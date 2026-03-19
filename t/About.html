@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ჩვენ შესახებ | SafeTech</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+theme:{
+extend:{
+colors:{
+primary:"#00C2FF",
+darkbg:"#071A2B",
+card:"#0F2538",
+footer:"#050F1A"
+}
+}
+}
+}
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+body{font-family:'Inter',sans-serif;}
+
+html{scroll-behavior:smooth;}
+
+.fade-in{
+opacity:0;
+transform:translateY(40px) scale(0.98);
+transition:all .8s cubic-bezier(0.22,1,0.36,1);
+}
+
+.fade-in.visible{
+opacity:1;
+transform:translateY(0) scale(1);
+}
+</style>
+
+</head>
+
+<body class="bg-darkbg text-white">
+
+<!-- HEADER -->
+
+<header class="border-b border-slate-800 sticky top-0 bg-darkbg z-50">
+
+<div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+
+<img src="logo-full.png" class="h-10">
+
+<a href="index.html"
+class="text-sm border border-primary px-4 py-2 rounded-md hover:bg-primary hover:text-darkbg transition">
+მთავარზე დაბრუნება
+</a>
+
+</div>
+
+</header>
+
+<!-- HERO -->
+
+<section class="py-24 text-center fade-in">
+
+<h1 class="text-5xl font-extrabold mb-6">
+ჩვენ შესახებ
+</h1>
+
+<p class="text-slate-400 max-w-2xl mx-auto">
+SafeTech არის კომპანია, რომელიც ეხმარება ბიზნესებს გახდნენ უსაფრთხო, ეფექტური და ტექნოლოგიურად გამართული
+</p>
+
+</section>
+
+<!-- STORY -->
+
+<section class="py-20 fade-in">
+
+<div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+
+<div>
+
+<h2 class="text-3xl font-bold mb-6">
+ვინ ვართ ჩვენ?
+</h2>
+
+<p class="text-slate-400 mb-4">
+ჩვენ ვართ გუნდი, რომელიც სპეციალიზირდება უსაფრთხოების და IT სისტემებში — CCTV, POS, დაშვების კონტროლი და ქსელები.
+</p>
+
+<p class="text-slate-400 mb-4">
+ჩვენი მიზანია ბიზნესებს მივცეთ სრული კონტროლი, უსაფრთხოება და თანამედროვე ტექნოლოგიური გადაწყვეტები.
+</p>
+
+<p class="text-slate-400">
+ჩვენ უკვე ვემსახურებით ათობით კომპანიას საქართველოში და ვაგრძელებთ ზრდას.
+</p>
+
+</div>
+
+<img src="https://images.unsplash.com/photo-1556761175-b413da4baf72"
+class="rounded-xl shadow-lg">
+
+</div>
+
+</section>
+
+<!-- STATS -->
+
+<section class="py-20 bg-card fade-in">
+
+<div class="max-w-7xl mx-auto px-6 text-center">
+
+<h2 class="text-3xl font-bold mb-12">
+ჩვენი შედეგები
+</h2>
+
+<div class="grid md:grid-cols-3 gap-8">
+
+<div>
+<h3 class="text-4xl font-extrabold text-primary mb-2">100+</h3>
+<p class="text-slate-400">დამონტაჟებული სისტემა</p>
+</div>
+
+<div>
+<h3 class="text-4xl font-extrabold text-primary mb-2">50+</h3>
+<p class="text-slate-400">აქტიური კლიენტი</p>
+</div>
+
+<div>
+<h3 class="text-4xl font-extrabold text-primary mb-2">24/7</h3>
+<p class="text-slate-400">მხარდაჭერა</p>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- WHY US -->
+
+<section class="py-20 fade-in">
+
+<div class="max-w-7xl mx-auto px-6">
+
+<h2 class="text-3xl font-bold text-center mb-12">
+რატომ ჩვენ?
+</h2>
+
+<div class="grid md:grid-cols-3 gap-8">
+
+<div class="bg-card p-6 rounded-xl hover:scale-105 transition">
+<h3 class="font-semibold mb-2">სწრაფი მონტაჟი</h3>
+<p class="text-slate-400 text-sm">პროექტების უმეტესობა სრულდება 1-2 დღეში</p>
+</div>
+
+<div class="bg-card p-6 rounded-xl hover:scale-105 transition">
+<h3 class="font-semibold mb-2">ხარისხი</h3>
+<p class="text-slate-400 text-sm">მხოლოდ სანდო ტექნოლოგიები და მოწყობილობები</p>
+</div>
+
+<div class="bg-card p-6 rounded-xl hover:scale-105 transition">
+<h3 class="font-semibold mb-2">მხარდაჭერა</h3>
+<p class="text-slate-400 text-sm">ყოველთვის ხელმისაწვდომი დახმარება</p>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- CTA -->
+
+<section class="py-20 text-center fade-in">
+
+<h2 class="text-3xl font-bold mb-6">
+მზად ხარ შენი ბიზნესის გასაძლიერებლად?
+</h2>
+
+<a href="https://wa.me/995555123456"
+class="bg-primary text-darkbg px-8 py-4 rounded-md font-semibold hover:scale-105 transition">
+დაგვიკავშირდი ახლავე
+</a>
+
+</section>
+
+<!-- FOOTER -->
+
+<footer class="bg-footer py-10 text-center text-slate-400 text-sm">
+© 2026 SafeTech • ყველა უფლება დაცულია
+</footer>
+
+<!-- SCRIPT -->
+
+<script>
+
+const observer = new IntersectionObserver((entries)=>{
+entries.forEach(entry=>{
+if(entry.isIntersecting){
+entry.target.classList.add("visible");
+observer.unobserve(entry.target);
+}
+});
+},{
+threshold:0.15
+});
+
+document.querySelectorAll(".fade-in").forEach(el=>{
+observer.observe(el);
+});
+
+</script>
+
+</body>
+</html>

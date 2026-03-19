@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CCTV კამერები | SafeTech</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+theme:{
+extend:{
+colors:{
+primary:"#00C2FF",
+darkbg:"#071A2B",
+card:"#0F2538",
+footer:"#050F1A"
+}
+}
+}
+}
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+body{font-family:'Inter',sans-serif;}
+
+/* smooth scroll */
+html{scroll-behavior:smooth;}
+
+/* fade animation */
+.fade-in{
+opacity:0;
+transform:translateY(40px) scale(0.98);
+transition:all .8s cubic-bezier(0.22,1,0.36,1);
+}
+
+.fade-in.visible{
+opacity:1;
+transform:translateY(0) scale(1);
+}
+</style>
+
+</head>
+
+<body class="bg-darkbg text-white">
+
+<!-- HEADER -->
+
+<header class="border-b border-slate-800 sticky top-0 bg-darkbg z-50">
+
+<div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+
+<img src="logo-full.png" class="h-10">
+
+<a href="index.html"
+class="text-sm border border-primary px-4 py-2 rounded-md hover:bg-primary hover:text-darkbg transition">
+მთავარზე დაბრუნება
+</a>
+
+</div>
+
+</header>
+
+<!-- HERO -->
+
+<section class="py-24 text-center fade-in">
+
+<h1 class="text-5xl font-extrabold mb-6">
+CCTV კამერები ბიზნესისთვის
+</h1>
+
+<p class="text-slate-400 max-w-xl mx-auto mb-8">
+დაიცავი შენი ბიზნესი თანამედროვე ვიდეომეთვალყურეობის სისტემებით
+</p>
+
+<a href="https://wa.me/995555123456"
+class="bg-primary text-darkbg px-8 py-4 rounded-md font-semibold hover:scale-105 transition">
+უფასო კონსულტაცია
+</a>
+
+</section>
+
+<!-- IMAGE -->
+
+<section class="max-w-5xl mx-auto px-6 mb-20 fade-in">
+
+<img src="https://images.unsplash.com/photo-1581092160562-40aa08e78837"
+class="rounded-xl shadow-lg hover:scale-105 transition duration-500">
+
+</section>
+
+<!-- BENEFITS -->
+
+<section class="py-20 fade-in">
+
+<div class="max-w-7xl mx-auto px-6">
+
+<h2 class="text-3xl font-bold mb-12 text-center">
+რატომ SafeTech?
+</h2>
+
+<div class="grid md:grid-cols-3 gap-8 text-center">
+
+<div class="bg-card p-6 rounded-xl hover:scale-105 transition">
+<h3 class="font-semibold mb-2">სწრაფი მონტაჟი</h3>
+<p class="text-slate-400 text-sm">1 დღეში სრულდება მონტაჟი</p>
+</div>
+
+<div class="bg-card p-6 rounded-xl hover:scale-105 transition">
+<h3 class="font-semibold mb-2">მაღალი ხარისხი</h3>
+<p class="text-slate-400 text-sm">4K კამერები და თანამედროვე ტექნოლოგია</p>
+</div>
+
+<div class="bg-card p-6 rounded-xl hover:scale-105 transition">
+<h3 class="font-semibold mb-2">მხარდაჭერა</h3>
+<p class="text-slate-400 text-sm">24/7 ტექნიკური დახმარება</p>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- FEATURES -->
+
+<section class="py-20 bg-card fade-in">
+
+<div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+
+<div>
+
+<h2 class="text-3xl font-bold mb-6">
+რას მიიღებ?
+</h2>
+
+<ul class="space-y-3 text-slate-300">
+<li>✔ Full HD / 4K ვიდეო</li>
+<li>✔ Live ნახვა ტელეფონიდან</li>
+<li>✔ ჩანაწერების შენახვა</li>
+<li>✔ მოძრაობის დეტექცია</li>
+<li>✔ უსაფრთხოების სრული კონტროლი</li>
+</ul>
+
+</div>
+
+<img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31"
+class="rounded-xl hover:scale-105 transition duration-500">
+
+</div>
+
+</section>
+
+<!-- CTA -->
+
+<section class="py-20 text-center fade-in">
+
+<h2 class="text-3xl font-bold mb-6">
+დაიცავი შენი ბიზნესი დღესვე
+</h2>
+
+<a href="https://wa.me/995555123456"
+class="bg-primary text-darkbg px-8 py-4 rounded-md font-semibold hover:scale-105 transition">
+დაგვიკავშირდი WhatsApp-ზე
+</a>
+
+</section>
+
+<!-- FAQ -->
+
+<section class="py-20 fade-in">
+
+<div class="max-w-3xl mx-auto px-6">
+
+<h2 class="text-3xl font-bold mb-10 text-center">
+FAQ
+</h2>
+
+<div class="space-y-4">
+
+<!-- ITEM -->
+
+<div class="faq-item border border-slate-700 rounded-xl overflow-hidden">
+
+<button class="faq-question w-full text-left p-5 flex justify-between items-center">
+<span>რამდენ ხანში ხდება მონტაჟი?</span>
+<span class="faq-icon transition">+</span>
+</button>
+
+<div class="faq-answer max-h-0 overflow-hidden transition-all duration-500 px-5">
+<p class="text-slate-400 pb-5">
+უმეტეს შემთხვევაში 1 დღეში
+</p>
+</div>
+
+</div>
+
+<!-- ITEM -->
+
+<div class="faq-item border border-slate-700 rounded-xl overflow-hidden">
+
+<button class="faq-question w-full text-left p-5 flex justify-between items-center">
+<span>არის გარანტია?</span>
+<span class="faq-icon transition">+</span>
+</button>
+
+<div class="faq-answer max-h-0 overflow-hidden transition-all duration-500 px-5">
+<p class="text-slate-400 pb-5">
+დიახ, ყველა სისტემაზე
+</p>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- FOOTER -->
+
+<footer class="bg-footer py-10 text-center text-slate-400 text-sm">
+© 2026 SafeTech
+</footer>
+
+<!-- SCRIPT -->
+
+<script>
+
+// FAQ
+
+document.querySelectorAll(".faq-question").forEach(btn => {
+
+btn.addEventListener("click", () => {
+
+const item = btn.parentElement;
+const answer = item.querySelector(".faq-answer");
+const icon = btn.querySelector(".faq-icon");
+
+document.querySelectorAll(".faq-item").forEach(el => {
+if(el !== item){
+el.querySelector(".faq-answer").style.maxHeight = null;
+el.querySelector(".faq-icon").innerText = "+";
+}
+});
+
+if(answer.style.maxHeight){
+answer.style.maxHeight = null;
+icon.innerText = "+";
+}else{
+answer.style.maxHeight = answer.scrollHeight + "px";
+icon.innerText = "−";
+}
+
+});
+
+});
+
+
+// SCROLL ANIMATION
+
+const observer = new IntersectionObserver((entries)=>{
+entries.forEach(entry=>{
+if(entry.isIntersecting){
+entry.target.classList.add("visible");
+observer.unobserve(entry.target);
+}
+});
+},{
+threshold:0.15
+});
+
+document.querySelectorAll(".fade-in").forEach(el=>{
+observer.observe(el);
+});
+
+</script>
+
+</body>
+</html>
