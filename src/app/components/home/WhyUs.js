@@ -2,7 +2,7 @@
 import useFadeIn from "../../hooks/useFadeIn";
 
 export default function WhyUs({data}) {
-  console.log('why',data)
+ if (!data) return null;
   const items = [
     {
       title: "სწრაფი მომსახურება",

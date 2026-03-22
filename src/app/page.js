@@ -60,11 +60,11 @@ export default async function Home() {
       />
 
       <HeroSection data={data?.homeHero} />
-      <ServicesPreview />
+      <ServicesPreview  data={data?.services}/>
       <WhyUs data={data?.HomeWhyUs}/>
-      <HowItWorks />
-      <CTASection />
-      <FAQ />
+      <HowItWorks data={data?.howWork} />
+      <CTASection data={data?.Cta} />
+      <FAQ  data={data?.Faq}/>
 
     </main>
   );
