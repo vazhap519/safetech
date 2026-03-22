@@ -1,27 +1,68 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
-import TopBar from "./components/TopBar";
-import Header from "./components/Header";
-import { getSettings } from "@/lib/settings";
+import { Noto_Sans_Georgian } from "next/font/google";
+import FloatingButtons from "./components/FloatingButtons";
 
-const inter = Inter({
-  subsets: ["latin"],
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+
+/* =========================
+   FONT
+========================= */
+const geoFont = Noto_Sans_Georgian({
+  subsets: ["georgian"],
+  weight: ["400", "500", "600", "700"],
 });
 
+/* =========================
+   GLOBAL SEO (IMPORTANT)
+========================= */
 export const metadata = {
-  title: "SafeTech | IT Security Systems",
-  description: "IT Security Systems",
+  metadataBase: new URL("https://safetech.ge"),
+
+  title: {
+    default: "Safetech | IT სერვისები და კამერების მონტაჟი თბილისში",
+    template: "%s | Safetech",
+  },
+
+  description:
+    "Safetech გთავაზობთ კამერების მონტაჟს, POS სისტემებს, ინტერნეტის გაყვანას და IT სერვისებს თბილისში და მთელ საქართველოში.",
+
+  openGraph: {
+    siteName: "Safetech",
+    type: "website",
+    locale: "ka_GE",
+    url: "https://safetech.ge",
+    images: [
+      {
+        url: "/services/1.jpg",
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
-export default async function RootLayout({ children }) {
-  const settings = await getSettings();
+/* =========================
+   LAYOUT
+========================= */
+export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-darkbg text-white`}>
+    <html lang="ka">
+      <body className={`${geoFont.className} bg-darkbg text-white`}>
         
-        <TopBar settings={settings} />
-<Header settings={settings}/>
-        {children}
+        <Header />
+
+        {/* HEADER OFFSET */}
+        <main className="pt-[80px] bg-[#F8FAFC] min-h-screen">
+          {children}
+        </main>
+
+        <FloatingButtons />
+        <Footer />
 
       </body>
     </html>
