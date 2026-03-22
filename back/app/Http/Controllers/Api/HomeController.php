@@ -20,7 +20,7 @@ $how=HomeHowWork::first();
 $cta=HomeCtaSection::first();
 $faq=FaqSection::first();
 $services = Service::all();
-$serviceSection=ServiceSection::first()
+$serviceSection=ServiceSection::first();
    return response()->json([
     'homeHero' => $hero ? [
         'title' => $hero->home_hero_title,
