@@ -1,25 +1,10 @@
 "use client";
 import useFadeIn from "../../hooks/useFadeIn";
 
-export default function HowItWorks() {
+export default function HowItWorks({data}) {
+   if (!data) return null;
    const [ref, visible] = useFadeIn();
-  const steps = [
-    {
-      title: "დაგვიკავშირდი",
-      desc: "დაგვირეკე ან მოგვწერე და გაგვიზიარე შენი საჭიროება.",
-      icon: "📞",
-    },
-    {
-      title: "შეფასება",
-      desc: "ვაფასებთ შენს მოთხოვნას და გთავაზობთ საუკეთესო გადაწყვეტას.",
-      icon: "📝",
-    },
-    {
-      title: "შესრულება",
-      desc: "ვახორციელებთ სამუშაოს სწრაფად და ხარისხიანად.",
-      icon: "✅",
-    },
-  ];
+  
 
   return (
     <section
@@ -36,17 +21,17 @@ export default function HowItWorks() {
         {/* Title */}
         <div className="text-center">
           <h2 className="text-3xl font-bold text-white">
-            როგორ ვმუშაობთ
+          {data.title}
           </h2>
           <p className="text-gray-300 mt-2">
-            მარტივი და სწრაფი პროცესი 3 ნაბიჯში
+            {data.description}
           </p>
         </div>
 
         {/* Steps */}
         <div className="grid md:grid-cols-3 gap-8 mt-12 relative">
 
-          {steps.map((step, i) => (
+          {data.cards.map((step, i) => (
             <div
               key={i}
               className="relative bg-[#F8FAFC] p-6 rounded-2xl text-center shadow-sm hover:shadow-lg transition"
