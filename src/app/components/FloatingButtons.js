@@ -6,8 +6,7 @@ export default function FloatingButtons() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
-
+<div className="fixed bottom-24 md:bottom-10 right-5 z-50 flex flex-col items-end gap-3">
       {/* CHILD BUTTONS */}
       <div
         className={`flex flex-col items-end gap-3 transition-all duration-300 ${

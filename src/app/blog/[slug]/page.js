@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { blogPosts } from "@/data/blog";
 import { buildMetadata } from "@/lib/seo";
-
+import Share from "@/app/components/Share";
 /* =========================
    META SEO
 ========================= */
@@ -107,31 +107,10 @@ export default async function BlogDetailPage({ params }) {
           </div>
 
           {/* SHARE */}
-          <div className="mt-8 flex gap-3 flex-wrap">
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${url}`}
-              target="_blank"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
-            >
-              Facebook
-            </a>
-
-            <a
-              href={`https://api.whatsapp.com/send?text=${url}`}
-              target="_blank"
-              className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm"
-            >
-              WhatsApp
-            </a>
-
-            <a
-              href={`https://t.me/share/url?url=${url}`}
-              target="_blank"
-              className="px-4 py-2 bg-sky-500 text-white rounded-lg text-sm"
-            >
-              Telegram
-            </a>
-          </div>
+   {/* <Share 
+  data={data?.shareSection} 
+  url={`https://safetech.ge/blog/${slug}`}
+/> */}
 
           {/* CTA */}
           <div className="mt-12 bg-gradient-to-r from-[#0B3C5D] to-[#06283D] text-white p-8 rounded-2xl text-center shadow-xl">
