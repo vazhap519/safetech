@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceSection;
 use Illuminate\Http\Request;
 use \App\Models\HomeHeroSection;
 use \App\Models\HomeWhyUs;
@@ -19,7 +20,7 @@ $why=HomeWhyUs::first();
 $how=HomeHowWork::first();
 $cta=HomeCtaSection::first();
 $faq=FaqSection::first();
-$services = Service::all();
+$services = Service::latest()->take(6)->get();
 $serviceSection=ServiceSection::first();
    return response()->json([
     'homeHero' => $hero ? [
@@ -59,19 +60,25 @@ $serviceSection=ServiceSection::first();
 'description'=>$faq->description,
 'faq'=>$faq->faq?? [],
     ]:null,
-'servicesSection' => $serviceSection ? [
-    'title' => $serviceSection->service_section_title,
-    'description' => $serviceSection->service_section_description,
-] : null,
+       'servicesSection' => $serviceSection ? [
+           'title' => $serviceSection->service_section_title,
+           'slug' => $serviceSection->slug,
+           'description' => $serviceSection->service_section_description,
 
-    'services' => $services->map(function ($service) {
-    return [
-        'title' => $service->title,
-        'description' => $service->description,
-        'slug' => $service->slug,
-        'image' => $service->getFirstMediaUrl('services', 'webp'),
-    ];
-}),
+           'image' => $serviceSection->getFirstMediaUrl('services', 'webp')
+               ? url($serviceSection->getFirstMediaUrl('services', 'webp'))
+               : null,
+       ] : null,
+
+       'services' => $services->map(function ($service) {
+           return [
+               'title' => $service->title,
+               'description' => $service->description,
+               'slug' => $service->slug,
+               'image' => $service->getFirstMediaUrl('services', 'webp')
+                   ? url($service->getFirstMediaUrl('services', 'webp'))
+                   : null,           ];
+       }),
 ]);
 }
 }

@@ -24,15 +24,16 @@ class ServiceForm
                 Section::make('ძირითადი ინფორმაცია')
                     ->schema([
 
+
                         TextInput::make('title')
                             ->label('სათაური')
                             ->required()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, callable $set, $get) {
-                                // 👉 მხოლოდ მაშინ დააგენერიროს თუ slug ცარიელია
-                                if (!$get('slug')) {
-                                    $set('slug', Str::slug($state));
-                                }
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+
+                                if ($get('slug')) return;
+
+                                $set('slug', Str::slug($state));
                             }),
 
                         TextInput::make('slug')

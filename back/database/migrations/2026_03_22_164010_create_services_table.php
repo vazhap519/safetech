@@ -9,8 +9,7 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('service_section_title');
- $table->string('service_section_description');
+
             $table->string('slug')->unique();
             $table->string('title');
             $table->text('description');
@@ -21,8 +20,7 @@ return new class extends Migration
             $table->json('features')->nullable(); // 🔥 nullable
             $table->json('faq')->nullable(); // 🔥 nullable
 
-            $table->text('seo_text')->nullable(); // 🔥 უკეთესი ვიდრე json
-
+            $table->json('seo_text')->nullable();
             $table->timestamps();
         });
     }

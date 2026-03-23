@@ -1,25 +1,31 @@
+
+
 import { notFound } from "next/navigation";
 import Image from "next/image";
 
-import { servicesData } from "@/data/services";
 import { buildMetadata } from "@/lib/seo";
+import { getService } from "@/lib/datafetch";
 
 import FeaturesSection from "@/app/components/services/FeaturesSection";
 import FAQSection from "@/app/components/services/FAQSection";
 import SEOSection from "@/app/components/services/SEOSection";
-import CopyButton from "@/app/components/services/CopyButton";
+import Share from "@/app/components/Share";
 
 /* =========================
    META SEO
 ========================= */
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const service = servicesData[slug];
+
+  const data = await getService(slug);
+  const service = data?.service;
+
+  if (!service) return {};
 
   return buildMetadata({
-    title: service?.title,
-    description: service?.desc,
-    image: service?.image,
+    title: service.title,
+    description: service.description,
+    image: service.image,
     path: `/services/${slug}`,
   });
 }
@@ -28,52 +34,17 @@ export async function generateMetadata({ params }) {
    PAGE
 ========================= */
 export default async function ServicePage({ params }) {
-  const { slug } = await params;
-  const service = servicesData[slug];
+   const { slug } = await params;
+
+ const data = await getService(slug, {
+  next: { revalidate: 60 },
+});
+  const service = data?.service;
 
   if (!service) return notFound();
 
   return (
     <main>
-
-      {/* JSON-LD (Service) */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Service",
-            name: service.title,
-            description: service.desc,
-            areaServed: "Georgia",
-            provider: {
-              "@type": "Organization",
-              name: "Safetech",
-            },
-          }),
-        }}
-      />
-
-      {/* JSON-LD (FAQ) */}
-      {service.faq?.length > 0 && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "FAQPage",
-              mainEntity: service.faq.map((item) => ({
-                "@type": "Question",
-                name: item.q,
-                acceptedAnswer: {
-                  "@type": "Answer",
-                  text: item.a,
-                },
-              })),
-            }),
-          }}
-        />
-      )}
 
       {/* HERO */}
       <section className="bg-[#0B3C5D] text-white py-20">
@@ -85,21 +56,21 @@ export default async function ServicePage({ params }) {
             </h1>
 
             <p className="mt-4 text-gray-300 text-lg">
-              {service.desc}
+              {service.description}
             </p>
 
+            {/* 🔥 dynamic CTA */}
             <a
-              href="tel:+995599000000"
+              href={`tel:${service.phone || "+995599000000"}`}
               className="inline-block mt-6 bg-[#00C2A8] px-6 py-3 rounded-xl hover:bg-[#00a892] transition"
             >
-              📞 დაგვირეკე
+              {service.button_text || "📞 დაგვირეკე"}
             </a>
           </div>
 
-          {/* 🔥 FIX: Next Image instead of img */}
           <div className="relative w-full h-[300px]">
             <Image
-              src={service.image}
+              src={service.image || "/placeholder.jpg"}
               alt={service.title}
               fill
               className="rounded-2xl shadow-lg object-cover"
@@ -109,51 +80,16 @@ export default async function ServicePage({ params }) {
 
         </div>
       </section>
-{/* 🔥 SHARE */}
-<div className="bg-white py-6 border-b">
-  <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-4 text-center">
 
-    <p className="text-sm text-gray-600">
-      გააზიარე ეს სერვისი:
-    </p>
+      {/* SHARE */}
+      <Share data={data?.share ?? { title: "", buttons: [] }} />
 
-    <div className="flex flex-wrap justify-center gap-3">
-
-      <a
-        href={`https://www.facebook.com/sharer/sharer.php?u=https://safetech.ge/services/${slug}`}
-        target="_blank"
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:scale-105 transition"
-      >
-        Facebook
-      </a>
-
-      <a
-        href={`https://api.whatsapp.com/send?text=https://safetech.ge/services/${slug}`}
-        target="_blank"
-        className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:scale-105 transition"
-      >
-        WhatsApp
-      </a>
-
-      <a
-        href={`https://t.me/share/url?url=https://safetech.ge/services/${slug}`}
-        target="_blank"
-        className="px-4 py-2 bg-sky-500 text-white rounded-lg text-sm hover:scale-105 transition"
-      >
-        Telegram
-      </a>
-
-<CopyButton url={`https://safetech.ge/services/${slug}`} />
-    </div>
-
-  </div>
-</div>
       {/* FEATURES */}
       {service.features?.length > 0 && (
         <FeaturesSection features={service.features} />
       )}
 
-      {/* SEO TEXT */}
+      {/* SEO */}
       {service.seo?.length > 0 && (
         <SEOSection title={service.title} paragraphs={service.seo} />
       )}
@@ -162,24 +98,6 @@ export default async function ServicePage({ params }) {
       {service.faq?.length > 0 && (
         <FAQSection faq={service.faq} />
       )}
-
-      {/* CTA */}
-      <section className="py-20 bg-[#0B3C5D] text-white text-center">
-        <h2 className="text-3xl font-bold">
-          დაგვიკავშირდი დღესვე
-        </h2>
-
-        <p className="mt-4 text-gray-300">
-          მიიღე პროფესიონალური IT მომსახურება სწრაფად და ხარისხიანად
-        </p>
-
-        <a
-          href="tel:+995599000000"
-          className="inline-block mt-6 bg-[#00C2A8] px-6 py-3 rounded-xl hover:bg-[#00a892] transition"
-        >
-          📞 დაგვირეკე
-        </a>
-      </section>
 
     </main>
   );

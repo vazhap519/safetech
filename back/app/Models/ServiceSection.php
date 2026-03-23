@@ -6,8 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class ServiceSection extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
         'service_section_title',
-'service_section_description',
-     ];
+        'service_section_description',
+    ];
+
 }

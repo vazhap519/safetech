@@ -14,6 +14,7 @@ class ServiceSectionForm
                 Section::make('მთავარ გვერძე სექციების სექცია')->schema([
     TextInput::make('service_section_title')->label('სათაური')->required(),
 TextInput::make('service_section_description')->label('აღწერა')->required(),
+
             ]),
             ]);
     }
