@@ -19,7 +19,7 @@ return new class extends Migration
 
             $table->json('share_buttons')->nullable(); // 🔥 buttons
 
-$table->json(' footer_brand_soc')->nullable();
+$table->json('footer_brand_soc')->nullable();
 $table->json('footer_headers')->nullable();
 $table->json('footer_contact_area')->nullable();
             $table->timestamps();

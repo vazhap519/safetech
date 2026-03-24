@@ -7,61 +7,66 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class HomeHeroSection extends Model implements HasMedia
+class About extends Model implements HasMedia
 {
     use InteractsWithMedia;
 
     protected $fillable = [
-        'home_hero_title',
-        'home_hero_description',
-        'home_hero_list',
-        'home_hero_call_button_text',
-        'home_hero_call_button_number',
-        'home_hero_service_button_text'
+        'hero_title',
+        'hero_description',
+        'hero_trust_list',
+        'hero_badge',
+
+        'story_title',
+        'story_title_description',
+        'story_content',
+        'story_stats',
+
+        'why_us_title',
+        'why_us_title_description',
+        'why_us_content',
+
+        'cta_title',
+        'cta_title_description',
+        'cta_trust',
+        'cta_phone'
     ];
 
     protected $casts = [
-        'home_hero_list' => 'array',
+        'hero_trust_list' => 'array',
+        'story_stats' => 'array',
+        'why_us_content' => 'array',
+        'cta_trust' => 'array',
     ];
 
     /**
-     * ✅ Media Collection
+     * MEDIA COLLECTION
      */
     public function registerMediaCollections(): void
     {
         $this
             ->addMediaCollection('hero')
-            ->useDisk('public');
+            ->singleFile();
     }
 
     /**
-     * ✅ Image Optimization
+     * IMAGE OPTIMIZATION
      */
     public function registerMediaConversions(Media $media = null): void
     {
         $this
             ->addMediaConversion('webp')
             ->format('webp')
-            ->width(600)
-            ->quality(70)
+            ->width(800) // 🔥 დაამატე ზომა
+            ->quality(75)
             ->nonQueued();
     }
 
     /**
-     * ✅ Clean accessor (no controller logic)
+     * ✅ CLEAN ACCESSOR
      */
     public function getImageUrlAttribute()
     {
         return $this->getFirstMediaUrl('hero', 'webp') ?: null;
-    }
-
-    /**
-     * ✅ Auto formatted phone
-     */
-    public function getFormattedPhoneAttribute()
-    {
-        $digits = preg_replace('/\D/', '', $this->home_hero_call_button_number);
-
-        return preg_replace('/(\d{3})(\d{3})(\d{3})/', '$1 $2 $3', $digits);
     }
 }

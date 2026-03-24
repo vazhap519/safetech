@@ -1,121 +1,95 @@
 <?php
-//
-//namespace App\Http\Controllers\Api;
-//
-//use App\Http\Controllers\Controller;
-//use App\Models\Service;
-//use App\Models\Settings;
-//use Illuminate\Http\Request;
-//
-//
-//
-//class ServicesController extends Controller
-//{
-//    public function index()
-//    {
-//        $services = Service::all();
-//
-//        return response()->json([
-//            'services' => $services->map(function ($service) {
-//                return [
-//                    'title' => $service->title,
-//                    'description' => $service->description,
-//                    'slug' => $service->slug,
-//                    'image' => $service->getFirstMediaUrl('services', 'webp')
-//                        ? url($service->getFirstMediaUrl('services', 'webp'))
-//                        : null,
-//
-//                    'features' => $service->features ?? [],
-//                    'faq' => $service->faq ?? [],
-//                    'seo' => $service->seo_text
-//                        ? array_filter(array_map('trim', explode("\n", $service->seo_text)))
-//                        : [],
-//                ];
-//            }),
-//
-//            // 🔥 GLOBAL SHARE
-//            'share' => [
-//                'title' => settings()->share_title ?? '',
-//                'buttons' => settings()->share_buttons ?? [],
-//            ],
-//        ]);
-//    }
-//
-//    public function show($slug)
-//    {
-//        $service = Service::where('slug', $slug)->first();
-//
-//        if (!$service) {
-//            return response()->json(['message' => 'Not found'], 404);
-//        }
-//
-//        return response()->json([
-//            'service' => [
-//                'title' => $service->title,
-//                'description' => $service->description,
-//                'slug' => $service->slug,
-//                'image' => $service->getFirstMediaUrl('services', 'webp'),
-//                'features' => $service->features ?? [],
-//                'faq' => $service->faq ?? [],
-//                'seo' => $service->seo_text ?? null,
-//            ],
-//
-//            // 🔥 GLOBAL SHARE აქაც
-//            'share' => [
-//                'title' => settings()->share_title ?? '',
-//                'buttons' => settings()->share_buttons ?? [],
-//            ],
-//        ]);
-//    }
-//}
-
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\ServiceSection;
-use App\Models\Settings;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class ServicesController extends Controller
 {
+    /**
+     * LIST (cached + optimized)
+     */
     public function index()
     {
-        $services = Service::latest()->paginate(6);
-        $serviceHero = ServiceSection::first();
+        return Cache::remember('services_list', 300, function () {
+
+            $services = Service::with('media')
+                ->select(
+                    'id',
+                    'title',
+                    'description',
+                    'slug',
+                    'features',
+                    'faq',
+                    'seo_text',
+                    'phone',
+                    'button_text'
+                )
+                ->latest()
+                ->paginate(6);
+
+            $serviceHero = ServiceSection::first();
+
+            return response()->json([
+                'services' => $services->getCollection()->map(
+                    fn($service) => $this->transformService($service)
+                ),
+
+                'meta' => [
+                    'current_page' => $services->currentPage(),
+                    'last_page' => $services->lastPage(),
+                    'per_page' => $services->perPage(),
+                    'total' => $services->total(),
+                ],
+
+                'links' => [
+                    'next' => $services->nextPageUrl(),
+                    'prev' => $services->previousPageUrl(),
+                ],
+
+                'share' => [
+                    'title' => settings()->share_title ?? '',
+                    'buttons' => settings()->share_buttons ?? [],
+                ],
+
+                'serviceHero' => $serviceHero ? [
+                    'title' => $serviceHero->service_section_title,
+                    'description' => $serviceHero->service_section_description,
+                    'image' => $serviceHero->image_url ?? null,
+                ] : null,
+            ]);
+        });
+    }
+    public function revalidate()
+    {
+        // ✅ 1. ყველა services cache წაშლა
+        Cache::forget('services_list');
+
+        // თუ გინდა ყველა service cache წაშალო:
+        // Cache::flush(); ❌ (არ გირჩევ)
+
+        // ✅ 2. Next.js revalidate (list)
+        Http::post('http://localhost:3000/api/revalidate', [
+            'tag' => 'services'
+        ]);
 
         return response()->json([
-            'services' => $services->getCollection()->map(
-                fn($service) => $this->transformService($service)
-            ),
-
-            // 🔥 pagination meta
-            'meta' => [
-                'current_page' => $services->currentPage(),
-                'last_page' => $services->lastPage(),
-                'per_page' => $services->perPage(),
-                'total' => $services->total(),
-            ],
-
-            'links' => [
-                'next' => $services->nextPageUrl(),
-                'prev' => $services->previousPageUrl(),
-            ],
-
-            'share' => [
-                'title' => settings()->share_title ?? '',
-                'buttons' => settings()->share_buttons ?? [],
-            ],
-            'ServiceHero' => [
-                'title' => $serviceHero->service_section_title ?? '',
-                'description' => $serviceHero->service_section_description ?? '',
-            ]
+            'success' => true,
+            'message' => 'Services cache cleared'
         ]);
     }
-
+    /**
+     * SHOW (🔥 critical performance fix)
+     */
     public function show($slug)
     {
-        $service = Service::where('slug', $slug)->first();
+        $service = Cache::remember("service_{$slug}", 300, function () use ($slug) {
+            return Service::with('media')->where('slug', $slug)->first();
+        });
 
         if (!$service) {
             return response()->json(['message' => 'Not found'], 404);
@@ -130,9 +104,21 @@ class ServicesController extends Controller
             ],
         ]);
     }
+    public function revalidateSingle($slug)
+    {
+        Cache::forget("service_{$slug}");
 
+        Http::post('http://localhost:3000/api/revalidate', [
+            'tag' => "service-{$slug}"
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Service {$slug} revalidated"
+        ]);
+    }
     /**
-     * 🔥 ცენტრალური transformer (DRY principle)
+     * 🔥 CLEAN TRANSFORMER (final form)
      */
     private function transformService($service)
     {
@@ -141,17 +127,15 @@ class ServicesController extends Controller
             'description' => $service->description,
             'slug' => $service->slug,
 
-            'image' => $service->getFirstMediaUrl('services', 'webp')
-                ? url($service->getFirstMediaUrl('services', 'webp'))
-                : null,
+            // ✅ accessor გამოყენება (no duplication)
+            'image' => $service->image_url,
 
-            // ✅ FIXED (React error აღარ იქნება)
+            // ✅ ALWAYS ARRAY
             'features' => collect($service->features)
                 ->pluck('text')
                 ->filter()
                 ->values(),
 
-            // ✅ FAQ სტაბილური სტრუქტურა
             'faq' => collect($service->faq)
                 ->map(fn($item) => [
                     'q' => $item['q'] ?? '',
@@ -159,9 +143,9 @@ class ServicesController extends Controller
                 ])
                 ->values(),
 
-            'seo' => $service->seo_text ?? [],
+            // ✅ NEVER breaks frontend
+            'seo' => $service->seo,
 
-            // ✅ HERO dynamic
             'phone' => $service->phone,
             'button_text' => $service->button_text,
         ];
