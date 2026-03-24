@@ -99,7 +99,7 @@ export default async function Home() {
  const data = await getHome({
   next: { revalidate: 60 },
 });
-
+console.log('home',data);
   return (
     <main>
 
