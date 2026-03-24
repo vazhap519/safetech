@@ -1,57 +1,28 @@
 import Link from "next/link";
-
-export default function Footer() {
+import Brand from "./footer/Brand";
+import { getSettings } from "@/lib/datafetch";
+import FooterColumn from "./footer/FooterColumn";
+import Bottom from "./footer/Bottom";
+import ContactArea from "./footer/ContactArea";
+export default async function Footer() {
+  const settings = await getSettings();
+const headers = settings?.headers || [];
+function getFooterTitle(headers, key, fallback) {
+  return headers?.find((h) => h.key === key)?.title || fallback;
+}
+const copy=settings?.copy;
+const contact=settings?.contact
   return (
     <footer className="bg-[#0B3C5D] text-white">
       <div className="max-w-7xl mx-auto px-4 py-12 grid md:grid-cols-4 gap-8 text-center md:text-left">
 
         {/* Brand */}
-        <div className="flex flex-col items-center md:items-start">
-          <h2 className="text-2xl font-bold mb-4">
-            <span>Safe</span>
-            <span className="text-[#00C2A8]">tech</span>
-          </h2>
-
-          <p className="text-sm text-gray-300 max-w-xs">
-            უსაფრთხოების კამერები, ქსელური სერვისები და IT მხარდაჭერა საქართველოში.
-          </p>
-
-          {/* 🔥 SOCIAL */}
-          <div className="flex gap-3 mt-5">
-
-            {/* Facebook */}
-            <a
-              href="#"
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 
-              hover:bg-[#1877F2] hover:-translate-y-1 transition-all duration-300"
-            >
-              <span>📘</span>
-            </a>
-
-            {/* WhatsApp */}
-            <a
-              href="https://wa.me/995599000000"
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 
-              hover:bg-green-500 hover:-translate-y-1 transition-all duration-300"
-            >
-              <span>💬</span>
-            </a>
-
-            {/* Email */}
-            <a
-              href="mailto:info@safetech.ge"
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 
-              hover:bg-[#00C2A8] hover:-translate-y-1 transition-all duration-300"
-            >
-              <span>✉️</span>
-            </a>
-
-          </div>
-        </div>
+<Brand settings={settings}/>
 
         {/* Services */}
-        <div className="flex flex-col items-center md:items-start">
-          <h3 className="font-semibold mb-4">სერვისები</h3>
+<FooterColumn
+  title={getFooterTitle(headers, "services", "სერვისები")}
+>
           <ul className="space-y-2 text-sm text-gray-300">
             <li><Link href="/services/cctv" className="hover:text-[#00C2A8] transition">CCTV მონტაჟი</Link></li>
             <li><Link href="/services/pos" className="hover:text-[#00C2A8] transition">POS სისტემები</Link></li>
@@ -59,35 +30,33 @@ export default function Footer() {
             <li><Link href="/services/router" className="hover:text-[#00C2A8] transition">Router Setup</Link></li>
             <li><Link href="/services/os" className="hover:text-[#00C2A8] transition">OS ინსტალაცია</Link></li>
           </ul>
-        </div>
+  </FooterColumn>
 
         {/* Company */}
-        <div className="flex flex-col items-center md:items-start">
-          <h3 className="font-semibold mb-4">კომპანია</h3>
+<FooterColumn
+  title={getFooterTitle(headers, "company", "კომპანია")}
+>
           <ul className="space-y-2 text-sm text-gray-300">
             <li><Link href="/about" className="hover:text-[#00C2A8] transition">ჩვენს შესახებ</Link></li>
             <li><Link href="/blog" className="hover:text-[#00C2A8] transition">ბლოგი</Link></li>
             <li><Link href="/contact" className="hover:text-[#00C2A8] transition">კონტაქტი</Link></li>
             <li><Link href="/privacy" className="hover:text-[#00C2A8] transition">Privacy Policy</Link></li>
           </ul>
-        </div>
+  </FooterColumn>
 
         {/* Contact */}
-        <div className="flex flex-col items-center md:items-start">
-          <h3 className="font-semibold mb-4">კონტაქტი</h3>
-          <ul className="space-y-2 text-sm text-gray-300">
-            <li>📞 +995 599 000 000</li>
-            <li>📧 info@safetech.ge</li>
-            <li>📍 Service Area: Georgia</li>
-          </ul>
-        </div>
+<FooterColumn
+  title={getFooterTitle(headers, "contact", "კონტაქტი")}
+>
+
+
+          <ContactArea contact={contact}/>
+       </FooterColumn>
 
       </div>
 
       {/* Bottom */}
-      <div className="border-t border-gray-600 text-center py-4 text-sm text-gray-400">
-        © 2026 Safetech. ყველა უფლება დაცულია.
-      </div>
+   <Bottom copy={copy}/>
     </footer>
   );
 }

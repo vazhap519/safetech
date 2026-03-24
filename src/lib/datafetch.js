@@ -98,3 +98,6 @@ export const getServices = (page = 1, options = {}) =>
 // 🔥 ერთი სერვისი
 export const getService = (slug, options = {}) =>
   fetcher(`${API}/services/${slug}`, options);
+//სეტინგები
+export const getSettings=(options={})=>
+  fetcher(`${API}/settings`,options)
