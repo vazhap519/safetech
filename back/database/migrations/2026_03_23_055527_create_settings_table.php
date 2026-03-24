@@ -14,14 +14,14 @@ return new class extends Migration
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
             $table->string('share_title')->nullable(); // 🔥 სათაური
+            $table->string('footer_copyright_text')->nullable(); // 🔥 სათაური
+            $table->longText('footer_brand_text')->nullable();
+
             $table->json('share_buttons')->nullable(); // 🔥 buttons
 
-
-            $table->text('footer_description')->nullable();
-            $table->string('footer_copyright')->nullable();
-            $table->json('footer_contact_info')->nullable();
-$table->json('footer_socials')->nullable();
+$table->json(' footer_brand_soc')->nullable();
 $table->json('footer_headers')->nullable();
+$table->json('footer_contact_area')->nullable();
             $table->timestamps();
         });
     }
