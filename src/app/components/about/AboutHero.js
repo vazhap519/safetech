@@ -81,7 +81,7 @@ export default function AboutHero({Hero}) {
         {/* RIGHT */}
       <div className="relative w-full h-[350px] md:h-[420px] group">
 <Image
-  src={Hero?.image || "/services/1.jpg"}
+  src={Hero?.image || " "}
   alt={
     Hero?.title
       ? `${Hero.title} - Safetech`

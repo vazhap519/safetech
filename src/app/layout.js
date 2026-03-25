@@ -5,6 +5,9 @@ import FloatingButtons from "./components/FloatingButtons";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
+// 🔥 დაამატე ეს
+import { Toaster } from "react-hot-toast";
+
 /* =========================
    FONT
 ========================= */
@@ -63,6 +66,20 @@ export default function RootLayout({ children }) {
 
         <FloatingButtons />
         <Footer />
+
+        {/* 🔥 TOAST GLOBAL */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              borderRadius: "10px",
+              background: "#0B3C5D",
+              color: "#fff",
+              fontSize: "14px",
+            },
+          }}
+        />
 
       </body>
     </html>

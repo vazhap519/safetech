@@ -1,15 +1,30 @@
 const API =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
+const isDev = process.env.NODE_ENV === "development";
+
 /* =========================
-   🔥 FETCHER (BALANCED)
+   🔥 FIXED FETCHER (PROPER)
 ========================= */
 async function fetcher(url, options = {}) {
   try {
-    const res = await fetch(url, {
+    const finalOptions = {
       ...options,
-      next: options.next || { revalidate: 60 },
-    });
+    };
+
+    // ✅ DEV → no cache საერთოდ
+    if (isDev) {
+      finalOptions.cache = "no-store";
+    } else {
+      // ✅ PROD → მხოლოდ ის გამოიყენე რაც გადმოგცეს
+      if (options.next) {
+        finalOptions.next = options.next;
+      } else {
+        finalOptions.cache = "force-cache";
+      }
+    }
+
+    const res = await fetch(url, finalOptions);
 
     const text = await res.text();
 
@@ -27,7 +42,6 @@ async function fetcher(url, options = {}) {
         body: text,
       });
 
-      // ❗ არ ვაგდებთ error-ს → UI გადაწყვეტს
       return {
         error: true,
         status: res.status,
@@ -36,7 +50,6 @@ async function fetcher(url, options = {}) {
     }
 
     return data;
-
   } catch (error) {
     console.error("❌ FETCH FAILED:", error);
 
@@ -58,10 +71,9 @@ function buildUrl(path, params = {}) {
 /* =========================
    🔵 HOME
 ========================= */
-export const getHome = (options = {}) =>
+export const getHome = () =>
   fetcher(buildUrl(`/`), {
     next: { tags: ["home"] },
-    ...options,
   });
 
 /* =========================
@@ -69,78 +81,74 @@ export const getHome = (options = {}) =>
 ========================= */
 
 // LIST
-export const getServices = ({ page = 1 } = {}, options = {}) =>
+export const getServices = ({ page = 1 } = {}) =>
   fetcher(buildUrl(`/services`, { page }), {
-    next: { tags: ["services"] },
-    ...options,
+    next: { tags: [`services-page-${page}`] }, // 🔥 FIXED
   });
 
-// SINGLE
-export const getService = (slug, options = {}) =>
+export const getService = (slug) =>
   fetcher(buildUrl(`/services/${slug}`), {
     next: { tags: [`service-${slug}`] },
-    ...options,
   });
-
 /* =========================
    ⚙ SETTINGS
 ========================= */
-export const getSettings = (options = {}) =>
+export const getSettings = () =>
   fetcher(buildUrl(`/settings`), {
     next: { tags: ["settings"] },
-    ...options,
   });
-
 /* =========================
    🔒 PRIVACY
 ========================= */
-export const getPrivacy = (options = {}) =>
+export const getPrivacy = () =>
   fetcher(buildUrl(`/privacy`), {
     next: { tags: ["privacy"] },
-    ...options,
   });
-
 /* =========================
    📘 ABOUT
 ========================= */
-export const getAbout = (options = {}) =>
+export const getAbout = () =>
   fetcher(buildUrl(`/about`), {
     next: { tags: ["about"] },
-    ...options,
   });
-
 /* =========================
    📰 BLOG
 ========================= */
 
-// LIST
-export const getBlog = (
-  { page = 1, category = "all" } = {},
-  options = {}
-) => {
+export const getBlog = ({ page = 1, category = "all" } = {}) => {
   const params = {
     page,
     ...(category !== "all" && { category }),
   };
 
   return fetcher(buildUrl(`/blog`, params), {
-    next: { tags: ["blog"] },
-    ...options,
+    next: { tags: [`blog-${category}-page-${page}`] }, // 🔥 FIXED
   });
 };
 
-// SINGLE
-export const getBlogPost = (slug, options = {}) =>
+export const getBlogPost = (slug) =>
   fetcher(buildUrl(`/blog/${slug}`), {
     next: { tags: [`post-${slug}`] },
-    ...options,
   });
-
 /* =========================
    📂 CATEGORIES
 ========================= */
-export const getCategories = (options = {}) =>
+export const getCategories = () =>
   fetcher(buildUrl(`/categories`), {
     next: { tags: ["categories"] },
-    ...options,
+  });
+
+  /* =========================
+   📩 CONTACT
+========================= */
+export const sendContact = (payload) =>
+  fetcher(buildUrl(`/contact`), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+
+    // ❗ POST-ზე cache არ გვინდა
+    cache: "no-store",
   });
