@@ -5,7 +5,7 @@ use App\Models\Settings;
 function settings()
 {
     return cache()->remember('settings', now()->addMinutes(10), function () {
-        return \App\Models\Settings::firstOrCreate([]);
+        return \App\Models\Settings::first();
     });
 }
 if (!function_exists('geoToLatin')) {

@@ -58,13 +58,18 @@ class Post extends Model implements HasMedia
 
             if (!$media) return null;
 
-            return $media->hasGeneratedConversion('webp')
-                ? $media->getUrl('webp')
-                : $media->getUrl();
+            // ✅ თუ webp არსებობს
+            if ($media->hasGeneratedConversion('webp')) {
+                return $media->getFullUrl('webp'); // 🔥 FIX
+            }
+
+            // ❗ fallback original image
+            return $media->getFullUrl();
 
         } catch (\Throwable $e) {
-            return null; // 🔥 never crash
+            return null;
         }
+
     }
 
     /*
@@ -130,6 +135,6 @@ class Post extends Model implements HasMedia
             ->format('webp')
             ->quality(80)
             ->performOnCollections('cover')
-            ->queued();
+            ->nonQueued(); // 🔥 FIX
     }
 }

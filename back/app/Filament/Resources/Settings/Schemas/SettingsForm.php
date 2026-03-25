@@ -241,6 +241,42 @@ Repeater::make('share_buttons')
                         ->collapsible()
 
 
+                ]),
+
+                Section::make('Contact-page')->schema([
+                    TextInput::make('contact_page_hero_title')->label('Hero სათაური')->required()->maxLength(255),
+                    TextInput::make('contact_page_hero_text')->label('Hero მოკლე აღწერა')->required()->maxLength(255),
+                    TextInput::make('contact_page_number')
+                        ->label('ტელეფონის ნომერი')
+                        ->rule('regex:/^[0-9]{6,12}$/') // ჯერ ვუშვებთ დიდსაც
+                        ->afterStateUpdated(function ($state, callable $set) {
+
+                            // ❗ წავშალოთ ყველაფერი რაც არაა ციფრი
+                            $number = preg_replace('/\D/', '', $state);
+
+                            // ❗ თუ იწყება 995-ით → მოვაჭრათ
+                            if (str_starts_with($number, '995')) {
+                                $number = substr($number, 3);
+                            }
+
+                            // ❗ დავტოვოთ მაქს 9 ციფრი
+                            $number = substr($number, 0, 9);
+
+                            $set('contact_page_number', $number);
+                        })
+                        ->minLength(6)
+                        ->maxLength(9)
+                        ->required(),
+                    TextInput::make('contact_page_why_title')->label('კონტაქტის სათაური')->maxLength(255)->required(),
+//                    TextInput::make('contact_page_cta_title')->label('კონტაქტის cta სათაური')->maxLength(255)->required(),
+                    TextInput::make('contact_page_info_title')->label('კონტაქტის ინფო სათაური')->maxLength(255)->required(),
+                    TextInput::make('contact_page_whatsapp')->label('WhatsApp ნომერი'),
+                    TextInput::make('contact_page_viber')->label('Viber ნომერი'),
+                    TextInput::make('contact_page_email')->email(),
+                    TextInput::make('contact_page_address'),
+                    Repeater::make('contact_page_why_text')->schema([
+                        TextInput::make('text')->label('კონტაქტის გვერდის მოკლე აღწერა')->required(),
+                    ])
                 ])
             ]);
     }

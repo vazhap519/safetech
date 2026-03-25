@@ -1,16 +1,28 @@
-export default function ContactWhyUs() {
+export default function ContactWhyUs({ data }) {
   return (
-    <div className="mt-10 bg-white p-5 rounded-xl shadow">
-      <h3 className="font-semibold text-[#0B3C5D]">
-        რატომ Safetech?
+    <div className="mt-10">
+      <h3 className="text-xl font-bold text-[#0B3C5D]">
+        {data?.why_title}
       </h3>
 
-      <ul className="mt-4 text-gray-600 space-y-2 text-sm">
-        <li>✔ სწრაფი მომსახურება</li>
-        <li>✔ გამოცდილება</li>
-        <li>✔ ხარისხიანი მოწყობილობები</li>
-        <li>✔ მთელი საქართველო</li>
-      </ul>
+      <div className="mt-6 flex flex-col gap-4">
+        {data?.why_items?.map((item, i) => (
+          <div
+            key={i}
+            className="flex items-start gap-3 bg-white p-4 rounded-xl shadow hover:shadow-md transition hover:bg-gray-50"
+          >
+            {/* ICON */}
+            <div className="mt-1 w-6 h-6 flex items-center justify-center rounded-full bg-[#00C2A8]/10 text-[#00C2A8] text-sm font-bold">
+              ✓
+            </div>
+
+            {/* TEXT */}
+            <p className="text-[#0B3C5D] font-medium leading-relaxed">
+              {item?.text}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

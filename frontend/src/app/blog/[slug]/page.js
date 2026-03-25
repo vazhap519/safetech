@@ -197,6 +197,7 @@
 import { notFound } from "next/navigation";
 import { generateSeo } from "@/lib/seoEngine";
 import { getBlogPost } from "@/lib/datafetch";
+import { getCurrentUrl } from "@/lib/getUrl";
 
 const DEFAULT_IMAGE = "/images/blog-placeholder.webp";
 
@@ -205,6 +206,7 @@ const DEFAULT_IMAGE = "/images/blog-placeholder.webp";
 ========================= */
 export async function generateMetadata({ params }) {
   const { slug } = await params; // 🔥 FIX
+  const url = getCurrentUrl(`/blog/${slug}`);
 
   if (!slug) return {};
 
@@ -274,7 +276,7 @@ export default async function BlogDetailPage({ params }) {
           <p className="mt-4 text-lg text-gray-600 leading-relaxed">
             {post.excerpt}
           </p>
-
+      <Share data={res?.share ?? []} url={url} />
           {/* CONTENT */}
           <div className="mt-10 space-y-6 text-gray-700 text-[17px]">
             {post.sections?.map((section, i) => (

@@ -7,12 +7,14 @@ import FeaturesSection from "@/app/components/services/FeaturesSection";
 import FAQSection from "@/app/components/services/FAQSection";
 import SEOSection from "@/app/components/services/SEOSection";
 import Share from "@/app/components/Share";
+import { getCurrentUrl } from "@/lib/getUrl";
 
 /* =========================
    PAGE
 ========================= */
 export default async function ServicePage({ params }) {
   const { slug } = await params; // ✅ FIX
+  const url = getCurrentUrl(`/services/${slug}`);
 
   const data = await getService(slug);
 
@@ -75,8 +77,7 @@ export default async function ServicePage({ params }) {
       </section>
 
       {/* SHARE */}
-      <Share data={data?.share ?? { title: "", buttons: [] }} />
-
+      <Share data={data?.share ?? []} url={url} />
       {/* FEATURES */}
       {features.length > 0 && (
         <FeaturesSection features={features} />

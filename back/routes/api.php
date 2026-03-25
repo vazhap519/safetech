@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AboutController;
 use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\PrivacyController;
 use App\Http\Controllers\Api\ServicesController;
@@ -34,3 +35,4 @@ Route::get('/categories', function () {
         $q->where('is_published', true);
     })->select('name', 'slug')->get();
 });
+Route::post('/contact', [ContactController::class, 'store']);

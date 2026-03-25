@@ -141,13 +141,13 @@ class PostForm
                                     ->required()
                                     ->columnSpanFull(),
 
-                                TextInput::make('order')
-                                    ->numeric()
-                                    ->default(0),
+//                                TextInput::make('order')
+//                                    ->numeric()
+//                                    ->default(0),
 
                             ])
-                            ->orderColumn('order')
-                            ->reorderable() // 🔥 drag & drop
+                            ->orderColumn('position') // ✅ სწორ column-ზე
+                            ->reorderable()           // ✅ drag & drop მუშაობს
                             ->collapsible()
                             ->cloneable()
                             ->columnSpanFull(),
