@@ -2,71 +2,112 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { blogPosts } from "@/data/blog";
+import { getBlog } from "@/lib/datafetch";
 
-const POSTS_PER_LOAD = 6;
+const DEFAULT_IMAGE = "/images/blog-placeholder.webp";
 
 export default function BlogList({ category }) {
-  const [visiblePosts, setVisiblePosts] = useState([]);
+  const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+
   const loaderRef = useRef(null);
 
-  // 🔥 FILTER
-  const filteredPosts =
-    category === "all"
-      ? blogPosts
-      : blogPosts.filter((p) => p.category === category);
+  /* =========================
+     FETCH DATA
+  ========================= */
+  const loadPosts = async (pageNum = 1, reset = false) => {
+    if (loading) return;
 
-  // 🔥 INITIAL LOAD
+    setLoading(true);
+
+    try {
+      const res = await getBlog({
+        page: pageNum,
+        category,
+      });
+
+      const newPosts = res?.data || [];
+
+      setPosts((prev) =>
+        reset ? newPosts : [...prev, ...newPosts]
+      );
+
+      // ✅ meta-based pagination (BEST)
+      if (!res?.meta || pageNum >= res.meta.last_page) {
+        setHasMore(false);
+      }
+
+    } catch (err) {
+      console.error("Blog load error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =========================
+     CATEGORY CHANGE
+  ========================= */
   useEffect(() => {
-    setVisiblePosts(filteredPosts.slice(0, POSTS_PER_LOAD));
+    setPosts([]);
     setPage(1);
+    setHasMore(true);
+
+    loadPosts(1, true);
   }, [category]);
 
-  // 🔥 LOAD MORE
+  /* =========================
+     PAGE CHANGE
+  ========================= */
   useEffect(() => {
+    if (page === 1) return;
+    loadPosts(page);
+  }, [page]);
+
+  /* =========================
+     INFINITE SCROLL (FIXED)
+  ========================= */
+  useEffect(() => {
+    if (!loaderRef.current) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          const nextPosts = filteredPosts.slice(
-            page * POSTS_PER_LOAD,
-            (page + 1) * POSTS_PER_LOAD
-          );
-
-          if (nextPosts.length > 0) {
-            setVisiblePosts((prev) => [...prev, ...nextPosts]);
-            setPage((prev) => prev + 1);
-          }
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          setPage((prev) => prev + 1);
         }
       },
-      { threshold: 1 }
+      { threshold: 0.5 }
     );
 
-    if (loaderRef.current) observer.observe(loaderRef.current);
+    observer.observe(loaderRef.current);
 
     return () => observer.disconnect();
-  }, [page, filteredPosts]);
+  }, [hasMore, loading]);
 
+  /* =========================
+     UI
+  ========================= */
   return (
     <>
       {/* POSTS */}
       <div className="grid md:grid-cols-3 gap-6 mt-10">
-        {visiblePosts.map((post) => (
+        {posts.map((post) => (
           <Link key={post.slug} href={`/blog/${post.slug}`}>
-            <div className="bg-white rounded-xl shadow p-4 hover:shadow-lg transition">
+            <div className="bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
 
               <img
-                src={post.image}
-                alt={post.title}
+                src={post.image || DEFAULT_IMAGE}
+                alt={post.title || "Blog image"}
                 className="rounded-lg h-40 w-full object-cover"
               />
 
-              <h2 className="mt-4 font-semibold text-[#0B3C5D]">
+              <h2 className="mt-4 font-semibold text-[#0B3C5D] line-clamp-2">
                 {post.title}
               </h2>
 
-              <p className="text-sm text-gray-600 mt-2">
-                {post.desc}
+              <p className="text-sm text-gray-600 mt-2 line-clamp-3">
+                {post.excerpt}
               </p>
 
             </div>
@@ -74,12 +115,24 @@ export default function BlogList({ category }) {
         ))}
       </div>
 
+      {/* EMPTY */}
+      {!loading && posts.length === 0 && (
+        <div className="text-center mt-10 text-gray-400">
+          პოსტები ვერ მოიძებნა 😔
+        </div>
+      )}
+
       {/* LOADER */}
-      <div ref={loaderRef} className="h-20 flex items-center justify-center">
-        <span className="text-gray-400 text-sm">
-          იტვირთება...
-        </span>
-      </div>
+      {hasMore && (
+        <div
+          ref={loaderRef}
+          className="h-20 flex items-center justify-center"
+        >
+          <span className="text-gray-400 text-sm">
+            {loading ? "იტვირთება..." : "გადაასკროლე ქვემოთ"}
+          </span>
+        </div>
+      )}
     </>
   );
 }

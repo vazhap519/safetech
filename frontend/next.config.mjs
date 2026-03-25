@@ -3,36 +3,38 @@ const nextConfig = {
   reactCompiler: true,
 
   images: {
-        unoptimized: true, // 🔥 ეს დაამატე
+    // 🔥 დატოვე მხოლოდ თუ იყენებ უკვე WebP + resized backend-ში
+    unoptimized: true,
 
     remotePatterns: [
-      // Unsplash
       {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
 
-      // localhost WITHOUT port 🔥 (შენი current case)
+      // dev
       {
         protocol: "http",
         hostname: "localhost",
       },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+      },
 
-      // localhost WITH port
+      // API server
       {
         protocol: "http",
         hostname: "localhost",
         port: "8000",
       },
-
-      // 127.0.0.1
       {
         protocol: "http",
         hostname: "127.0.0.1",
         port: "8000",
       },
 
-      // production
+      // production API
       {
         protocol: "https",
         hostname: "api.safetech.ge",

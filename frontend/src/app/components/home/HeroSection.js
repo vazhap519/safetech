@@ -65,21 +65,7 @@ export default function HeroSection({ data }) {
 
         {/* RIGHT IMAGE */}
         <div className="relative w-full h-[300px] md:h-[450px]">
-{/*           
-          {data?.image ? (
-            <Image
-              src={data.image}
-              alt={data.title || "Hero image"}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover rounded-2xl"
-              priority
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-700 rounded-2xl flex items-center justify-center text-sm">
-              No Image
-            </div>
-          )} */}
+
 <div className="relative w-full h-[300px] md:h-[450px] overflow-hidden rounded-2xl">
 
   {data?.image ? (

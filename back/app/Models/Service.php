@@ -26,8 +26,8 @@ class Service extends Model implements HasMedia
     protected $casts = [
         'features' => 'array',
         'faq' => 'array',
-        // ❌ seo_text აქედან ამოვიღეთ
-    ];
+        'seo_text' => 'array',
+        ];
 
     /**
      * Media Collection

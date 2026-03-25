@@ -5,20 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Models\ServiceSection;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class ServicesController extends Controller
 {
     /**
-     * LIST (cached + optimized)
+     * 🔵 LIST (FIXED CACHE + PAGINATION)
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Cache::remember('services_list', 300, function () {
+        $page = $request->get('page', 1);
 
-            $services = Service::with('media')
-                ->select(
+        $cacheKey = "services_list_page_{$page}";
+
+        return Cache::remember($cacheKey, 300, function () {
+
+            $services = Service::query()
+                ->select([
                     'id',
                     'title',
                     'description',
@@ -28,7 +33,8 @@ class ServicesController extends Controller
                     'seo_text',
                     'phone',
                     'button_text'
-                )
+                ])
+                ->with('media:id,model_id,collection_name,file_name')
                 ->latest()
                 ->paginate(6);
 
@@ -64,31 +70,19 @@ class ServicesController extends Controller
             ]);
         });
     }
-    public function revalidate()
-    {
-        // ✅ 1. ყველა services cache წაშლა
-        Cache::forget('services_list');
 
-        // თუ გინდა ყველა service cache წაშალო:
-        // Cache::flush(); ❌ (არ გირჩევ)
-
-        // ✅ 2. Next.js revalidate (list)
-        Http::post('http://localhost:3000/api/revalidate', [
-            'tag' => 'services'
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Services cache cleared'
-        ]);
-    }
     /**
-     * SHOW (🔥 critical performance fix)
+     * 🔥 SINGLE
      */
     public function show($slug)
     {
-        $service = Cache::remember("service_{$slug}", 300, function () use ($slug) {
-            return Service::with('media')->where('slug', $slug)->first();
+        $cacheKey = "service_{$slug}";
+
+        $service = Cache::remember($cacheKey, 300, function () use ($slug) {
+            return Service::query()
+                ->with('media:id,model_id,collection_name,file_name')
+                ->where('slug', $slug)
+                ->first();
         });
 
         if (!$service) {
@@ -104,21 +98,56 @@ class ServicesController extends Controller
             ],
         ]);
     }
+
+    /**
+     * 🔄 REVALIDATE LIST
+     */
+    public function revalidate()
+    {
+        // 🔥 clear all service list cache (pages)
+        Cache::flush(); // თუ გინდა granular, მერე დავწერთ
+
+        try {
+            Http::withHeaders([
+                'x-secret' => config('services.next.secret'),
+            ])->post(config('services.next.revalidate_url'), [
+                'tag' => 'services',
+                'path' => '/services',
+            ]);
+        } catch (\Exception $e) {
+            report($e);
+        }
+
+        return response()->json([
+            'success' => true,
+        ]);
+    }
+
+    /**
+     * 🔄 REVALIDATE SINGLE
+     */
     public function revalidateSingle($slug)
     {
         Cache::forget("service_{$slug}");
 
-        Http::post('http://localhost:3000/api/revalidate', [
-            'tag' => "service-{$slug}"
-        ]);
+        try {
+            Http::withHeaders([
+                'x-secret' => config('services.next.secret'),
+            ])->post(config('services.next.revalidate_url'), [
+                'tag' => "service-{$slug}",
+                'path' => "/services/{$slug}",
+            ]);
+        } catch (\Exception $e) {
+            report($e);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => "Service {$slug} revalidated"
         ]);
     }
+
     /**
-     * 🔥 CLEAN TRANSFORMER (final form)
+     * 🔥 TRANSFORMER (FIXED)
      */
     private function transformService($service)
     {
@@ -127,12 +156,10 @@ class ServicesController extends Controller
             'description' => $service->description,
             'slug' => $service->slug,
 
-            // ✅ accessor გამოყენება (no duplication)
             'image' => $service->image_url,
 
-            // ✅ ALWAYS ARRAY
+            // 🔥 FIX: simple array
             'features' => collect($service->features)
-                ->pluck('text')
                 ->filter()
                 ->values(),
 
@@ -143,7 +170,6 @@ class ServicesController extends Controller
                 ])
                 ->values(),
 
-            // ✅ NEVER breaks frontend
             'seo' => $service->seo,
 
             'phone' => $service->phone,
