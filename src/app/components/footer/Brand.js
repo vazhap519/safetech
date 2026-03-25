@@ -1,7 +1,6 @@
 import Socials from "./Socials";
 
 export default function Brand({settings}){
-    console.log('ბრენდი',settings.brand_description)
     return(
 <>
         <div className="flex flex-col items-center md:items-start">

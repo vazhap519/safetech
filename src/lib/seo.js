@@ -1,11 +1,20 @@
-const baseUrl = "https://safetech.ge";
+import { getBaseUrl } from "@/lib/config";
 
 export function buildMetadata({
   title,
   description,
-  image = "/services/1.jpg",
+  image,
   path = "",
+  type = "website", // 🔥 article / website
 }) {
+  const baseUrl = getBaseUrl();
+
+  /*
+  |--------------------------------------------------------------------------
+  | FALLBACKS
+  |--------------------------------------------------------------------------
+  */
+
   const fullTitle = title
     ? `${title} | Safetech`
     : "Safetech | IT სერვისები";
@@ -13,29 +22,51 @@ export function buildMetadata({
   const fullDescription =
     description || "IT და უსაფრთხოების სერვისები საქართველოში";
 
+  const fullImage = image
+    ? image.startsWith("http")
+      ? image
+      : `${baseUrl}${image}`
+    : `${baseUrl}/default-og.jpg`; // 🔥 default image
+
+  const fullUrl = `${baseUrl}${path}`;
+
+  /*
+  |--------------------------------------------------------------------------
+  | METADATA
+  |--------------------------------------------------------------------------
+  */
+
   return {
     title: fullTitle,
     description: fullDescription,
 
+    metadataBase: new URL(baseUrl),
+
     openGraph: {
       title: fullTitle,
       description: fullDescription,
-      url: `${baseUrl}${path}`,
+      url: fullUrl,
       siteName: "Safetech",
-      images: [image],
+      images: [
+        {
+          url: fullImage,
+          width: 1200,
+          height: 630,
+        },
+      ],
       locale: "ka_GE",
-      type: "website",
+      type,
     },
 
     twitter: {
       card: "summary_large_image",
       title: fullTitle,
       description: fullDescription,
-      images: [image],
+      images: [fullImage],
     },
 
     alternates: {
-      canonical: `${baseUrl}${path}`,
+      canonical: fullUrl,
     },
   };
 }
