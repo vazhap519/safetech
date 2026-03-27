@@ -13,16 +13,15 @@ async function fetcher(url, options = {}) {
     };
 
     // ✅ DEV → no cache საერთოდ
-    if (isDev) {
-      finalOptions.cache = "no-store";
-    } else {
-      // ✅ PROD → მხოლოდ ის გამოიყენე რაც გადმოგცეს
-      if (options.next) {
-        finalOptions.next = options.next;
-      } else {
-        finalOptions.cache = "force-cache";
-      }
-    }
+if (isDev) {
+  finalOptions.cache = "no-store";
+} else {
+  if (options.next) {
+    finalOptions.next = options.next; // ✅ cache + tags
+  } else if (!options.cache) {
+    finalOptions.cache = "force-cache"; // ✅ default
+  }
+}
 
     const res = await fetch(url, finalOptions);
 
@@ -83,7 +82,7 @@ export const getHome = () =>
 // LIST
 export const getServices = ({ page = 1 } = {}) =>
   fetcher(buildUrl(`/services`, { page }), {
-    next: { tags: [`services-page-${page}`] }, // 🔥 FIXED
+    cache: "no-store", // 🔥 override
   });
 
 export const getService = (slug) =>

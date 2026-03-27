@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getPrivacy,getSeoByKey  } from "@/lib/datafetch";
-
+import { buildMetadata } from "@/lib/seo";
 /* =========================
    SEO (privacy 🔥)
 ========================= */

@@ -16,10 +16,7 @@ const contact=settings?.contact
 const servicesRes = await getServices();
 const services = servicesRes?.data?.services ?? [];
 const latestServices = services.slice(0, 5);
-console.log("LEVEL 1:", servicesRes);
-console.log("LEVEL 2:", servicesRes?.data);
-console.log("LEVEL 3:", servicesRes?.data?.data);
-console.log("LEVEL 4:", servicesRes?.data?.data?.services);
+
   return (
     <footer className="bg-[#0B3C5D] text-white">
       <div className="max-w-7xl mx-auto px-4 py-12 grid md:grid-cols-4 gap-8 text-center md:text-left">

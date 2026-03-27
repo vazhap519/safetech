@@ -1,8 +1,8 @@
 import { revalidateTag, revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  try {
+export async function POST(req) {
+    try {
     const body = await req.json();
 
     const secret = req.headers.get("x-secret");
