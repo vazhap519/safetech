@@ -23,25 +23,16 @@ export const metadata = {
   metadataBase: new URL("https://safetech.ge"),
 
   title: {
-    default: "Safetech | IT სერვისები და კამერების მონტაჟი თბილისში",
+    default: "Safetech",
     template: "%s | Safetech",
   },
 
-  description:
-    "Safetech გთავაზობთ კამერების მონტაჟს, POS სისტემებს, ინტერნეტის გაყვანას და IT სერვისებს თბილისში და მთელ საქართველოში.",
+  description: "IT სერვისები საქართველოში",
 
   openGraph: {
     siteName: "Safetech",
     type: "website",
     locale: "ka_GE",
-    url: "https://safetech.ge",
-    images: [
-      {
-        url: "/services/1.jpg",
-        width: 1200,
-        height: 630,
-      },
-    ],
   },
 
   icons: {

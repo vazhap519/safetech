@@ -9,32 +9,67 @@ class ServiceFactory extends Factory
 {
     public function definition(): array
     {
-        $title = $this->faker->sentence(3);
+        $title = $this->faker->unique()->sentence(3);
 
         return [
             'title' => $title,
             'slug' => Str::slug($title),
 
-            'description' => $this->faker->paragraph(),
-
+            'description' => $this->faker->paragraphs(3, true),
+            'short_description' => $this->faker->paragraphs(3, true),
+            'long_description' => $this->faker->paragraphs(3, true),
             'phone' => '+9955' . $this->faker->numberBetween(10000000, 99999999),
-            'button_text' => 'დაგვიკავშირდი',
 
-            'features' => [
-                $this->faker->sentence(3),
-                $this->faker->sentence(3),
-                $this->faker->sentence(3),
-            ],
+            'button_text' => $this->faker->randomElement([
+                'დაგვიკავშირდი',
+                'დაგვირეკე ახლავე',
+                'შეკვეთა',
+            ]),
 
-            'faq' => [
-                [
+            /*
+            |--------------------------------------------------------------------------
+            | 🔥 FEATURES (dynamic)
+            |--------------------------------------------------------------------------
+            */
+            'features' => collect(range(1, rand(3, 6)))
+                ->map(fn() => $this->faker->sentence(4))
+                ->toArray(),
+
+            /*
+            |--------------------------------------------------------------------------
+            | ❓ FAQ (multiple Q&A)
+            |--------------------------------------------------------------------------
+            */
+            'faq' => collect(range(1, rand(2, 5)))
+                ->map(fn() => [
                     'q' => $this->faker->sentence(),
                     'a' => $this->faker->paragraph(),
-                ],
-            ],
+                ])
+                ->toArray(),
 
-            'seo_text' => [
-                $this->faker->paragraph(),
+            /*
+            |--------------------------------------------------------------------------
+            | 🔥 SEO TEXT (long content)
+            |--------------------------------------------------------------------------
+            */
+            'seo' => [
+                'title' => $title . ' თბილისში',
+                'description' => $this->faker->sentence(12),
+
+                'keywords' => [
+                    'IT სერვისები თბილისი',
+                    'კამერების მონტაჟი',
+                    'ქსელები',
+                ],
+                'content' => collect(range(1, 3))
+                    ->map(fn() => $this->faker->paragraph())
+                    ->toArray(),
+                'faq' => collect(range(1, 3))
+                    ->map(fn() => [
+                        'q' => $this->faker->sentence(),
+                        'a' => $this->faker->paragraph(),
+                    ])
+                    ->toArray(),
             ],
         ];
     }

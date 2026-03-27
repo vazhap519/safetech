@@ -36,7 +36,6 @@ $table->string('contact_page_info_title')->nullable();
             $table->string('contact_page_viber')->nullable();
             $table->string('contact_page_email')->nullable();
             $table->string('contact_page_address')->nullable();
-
             $table->timestamps();
         });
     }

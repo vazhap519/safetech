@@ -54,6 +54,8 @@ class Settings extends Model
         'contact_page_viber',
         'contact_page_email',
         'contact_page_address',
+
+        'seo',
     ];
 
     protected $casts = [
@@ -62,5 +64,9 @@ class Settings extends Model
         'footer_headers'=> 'array',
         'footer_contact_area'=> 'array',
         'contact_page_why_text'=>'array',
+
+        'seo'=> 'array',
     ];
+
+
 }

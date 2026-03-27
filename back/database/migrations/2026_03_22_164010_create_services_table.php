@@ -13,14 +13,15 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('title');
             $table->text('description');
-
+            $table->text('short_description');
+$table->longText('long_description');
             $table->string('phone')->nullable(); // 🔥 ახალი
             $table->string('button_text')->nullable(); // 🔥 ახალი
 
             $table->json('features')->nullable(); // 🔥 nullable
             $table->json('faq')->nullable(); // 🔥 nullable
 
-            $table->json('seo_text')->nullable();
+            $table->json('seo')->nullable();
             $table->timestamps();
         });
     }

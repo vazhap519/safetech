@@ -1,138 +1,324 @@
-"use client";
 
-import { useState, useEffect, useRef } from "react";
+
+// import Link from "next/link";
+// import { getBlog } from "@/lib/datafetch";
+
+// export default async function BlogList({ page = 1, category = "all" }) {
+//   const res = await getBlog({ page, category });
+
+//   if (!res || res.error) {
+//     return <p className="text-center mt-10 text-red-500">ვერ ჩაიტვირთა</p>;
+//   }
+
+//   const posts = res?.data || [];
+//   const meta = res?.meta || {};
+
+//   const currentPage = meta?.current_page || 1;
+//   const lastPage = meta?.last_page || 1;
+
+//   return (
+//     <div className="mt-10">
+
+//       {/* GRID */}
+//       <div className="grid md:grid-cols-3 gap-6">
+
+//         {posts.map((post) => (
+//           <Link
+//             key={post.slug}
+//             href={`/blog/${post.slug}`}
+//             className="block bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden"
+//           >
+//             <img
+//               src={post.image}
+//               alt={post.title}
+//               className="h-44 w-full object-cover"
+//             />
+
+//             <div className="p-4">
+
+//               {/* CATEGORY */}
+//               <span className="text-xs text-[#00C2A8] font-semibold uppercase">
+//                 {post.category?.name}
+//               </span>
+
+//               {/* TITLE */}
+//               <h3 className="mt-1 font-semibold text-[#0B3C5D] line-clamp-2">
+//                 {post.title}
+//               </h3>
+
+//               {/* META */}
+//               <div className="mt-2 text-xs text-gray-500 flex gap-2 flex-wrap">
+//                 {post.author?.name && <span>✍️ {post.author.name}</span>}
+//                 {post.created_at && (
+//                   <span>
+//                     📅 {new Date(post.created_at).toLocaleDateString("ka-GE")}
+//                   </span>
+//                 )}
+//                 {post.reading_time && <span>⏱ {post.reading_time} წთ</span>}
+//               </div>
+
+//               {/* EXCERPT */}
+//               <p className="mt-2 text-sm text-gray-600 line-clamp-3">
+//                 {post.excerpt}
+//               </p>
+
+//             </div>
+//           </Link>
+//         ))}
+
+//       </div>
+
+//     {/* =========================
+//    🔥 SMART PAGINATION
+// ========================= */}
+// {lastPage > 1 && (
+//   <div className="flex justify-center mt-16">
+
+//     <div className="flex items-center gap-2 bg-white px-4 py-3 rounded-xl shadow">
+
+//       {/* PREV */}
+//       <Link
+//         href={`/blog?page=${currentPage - 1}&category=${category}`}
+//         className={`px-3 py-1 rounded-md border text-sm ${
+//           currentPage === 1
+//             ? "opacity-40 pointer-events-none"
+//             : "hover:bg-gray-100"
+//         }`}
+//       >
+//         ←
+//       </Link>
+
+//       {/* FIRST */}
+//       {currentPage > 2 && (
+//         <>
+//           <Link
+//             href={`/blog?page=1&category=${category}`}
+//             className="px-3 py-1 rounded-md border hover:bg-gray-100"
+//           >
+//             1
+//           </Link>
+
+//           {currentPage > 3 && <span className="px-2">...</span>}
+//         </>
+//       )}
+
+//       {/* CURRENT WINDOW */}
+//       {Array.from({ length: 3 }).map((_, i) => {
+//         const p = currentPage - 1 + i;
+
+//         if (p < 1 || p > lastPage) return null;
+
+//         return (
+//           <Link
+//             key={p}
+//             href={`/blog?page=${p}&category=${category}`}
+//             className={`px-3 py-1 rounded-md border text-sm ${
+//               p === currentPage
+//                 ? "bg-[#00C2A8] text-white border-[#00C2A8]"
+//                 : "hover:bg-gray-100"
+//             }`}
+//           >
+//             {p}
+//           </Link>
+//         );
+//       })}
+
+//       {/* LAST */}
+//       {currentPage < lastPage - 1 && (
+//         <>
+//           {currentPage < lastPage - 2 && (
+//             <span className="px-2">...</span>
+//           )}
+
+//           <Link
+//             href={`/blog?page=${lastPage}&category=${category}`}
+//             className="px-3 py-1 rounded-md border hover:bg-gray-100"
+//           >
+//             {lastPage}
+//           </Link>
+//         </>
+//       )}
+
+//       {/* NEXT */}
+//       <Link
+//         href={`/blog?page=${currentPage + 1}&category=${category}`}
+//         className={`px-3 py-1 rounded-md border text-sm ${
+//           currentPage === lastPage
+//             ? "opacity-40 pointer-events-none"
+//             : "hover:bg-gray-100"
+//         }`}
+//       >
+//         →
+//       </Link>
+
+//     </div>
+//   </div>
+// )}
+//     </div>
+//   );
+// }
+
+
+
 import Link from "next/link";
-import { getBlog } from "@/lib/datafetch";
+import { getBlog, getCategories } from "@/lib/datafetch";
 
-const DEFAULT_IMAGE = "/images/blog-placeholder.webp";
+export default async function BlogList({ page = 1, category = "all" }) {
+  const [blogRes, catRes] = await Promise.all([
+    getBlog({ page, category }),
+    getCategories(),
+  ]);
 
-export default function BlogList({ category }) {
-  const [posts, setPosts] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
+  if (!blogRes || blogRes.error) {
+    return <p className="text-center mt-10 text-red-500">ვერ ჩაიტვირთა</p>;
+  }
 
-  const loaderRef = useRef(null);
+  const posts = blogRes?.data || [];
+  const meta = blogRes?.meta || {};
 
-  /* =========================
-     FETCH DATA
-  ========================= */
-  const loadPosts = async (pageNum = 1, reset = false) => {
-    if (loading) return;
+  const categories = [
+    { name: "ყველა", slug: "all" },
+    ...(catRes?.data || []),
+  ];
 
-    setLoading(true);
+  const currentPage = meta?.current_page || 1;
+  const lastPage = meta?.last_page || 1;
 
-    try {
-      const res = await getBlog({
-        page: pageNum,
-        category,
-      });
-
-      const newPosts = res?.data || [];
-
-      setPosts((prev) =>
-        reset ? newPosts : [...prev, ...newPosts]
-      );
-
-      // ✅ meta-based pagination (BEST)
-      if (!res?.meta || pageNum >= res.meta.last_page) {
-        setHasMore(false);
-      }
-
-    } catch (err) {
-      console.error("Blog load error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* =========================
-     CATEGORY CHANGE
-  ========================= */
-  useEffect(() => {
-    setPosts([]);
-    setPage(1);
-    setHasMore(true);
-
-    loadPosts(1, true);
-  }, [category]);
-
-  /* =========================
-     PAGE CHANGE
-  ========================= */
-  useEffect(() => {
-    if (page === 1) return;
-    loadPosts(page);
-  }, [page]);
-
-  /* =========================
-     INFINITE SCROLL (FIXED)
-  ========================= */
-  useEffect(() => {
-    if (!loaderRef.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          setPage((prev) => prev + 1);
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    observer.observe(loaderRef.current);
-
-    return () => observer.disconnect();
-  }, [hasMore, loading]);
-
-  /* =========================
-     UI
-  ========================= */
   return (
-    <>
-      {/* POSTS */}
-      <div className="grid md:grid-cols-3 gap-6 mt-10">
+    <div className="mt-10">
+
+      {/* =========================
+         🔥 CATEGORY FILTER (DYNAMIC)
+      ========================= */}
+      <div className="flex flex-wrap justify-center gap-3 mb-10">
+
+        {categories.map((cat) => (
+          <Link
+            key={cat.slug}
+            href={`/blog?category=${cat.slug}`}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition
+              ${
+                category === cat.slug
+                  ? "bg-[#00C2A8] text-white shadow"
+                  : "bg-gray-100 border border-gray-400 text-gray-800 hover:bg-gray-200"
+              }`}
+          >
+            {cat.name}
+          </Link>
+        ))}
+
+      </div>
+
+      {/* =========================
+         GRID
+      ========================= */}
+      <div className="grid md:grid-cols-3 gap-6">
+
         {posts.map((post) => (
-          <Link key={post.slug} href={`/blog/${post.slug}`}>
-            <div className="bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
+          <Link
+            key={post.slug}
+            href={`/blog/${post.slug}`}
+            className="block bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden"
+          >
+            <img
+              src={post.image}
+              alt={post.title}
+              className="h-44 w-full object-cover"
+            />
 
-              <img
-                src={post.image || DEFAULT_IMAGE}
-                alt={post.title || "Blog image"}
-                className="rounded-lg h-40 w-full object-cover"
-              />
+            <div className="p-4">
 
-              <h2 className="mt-4 font-semibold text-[#0B3C5D] line-clamp-2">
+              {/* CATEGORY */}
+              <span className="text-xs text-[#00C2A8] font-semibold uppercase">
+                {post.category?.name}
+              </span>
+
+              {/* TITLE */}
+              <h3 className="mt-1 font-semibold text-[#0B3C5D] line-clamp-2">
                 {post.title}
-              </h2>
+              </h3>
 
-              <p className="text-sm text-gray-600 mt-2 line-clamp-3">
+              {/* META */}
+              <div className="mt-2 text-xs text-gray-500 flex gap-2 flex-wrap">
+                {post.author?.name && <span>✍️ {post.author.name}</span>}
+                {post.created_at && (
+                  <span>
+                    📅 {new Date(post.created_at).toLocaleDateString("ka-GE")}
+                  </span>
+                )}
+                {post.reading_time && <span>⏱ {post.reading_time} წთ</span>}
+              </div>
+
+              {/* EXCERPT */}
+              <p className="mt-2 text-sm text-gray-600 line-clamp-3">
                 {post.excerpt}
               </p>
 
             </div>
           </Link>
         ))}
+
       </div>
 
-      {/* EMPTY */}
-      {!loading && posts.length === 0 && (
-        <div className="text-center mt-10 text-gray-400">
-          პოსტები ვერ მოიძებნა 😔
+      {/* =========================
+         🔥 CLEAN PAGINATION
+      ========================= */}
+      {lastPage > 1 && (
+        <div className="flex justify-center mt-16">
+
+          <div className="flex items-center gap-2">
+
+            {/* PREV */}
+            <Link
+              href={`/blog?page=${currentPage - 1}&category=${category}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition
+                ${
+                  currentPage === 1
+      ? "opacity-40 pointer-events-none bg-gray-200 text-gray-500"
+      : "bg-gray-100 border border-gray-400 text-gray-800 hover:bg-gray-200"
+                }`}
+            >
+              ←
+            </Link>
+
+            {/* NUMBERS */}
+            {Array.from({ length: lastPage }).map((_, i) => {
+              const p = i + 1;
+
+              return (
+                <Link
+                  key={p}
+                  href={`/blog?page=${p}&category=${category}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition
+                    ${
+                      p === currentPage
+                         ? "bg-[#00C2A8] text-white border-[#00C2A8] shadow-md"
+      : "bg-gray-100 border border-gray-400 text-gray-800 hover:bg-gray-200"
+                    }`}
+                >
+                  {p}
+                </Link>
+              );
+            })}
+
+            {/* NEXT */}
+            <Link
+              href={`/blog?page=${currentPage + 1}&category=${category}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition
+                ${
+                  currentPage === lastPage
+                              ? "bg-[#00C2A8] text-white border-[#00C2A8] shadow-md"
+      : "bg-gray-100 border border-gray-400 text-gray-800 hover:bg-gray-200"
+                }`}
+            >
+              →
+            </Link>
+
+          </div>
+
         </div>
       )}
 
-      {/* LOADER */}
-      {hasMore && (
-        <div
-          ref={loaderRef}
-          className="h-20 flex items-center justify-center"
-        >
-          <span className="text-gray-400 text-sm">
-            {loading ? "იტვირთება..." : "გადაასკროლე ქვემოთ"}
-          </span>
-        </div>
-      )}
-    </>
+    </div>
   );
 }

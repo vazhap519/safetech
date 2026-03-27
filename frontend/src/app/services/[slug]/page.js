@@ -1,31 +1,83 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
+
 
 import { getService } from "@/lib/datafetch";
 
 import FeaturesSection from "@/app/components/services/FeaturesSection";
 import FAQSection from "@/app/components/services/FAQSection";
-import SEOSection from "@/app/components/services/SEOSection";
+import SEOSection from "@/app/components/SEOSection";
 import Share from "@/app/components/Share";
-import { getCurrentUrl } from "@/lib/getUrl";
+import ServiceHero from "../../components/services/ServiceHero";
+import Short from "../../components/services/Short";
+import LongDesc from "../../components/services/LongDesc";
+/* =========================
+   🔥 SEO META
+========================= */
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+
+  if (!slug) return {};
+
+  const data = await getService(slug);
+console.log(data,'სერვისი')
+  // ✅ API error safe
+  if (!data || data.error || !data.service) {
+    return {};
+  }
+
+  const service = data.service;
+
+  const title = service?.seo?.title || service.title;
+  const description =
+    service?.seo?.description || service.description;
+
+  const image = service?.image || "/placeholder.jpg";
+
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/services/${slug}`;
+
+  return {
+    title,
+    description,
+    keywords: service?.seo?.keywords?.join(", ") || "",
+
+    openGraph: {
+      title,
+      description,
+      url,
+      images: [image],
+      type: "website",
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
+  };
+}
 
 /* =========================
    PAGE
 ========================= */
 export default async function ServicePage({ params }) {
-  const { slug } = await params; // ✅ FIX
-  const url = getCurrentUrl(`/services/${slug}`);
+  const { slug } = await params; // ✅ სწორი
+
+  if (!slug) return notFound();
 
   const data = await getService(slug);
 
-  // ✅ GLOBAL SAFETY
-  if (!data || data.error) return notFound();
+  // ✅ API error safe (ძალიან მნიშვნელოვანი)
+  if (!data || data.error || !data.service) {
+    return notFound();
+  }
 
-  const service = data?.service;
-
-  if (!service) return notFound();
-
-  // ✅ SAFE ARRAYS
+  const service = data.service;
+  const short=service?.short_description;
+    const long=service?.long_description;
+  /* =========================
+     SAFE DATA
+  ========================== */
   const features = Array.isArray(service.features)
     ? service.features
     : [];
@@ -34,59 +86,92 @@ export default async function ServicePage({ params }) {
     ? service.faq
     : [];
 
-  const seo = Array.isArray(service.seo)
-    ? service.seo
-    : service.seo
-    ? [service.seo]
+  const seoContent = Array.isArray(service?.seo?.content)
+    ? service.seo.content
     : [];
+
+  const links = Array.isArray(service?.seo?.internal_links)
+    ? service.seo.internal_links
+    : [];
+
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/services/${slug}`;
+
+  /* =========================
+     🔥 SCHEMA
+  ========================== */
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: service.title,
+    description: service.description,
+    url,
+    image: service.image,
+    provider: {
+      "@type": "Organization",
+      name: "Safetech",
+      url: process.env.NEXT_PUBLIC_SITE_URL,
+    },
+  };
+
+  const faqSchema =
+    faq.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faq.map((item) => ({
+            "@type": "Question",
+            name: item.q,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: item.a,
+            },
+          })),
+        }
+      : null;
 
   return (
     <main>
 
+      {/* 🔥 SERVICE SCHEMA */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(serviceSchema),
+        }}
+      />
+
+      {/* 🔥 FAQ SCHEMA */}
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(faqSchema),
+          }}
+        />
+      )}
+
       {/* HERO */}
-      <section className="bg-[#0B3C5D] text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
-
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold">
-              {service.title}
-            </h1>
-
-            <p className="mt-4 text-gray-300 text-lg">
-              {service.description}
-            </p>
-
-            <a
-              href={`tel:${service.phone || "+995599000000"}`}
-              className="inline-block mt-6 bg-[#00C2A8] px-6 py-3 rounded-xl"
-            >
-              {service.button_text || "📞 დაგვირეკე"}
-            </a>
-          </div>
-
-          <div className="relative w-full h-[300px] md:h-[400px]">
-            <Image
-              src={service.image || "/placeholder.jpg"}
-              alt={service.title}
-              fill
-              className="object-cover rounded-2xl"
-            />
-          </div>
-
-        </div>
-      </section>
-
+<ServiceHero service={service} />
       {/* SHARE */}
       <Share data={data?.share ?? []} url={url} />
+<Short short={short}/>
+<LongDesc long={long} />
+
       {/* FEATURES */}
       {features.length > 0 && (
         <FeaturesSection features={features} />
       )}
 
-      {/* SEO */}
-      {seo.length > 0 && (
-        <SEOSection title={service.title} paragraphs={seo} />
-      )}
+
+
+      {/* SEO CONTENT */}
+      {/* {seoContent.length > 0 && (
+        <SEOSection
+          title={service.title}
+          paragraphs={seoContent}
+          links={links}
+        />
+      )} */}
 
       {/* FAQ */}
       {faq.length > 0 && (

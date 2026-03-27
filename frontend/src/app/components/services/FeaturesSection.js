@@ -17,7 +17,9 @@ export default function FeaturesSection({ features, title = "რას გთა
               className="bg-white p-5 rounded-xl shadow-sm flex items-start gap-3 hover:shadow-md transition"
             >
               <span className="text-[#00C2A8] text-xl">✔</span>
-              <p className="text-gray-700 leading-relaxed">{item}</p>
+              <p className="text-gray-700 leading-relaxed">
+                {item.text} {/* ✅ FIX */}
+              </p>
             </div>
           ))}
 

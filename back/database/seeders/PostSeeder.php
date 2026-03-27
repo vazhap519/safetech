@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Post;
 use App\Models\Category;
 use App\Models\Author;
 use App\Models\PostSection;
-use Illuminate\Support\Str;
+use Illuminate\Database\Seeder;
 
 class PostSeeder extends Seeder
 {
@@ -39,7 +38,7 @@ class PostSeeder extends Seeder
             [
                 'name' => 'Safetech Team',
                 'slug' => 'safetech-team',
-                'bio' => 'IT და უსაფრთხოების ექსპერტები',
+                'bio' => 'IT ექსპერტები',
             ]
         );
 
@@ -48,59 +47,59 @@ class PostSeeder extends Seeder
         | 🔥 POSTS
         |--------------------------------------------------------------------------
         */
-        $posts = [
-            ['title' => 'კამერების მონტაჟის სრული გზამკვლევი 2026', 'category' => 'cctv'],
-            ['title' => 'როგორ ავირჩიოთ საუკეთესო უსაფრთხოების კამერა', 'category' => 'cctv'],
-            ['title' => 'ინტერნეტის გაყვანის სრული გიდი', 'category' => 'network'],
-            ['title' => 'როგორ დავაყენოთ WiFi ოფისში სწორად', 'category' => 'network'],
-            ['title' => 'POS სისტემები რესტორნებისთვის', 'category' => 'pos'],
-        ];
+        Post::factory(30)->make()->each(function ($post) use ($categories, $author) {
 
-        foreach ($posts as $item) {
-
-            $title = $item['title'];
-            $slug = Str::slug($title);
-
-            $category = $categories[$item['category']] ?? null;
-
-            if (!$category) {
-                continue; // 🔥 safe skip
-            }
-
-            $post = Post::updateOrCreate(
-                ['slug' => $slug],
-                [
-                    'title' => $title,
-                    'excerpt' => Str::limit(
-                        'ეს არის სტატიის მოკლე აღწერა, რომელიც ეხმარება მომხმარებელს სწრაფად გაიგოს შინაარსი.',
-                        120
-                    ),
-                    'body' => '<p>დეტალური კონტენტი აქ ჩაჯდება...</p>',
-                    'category_id' => $category->id,
-                    'author_id' => $author->id,
-                    'reading_time' => 5, // ✅ stable
-                    'published_year' => now()->year,
-                    'meta_title' => $title,
-                    'meta_description' => Str::limit(
-                        $title . ' - სრული გზამკვლევი Safetech-ისგან',
-                        160
-                    ),
-                    'is_published' => true,
-                ]
-            );
+            $post->category_id = $categories->random()->id;
+            $post->author_id = $author->id;
 
             /*
-            |--------------------------------------------------------------------------
-            | 🔥 SECTIONS (IMPORTANT)
-            |--------------------------------------------------------------------------
+            |----------------------------------
+            | 🔥 ENSURE SEO EXISTS
+            |----------------------------------
             */
-            PostSection::where('post_id', $post->id)->delete();
+            if (!$post->seo) {
+                $post->seo = [
+                    'title' => $post->title . ' თბილისში',
+                    'description' => $post->excerpt,
+                    'keywords' => [
+                        ['value' => $post->title],
+                        ['value' => 'უსაფრთხოება'],
+                    ],
+                    'content' => [
+                        ['text' => $post->excerpt],
+                    ],
+                ];
+            }
 
+            $post->save();
+
+            /*
+            |----------------------------------
+            | 🖼 IMAGE
+            |----------------------------------
+            */
+            $imageUrl = "https://picsum.photos/1200/630?random=" . rand(1, 1000);
+
+            try {
+                $post->clearMediaCollection('cover');
+
+                $post
+                    ->addMediaFromUrl($imageUrl)
+                    ->toMediaCollection('cover');
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
+            /*
+            |----------------------------------
+            | ✍️ SECTIONS
+            |----------------------------------
+            */
             PostSection::insert([
                 [
                     'post_id' => $post->id,
                     'title' => 'შესავალი',
-                    'content' => '<p>ეს არის შესავალი ტექსტი...</p>',
+                    'content' => '<p>' . fake()->paragraph() . '</p>',
                     'position' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -108,7 +107,7 @@ class PostSeeder extends Seeder
                 [
                     'post_id' => $post->id,
                     'title' => 'მთავარი ნაწილი',
-                    'content' => '<p>აქ მოდის მთავარი ინფორმაცია...</p>',
+                    'content' => '<p>' . fake()->paragraphs(2, true) . '</p>',
                     'position' => 2,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -116,12 +115,12 @@ class PostSeeder extends Seeder
                 [
                     'post_id' => $post->id,
                     'title' => 'დასკვნა',
-                    'content' => '<p>დასკვნითი ნაწილი...</p>',
+                    'content' => '<p>' . fake()->paragraph() . '</p>',
                     'position' => 3,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],
             ]);
-        }
+        });
     }
 }

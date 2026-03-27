@@ -1,22 +1,152 @@
 // import { notFound } from "next/navigation";
-// import { blogPosts } from "@/data/blog";
-// import { buildMetadata } from "@/lib/seo";
-// import Share from "@/app/components/Share";
+// import { getBlogPost } from "@/lib/datafetch";
+// import SEOSection from "@/app/components/SEOSection";
+// import { injectInternalLinks } from "@/lib/internalLinks";
+
+// const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+// const DEFAULT_IMAGE = "/images/blog-placeholder.webp";
+
 // /* =========================
-//    META SEO
+//    🔥 METADATA
 // ========================= */
 // export async function generateMetadata({ params }) {
 //   const { slug } = await params;
-//   const post = blogPosts.find((p) => p.slug === slug);
 
-//   if (!post) return {};
+//   if (!slug) {
+//     return {
+//       title: "ბლოგი",
+//       description: "Safetech ბლოგი",
+//     };
+//   }
 
-//   return buildMetadata({
-//     title: post.title,
-//     description: post.desc,
-//     image: post.image,
-//     path: `/blog/${slug}`,
-//   });
+//   try {
+//     const res = await getBlogPost(slug);
+
+//     if (!res || res.error || !res.data) {
+//       return {
+//         title: "ბლოგი",
+//         description: "სტატია ვერ მოიძებნა",
+//       };
+//     }
+
+//     const post = res.data;
+
+//     const title = post.seo?.title || post.title;
+//     const description = post.seo?.description || post.excerpt;
+
+//     const image =
+//       post.seo?.image ||
+//       post.image ||
+//       `${BASE_URL}${DEFAULT_IMAGE}`;
+
+//     const keywords = Array.isArray(post.seo?.keywords)
+//       ? post.seo.keywords
+//           .map((k) => k?.value?.trim())
+//           .filter(Boolean)
+//       : [];
+
+//     return {
+//       title,
+//       description,
+//       keywords,
+
+//       alternates: {
+//         canonical: `${BASE_URL}/blog/${slug}`,
+//       },
+
+//       openGraph: {
+//         title,
+//         description,
+//         url: `${BASE_URL}/blog/${slug}`,
+//         type: "article",
+//         images: [
+//           {
+//             url: image,
+//             width: 1200,
+//             height: 630,
+//           },
+//         ],
+//       },
+
+//       twitter: {
+//         card: "summary_large_image",
+//         title,
+//         description,
+//         images: [image],
+//       },
+//     };
+
+//   } catch (e) {
+//     console.error("❌ METADATA ERROR:", e);
+
+//     return {
+//       title: "ბლოგი",
+//       description: "Safetech ბლოგი",
+//     };
+//   }
+// }
+
+// /* =========================
+//    🔥 SCHEMA
+// ========================= */
+// function buildSchema(post, toc) {
+//   const url = `${BASE_URL}/blog/${post.slug}`;
+
+//   return {
+//     "@context": "https://schema.org",
+//     "@graph": [
+//       {
+//         "@type": "Article",
+//         headline: post.seo?.title || post.title,
+//         description: post.seo?.description || post.excerpt,
+//         image: post.image,
+//         author: {
+//           "@type": "Person",
+//           name: post.author?.name || "Safetech",
+//         },
+//         publisher: {
+//           "@type": "Organization",
+//           name: "Safetech",
+//         },
+//         datePublished: post.published_year,
+//         mainEntityOfPage: url,
+//       },
+//       {
+//         "@type": "BreadcrumbList",
+//         itemListElement: [
+//           { "@type": "ListItem", position: 1, name: "მთავარი", item: BASE_URL },
+//           { "@type": "ListItem", position: 2, name: "ბლოგი", item: `${BASE_URL}/blog` },
+//           { "@type": "ListItem", position: 3, name: post.title, item: url },
+//         ],
+//       },
+
+//       /* 🔥 OPTIONAL TOC SCHEMA */
+//       ...(toc.length > 0
+//         ? [{
+//             "@type": "ItemList",
+//             name: "Table of Contents",
+//             itemListElement: toc.map((item, i) => ({
+//               "@type": "ListItem",
+//               position: i + 1,
+//               name: item.title,
+//               item: `${url}#${item.id}`,
+//             })),
+//           }]
+//         : []),
+//     ],
+//   };
+// }
+
+// /* =========================
+//    🔥 TOC GENERATOR
+// ========================= */
+// function generateTOC(sections = []) {
+//   return sections
+//     .filter((s) => s?.title)
+//     .map((s, index) => ({
+//       id: `section-${index}`,
+//       title: s.title,
+//     }));
 // }
 
 // /* =========================
@@ -24,345 +154,439 @@
 // ========================= */
 // export default async function BlogDetailPage({ params }) {
 //   const { slug } = await params;
-//   const post = blogPosts.find((p) => p.slug === slug);
 
-//   if (!post) return notFound();
+//   if (!slug || typeof slug !== "string") {
+//     return notFound();
+//   }
 
-//   const relatedPosts = blogPosts
-//     .filter((p) => p.category === post.category && p.slug !== post.slug)
-//     .slice(0, 3);
+//   const res = await getBlogPost(slug);
 
-//   const url = `https://safetech.ge/blog/${slug}`;
+//   if (!res || res.error || !res.data) {
+//     return notFound();
+//   }
+
+//   const post = res.data;
+
+//   const toc = generateTOC(post.sections);
+//   const schema = buildSchema(post, toc);
+
+//   const internalLinks = [
+//     { keyword: "კამერები", url: "/services/cameras" },
+//     { keyword: "უსაფრთხოება", url: "/services/security" },
+//     ...(post.related || []).map((r) => ({
+//       keyword: r.title,
+//       url: `/blog/${r.slug}`,
+//     })),
+//   ];
 
 //   return (
-//     <main className="py-20 bg-[#F8FAFC]">
-//       <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-3 gap-10">
+//     <>
+//       {/* 🔥 JSON-LD */}
+//       <script
+//         type="application/ld+json"
+//         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+//       />
 
-//         {/* ================= LEFT ================= */}
-//         <article className="md:col-span-2">
-
-//           {/* BREADCRUMBS */}
-//           <nav className="text-sm text-gray-400 mb-4">
-//             <a href="/" className="hover:text-[#00C2A8]">მთავარი</a> /{" "}
-//             <a href="/blog" className="hover:text-[#00C2A8]">ბლოგი</a> /{" "}
-//             <span className="text-gray-600">{post.title}</span>
-//           </nav>
-
-//           {/* IMAGE */}
-//           <div className="overflow-hidden rounded-2xl shadow-lg group">
-//             <img
-//               src={post.image}
-//               alt={post.title}
-//               className="w-full h-72 object-cover group-hover:scale-105 transition duration-500"
-//             />
-//           </div>
-
-//           {/* META */}
-//           <div className="mt-6 flex flex-wrap gap-3 text-xs">
-//             <span className="bg-gray-100 px-3 py-1 rounded-full">📅 2026</span>
-//             <span className="bg-gray-100 px-3 py-1 rounded-full">📖 3 წუთი</span>
-//             <span className="bg-[#00C2A8]/10 text-[#00C2A8] px-3 py-1 rounded-full">
-//               {post.category}
-//             </span>
-//           </div>
+//       <main className="py-20 bg-[#F8FAFC]">
+//         <article className="max-w-4xl mx-auto px-4">
 
 //           {/* TITLE */}
-//           <h1 className="mt-4 text-3xl md:text-4xl font-bold text-[#0B3C5D]">
+//           <h1 className="text-4xl font-bold text-[#0B3C5D]">
 //             {post.title}
 //           </h1>
 
-//           {/* DESC */}
-//           <p className="mt-4 text-lg text-gray-600 leading-relaxed">
-//             {post.desc}
+//           {/* IMAGE */}
+//           <img
+//             src={post.image || DEFAULT_IMAGE}
+//             alt={post.title}
+//             className="mt-6 rounded-xl w-full"
+//           />
+
+//           {/* META */}
+//           <div className="mt-4 flex gap-3 text-sm text-gray-500">
+//             <span>📅 {post.published_year}</span>
+//             <span>📖 {post.reading_time} წუთი</span>
+//           </div>
+
+//           {/* EXCERPT */}
+//           <p className="mt-6 text-lg text-gray-600">
+//             {post.excerpt}
 //           </p>
 
-//           {/* CONTENT */}
-//           <div className="mt-10 space-y-6 text-gray-700 text-[17px]">
-//             {post.content?.map((p, i) => (
-//               <p
-//                 key={i}
-//                 id={`section-${i}`}
-//                 className="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition"
-//               >
-//                 {p}
-//               </p>
-//             ))}
-//           </div>
+//           {/* 🔥 TABLE OF CONTENTS */}
+//           {toc.length > 0 && (
+//             <div className="mt-10 p-6 bg-white rounded-xl border">
+//               <h2 className="text-xl font-semibold text-[#0B3C5D]">
+//                 სარჩევი
+//               </h2>
 
-//           {/* AUTHOR */}
-//           <div className="mt-12 bg-white p-6 rounded-xl shadow flex items-center gap-4">
-//             <img
-//               src="/avatar.jpg"
-//               alt="author"
-//               className="w-14 h-14 rounded-full object-cover"
-//             />
-//             <div>
-//               <p className="font-semibold text-[#0B3C5D]">
-//                 Safetech Team
-//               </p>
-//               <p className="text-sm text-gray-500">
-//                 IT სპეციალისტები და უსაფრთხოების ექსპერტები
-//               </p>
-//             </div>
-//           </div>
-
-//           {/* SHARE */}
-//    {/* <Share 
-//   data={data?.shareSection} 
-//   url={`https://safetech.ge/blog/${slug}`}
-// /> */}
-
-//           {/* CTA */}
-//           <div className="mt-12 bg-gradient-to-r from-[#0B3C5D] to-[#06283D] text-white p-8 rounded-2xl text-center shadow-xl">
-//             <h3 className="text-2xl font-semibold">
-//               გჭირდება მსგავსი სერვისი?
-//             </h3>
-
-//             <p className="mt-2 text-gray-300">
-//               დაგვიკავშირდი და მიიღე პროფესიონალური დახმარება
-//             </p>
-
-//             <a
-//               href="tel:+995599000000"
-//               className="inline-block mt-6 bg-[#00C2A8] px-6 py-3 rounded-xl hover:bg-[#00a892] transition"
-//             >
-//               📞 დაგვირეკე
-//             </a>
-//           </div>
-
-//           {/* RELATED POSTS */}
-//           {relatedPosts.length > 0 && (
-//             <div className="mt-16">
-//               <h3 className="text-2xl font-bold text-[#0B3C5D] mb-6">
-//                 მსგავსი სტატიები
-//               </h3>
-
-//               <div className="grid md:grid-cols-3 gap-6">
-//                 {relatedPosts.map((item) => (
-//                   <a key={item.slug} href={`/blog/${item.slug}`}>
-//                     <div className="group bg-white rounded-xl overflow-hidden shadow hover:shadow-xl transition">
-
-//                       <img
-//                         src={item.image}
-//                         alt={item.title}
-//                         className="h-32 w-full object-cover group-hover:scale-110 transition"
-//                       />
-
-//                       <div className="p-4">
-//                         <h4 className="text-sm font-semibold text-[#0B3C5D] group-hover:text-[#00C2A8]">
-//                           {item.title}
-//                         </h4>
-//                       </div>
-
-//                     </div>
-//                   </a>
+//               <ul className="mt-4 space-y-2">
+//                 {toc.map((item) => (
+//                   <li key={item.id}>
+//                     <a
+//                       href={`#${item.id}`}
+//                       className="text-[#00C2A8] hover:underline"
+//                     >
+//                       {item.title}
+//                     </a>
+//                   </li>
 //                 ))}
-//               </div>
+//               </ul>
 //             </div>
 //           )}
 
-//         </article>
+//           {/* CONTENT */}
+//           <div className="mt-10 space-y-6 text-gray-700">
+//             {post.sections?.map((section, i) => {
+//               const html = injectInternalLinks(
+//                 section.content,
+//                 internalLinks
+//               );
 
-//         {/* ================= RIGHT SIDEBAR ================= */}
-//         <aside className="hidden md:block">
+//               return (
+//                 <div key={i} id={`section-${i}`}>
 
-//           <div className="sticky top-24 bg-white p-6 rounded-xl shadow">
+//                   {section.title && (
+//                     <h2 className="text-2xl font-bold text-[#0B3C5D] mt-10">
+//                       {section.title}
+//                     </h2>
+//                   )}
 
-//             <h3 className="font-semibold text-[#0B3C5D] mb-4">
-//               📑 სარჩევი
-//             </h3>
-
-//             <ul className="space-y-3 text-sm">
-//               {post.content?.map((_, i) => (
-//                 <li key={i}>
-//                   <a
-//                     href={`#section-${i}`}
-//                     className="text-gray-600 hover:text-[#00C2A8]"
-//                   >
-//                     სექცია {i + 1}
-//                   </a>
-//                 </li>
-//               ))}
-//             </ul>
-
+//                   <div
+//                     className="mt-4"
+//                     dangerouslySetInnerHTML={{ __html: html }}
+//                   />
+//                 </div>
+//               );
+//             })}
 //           </div>
 
-//         </aside>
+//           {/* 🔥 SEO SECTION */}
+//           <SEOSection
+//             title="დამატებითი ინფორმაცია"
+//             paragraphs={post.seo?.content || [post.excerpt]}
+//             links={internalLinks}
+//           />
 
-//       </div>
-//     </main>
+//         </article>
+//       </main>
+//     </>
 //   );
 // }
 
-import { notFound } from "next/navigation";
-import { generateSeo } from "@/lib/seoEngine";
-import { getBlogPost } from "@/lib/datafetch";
-import { getCurrentUrl } from "@/lib/getUrl";
 
+
+
+
+
+
+
+
+
+
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { getBlogPost } from "@/lib/datafetch";
+import SEOSection from "@/app/components/SEOSection";
+import { injectInternalLinks } from "@/lib/internalLinks";
+
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 const DEFAULT_IMAGE = "/images/blog-placeholder.webp";
 
 /* =========================
-   META SEO
+   🔥 METADATA
 ========================= */
 export async function generateMetadata({ params }) {
-  const { slug } = await params; // 🔥 FIX
-  const url = getCurrentUrl(`/blog/${slug}`);
+  const { slug } = await params;
 
-  if (!slug) return {};
+  if (!slug) {
+    return {
+      title: "ბლოგი",
+      description: "Safetech ბლოგი",
+    };
+  }
 
-  return generateSeo({
-    type: "blog",
-    slug,
-  });
+  try {
+    const res = await getBlogPost(slug);
+
+    if (!res || res.error || !res.data) {
+      return {
+        title: "ბლოგი",
+        description: "სტატია ვერ მოიძებნა",
+      };
+    }
+
+    const post = res.data;
+
+    const title = post.seo?.title || post.title;
+    const description = post.seo?.description || post.excerpt;
+
+    const image =
+      post.seo?.image ||
+      post.image ||
+      `${BASE_URL}${DEFAULT_IMAGE}`;
+
+    const keywords = Array.isArray(post.seo?.keywords)
+      ? post.seo.keywords
+          .map((k) => k?.value?.trim())
+          .filter(Boolean)
+      : [];
+
+    return {
+      title,
+      description,
+      keywords,
+
+      alternates: {
+        canonical: `${BASE_URL}/blog/${slug}`,
+      },
+
+      openGraph: {
+        title,
+        description,
+        url: `${BASE_URL}/blog/${slug}`,
+        type: "article",
+        images: [
+          {
+            url: image,
+            width: 1200,
+            height: 630,
+          },
+        ],
+      },
+
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [image],
+      },
+    };
+
+  } catch (e) {
+    console.error("❌ METADATA ERROR:", e);
+
+    return {
+      title: "ბლოგი",
+      description: "Safetech ბლოგი",
+    };
+  }
+}
+
+/* =========================
+   🔥 SCHEMA
+========================= */
+function buildSchema(post, toc) {
+  const url = `${BASE_URL}/blog/${post.slug}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        headline: post.seo?.title || post.title,
+        description: post.seo?.description || post.excerpt,
+        image: post.image,
+        author: {
+          "@type": "Person",
+          name: post.author?.name || "Safetech",
+        },
+        publisher: {
+          "@type": "Organization",
+          name: "Safetech",
+        },
+        datePublished: post.published_year,
+        mainEntityOfPage: url,
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "მთავარი", item: BASE_URL },
+          { "@type": "ListItem", position: 2, name: "ბლოგი", item: `${BASE_URL}/blog` },
+          { "@type": "ListItem", position: 3, name: post.title, item: url },
+        ],
+      },
+
+      ...(toc.length > 0
+        ? [{
+            "@type": "ItemList",
+            name: "Table of Contents",
+            itemListElement: toc.map((item, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              name: item.title,
+              item: `${url}#${item.id}`,
+            })),
+          }]
+        : []),
+    ],
+  };
+}
+
+/* =========================
+   🔥 TOC
+========================= */
+function generateTOC(sections = []) {
+  return sections
+    .filter((s) => s?.title)
+    .map((s, index) => ({
+      id: `section-${index}`,
+      title: s.title,
+    }));
 }
 
 /* =========================
    PAGE
 ========================= */
 export default async function BlogDetailPage({ params }) {
-  const { slug } = await params; // 🔥 FIX
+  const { slug } = await params;
 
-  if (!slug) return notFound();
+  if (!slug || typeof slug !== "string") {
+    return notFound();
+  }
 
   const res = await getBlogPost(slug);
-  const post = res?.data;
 
-  if (!post) return notFound();
+  if (!res || res.error || !res.data) {
+    return notFound();
+  }
+
+  const post = res.data;
+
+  const toc = generateTOC(post.sections);
+  const schema = buildSchema(post, toc);
+
+  /* 🔥 INTERNAL LINKS (DB-driven) */
+  const internalLinks = [
+    ...(post.seo?.internal_links || []),
+
+    ...(post.related || []).map((r) => ({
+      keyword: r.title,
+      url: `/blog/${r.slug}`,
+    })),
+  ];
 
   return (
-    <main className="py-20 bg-[#F8FAFC]">
-      <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-3 gap-10">
+    <>
+      {/* 🔥 JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
 
-        {/* ================= LEFT ================= */}
-        <article className="md:col-span-2">
-
-          {/* BREADCRUMBS */}
-          <nav className="text-sm text-gray-400 mb-4">
-            <a href="/" className="hover:text-[#00C2A8]">მთავარი</a> /{" "}
-            <a href="/blog" className="hover:text-[#00C2A8]">ბლოგი</a> /{" "}
-            <span className="text-gray-600">{post.title}</span>
-          </nav>
-
-          {/* IMAGE */}
-          <div className="overflow-hidden rounded-2xl shadow-lg group">
-            <img
-              src={post.image || DEFAULT_IMAGE} // 🔥 FIX
-              alt={post.title}
-              className="w-full h-72 object-cover group-hover:scale-105 transition"
-            />
-          </div>
-
-          {/* META */}
-          <div className="mt-6 flex flex-wrap gap-3 text-xs">
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
-              📅 {post.published_year}
-            </span>
-            <span className="bg-gray-100 px-3 py-1 rounded-full">
-              📖 {post.reading_time} წუთი
-            </span>
-            {post.category && (
-              <span className="bg-[#00C2A8]/10 text-[#00C2A8] px-3 py-1 rounded-full">
-                {post.category.name}
-              </span>
-            )}
-          </div>
+      <main className="py-20 bg-[#F8FAFC]">
+        <article className="max-w-4xl mx-auto px-4">
 
           {/* TITLE */}
-          <h1 className="mt-4 text-3xl md:text-4xl font-bold text-[#0B3C5D]">
+          <h1 className="text-4xl font-bold text-[#0B3C5D]">
             {post.title}
           </h1>
 
-          {/* DESC */}
-          <p className="mt-4 text-lg text-gray-600 leading-relaxed">
-            {post.excerpt}
-          </p>
-      <Share data={res?.share ?? []} url={url} />
-          {/* CONTENT */}
-          <div className="mt-10 space-y-6 text-gray-700 text-[17px]">
-            {post.sections?.map((section, i) => (
-              <div
-                key={section.id}
-                id={`section-${i}`}
-                className="bg-white p-5 rounded-xl shadow-sm"
-                dangerouslySetInnerHTML={{ __html: section.content }}
-              />
-            ))}
+          {/* IMAGE */}
+          <img
+            src={post.image || DEFAULT_IMAGE}
+            alt={post.title}
+            className="mt-6 rounded-xl w-full"
+          />
+
+          {/* META */}
+          <div className="mt-4 flex gap-3 text-sm text-gray-500">
+            <span>📅 {post.published_year}</span>
+            <span>📖 {post.reading_time} წუთი</span>
           </div>
 
-          {/* AUTHOR */}
-          {post.author && (
-            <div className="mt-12 bg-white p-6 rounded-xl shadow flex items-center gap-4">
-              <img
-                src={post.author.avatar || DEFAULT_IMAGE} // 🔥 FIX
-                alt={post.author.name}
-                className="w-14 h-14 rounded-full object-cover"
-              />
-              <div>
-                <p className="font-semibold text-[#0B3C5D]">
-                  {post.author.name}
-                </p>
-              </div>
+          {/* EXCERPT */}
+          <p className="mt-6 text-lg text-gray-600">
+            {post.excerpt}
+          </p>
+
+          {/* 🔥 TOC */}
+          {toc.length > 0 && (
+            <div className="mt-10 p-6 bg-white rounded-xl border">
+              <h2 className="text-xl font-semibold text-[#0B3C5D]">
+                სარჩევი
+              </h2>
+
+              <ul className="mt-4 space-y-2">
+                {toc.map((item) => (
+                  <li key={item.id}>
+                    <a
+                      href={`#${item.id}`}
+                      className="text-[#00C2A8] hover:underline"
+                    >
+                      {item.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
-          {/* RELATED */}
+          {/* CONTENT */}
+          <div className="mt-10 space-y-6 text-gray-700">
+            {post.sections?.map((section, i) => {
+              const html = injectInternalLinks(
+                section.content,
+                internalLinks
+              );
+
+              return (
+                <div key={i} id={`section-${i}`}>
+                  {section.title && (
+                    <h2 className="text-2xl font-bold text-[#0B3C5D] mt-10">
+                      {section.title}
+                    </h2>
+                  )}
+
+                  <div
+                    className="mt-4"
+                    dangerouslySetInnerHTML={{ __html: html }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 🔥 SEO SECTION */}
+          <SEOSection
+            title="დამატებითი ინფორმაცია"
+            paragraphs={post.seo?.content || [post.excerpt]}
+            links={internalLinks}
+          />
+
+          {/* 🔥 RELATED POSTS */}
           {post.related?.length > 0 && (
-            <div className="mt-16">
-              <h3 className="text-2xl font-bold text-[#0B3C5D] mb-6">
+            <div className="mt-20">
+              <h2 className="text-2xl font-bold text-[#0B3C5D]">
                 მსგავსი სტატიები
-              </h3>
+              </h2>
 
-              <div className="grid md:grid-cols-3 gap-6">
-                {post.related.map((item) => (
-                  <a key={item.slug} href={`/blog/${item.slug}`}>
-                    <div className="bg-white rounded-xl overflow-hidden shadow hover:shadow-xl transition">
+              <div className="grid md:grid-cols-3 gap-6 mt-6">
+                {post.related.map((r) => (
+                  <Link
+                    key={r.slug}
+                    href={`/blog/${r.slug}`}
+                    className="block bg-white rounded-xl shadow hover:shadow-lg transition"
+                  >
+                    <img
+                      src={r.image}
+                      alt={r.title}
+                      className="rounded-t-xl h-40 w-full object-cover"
+                    />
 
-                      <img
-                        src={item.image || DEFAULT_IMAGE} // 🔥 FIX
-                        alt={item.title}
-                        className="h-32 w-full object-cover"
-                      />
-
-                      <div className="p-4">
-                        <h4 className="text-sm font-semibold text-[#0B3C5D]">
-                          {item.title}
-                        </h4>
-                      </div>
-
+                    <div className="p-4">
+                      <p className="font-semibold text-[#0B3C5D]">
+                        {r.title}
+                      </p>
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
           )}
 
         </article>
-
-        {/* ================= SIDEBAR ================= */}
-        <aside className="hidden md:block">
-          <div className="sticky top-24 bg-white p-6 rounded-xl shadow">
-
-            <h3 className="font-semibold text-[#0B3C5D] mb-4">
-              📑 სარჩევი
-            </h3>
-
-            <ul className="space-y-3 text-sm">
-              {post.sections?.map((_, i) => (
-                <li key={i}>
-                  <a
-                    href={`#section-${i}`}
-                    className="text-gray-600 hover:text-[#00C2A8]"
-                  >
-                    სექცია {i + 1}
-                  </a>
-                </li>
-              ))}
-            </ul>
-
-          </div>
-        </aside>
-
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

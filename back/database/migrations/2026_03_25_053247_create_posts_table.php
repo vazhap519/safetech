@@ -28,8 +28,7 @@ return new class extends Migration
             $table->boolean('is_published')->default(true);
 
             // SEO
-            $table->string('meta_title')->nullable();
-            $table->text('meta_description')->nullable();
+            $table->json('seo')->nullable();
 
             $table->timestamps();
 

@@ -138,6 +138,21 @@ export const getCategories = () =>
     next: { tags: ["categories"] },
   });
 
+ /* =========================
+   📂 Seo
+========================= */
+
+// ყველა SEO (sitemap / admin)
+export const getSeo = () =>
+  fetcher(buildUrl(`/seo`), {
+    next: { tags: ["seo"] },
+  });
+
+// კონკრეტული გვერდის SEO (🔥 მთავარი)
+export const getSeoByKey = (key) =>
+  fetcher(buildUrl(`/seo/${key}`), {
+    next: { tags: [`seo-${key}`] },
+  });
   /* =========================
    📩 CONTACT
 ========================= */

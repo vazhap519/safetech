@@ -15,23 +15,28 @@ class Service extends Model implements HasMedia
     protected $fillable = [
         'slug',
         'title',
-        'description',
+
         'phone',
         'button_text',
         'features',
         'faq',
-        'seo_text',
+        'seo',
+        'short_description',
+         'description',
+'long_description',
     ];
 
     protected $casts = [
         'features' => 'array',
         'faq' => 'array',
-        'seo_text' => 'array',
-        ];
+        'seo' => 'array',
+    ];
 
-    /**
-     * Media Collection
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 📸 MEDIA COLLECTION
+    |--------------------------------------------------------------------------
+    */
     public function registerMediaCollections(): void
     {
         $this
@@ -39,9 +44,11 @@ class Service extends Model implements HasMedia
             ->useDisk('public');
     }
 
-    /**
-     * Image Optimization
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 🖼 CONVERSIONS
+    |--------------------------------------------------------------------------
+    */
     public function registerMediaConversions(Media $media = null): void
     {
         $this
@@ -52,29 +59,26 @@ class Service extends Model implements HasMedia
             ->nonQueued();
     }
 
-    /**
-     * Image accessor
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 🧠 IMAGE ACCESSOR (SAFE FIX)
+    |--------------------------------------------------------------------------
+    */
     public function getImageUrlAttribute()
     {
-        return $this->getFirstMediaUrl('services', 'webp') ?: null;
+        try {
+            // თუ media არ არსებობს საერთოდ
+            if (!$this->hasMedia('services')) {
+                return null;
+            }
+
+            // ❗ არ ვიყენებთ webp-ს (conversion შეიძლება არ იყოს მზად)
+            return $this->getFirstMediaUrl('services');
+
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
-    /**
-     * 🔥 SEO accessor (მთავარი FIX)
-     */
-    public function getSeoAttribute()
-    {
-        $seo = $this->seo_text;
 
-        if (is_array($seo)) {
-            return $seo;
-        }
-
-        if (is_string($seo)) {
-            return array_filter(array_map('trim', explode("\n", $seo)));
-        }
-
-        return [];
-    }
 }

@@ -24,9 +24,9 @@ class DatabaseSeeder extends Seeder
             'is_admin'=>true
         ]);
 
-//        $this->call([
-//            ServiceSeeder::class,
-//            PostSeeder::class,
-//        ]);
+        $this->call([
+            ServiceSeeder::class,
+            PostSeeder::class,
+        ]);
     }
 }

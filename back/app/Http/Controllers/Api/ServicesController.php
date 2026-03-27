@@ -11,13 +11,70 @@ use Illuminate\Support\Facades\Http;
 
 class ServicesController extends Controller
 {
-    /**
-     * 🔵 LIST (FIXED CACHE + PAGINATION)
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 🔵 LIST
+    |--------------------------------------------------------------------------
+    */
+//    public function index(Request $request)
+//    {
+//        $page = $request->get('page', 1);
+//        $cacheKey = "services_list_page_{$page}";
+//
+//        return Cache::remember($cacheKey, 300, function () {
+//
+//            $services = Service::query()
+//                ->select([
+//                    'id',
+//                    'title',
+//                    'short_description',
+//                    'slug',
+//                    'features',
+//                    'faq',
+//                    'seo',
+//                    'phone',
+//                    'button_text'
+//                ])
+//                ->with('media') // ✅ FIX (ძალიან მნიშვნელოვანი)
+//                ->latest()
+//                ->paginate(6);
+//
+//            $serviceHero = ServiceSection::first();
+//
+//            return response()->json([
+//                'services' => $services->getCollection()->map(
+//                    fn($service) => $this->transformService($service)
+//                ),
+//
+//                'meta' => [
+//                    'current_page' => $services->currentPage(),
+//                    'last_page' => $services->lastPage(),
+//                    'per_page' => $services->perPage(),
+//                    'total' => $services->total(),
+//                ],
+//
+//                'links' => [
+//                    'next' => $services->nextPageUrl(),
+//                    'prev' => $services->previousPageUrl(),
+//                ],
+//
+//                'share' => [
+//                    'title' => settings()->share_title ?? '',
+//                    'buttons' => settings()->share_buttons ?? [],
+//                ],
+//
+//                'serviceHero' => $serviceHero ? [
+//                    'title' => $serviceHero->service_section_title,
+//                    'hero_description' => $serviceHero->service_section_description,
+//                    'image' => $serviceHero->image_url ?? null,
+//                ] : null,
+//            ]);
+//        });
+//    }
+
     public function index(Request $request)
     {
         $page = $request->get('page', 1);
-
         $cacheKey = "services_list_page_{$page}";
 
         return Cache::remember($cacheKey, 300, function () {
@@ -26,61 +83,71 @@ class ServicesController extends Controller
                 ->select([
                     'id',
                     'title',
-                    'description',
+                    'short_description', // ✅ მხოლოდ ეს გვჭირდება
                     'slug',
-                    'features',
-                    'faq',
-                    'seo_text',
-                    'phone',
-                    'button_text'
                 ])
-                ->with('media:id,model_id,collection_name,file_name')
+                ->with('media')
                 ->latest()
                 ->paginate(6);
 
             $serviceHero = ServiceSection::first();
 
             return response()->json([
-                'services' => $services->getCollection()->map(
-                    fn($service) => $this->transformService($service)
-                ),
+                'success' => true,
 
-                'meta' => [
-                    'current_page' => $services->currentPage(),
-                    'last_page' => $services->lastPage(),
-                    'per_page' => $services->perPage(),
-                    'total' => $services->total(),
-                ],
+                'data' => [
+                    'services' => $services->getCollection()->map(fn($service) => [
+                        'title' => $service->title,
+                        'slug' => $service->slug,
 
-                'links' => [
-                    'next' => $services->nextPageUrl(),
-                    'prev' => $services->previousPageUrl(),
+                        // 🔥 LIST-ში მხოლოდ მოკლე ტექსტი
+                        'short_description' => $service->short_description,
+
+                        'image' => $service->image_url,
+                    ]),
+
+                    'meta' => [
+                        'current_page' => $services->currentPage(),
+                        'last_page' => $services->lastPage(),
+                        'per_page' => $services->perPage(),
+                        'total' => $services->total(),
+                    ],
+
+                    'links' => [
+                        'next' => $services->nextPageUrl(),
+                        'prev' => $services->previousPageUrl(),
+                    ],
+
+                    'serviceHero' => $serviceHero ? [
+                        'title' => $serviceHero->service_section_title,
+
+                        // 🔥 FIX (მთავარი)
+                        'description' => $serviceHero->service_section_description,
+
+                        'image' => $serviceHero->image_url ?? null,
+                    ] : null,
                 ],
 
                 'share' => [
                     'title' => settings()->share_title ?? '',
                     'buttons' => settings()->share_buttons ?? [],
                 ],
-
-                'serviceHero' => $serviceHero ? [
-                    'title' => $serviceHero->service_section_title,
-                    'description' => $serviceHero->service_section_description,
-                    'image' => $serviceHero->image_url ?? null,
-                ] : null,
             ]);
         });
     }
 
-    /**
-     * 🔥 SINGLE
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 🔥 SINGLE
+    |--------------------------------------------------------------------------
+    */
     public function show($slug)
     {
         $cacheKey = "service_{$slug}";
 
         $service = Cache::remember($cacheKey, 300, function () use ($slug) {
             return Service::query()
-                ->with('media:id,model_id,collection_name,file_name')
+                ->with('media') // ✅ FIX
                 ->where('slug', $slug)
                 ->first();
         });
@@ -99,66 +166,21 @@ class ServicesController extends Controller
         ]);
     }
 
-    /**
-     * 🔄 REVALIDATE LIST
-     */
-    public function revalidate()
-    {
-        // 🔥 clear all service list cache (pages)
-        Cache::flush(); // თუ გინდა granular, მერე დავწერთ
-
-        try {
-            Http::withHeaders([
-                'x-secret' => config('services.next.secret'),
-            ])->post(config('services.next.revalidate_url'), [
-                'tag' => 'services',
-                'path' => '/services',
-            ]);
-        } catch (\Exception $e) {
-            report($e);
-        }
-
-        return response()->json([
-            'success' => true,
-        ]);
-    }
-
-    /**
-     * 🔄 REVALIDATE SINGLE
-     */
-    public function revalidateSingle($slug)
-    {
-        Cache::forget("service_{$slug}");
-
-        try {
-            Http::withHeaders([
-                'x-secret' => config('services.next.secret'),
-            ])->post(config('services.next.revalidate_url'), [
-                'tag' => "service-{$slug}",
-                'path' => "/services/{$slug}",
-            ]);
-        } catch (\Exception $e) {
-            report($e);
-        }
-
-        return response()->json([
-            'success' => true,
-        ]);
-    }
-
-    /**
-     * 🔥 TRANSFORMER (FIXED)
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | 🔥 TRANSFORMER
+    |--------------------------------------------------------------------------
+    */
     private function transformService($service)
     {
         return [
             'title' => $service->title,
-            'description' => $service->description,
+            'long_description' => $service->long_description,
+            'short_description' => $service->short_description,
             'slug' => $service->slug,
 
             'image' => $service->image_url,
 
-            // 🔥 FIX: simple array
             'features' => collect($service->features)
                 ->filter()
                 ->values(),
@@ -170,7 +192,7 @@ class ServicesController extends Controller
                 ])
                 ->values(),
 
-            'seo' => $service->seo,
+            'seo' => $service->seo?? [],
 
             'phone' => $service->phone,
             'button_text' => $service->button_text,

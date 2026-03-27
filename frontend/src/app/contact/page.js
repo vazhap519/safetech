@@ -4,13 +4,39 @@ import ContactHero from "@/app/components/contact/ContactHero";
 import ContactInfo from "@/app/components/contact/ContactInfo";
 import ContactForm from "@/app/components/contact/ContactForm";
 import ContactWhyUs from "@/app/components/contact/ContactWhyUs";
-import ContactCTA from "@/app/components/contact/ContactCTA";
-import { getSettings } from "@/lib/datafetch";
+// import ContactCTA from "@/app/components/contact/ContactCTA";
+import { getSettings,getSeoByKey } from "@/lib/datafetch";
+
+/* =========================
+   PAGE
+========================= */
+/* =========================
+   SEO (Contact 🔥)
+========================= */
+export async function generateMetadata() {
+  const seo = await getSeoByKey("contact");
+
+  const data = seo?.data;
+
+  return buildMetadata({
+    title: data?.title,
+    description: data?.description,
+    image: data?.og?.image,
+    keywords: data?.keywords,
+    canonical: data?.canonical,
+    noindex: data?.noindex,
+    og: data?.og,
+    path: data?.slug || "/contact",
+  });
+}
+
+
+
 
 export default async function ContactPage() {
   const settings = await getSettings();
   const contact = settings?.contact_page;
-console.log("CONTACT DATA:", contact);
+
   return (
     <main>
 

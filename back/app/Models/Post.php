@@ -23,15 +23,15 @@ class Post extends Model implements HasMedia
         'author_id',
         'reading_time',
         'published_year',
-        'meta_title',
-        'meta_description',
         'is_published',
+        'seo',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'is_published' => 'boolean',
+        'seo'=>'array'
     ];
 
     /*

@@ -1,13 +1,16 @@
 <?php
 
 use App\Models\Settings;
-
-function settings()
-{
-    return cache()->remember('settings', now()->addMinutes(10), function () {
-        return \App\Models\Settings::first();
-    });
+use App\Models\SeoPage;
+if (!function_exists('settings')) {
+    function settings()
+    {
+        return cache()->remember('settings', now()->addMinutes(10), function () {
+            return Settings::first();
+        });
+    }
 }
+
 if (!function_exists('geoToLatin')) {
     function geoToLatin($text)
     {
@@ -19,5 +22,11 @@ if (!function_exists('geoToLatin')) {
         ];
 
         return strtr($text, $map);
+    }
+
+
+    function seo($key)
+    {
+        return SeoPage::getByKey($key);
     }
 }
