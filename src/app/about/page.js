@@ -1,21 +1,34 @@
-import { buildMetadata } from "@/lib/seo";
+
 import Script from "next/script";
 
 import AboutCTA from "../components/about/AboutCTA";
 import AboutHero from "../components/about/AboutHero";
 import AboutStory from "../components/about/AboutStory";
 import AboutWhyUs from "../components/about/AboutWhyUs";
-import { getAbout } from "@/lib/datafetch";
+import { getAbout ,getSeoByKey} from "@/lib/datafetch";
+import { buildMetadata } from "@/lib/seo";
 /* =========================
    META SEO
 ========================= */
-export const metadata = buildMetadata({
-  title: "ჩვენს შესახებ",
-  description:
-    "Safetech არის IT სერვისების კომპანია საქართველოში, რომელიც გთავაზობთ კამერების მონტაჟს და ტექნიკურ მხარდაჭერას.",
-  path: "/about",
-});
+/* =========================
+   SEO (SERVICES 🔥)
+========================= */
+export async function generateMetadata() {
+  const seo = await getSeoByKey("about");
 
+  const data = seo?.data;
+
+  return buildMetadata({
+    title: data?.title,
+    description: data?.description,
+    image: data?.og?.image,
+    keywords: data?.keywords,
+    canonical: data?.canonical,
+    noindex: data?.noindex,
+    og: data?.og,
+    path: data?.slug || "/about",
+  });
+}
 export default async function AboutPage() {
   const About=await getAbout();
   console.log('AboutUs',About)

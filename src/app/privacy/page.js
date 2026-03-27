@@ -1,8 +1,28 @@
 import Link from "next/link";
-import { getPrivacy } from "@/lib/datafetch";
+import { getPrivacy,getSeoByKey  } from "@/lib/datafetch";
+
+/* =========================
+   SEO (privacy 🔥)
+========================= */
+export async function generateMetadata() {
+  const seo = await getSeoByKey("privacy");
+
+  const data = seo?.data;
+
+  return buildMetadata({
+    title: data?.title,
+    description: data?.description,
+    image: data?.og?.image,
+    keywords: data?.keywords,
+    canonical: data?.canonical,
+    noindex: data?.noindex,
+    og: data?.og,
+    path: data?.slug || "/privacy",
+  });
+}
 export default async function PrivacyPage() {
     const privacy=await getPrivacy()
-    console.log('privacy',privacy);
+
   return (
     <main className="bg-white text-gray-800">
 
