@@ -5,51 +5,90 @@ export default function CTASection({data}) {
    if (!data) return null;
    const [ref, visible] = useFadeIn();
   return (
-    <section 
-     ref={ref}
-  className={`py-20 bg-[#0B3C5D] text-white text-center 
-  transition-all duration-700 ease-out will-change-transform ${
-    visible
-      ? "opacity-100 translate-y-0"
-      : "opacity-0 translate-y-10"
-  }`}
+//     <section 
+//      ref={ref}
+//   className={`py-20 bg-[#0B3C5D] text-white text-center 
+//   transition-all duration-700 ease-out will-change-transform ${
+//     visible
+//       ? "opacity-100 translate-y-0"
+//       : "opacity-0 translate-y-10"
+//   }`}
     
-    >
-      <div className="max-w-4xl mx-auto px-4">
+//     >
+//       <div className="max-w-4xl mx-auto px-4">
 
-        {/* Title */}
-        <h2 className="text-3xl md:text-4xl font-bold">
-          {data.cta_title}
-          <br />
-          {data.cta_title_hilight}
-        </h2>
+//         {/* Title */}
+//         <h2 className="text-3xl md:text-4xl font-bold">
+//           {data.cta_title}
+//           <br />
+//           {data.cta_title_hilight}
+//         </h2>
 
-        {/* Description */}
-        <p className="mt-4 text-gray-300">
-{data.cta_description}        </p>
+//         {/* Description */}
+//         <p className="mt-4 text-gray-300">
+// {data.cta_description}        </p>
 
-        {/* Buttons */}
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
+//         {/* Buttons */}
+//         <div className="mt-8 flex flex-wrap justify-center gap-4">
 
-          {/* Primary CTA */}
-          <a
-            href={`tel:${data.cta_phone_btn_number}`}
-            className="bg-[#00C2A8] text-white px-6 py-3 rounded-xl hover:bg-[#00a892] transition shadow-lg"
-          >
-            📞 {data.cta_phone_btn_text}
-          </a>
+//           {/* Primary CTA */}
+//           <a
+//             href={`tel:${data.cta_phone_btn_number}`}
+//             className="bg-[#00C2A8] text-white px-6 py-3 rounded-xl hover:bg-[#00a892] transition shadow-lg"
+//           >
+//             📞 {data.cta_phone_btn_text}
+//           </a>
 
-          {/* Secondary CTA */}
-          <Link
-            href="/contact"
-            className="border-2 border-white px-6 py-3 rounded-xl hover:bg-white hover:text-[#0B3C5D] transition"
-          >
-            {data.cta_message_button_text}
-          </Link>
+//           {/* Secondary CTA */}
+//           <Link
+//             href="/contact"
+//             className="border-2 border-white px-6 py-3 rounded-xl hover:bg-white hover:text-[#0B3C5D] transition"
+//           >
+//             {data.cta_message_button_text}
+//           </Link>
 
-        </div>
+//         </div>
 
-      </div>
-    </section>
+//       </div>
+//     </section>
+
+<section
+  ref={ref}
+  className={`py-24 bg-gradient-to-r from-[#00C2A8] to-[#0B3C5D] text-white transition-all duration-700 ${
+    visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+  }`}
+>
+  <div className="max-w-4xl mx-auto px-6 text-center">
+
+    <h2 className="text-4xl font-bold leading-tight">
+      {data.cta_title}
+      <br />
+      <span className="text-white/80">{data.cta_title_hilight}</span>
+    </h2>
+
+    <p className="mt-4 text-white/80">
+      {data.cta_description}
+    </p>
+
+    <div className="mt-10 flex justify-center gap-4 flex-wrap">
+
+      <a
+        href={`tel:${data.cta_phone_btn_number}`}
+        className="bg-white text-[#0B3C5D] px-6 py-3 rounded-xl font-medium shadow-lg hover:scale-105 transition"
+      >
+        📞 {data.cta_phone_btn_text}
+      </a>
+
+      <Link
+        href="/contact"
+        className="border border-white/30 px-6 py-3 rounded-xl hover:bg-white hover:text-[#0B3C5D] transition"
+      >
+        {data.cta_message_button_text}
+      </Link>
+
+    </div>
+
+  </div>
+</section>
   );
 }

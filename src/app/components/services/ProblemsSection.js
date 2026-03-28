@@ -1,48 +1,39 @@
-export default function FeaturesSection({ features, title = "რას გთავაზობთ" }) {
-  if (!features || features.length === 0) return null;
-
+export default function ProblemsSection({ problems = [] }) {
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-white">
       <div className="max-w-6xl mx-auto px-6">
 
         {/* HEADER */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            {title}
+            რა პრობლემებს ვაგვარებთ
           </h2>
 
           <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
-            ეფექტური გადაწყვეტილებები, რომლებიც რეალურად მუშაობს
+            რეალური გამოწვევები, რომლებიც აფერხებს შენს სისტემას და ზრდას
           </p>
         </div>
 
         {/* GRID */}
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
 
-          {features.map((item, i) => (
+          {problems.map((item, i) => (
             <div
               key={i}
               className="
                 group
-                bg-white
+                bg-gray-50
                 border border-gray-200
                 rounded-2xl
                 p-6
-                flex items-start gap-4
                 transition-all duration-300
                 hover:-translate-y-2
                 hover:shadow-xl
               "
             >
               {/* ICON */}
-              <div className="
-                w-10 h-10 flex items-center justify-center
-                rounded-xl
-                bg-green-100
-                text-green-600
-                flex-shrink-0
-              ">
-                ✓
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-100 text-red-600 mb-4">
+                !
               </div>
 
               {/* TEXT */}
@@ -54,7 +45,6 @@ export default function FeaturesSection({ features, title = "რას გთა
           ))}
 
         </div>
-
       </div>
     </section>
   );

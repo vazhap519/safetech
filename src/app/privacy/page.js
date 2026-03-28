@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { getPrivacy,getSeoByKey  } from "@/lib/datafetch";
+import { getPrivacy, getSeoByKey } from "@/lib/datafetch";
 import { buildMetadata } from "@/lib/seo";
+
 /* =========================
-   SEO (privacy 🔥)
+   SEO
 ========================= */
 export async function generateMetadata() {
   const seo = await getSeoByKey("privacy");
-
   const data = seo?.data;
 
   return buildMetadata({
@@ -20,58 +20,97 @@ export async function generateMetadata() {
     path: data?.slug || "/privacy",
   });
 }
+
+/* =========================
+   PAGE
+========================= */
 export default async function PrivacyPage() {
-    const privacy=await getPrivacy()
+  const privacy = await getPrivacy();
 
   return (
-    <main className="bg-white text-gray-800">
+    <main className="bg-white text-gray-900">
 
       {/* 🔥 HERO */}
-      <section className="bg-[#0B3C5D] text-white py-20">
-        <div className="max-w-5xl mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+      <section className="
+        py-24
+        bg-gradient-to-br from-[#071A2B] via-[#0A2238] to-[#071A2B]
+        text-white
+      ">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             {privacy?.title || "Privacy Policy"}
           </h1>
-          <p className="text-gray-300 max-w-2xl mx-auto">
-             {privacy?.highlight || "Privacy Policy"}
+
+          <p className="mt-6 text-white/80 max-w-2xl mx-auto text-lg leading-relaxed">
+            {privacy?.highlight || "ჩვენ ვიცავთ თქვენს მონაცემებს და კონფიდენციალურობას"}
           </p>
+
         </div>
       </section>
 
       {/* 🔥 CONTENT */}
-<section className="max-w-5xl mx-auto px-4 py-20">
+      <section className="py-24">
+        <div className="max-w-4xl mx-auto px-6">
 
-  <div className="bg-white rounded-2xl shadow-lg p-6 md:p-10">
+          <div className="
+            bg-white
+            border border-gray-200
+            rounded-3xl
+            p-8 md:p-12
+          ">
 
-    <div
-      className="prose max-w-none prose-lg
-                 prose-h2:text-[#0B3C5D]
-                 prose-h2:font-bold
-                 prose-h2:mt-10
-                 prose-p:text-gray-600
-                 prose-li:text-gray-600
-                 prose-li:marker:text-[#00C2A8]
-                 prose-strong:text-[#0B3C5D]
-                 prose-a:text-[#00C2A8]
-                 prose-a:no-underline hover:prose-a:underline"
-      dangerouslySetInnerHTML={{
-        __html: privacy?.content || "<p>No content</p>",
-      }}
-    />
+            <div
+              className="
+                prose prose-lg max-w-none
 
-  </div>
+                prose-h2:text-gray-900
+                prose-h2:font-bold
+                prose-h2:mt-12
 
-  {/* 🔥 BACK */}
-  <div className="pt-12 text-center">
-    <Link
-      href="/"
-      className="inline-flex items-center gap-2 bg-[#00C2A8] text-white px-6 py-3 rounded-xl shadow hover:scale-105 transition"
-    >
-      ← მთავარ გვერდზე დაბრუნება
-    </Link>
-  </div>
+                prose-p:text-gray-700
+                prose-p:leading-relaxed
 
-</section>
+                prose-li:text-gray-700
+
+                prose-li:marker:text-[#00C2A8]
+
+                prose-strong:text-gray-900
+
+                prose-a:text-[#00C2A8]
+                prose-a:no-underline
+                hover:prose-a:underline
+              "
+              dangerouslySetInnerHTML={{
+                __html: privacy?.content || "<p>No content</p>",
+              }}
+            />
+
+          </div>
+
+          {/* 🔥 BACK BUTTON */}
+          <div className="pt-12 text-center">
+            <Link
+              href="/"
+              className="
+                inline-flex items-center gap-2
+                bg-[#00E0B8]
+                text-black
+                px-6 py-3
+                rounded-2xl
+                font-semibold
+                shadow-[0_10px_30px_rgba(0,224,184,0.25)]
+                hover:scale-105
+                transition-all duration-300
+              "
+            >
+              ← მთავარ გვერდზე დაბრუნება
+            </Link>
+          </div>
+
+        </div>
+      </section>
+
     </main>
   );
 }

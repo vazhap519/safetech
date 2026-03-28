@@ -9,25 +9,28 @@ export default function AboutWhyUs({ Why }) {
   return (
     <section
       ref={ref}
-      className={`py-20 bg-white transition-all duration-700 ${
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-      }`}
+      className={`
+        py-24 
+        bg-white 
+        transition-all duration-700
+        ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}
+      `}
     >
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-6">
 
-        {/* 🔥 TITLE */}
-        <div className="text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#0B3C5D]">
+        {/* HEADER */}
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
             {Why?.title}
           </h2>
 
-          <p className="mt-4 text-gray-600 max-w-xl mx-auto">
+          <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
             {Why?.description}
           </p>
         </div>
 
-        {/* 🔥 GRID */}
-        <div className="mt-12 grid md:grid-cols-3 gap-6">
+        {/* GRID */}
+        <div className="grid md:grid-cols-3 gap-8">
 
           {Why?.items?.map((item, i) => {
             const Icon = FaIcons[item.why_us_icons];
@@ -35,28 +38,46 @@ export default function AboutWhyUs({ Why }) {
             return (
               <div
                 key={i}
-                className={`group bg-[#F8FAFC] p-6 rounded-2xl shadow-sm 
-                hover:shadow-xl hover:-translate-y-1 transition-all duration-500
-                ${
-                  visible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-10"
-                }`}
+                className={`
+                  group
+                  bg-gray-50
+                  border border-gray-200
+                  rounded-2xl
+                  p-6
+                  transition-all duration-300
+                  hover:-translate-y-2
+                  hover:shadow-xl
+                  ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}
+                `}
                 style={{ transitionDelay: `${i * 120}ms` }}
               >
 
-                {/* 🔥 ICON */}
-                <div className="text-3xl text-[#00C2A8]">
+                {/* ICON BOX */}
+                <div className="
+                  w-12 h-12 
+                  flex items-center justify-center
+                  rounded-xl
+                  bg-[#00C2A8]/10
+                  text-[#00C2A8]
+                  text-xl
+                ">
                   {Icon ? <Icon /> : "⚡"}
                 </div>
 
-                {/* 🔥 TITLE */}
-                <h3 className="mt-4 font-semibold text-[#0B3C5D] group-hover:text-[#00C2A8] transition">
+                {/* TITLE */}
+                <h3 className="
+                  mt-4 
+                  text-lg 
+                  font-semibold 
+                  text-gray-900 
+                  group-hover:text-[#00C2A8] 
+                  transition
+                ">
                   {item.title}
                 </h3>
 
-                {/* 🔥 DESC */}
-                <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                {/* DESC */}
+                <p className="text-gray-600 mt-2 leading-relaxed">
                   {item.desc}
                 </p>
 
