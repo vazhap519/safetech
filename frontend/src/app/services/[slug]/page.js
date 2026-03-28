@@ -5,11 +5,15 @@ import { getService } from "@/lib/datafetch";
 
 import FeaturesSection from "@/app/components/services/FeaturesSection";
 import FAQSection from "@/app/components/services/FAQSection";
-import SEOSection from "@/app/components/SEOSection";
 import Share from "@/app/components/Share";
 import ServiceHero from "../../components/services/ServiceHero";
 import Short from "../../components/services/Short";
 import LongDesc from "../../components/services/LongDesc";
+import ProblemsSection from "@/app/components/services/ProblemsSection";
+import ResultsSection from "@/app/components/services/ResultsSection";
+import TestimonialsSection from "@/app/components/services/TestimonialsSection";
+import CTASection from "@/app/components/services/CTASection";
+import CaseStudySection from "@/app/components/services/CaseStudySection";
 /* =========================
    🔥 SEO META
 ========================= */
@@ -149,34 +153,90 @@ export default async function ServicePage({ params }) {
           }}
         />
       )}
+{/* <ServiceHero service={service} />
 
-      {/* HERO */}
+<Share data={data?.share ?? []} url={url} />
+
+<Short short={short} /> */}
+
+{/* 🔴 PROBLEMS */}
+{/* {service.problems?.length > 0 && (
+  <ProblemsSection problems={service.problems} />
+)} */}
+
+{/* <LongDesc long={long} /> */}
+
+{/* 🟢 FEATURES */}
+{/* {features.length > 0 && (
+  <FeaturesSection features={features} />
+)} */}
+
+{/* 🟡 RESULTS */}
+{/* {service.results?.length > 0 && (
+  <ResultsSection results={service.results} />
+)} */}
+
+{/* 💼 CASE STUDY */}
+{/* {service.case_study?.title && (
+  <CaseStudySection data={service.case_study} />
+)} */}
+
+{/* ⭐ TESTIMONIALS */}
+{/* {service.testimonials?.length > 0 && (
+  <TestimonialsSection items={service.testimonials} />
+)} */}
+
+{/* ❓ FAQ */}
+{/* {faq.length > 0 && (
+  <FAQSection faq={faq} />
+)} */}
+
+{/* 🎯 CTA */}
+{/* <CTASection service={service} /> */}
+
+
+
 <ServiceHero service={service} />
-      {/* SHARE */}
-      <Share data={data?.share ?? []} url={url} />
-<Short short={short}/>
+
+<Share data={data?.share ?? []} url={url} />
+
+<Short short={short} />
+
+{/* 🔴 PROBLEMS */}
+{service.problems?.length > 0 && (
+  <ProblemsSection problems={service.problems} />
+)}
+
+{/* 🟢 FEATURES */}
+{features.length > 0 && (
+  <FeaturesSection features={features} />
+)}
+
+{/* 🟡 RESULTS */}
+{service.results?.length > 0 && (
+  <ResultsSection results={service.results} />
+)}
+
+{/* 💼 CASE STUDY */}
+{service.case_study?.title && (
+  <CaseStudySection data={service.case_study} />
+)}
+
+{/* ⭐ TESTIMONIALS */}
+{service.testimonials?.length > 0 && (
+  <TestimonialsSection items={service.testimonials} />
+)}
+
+{/* 🔥 ახლა აქ უნდა მოვიდეს */}
 <LongDesc long={long} />
 
-      {/* FEATURES */}
-      {features.length > 0 && (
-        <FeaturesSection features={features} />
-      )}
+{/* ❓ FAQ */}
+{faq.length > 0 && (
+  <FAQSection faq={faq} />
+)}
 
-
-
-      {/* SEO CONTENT */}
-      {/* {seoContent.length > 0 && (
-        <SEOSection
-          title={service.title}
-          paragraphs={seoContent}
-          links={links}
-        />
-      )} */}
-
-      {/* FAQ */}
-      {faq.length > 0 && (
-        <FAQSection faq={faq} />
-      )}
+{/* 🎯 CTA */}
+<CTASection service={service} />
 
     </main>
   );

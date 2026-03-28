@@ -4,14 +4,32 @@ export default function LongDesc({ long }) {
   const paragraphs = long.split("\n").filter(p => p.trim() !== "");
 
   return (
-    <section className="py-16 bg-[#F8FAFC]">
-      <div className="max-w-4xl mx-auto px-4">
+    <section className="py-24 bg-white">
+      <div className="max-w-3xl mx-auto px-6">
 
-        <div className="bg-white p-6 md:p-10 rounded-2xl shadow-sm">
+        {/* CONTENT */}
+        <div className="
+          bg-gray-50
+          border border-gray-200
+          rounded-3xl
+          p-8 md:p-12
+        ">
 
-          <div className="space-y-4 text-gray-700 text-lg leading-relaxed">
+          <div className="
+            space-y-6
+            text-gray-700
+            text-lg
+            leading-relaxed
+          ">
             {paragraphs.map((paragraph, i) => (
-              <p key={i}>
+              <p
+                key={i}
+                className="
+                  first:text-xl 
+                  first:font-medium 
+                  first:text-gray-900
+                "
+              >
                 {paragraph}
               </p>
             ))}

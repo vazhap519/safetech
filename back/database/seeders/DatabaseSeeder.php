@@ -16,17 +16,24 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'vazha',
-            'email' => 'safetechcomge@gmail.com',
-            'password'=>Hash::make('SafeTech123!'),
-            'is_admin'=>true
-        ]);
+        User::updateOrCreate(
+            ['email' => 'safetechcomge@gmail.com'], // უნიკალური ველი
+            [
+                'name' => 'vazha',
+                'password' => Hash::make('SafeTech123!'),
+                'is_admin' => true,
+            ]
+        );
 
         $this->call([
             ServiceSeeder::class,
             PostSeeder::class,
+            AboutSeeder::class,
+            ServiceSeeder::class,
+            SeoPageSeeder::class,
+            ContactPageSeeder::class,
+            HomeSeeder::class,
+
         ]);
     }
 }

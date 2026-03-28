@@ -129,15 +129,7 @@ class SettingsForm
                     ])->columnSpanFull(),
                 ]),
 
-                Section::make('Contact-page')->schema([
 
-                    TextInput::make('contact_page_hero_title')->required(),
-                    TextInput::make('contact_page_hero_text')->required(),
-
-
-
-                ])
-                    ->columns(2),
 
             ]);
     }

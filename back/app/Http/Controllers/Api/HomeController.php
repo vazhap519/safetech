@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\HomeStat;
+use App\Models\HomeTestimonial;
+use App\Models\HomeTrust;
 use App\Models\ServiceSection;
 use App\Models\HomeHeroSection;
 use App\Models\HomeWhyUs;
@@ -30,7 +33,16 @@ class HomeController extends Controller
             $services = Service::latest()->take(6)->get();
             $serviceSection = ServiceSection::first();
 
+            // 🔥 NEW SECTIONS (FIXED)
+            $trust = HomeTrust::where('is_active', true)->latest()->first();
+            $stats = HomeStat::where('is_active', true)->latest()->first();
+            $testimonials = HomeTestimonial::where('is_active', true)->latest()->first();
+
             return [
+
+                /* =========================
+                   HERO
+                ========================== */
                 'homeHero' => $hero ? [
                     'title' => $hero->home_hero_title,
                     'description' => $hero->home_hero_description,
@@ -41,12 +53,18 @@ class HomeController extends Controller
                     'image' => $hero->image_url,
                 ] : null,
 
+                /* =========================
+                   WHY US
+                ========================== */
                 'whyUs' => $why ? [
                     'title' => $why->why_us_title,
                     'description' => $why->why_us_description,
                     'items' => $why->why_us_items ?? [],
                 ] : null,
 
+                /* =========================
+                   HOW IT WORKS
+                ========================== */
                 'howWork' => $how ? [
                     'title' => $how->title,
                     'description' => $how->description,
@@ -55,6 +73,9 @@ class HomeController extends Controller
                         : ($how->how_cards ?? []),
                 ] : null,
 
+                /* =========================
+                   CTA
+                ========================== */
                 'Cta' => $cta ? [
                     'cta_title' => $cta->cta_title,
                     'cta_title_hilight' => $cta->cta_title_hilight,
@@ -64,12 +85,41 @@ class HomeController extends Controller
                     'cta_message_button_text' => $cta->cta_message_button_text,
                 ] : null,
 
+                /* =========================
+                   FAQ
+                ========================== */
                 'Faq' => $faq ? [
                     'title' => $faq->title,
                     'description' => $faq->description,
                     'faq' => $faq->faq ?? [],
                 ] : null,
 
+                /* =========================
+                   🔥 NEW: TRUST (LOGOS)
+                ========================== */
+                'trust' => $trust ? $trust->logos : [],
+
+                /* =========================
+                   🔥 NEW: STATS
+                ========================== */
+                'stats' => $stats ? (
+                is_string($stats->items)
+                    ? json_decode($stats->items, true)
+                    : ($stats->items ?? [])
+                ) : [],
+
+                /* =========================
+                   🔥 NEW: TESTIMONIALS
+                ========================== */
+                'testimonials' => $testimonials ? (
+                is_string($testimonials->items)
+                    ? json_decode($testimonials->items, true)
+                    : ($testimonials->items ?? [])
+                ) : [],
+
+                /* =========================
+                   SERVICES SECTION
+                ========================== */
                 'servicesSection' => $serviceSection ? [
                     'title' => $serviceSection->service_section_title,
                     'slug' => $serviceSection->slug,
@@ -77,6 +127,9 @@ class HomeController extends Controller
                     'image' => $this->getMediaUrl($serviceSection, 'services'),
                 ] : null,
 
+                /* =========================
+                   SERVICES LIST
+                ========================== */
                 'services' => $services->map(function ($service) {
                     return [
                         'title' => $service->title,
@@ -93,14 +146,12 @@ class HomeController extends Controller
     }
 
     /**
-     * 🔥 REVALIDATE (მთავარი ნაწილი)
+     * 🔥 REVALIDATE
      */
     public function revalidate()
     {
-        // ✅ 1. Laravel cache clear
         Cache::forget('home_api');
 
-        // ✅ 2. Next.js cache clear
         Http::post('http://localhost:3000/api/revalidate', [
             'tag' => 'home'
         ]);

@@ -396,6 +396,82 @@ class ServiceForm
                 TextInput::make('short_description')->required(),
                 Textarea::make('long_description')->required(),
             ]),
+            Section::make('პრობლემები (მომხმარებლის ტკივილები)')
+                ->schema([
+
+                    Repeater::make('problems')
+                        ->schema([
+                            TextInput::make('text')
+                                ->label('პრობლემა')
+                                ->required(),
+                        ])
+                        ->defaultItems(3)
+                        ->reorderable()
+                        ->collapsible(),
+
+                ]),
+
+            Section::make('შედეგები (Results / Benefits)')
+                ->schema([
+
+                    Repeater::make('results')
+                        ->schema([
+                            TextInput::make('text')
+                                ->label('შედეგი')
+                                ->placeholder('+40% performance')
+                                ->required(),
+                        ])
+                        ->defaultItems(3)
+                        ->reorderable()
+                        ->collapsible(),
+
+                ]),
+            Section::make('Case Study (ქეისი)')
+                ->schema([
+
+                    TextInput::make('case_study.title')
+                        ->label('კომპანიის სახელი'),
+
+                    Textarea::make('case_study.description')
+                        ->label('აღწერა')
+                        ->rows(3),
+
+                    TextInput::make('case_study.result')
+                        ->label('შედეგი (მაგ: -70% downtime)'),
+
+                ])
+                ->collapsible(),
+
+            Section::make('Testimonials (კლიენტების შეფასებები)')
+                ->schema([
+
+                    Repeater::make('testimonials')
+                        ->schema([
+                            TextInput::make('name')
+                                ->label('სახელი'),
+
+                            Textarea::make('text')
+                                ->label('კომენტარი')
+                                ->rows(3),
+                        ])
+                        ->defaultItems(2)
+                        ->reorderable()
+                        ->collapsible(),
+
+                ]),
+            Section::make('CTA (Call To Action)')
+                ->schema([
+
+                    TextInput::make('cta_title')
+                        ->label('CTA სათაური')
+                        ->placeholder('დაგვიკავშირდი დღესვე'),
+
+                    Textarea::make('cta_description')
+                        ->label('CTA აღწერა')
+                        ->rows(2),
+
+                ])
+                ->collapsible(),
             Section::make('SEO (Google Optimization)')
                 ->schema([
 

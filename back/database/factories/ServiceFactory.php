@@ -16,29 +16,88 @@ class ServiceFactory extends Factory
             'slug' => Str::slug($title),
 
             'description' => $this->faker->paragraphs(3, true),
-            'short_description' => $this->faker->paragraphs(3, true),
-            'long_description' => $this->faker->paragraphs(3, true),
+            'short_description' => $this->faker->sentence(12),
+            'long_description' => $this->faker->paragraphs(5, true),
+
             'phone' => '+9955' . $this->faker->numberBetween(10000000, 99999999),
 
             'button_text' => $this->faker->randomElement([
                 'დაგვიკავშირდი',
+                'უფასო კონსულტაცია',
                 'დაგვირეკე ახლავე',
-                'შეკვეთა',
             ]),
 
             /*
-            |--------------------------------------------------------------------------
-            | 🔥 FEATURES (dynamic)
-            |--------------------------------------------------------------------------
+            |------------------------------------------------------------------
+            | 🔴 PROBLEMS (Pain Points)
+            |------------------------------------------------------------------
             */
-            'features' => collect(range(1, rand(3, 6)))
-                ->map(fn() => $this->faker->sentence(4))
+            'problems' => collect(range(1, rand(3, 5)))
+                ->map(fn() => [
+                    'text' => $this->faker->sentence(6),
+                ])
                 ->toArray(),
 
             /*
-            |--------------------------------------------------------------------------
-            | ❓ FAQ (multiple Q&A)
-            |--------------------------------------------------------------------------
+            |------------------------------------------------------------------
+            | 🟢 FEATURES
+            |------------------------------------------------------------------
+            */
+            /*
+     |------------------------------------------------------------------
+     | 🟢 FEATURES (FIXED)
+     |------------------------------------------------------------------
+     */
+            'features' => collect(range(1, rand(3, 6)))
+                ->map(fn() => [
+                    'text' => $this->faker->sentence(5),
+                ])
+                ->toArray(),
+
+            /*
+            |------------------------------------------------------------------
+            | 🟡 RESULTS (FIXED)
+            |------------------------------------------------------------------
+            */
+            'results' => collect([
+                '+'.$this->faker->numberBetween(20, 80).'% performance',
+                '-'.$this->faker->numberBetween(20, 70).'% downtime',
+                $this->faker->numberBetween(2, 5).'x faster systems',
+            ])
+                ->map(fn($item) => [
+                    'text' => $item,
+                ])
+                ->toArray(),
+
+
+
+            /*
+            |------------------------------------------------------------------
+            | 💼 CASE STUDY
+            |------------------------------------------------------------------
+            */
+            'case_study' => [
+                'title' => $this->faker->company(),
+                'description' => $this->faker->sentence(12),
+                'result' => '-'.$this->faker->numberBetween(40, 80).'% downtime',
+            ],
+
+            /*
+            |------------------------------------------------------------------
+            | ⭐ TESTIMONIALS
+            |------------------------------------------------------------------
+            */
+            'testimonials' => collect(range(1, rand(2, 4)))
+                ->map(fn() => [
+                    'name' => $this->faker->name(),
+                    'text' => $this->faker->sentence(12),
+                ])
+                ->toArray(),
+
+            /*
+            |------------------------------------------------------------------
+            | ❓ FAQ
+            |------------------------------------------------------------------
             */
             'faq' => collect(range(1, rand(2, 5)))
                 ->map(fn() => [
@@ -48,9 +107,22 @@ class ServiceFactory extends Factory
                 ->toArray(),
 
             /*
-            |--------------------------------------------------------------------------
-            | 🔥 SEO TEXT (long content)
-            |--------------------------------------------------------------------------
+            |------------------------------------------------------------------
+            | 🎯 CTA
+            |------------------------------------------------------------------
+            */
+            'cta_title' => $this->faker->randomElement([
+                'დაგვიკავშირდი დღესვე',
+                'მიიღე უფასო კონსულტაცია',
+                'დაიწყე ახლა',
+            ]),
+
+            'cta_description' => $this->faker->sentence(10),
+
+            /*
+            |------------------------------------------------------------------
+            | 🔥 SEO
+            |------------------------------------------------------------------
             */
             'seo' => [
                 'title' => $title . ' თბილისში',
@@ -58,17 +130,12 @@ class ServiceFactory extends Factory
 
                 'keywords' => [
                     'IT სერვისები თბილისი',
-                    'კამერების მონტაჟი',
                     'ქსელები',
+                    'უსაფრთხოება',
                 ],
+
                 'content' => collect(range(1, 3))
                     ->map(fn() => $this->faker->paragraph())
-                    ->toArray(),
-                'faq' => collect(range(1, 3))
-                    ->map(fn() => [
-                        'q' => $this->faker->sentence(),
-                        'a' => $this->faker->paragraph(),
-                    ])
                     ->toArray(),
             ],
         ];

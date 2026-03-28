@@ -11,66 +11,7 @@ use Illuminate\Support\Facades\Http;
 
 class ServicesController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | 🔵 LIST
-    |--------------------------------------------------------------------------
-    */
-//    public function index(Request $request)
-//    {
-//        $page = $request->get('page', 1);
-//        $cacheKey = "services_list_page_{$page}";
-//
-//        return Cache::remember($cacheKey, 300, function () {
-//
-//            $services = Service::query()
-//                ->select([
-//                    'id',
-//                    'title',
-//                    'short_description',
-//                    'slug',
-//                    'features',
-//                    'faq',
-//                    'seo',
-//                    'phone',
-//                    'button_text'
-//                ])
-//                ->with('media') // ✅ FIX (ძალიან მნიშვნელოვანი)
-//                ->latest()
-//                ->paginate(6);
-//
-//            $serviceHero = ServiceSection::first();
-//
-//            return response()->json([
-//                'services' => $services->getCollection()->map(
-//                    fn($service) => $this->transformService($service)
-//                ),
-//
-//                'meta' => [
-//                    'current_page' => $services->currentPage(),
-//                    'last_page' => $services->lastPage(),
-//                    'per_page' => $services->perPage(),
-//                    'total' => $services->total(),
-//                ],
-//
-//                'links' => [
-//                    'next' => $services->nextPageUrl(),
-//                    'prev' => $services->previousPageUrl(),
-//                ],
-//
-//                'share' => [
-//                    'title' => settings()->share_title ?? '',
-//                    'buttons' => settings()->share_buttons ?? [],
-//                ],
-//
-//                'serviceHero' => $serviceHero ? [
-//                    'title' => $serviceHero->service_section_title,
-//                    'hero_description' => $serviceHero->service_section_description,
-//                    'image' => $serviceHero->image_url ?? null,
-//                ] : null,
-//            ]);
-//        });
-//    }
+
 
     public function index(Request $request)
     {
@@ -181,21 +122,83 @@ class ServicesController extends Controller
 
             'image' => $service->image_url,
 
-            'features' => collect($service->features)
-                ->filter()
+            /*
+            |--------------------------------------------------
+            | ✅ NORMALIZED ARRAYS (VERY IMPORTANT)
+            |--------------------------------------------------
+            */
+
+            'problems' => collect($service->problems ?? [])
+                ->map(fn($item) => [
+                    'text' => $item['text'] ?? $item,
+                ])
                 ->values(),
 
-            'faq' => collect($service->faq)
+            'features' => collect($service->features ?? [])
+                ->map(fn($item) => [
+                    'text' => $item['text'] ?? $item,
+                ])
+                ->values(),
+
+            'results' => collect($service->results ?? [])
+                ->map(fn($item) => [
+                    'text' => $item['text'] ?? $item,
+                ])
+                ->values(),
+
+            /*
+            |--------------------------------------------------
+            | ⭐ TESTIMONIALS
+            |--------------------------------------------------
+            */
+            'testimonials' => collect($service->testimonials ?? [])
+                ->map(fn($item) => [
+                    'name' => $item['name'] ?? 'Client',
+                    'text' => $item['text'] ?? '',
+                ])
+                ->values(),
+
+            /*
+            |--------------------------------------------------
+            | 💼 CASE STUDY
+            |--------------------------------------------------
+            */
+            'case_study' => [
+                'title' => $service->case_study['title'] ?? null,
+                'description' => $service->case_study['description'] ?? null,
+                'result' => $service->case_study['result'] ?? null,
+            ],
+
+            /*
+            |--------------------------------------------------
+            | ❓ FAQ
+            |--------------------------------------------------
+            */
+            'faq' => collect($service->faq ?? [])
                 ->map(fn($item) => [
                     'q' => $item['q'] ?? '',
                     'a' => $item['a'] ?? '',
                 ])
                 ->values(),
 
-            'seo' => $service->seo?? [],
+            /*
+            |--------------------------------------------------
+            | 🎯 CTA
+            |--------------------------------------------------
+            */
+            'cta' => [
+                'title' => $service->cta_title ?? null,
+                'description' => $service->cta_description ?? null,
+                'phone' => $service->phone ?? null,
+                'button_text' => $service->button_text ?? null,
+            ],
 
-            'phone' => $service->phone,
-            'button_text' => $service->button_text,
+            /*
+            |--------------------------------------------------
+            | 🔥 SEO
+            |--------------------------------------------------
+            */
+            'seo' => $service->seo ?? [],
         ];
     }
 }

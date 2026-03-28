@@ -20,8 +20,14 @@ $table->longText('long_description');
 
             $table->json('features')->nullable(); // 🔥 nullable
             $table->json('faq')->nullable(); // 🔥 nullable
-
             $table->json('seo')->nullable();
+
+            $table->json('problems')->nullable();
+            $table->json('results')->nullable();
+            $table->json('testimonials')->nullable();
+            $table->json('case_study')->nullable();
+            $table->string('cta_title')->nullable();
+            $table->string('cta_description')->nullable();
             $table->timestamps();
         });
     }

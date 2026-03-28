@@ -8,48 +8,75 @@ export default function FAQSection({ faq, title = "ხშირად დას�
   if (!faq || faq.length === 0) return null;
 
   return (
-    <section className="py-20 bg-[#F8FAFC]">
-      <div className="max-w-4xl mx-auto px-4">
+    <section className="py-24 bg-gray-50">
+      <div className="max-w-4xl mx-auto px-6">
 
-        <h2 className="text-3xl font-bold text-[#0B3C5D] text-center">
-          {title}
-        </h2>
+        {/* HEADER */}
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            {title}
+          </h2>
 
-        <div className="mt-10 space-y-4">
+          <p className="mt-4 text-gray-600">
+            პასუხები ყველაზე ხშირად დასმულ კითხვებზე
+          </p>
+        </div>
 
-          {faq.map((item, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-xl shadow-sm overflow-hidden"
-            >
-              {/* QUESTION */}
-              <button
-                onClick={() =>
-                  setOpenIndex(openIndex === i ? null : i)
-                }
-                className="w-full text-left p-5 flex justify-between items-center"
-              >
-                <span className="font-semibold text-[#0B3C5D]">
-                  {item.q}
-                </span>
+        {/* FAQ LIST */}
+        <div className="space-y-4">
 
-                <span className="text-[#00C2A8] text-xl">
-                  {openIndex === i ? "−" : "+"}
-                </span>
-              </button>
+          {faq.map((item, i) => {
+            const isOpen = openIndex === i;
 
-              {/* ANSWER */}
+            return (
               <div
-                className={`px-5 overflow-hidden transition-all duration-300 ${
-                  openIndex === i ? "max-h-40 pb-5" : "max-h-0"
-                }`}
+                key={i}
+                className={`
+                  border border-gray-200
+                  rounded-2xl
+                  bg-white
+                  transition-all duration-300
+                  ${isOpen ? "shadow-lg" : ""}
+                `}
               >
-                <p className="text-gray-600">
-                  {item.a}
-                </p>
+
+                {/* QUESTION */}
+                <button
+                  onClick={() =>
+                    setOpenIndex(isOpen ? null : i)
+                  }
+                  className="w-full flex justify-between items-center p-6 text-left"
+                >
+                  <span className="font-semibold text-gray-900">
+                    {item.q}
+                  </span>
+
+                  <span className={`
+                    text-xl
+                    transition-transform duration-300
+                    ${isOpen ? "rotate-45 text-green-600" : "text-gray-400"}
+                  `}>
+                    +
+                  </span>
+                </button>
+
+                {/* ANSWER */}
+                <div
+                  className={`
+                    grid transition-all duration-300 ease-in-out
+                    ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}
+                  `}
+                >
+                  <div className="overflow-hidden">
+                    <p className="px-6 pb-6 text-gray-600 leading-relaxed">
+                      {item.a}
+                    </p>
+                  </div>
+                </div>
+
               </div>
-            </div>
-          ))}
+            );
+          })}
 
         </div>
 

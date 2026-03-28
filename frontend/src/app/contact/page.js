@@ -5,8 +5,7 @@ import ContactInfo from "@/app/components/contact/ContactInfo";
 import ContactForm from "@/app/components/contact/ContactForm";
 import ContactWhyUs from "@/app/components/contact/ContactWhyUs";
 // import ContactCTA from "@/app/components/contact/ContactCTA";
-import { getSettings,getSeoByKey } from "@/lib/datafetch";
-
+import { getContact,getSeoByKey } from "@/lib/datafetch";
 /* =========================
    PAGE
 ========================= */
@@ -34,8 +33,8 @@ export async function generateMetadata() {
 
 
 export default async function ContactPage() {
-  const settings = await getSettings();
-  const contact = settings?.contact_page;
+  const contactpage = await getContact();
+const contact = contactpage;
 
   return (
     <main>

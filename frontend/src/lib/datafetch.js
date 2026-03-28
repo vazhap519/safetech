@@ -166,3 +166,8 @@ export const sendContact = (payload) =>
     // ❗ POST-ზე cache არ გვინდა
     cache: "no-store",
   });
+
+  export const getContact = () =>
+  fetcher(buildUrl(`/contact-page`), {
+    next: { tags: ["contact-page"] },
+  });

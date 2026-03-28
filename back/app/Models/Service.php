@@ -24,12 +24,23 @@ class Service extends Model implements HasMedia
         'short_description',
          'description',
 'long_description',
+
+        'problems',
+'results',
+'testimonials',
+'case_study',
+'cta_title',
+'cta_description',
     ];
 
     protected $casts = [
         'features' => 'array',
         'faq' => 'array',
         'seo' => 'array',
+        'problems'=>'array',
+'results'=>'array',
+'testimonials'=>'array',
+'case_study'=>'array',
     ];
 
     /*
