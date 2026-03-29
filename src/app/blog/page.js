@@ -4,15 +4,12 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 import { buildMetadata } from "@/lib/seo";
 import { getSeoByKey } from "@/lib/datafetch";
 
+
 /* =========================
-   PAGE
-========================= */
-/* =========================
-   SEO (SERVICES 🔥)
+   SEO (BLOG 🔥)
 ========================= */
 export async function generateMetadata() {
   const seo = await getSeoByKey("blog");
-
   const data = seo?.data;
 
   return buildMetadata({
@@ -26,6 +23,12 @@ export async function generateMetadata() {
     path: data?.slug || "/blog",
   });
 }
+
+/* =========================
+   PAGE
+========================= */
+
+
 export default async function BlogPage({ searchParams }) {
   const params = await searchParams;
 
