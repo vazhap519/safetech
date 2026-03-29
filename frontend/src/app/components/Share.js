@@ -1,48 +1,4 @@
-// export default function Share({ data, url: propUrl }) {
-//   if (!data) return null;
-
-//   const url =
-//     propUrl ||
-//     (typeof window !== "undefined" ? window.location.href : "");
-
-//   return (
-//     <div className="bg-white py-6 border-b">
-//       <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-4 text-center">
-
-//         <p className="text-sm text-gray-600">
-//           {data.title}
-//         </p>
-
-//         <div className="flex flex-wrap justify-center gap-3">
-
-//           {data.buttons?.map((btn, i) => {
-//             const Icon = icons[btn.icon];
-
-//             if (btn.icon === "link") {
-//               return <CopyButton key={i} url={url} />;
-//             }
-
-//             const shareUrl = btn.url.replace("{url}", url);
-
-//             return (
-//               <a
-//                 key={i}
-//                 href={shareUrl}
-//                 target="_blank"
-//                 rel="noopener noreferrer"
-//                 className={`px-4 py-2 text-white rounded-lg text-sm flex items-center gap-2 hover:scale-105 transition ${btn.color}`}
-//               >
-//                 {Icon && <Icon size={16} />}
-//                 {btn.name}
-//               </a>
-//             );
-//           })}
-
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }   "use client";
+"use client";
 
 import {
   FaFacebook,
@@ -69,6 +25,19 @@ const icons = {
 };
 
 /* =========================
+   COLOR FALLBACK (🔥 FIX)
+========================= */
+const colorMap = {
+  FaFacebook: "bg-blue-600 hover:bg-blue-700",
+  FaWhatsapp: "bg-green-500 hover:bg-green-600",
+  FaTelegram: "bg-sky-500 hover:bg-sky-600",
+  FaLinkedin: "bg-blue-700 hover:bg-blue-800",
+  FaPinterest: "bg-red-600 hover:bg-red-700",
+  FaTwitter: "bg-black hover:bg-gray-800",
+  FaLink: "bg-gray-600 hover:bg-gray-700",
+};
+
+/* =========================
    COPY BUTTON
 ========================= */
 function CopyButton({ url }) {
@@ -80,9 +49,9 @@ function CopyButton({ url }) {
   return (
     <button
       onClick={handleCopy}
-      className="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm hover:scale-105 transition flex items-center gap-2"
+      className="px-4 py-2 bg-gray-600 text-white rounded-full text-sm flex items-center gap-2 hover:scale-105 transition"
     >
-      <FaLink size={16} />
+      <FaLink size={14} />
       კოპირება
     </button>
   );
@@ -92,7 +61,7 @@ function CopyButton({ url }) {
    SHARE COMPONENT
 ========================= */
 export default function Share({ data, url: propUrl }) {
-  if (!data || !data.length) return null;
+  if (!data || !Array.isArray(data.share_buttons)) return null;
 
   const url =
     propUrl ||
@@ -101,21 +70,22 @@ export default function Share({ data, url: propUrl }) {
   const encodedUrl = encodeURIComponent(url);
 
   return (
-    <div className="bg-white py-6 border-b">
-      <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-4 text-center">
+    <div className="py-10">
+      <div className="max-w-4xl mx-auto px-4 text-center">
 
-        {data.title && (
-          <p className="text-sm text-gray-600">
-            {data.title}
+        {/* TITLE */}
+        {data.share_title && (
+          <p className="text-sm text-gray-500 mb-4">
+            {data.share_title}
           </p>
         )}
 
+        {/* BUTTONS */}
         <div className="flex flex-wrap justify-center gap-3">
 
-          {data.map((btn, i) => {
+          {data.share_buttons.map((btn, i) => {
             const Icon = icons[btn.icon];
 
-            // 🔥 COPY BUTTON
             if (btn.icon === "FaLink") {
               return <CopyButton key={i} url={url} />;
             }
@@ -128,9 +98,18 @@ export default function Share({ data, url: propUrl }) {
                 href={shareUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`px-4 py-2 text-white rounded-lg text-sm flex items-center gap-2 hover:scale-105 transition ${btn.color}`}
+                className={`
+                  px-4 py-2
+                  text-white
+                  rounded-full
+                  text-sm
+                  flex items-center gap-2
+                  transition
+                  hover:scale-105
+                  ${colorMap[btn.icon] || "bg-gray-500"}
+                `}
               >
-                {Icon && <Icon size={16} />}
+                {Icon && <Icon size={14} />}
                 {btn.name}
               </a>
             );

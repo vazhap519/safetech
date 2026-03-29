@@ -55,7 +55,8 @@ return new class extends Migration
             */
             $table->string('canonical')->nullable()->index();
             $table->boolean('noindex')->default(false);
-
+            $table->string('schema_type')->nullable(); // Article, WebPage, Service
+            $table->json('schema')->nullable(); // custom override
             /*
             |--------------------------------------------------------------------------
             | TIMESTAMPS

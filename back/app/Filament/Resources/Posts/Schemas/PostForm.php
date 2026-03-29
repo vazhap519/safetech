@@ -7,6 +7,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\View;
 use Filament\Forms\Components\{
+    DateTimePicker,
     TextInput,
     Select,
     Toggle,
@@ -26,43 +27,54 @@ class PostForm
             ->components([
 
                 /*
-                |------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | 🟢 MAIN INFO
-                |------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
                 Section::make('Main Info')
                     ->schema([
 
                         TextInput::make('title')
                             ->required()
-                            ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, $set) =>
-                            $set('slug', Str::slug($state))
-                            ),
+                            ->afterStateUpdated(function ($state, $set, $get) {
+
+                                $set('slug', Str::slug($state));
+
+                                // 🔥 update schema
+                                $type = $get('schema_type') ?: 'Article';
+
+                                $set('schema', self::generateSchema(
+                                    $type,
+                                    $state,
+                                    $get('excerpt')
+                                ));
+                            }),
 
                         TextInput::make('slug')
                             ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255),
+                            ->unique(ignoreRecord: true),
 
                         Textarea::make('excerpt')
-                            ->label('Short Description')
                             ->rows(3)
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->afterStateUpdated(function ($state, $set, $get) {
 
-                        /*
-                        | CATEGORY
-                        */
+                                $type = $get('schema_type') ?: 'Article';
+
+                                $set('schema', self::generateSchema(
+                                    $type,
+                                    $get('title'),
+                                    $state
+                                ));
+                            }),
+
                         Select::make('category_id')
                             ->relationship('category', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
 
-                        /*
-                        | AUTHOR
-                        */
                         Select::make('author_id')
                             ->relationship('author', 'name')
                             ->searchable()
@@ -75,24 +87,22 @@ class PostForm
                     ->columns(2),
 
                 /*
-                |------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | 🟣 MEDIA
-                |------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
                 Section::make('Media')
                     ->schema([
-
                         SpatieMediaLibraryFileUpload::make('cover')
                             ->collection('cover')
                             ->image()
                             ->required(),
-
                     ]),
 
                 /*
-                |------------------------------------------------------------------
-                | 🔵 CONTENT SECTIONS
-                |------------------------------------------------------------------
+                |--------------------------------------------------------------------------
+                | 🔵 CONTENT
+                |--------------------------------------------------------------------------
                 */
                 Section::make('Content Sections')
                     ->schema([
@@ -100,17 +110,10 @@ class PostForm
                         Repeater::make('sections')
                             ->relationship()
                             ->schema([
-
-                                TextInput::make('title')
-                                    ->label('Section Title')
-                                    ->maxLength(255),
-
-                                RichEditor::make('content')
-                                    ->required()
-                                    ->columnSpanFull(),
-
+                                TextInput::make('title'),
+                                RichEditor::make('content')->required(),
                             ])
-                            ->orderColumn('position') // ✅ FIX
+                            ->orderColumn('position')
                             ->reorderable()
                             ->collapsible()
                             ->cloneable()
@@ -119,155 +122,198 @@ class PostForm
                     ]),
 
                 /*
-                |------------------------------------------------------------------
-                | 🟡 SEO SYSTEM (🔥 CORE)
-                |------------------------------------------------------------------
+                |--------------------------------------------------------------------------
+                | 🟡 SEO (FIXED 100%)
+                |--------------------------------------------------------------------------
                 */
+                Section::make('SEO')
+                    ->schema([
 
+                        TextInput::make('seo.title')
+                            ->label('Meta Title')
+                            ->maxLength(60),
 
-Section::make('SEO (Google Optimization)')
-    ->schema([
+                        Textarea::make('seo.description')
+                            ->label('Meta Description')
+                            ->maxLength(160),
 
-        /*
-        |-------------------------------
-        | 🔥 TITLE
-        |-------------------------------
-        */
-        TextInput::make('seo.title')
-            ->label('SEO Title')
-            ->maxLength(255),
+                        Repeater::make('seo.keywords')
+                            ->label('Keywords')
+                            ->schema([
+                                TextInput::make('value')->required(),
+                            ])
+                            ->default([]),
 
-        /*
-        |-------------------------------
-        | 🔥 DESCRIPTION
-        |-------------------------------
-        */
-        Textarea::make('seo.description')
-            ->rows(3),
+                        /*
+                        | 🔥 SCHEMA TYPE (FIXED)
+                        */
+                        Select::make('schema_type')
+                            ->label('Schema Type')
+                            ->options([
+                                'Article' => 'Article',
+                                'WebPage' => 'WebPage',
+                                'Service' => 'Service',
+                            ])
+                            ->default('Article') // ✅ CRITICAL FIX
+                            ->required()
+                            ->reactive()
 
-        /*
-        |-------------------------------
-        | 🔥 KEYWORDS
-        |-------------------------------
-        */
-        Repeater::make('seo.keywords')
-            ->simple(
-                TextInput::make('value')
-                    ->label('Keyword')
-            )
-            ->defaultItems(2),
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
 
-        /*
-        |-------------------------------
-        | 🔥 SEO CONTENT
-        |-------------------------------
-        */
-        Repeater::make('seo.content')
-            ->schema([
-                Textarea::make('text')
-                    ->rows(3),
-            ])
-            ->defaultItems(2)
-            ->columnSpanFull(),
+                                $type = $state ?: 'Article';
 
-        /*
-        | 🔥 AI GENERATOR (FIXED FOR BLOG)
-        */
-        Action::make('generate_seo')
-            ->label('🤖 Generate SEO')
-            ->color('success')
-            ->action(function ($set, $get) {
+                                $set('schema', self::generateSchema(
+                                    $type,
+                                    $get('title'),
+                                    $get('excerpt')
+                                ));
+                            })
 
-                $title = $get('title');
-                $excerpt = $get('excerpt');
+                            ->afterStateHydrated(function ($state, callable $set, callable $get) {
 
-                if (!$title) return;
+                                if ($get('schema')) return;
 
-                /* =========================
-                   🔥 BASIC SEO
-                ========================= */
-                $set('seo.title', $title . ' თბილისში');
+                                $type = $state ?: 'Article';
 
-                $set('seo.description',
-                    ($excerpt ?: $title) . ' - დეტალური სტატია და რჩევები.'
-                );
+                                $set('schema', self::generateSchema(
+                                    $type,
+                                    $get('title'),
+                                    $get('excerpt')
+                                ));
+                            }),
 
-                $set('seo.keywords', [
-                    ['value' => $title],
-                    ['value' => $title . ' თბილისი'],
-                    ['value' => 'IT ბლოგი'],
-                ]);
+                        /*
+                        | 🔥 SCHEMA JSON
+                        */
+                        Textarea::make('schema')
+                            ->label('Schema JSON (JSON-LD)')
+                            ->rows(12)
+                            ->helperText('Auto-generated, editable')
 
-                $set('seo.content', [
-                    ['text' => $excerpt ?: $title],
-                    ['text' => "{$title} თემაზე სრული გზამკვლევი."],
-                ]);
+                            ->dehydrateStateUsing(function ($state) {
+                                if (!$state) return null;
 
-                /* =========================
-                   🔥 BLOG INTERNAL LINKS (CORRECT)
-                ========================= */
+                                $decoded = json_decode($state, true);
 
-                $links = [];
+                                return json_last_error() === JSON_ERROR_NONE
+                                    ? $decoded
+                                    : null;
+                            })
 
-                // 🔹 keyword-based linking
-                $keywords = collect([
-                    $title,
-                    $excerpt,
-                ])->filter()->implode(' ');
+                            ->formatStateUsing(function ($state) {
+                                if (is_array($state)) {
+                                    return json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                                }
+                                return $state;
+                            }),
 
-                // 🔹 basic blog keywords (შეგიძლია გააფართოვო)
-                $blogKeywords = [
-                    'უსაფრთხოება',
-                    'კამერები',
-                    'ქსელები',
-                    'IT',
-                ];
+                        /*
+                        | 🔥 SEO GENERATOR
+                        */
+                        Action::make('generate_seo')
+                            ->label('Generate SEO')
+                            ->action(function ($set, $get) {
 
-                foreach ($blogKeywords as $word) {
-                    if (str_contains(mb_strtolower($keywords), mb_strtolower($word))) {
-                        $links[] = [
-                            'keyword' => $word,
-                            'url' => "/blog?search=" . urlencode($word),
-                        ];
-                    }
-                }
+                                $title = $get('title');
 
-                // 🔹 fallback
-                if (empty($links)) {
-                    $links = [
-                        ['keyword' => 'ბლოგი', 'url' => '/blog'],
-                    ];
-                }
+                                if (!$title) return;
 
-                $set('seo.internal_links', $links);
-            }),
+                                $set('seo.title', $title . ' | ' . config('app.name'));
 
-        /*
-        | 📊 SEO SCORE
-        */
-        Placeholder::make('seo_score')
-            ->content(function ($get) {
+                                $set('seo.description',
+                                    Str::limit($get('excerpt') ?? $title, 150)
+                                );
 
-                $score = 0;
+                                $set('seo.keywords', [
+                                    ['value' => $title],
+                                    ['value' => 'blog'],
+                                    ['value' => 'article'],
+                                ]);
+                            }),
 
-                if (strlen($get('seo.title')) >= 40) $score += 30;
-                if (strlen($get('seo.description')) >= 120) $score += 30;
-                if (!empty($get('seo.keywords'))) $score += 20;
-                if (!empty($get('seo.content'))) $score += 20;
+                        Placeholder::make('seo_score')
+                            ->content(fn ($get) =>
+                            $get('seo.title') && $get('seo.description')
+                                ? '✅ Good SEO'
+                                : '❌ Missing SEO'
+                            ),
 
-                return "SEO Score: {$score}/100";
-            })
-            ->reactive(),
+                        View::make('filament.seo-preview'),
 
-        /*
-        | 🔍 GOOGLE PREVIEW (🔥 ეს გაკლდა)
-        */
-        View::make('filament.seo-preview')
-            ->reactive(),
+                    ]),
 
-    ])
-    ->columnSpanFull(),
+                /*
+                |--------------------------------------------------------------------------
+                | 🔥 FAQ
+                |--------------------------------------------------------------------------
+                */
+                Section::make('FAQ')
+                    ->schema([
+                        Repeater::make('faq')
+                            ->schema([
+                                TextInput::make('question')->required(),
+                                Textarea::make('answer')->required(),
+                            ])
+                            ->collapsible(),
+                    ]),
 
+                /*
+                |--------------------------------------------------------------------------
+                | ⚙️ ADVANCED
+                |--------------------------------------------------------------------------
+                */
+                Section::make('Advanced')
+                    ->schema([
+
+                        TextInput::make('seo_author'),
+
+                        DateTimePicker::make('seo_published_at'),
+
+                    ]),
             ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 🔥 SCHEMA GENERATOR
+    |--------------------------------------------------------------------------
+    */
+    protected static function generateSchema($type, $title = null, $description = null): ?string
+    {
+        $baseUrl = config('app.url');
+        $name = config('app.name');
+
+        return match ($type) {
+
+            'BlogPosting' => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "BlogPosting",
+                "headline" => $title,
+                "description" => $description,
+                "image" => $baseUrl . "/images/placeholder.jpg",
+                "author" => [
+                    "@type" => "Organization",
+                    "name" => $name
+                ],
+                "publisher" => [
+                    "@type" => "Organization",
+                    "name" => $name
+                ],
+                "mainEntityOfPage" => $baseUrl,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+
+            'Article' => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "Article",
+                "headline" => $title,
+                "description" => $description,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+
+            default => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "WebPage",
+                "name" => $title,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+        };
     }
 }

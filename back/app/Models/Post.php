@@ -25,13 +25,23 @@ class Post extends Model implements HasMedia
         'published_year',
         'is_published',
         'seo',
+
+        'faq',
+        'schema',
+        'seo_author',
+        'seo_published_at',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'is_published' => 'boolean',
-        'seo'=>'array'
+        'seo' => 'array',
+
+        // 🔥 NEW
+        'faq' => 'array',
+        'schema' => 'array',
+        'seo_published_at' => 'datetime',
     ];
 
     /*
@@ -50,7 +60,6 @@ class Post extends Model implements HasMedia
     | ACCESSORS
     |--------------------------------------------------------------------------
     */
-
     public function getImageAttribute(): ?string
     {
         try {
@@ -58,19 +67,41 @@ class Post extends Model implements HasMedia
 
             if (!$media) return null;
 
-            // ✅ თუ webp არსებობს
-            if ($media->hasGeneratedConversion('webp')) {
-                return $media->getFullUrl('webp'); // 🔥 FIX
-            }
+            $url = $media->hasGeneratedConversion('webp')
+                ? $media->getFullUrl('webp')
+                : $media->getFullUrl();
 
-            // ❗ fallback original image
-            return $media->getFullUrl();
+            // 🔥 FORCE PUBLIC URL (CRITICAL FIX)
+            return str_replace(
+                ['http://127.0.0.1:8000', 'http://localhost:8000'],
+                config('app.url'),
+                $url
+            );
 
         } catch (\Throwable $e) {
             return null;
         }
-
     }
+//    public function getImageAttribute(): ?string
+//    {
+//        try {
+//            $media = $this->getFirstMedia('cover');
+//
+//            if (!$media) return null;
+//
+//            // ✅ თუ webp არსებობს
+//            if ($media->hasGeneratedConversion('webp')) {
+//                return $media->getFullUrl('webp'); // 🔥 FIX
+//            }
+//
+//            // ❗ fallback original image
+//            return $media->getFullUrl();
+//
+//        } catch (\Throwable $e) {
+//            return null;
+//        }
+//
+//    }
 
     /*
     |--------------------------------------------------------------------------
@@ -134,7 +165,6 @@ class Post extends Model implements HasMedia
             ->fit(Fit::Crop, 1200, 630)
             ->format('webp')
             ->quality(80)
-            ->performOnCollections('cover')
-            ->nonQueued(); // 🔥 FIX
+            ->nonQueued();
     }
 }

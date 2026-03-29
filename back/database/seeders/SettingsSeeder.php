@@ -9,71 +9,60 @@ class SettingsSeeder extends Seeder
 {
     public function run(): void
     {
-        Setting::create([
+        Setting::updateOrCreate(
+            ['id' => 1],
+            [
 
-            // 🔗 Share
-            'share_title' => 'გააზიარე',
+                /*
+                |--------------------------------------------------------------------------
+                | SHARE
+                |--------------------------------------------------------------------------
+                */
+                'share_title' => 'გააზიარე ეს გვერდი',
 
-            'share_buttons' => [
-                [
-                    'share_button_type' => 'facebook',
-                    'name' => 'Facebook',
-                    'url' => 'https://www.facebook.com/sharer/sharer.php?u={url}',
-                    'color' => 'bg-blue-600',
-                    'icon' => 'FaFacebook',
+                'share_buttons' => [
+                    ['type' => 'facebook'],
+                    ['type' => 'whatsapp'],
+                    ['type' => 'telegram'],
+                    ['type' => 'linkedin'],
+                    ['type' => 'twitter'],
+                    ['type' => 'link'],
                 ],
-                [
-                    'share_button_type' => 'whatsapp',
-                    'name' => 'WhatsApp',
-                    'url' => 'https://wa.me/?text={url}',
-                    'color' => 'bg-green-500',
-                    'icon' => 'FaWhatsapp',
-                ],
-                [
-                    'share_button_type' => 'telegram',
-                    'name' => 'Telegram',
-                    'url' => 'https://t.me/share/url?url={url}',
-                    'color' => 'bg-sky-500',
-                    'icon' => 'FaTelegram',
-                ],
-                [
-                    'share_button_type' => 'linkedin',
-                    'name' => 'LinkedIn',
-                    'url' => 'https://www.linkedin.com/sharing/share-offsite/?url={url}',
-                    'color' => 'bg-blue-700',
-                    'icon' => 'FaLinkedin',
-                ],
-            ],
 
-            // 🦶 Footer
-            'footer_copyright_text' => '© 2026 ყველა უფლება დაცულია',
-            'footer_brand_text' => 'My Company',
+                /*
+                |--------------------------------------------------------------------------
+                | FOOTER (test data)
+                |--------------------------------------------------------------------------
+                */
+                'footer_brand_text' => 'Safetech - უსაფრთხოების სისტემები',
+                'footer_copyright_text' => '© 2026 Safetech',
 
-            'footer_brand_soc' => [
-                [
-                    'icon' => 'FaFacebook',
-                    'url' => 'https://facebook.com',
-                    'text' => 'Facebook',
-                    'bg_color' => '#1877F2',
-                    'hover_color' => '#0e5ec9',
+                'footer_brand_soc' => [
+                    [
+                        'icon' => 'FaFacebook',
+                        'url' => 'https://facebook.com',
+                        'text' => 'Facebook',
+                        'bg_color' => '#1877F2',
+                        'hover_color' => '#0d65d9',
+                    ],
+                    [
+                        'icon' => 'FaInstagram',
+                        'url' => 'https://instagram.com',
+                        'text' => 'Instagram',
+                        'bg_color' => '#E4405F',
+                        'hover_color' => '#c72e4d',
+                    ],
                 ],
-                [
-                    'icon' => 'FaInstagram',
-                    'url' => 'https://instagram.com',
-                    'text' => 'Instagram',
-                    'bg_color' => '#E4405F',
-                    'hover_color' => '#c13584',
-                ],
-                [
-                    'icon' => 'FaLinkedin',
-                    'url' => 'https://linkedin.com',
-                    'text' => 'LinkedIn',
-                    'bg_color' => '#0077B5',
-                    'hover_color' => '#005582',
-                ],
-            ],
 
-
-        ]);
+//                /*
+//                |--------------------------------------------------------------------------
+//                | CONTACT PAGE (optional test)
+//                |--------------------------------------------------------------------------
+//                */
+//                'contact_page_number' => '+995599123456',
+//                'contact_page_email' => 'info@safetech.ge',
+//                'contact_page_address' => 'Tbilisi, Georgia',
+            ]
+        );
     }
 }

@@ -15,7 +15,7 @@ class ServiceSeeder extends Seeder
 
             try {
                 $service->addMediaFromUrl($imageUrl)
-                    ->toMediaCollection('services');
+                    ->toMediaCollection('cover');
             } catch (\Throwable $e) {
                 logger($e->getMessage());
             }

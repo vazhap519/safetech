@@ -354,7 +354,7 @@ class ServiceForm
                         ->label('ღილაკის ტექსტი')
                         ->default('დაგვიკავშირდი'),
 
-                    SpatieMediaLibraryFileUpload::make('image')
+                    SpatieMediaLibraryFileUpload::make('cover')
                         ->label('სურათი')
                         ->collection('services')
                         ->image()
@@ -678,6 +678,96 @@ class ServiceForm
 
                 ])
                 ->columnSpanFull(),
+            /*
+| 🔥 SCHEMA TYPE
+*/
+            Select::make('seo.schema_type')
+                ->label('Schema Type')
+                ->options([
+                    'Service' => 'Service (Recommended)',
+                    'LocalBusiness' => 'Local Business',
+                    'WebPage' => 'WebPage',
+                ])
+                ->default('Service')
+                ->reactive()
+
+                ->afterStateUpdated(function ($state, callable $set, callable $get) {
+
+                    $type = $state ?: 'Service';
+
+                    $set('seo.schema', self::generateSchema(
+                        $type,
+                        $get('title'),
+                        $get('long_description')
+                    ));
+                })
+
+                ->afterStateHydrated(function ($state, callable $set, callable $get) {
+
+                    if ($get('seo.schema')) return;
+
+                    $type = $state ?: 'Service';
+
+                    $set('seo.schema', self::generateSchema(
+                        $type,
+                        $get('title'),
+                        $get('long_description')
+                    ));
+                }),Textarea::make('seo.schema')
+                ->label('Schema JSON (JSON-LD)')
+                ->rows(10)
+                ->helperText('Auto-generated, editable')
+
+                ->dehydrateStateUsing(function ($state) {
+                    if (!$state) return null;
+
+                    $decoded = json_decode($state, true);
+
+                    return json_last_error() === JSON_ERROR_NONE
+                        ? $decoded
+                        : null;
+                })
+
+                ->formatStateUsing(function ($state) {
+                    if (is_array($state)) {
+                        return json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                    }
+                    return $state;
+                }),
         ]);
+    }
+    protected static function generateSchema($type, $title = null, $description = null): ?string
+    {
+        $baseUrl = config('app.url');
+        $name = config('app.name');
+
+        return match ($type) {
+
+            'Service' => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "Service",
+                "name" => $title,
+                "description" => $description,
+                "provider" => [
+                    "@type" => "Organization",
+                    "name" => $name,
+                    "url" => $baseUrl,
+                ],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+
+            'LocalBusiness' => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "LocalBusiness",
+                "name" => $name,
+                "description" => $description,
+                "areaServed" => "Tbilisi",
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+
+            default => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "WebPage",
+                "name" => $title,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+        };
     }
 }

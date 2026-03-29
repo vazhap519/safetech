@@ -3,18 +3,77 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Settings;
-use Illuminate\Http\Request;
+use App\Models\Setting;
 
 class SettingsController extends Controller
 {
-
-
-
+    /**
+     * ✅ Single Source of Truth
+     */
+    private function shareMap()
+    {
+        return [
+            'facebook' => [
+                'name' => 'Facebook',
+                'url' => 'https://www.facebook.com/sharer/sharer.php?u={url}',
+                'color' => 'bg-blue-600',
+                'icon' => 'FaFacebook',
+            ],
+            'whatsapp' => [
+                'name' => 'WhatsApp',
+                'url' => 'https://wa.me/?text={url}',
+                'color' => 'bg-green-500',
+                'icon' => 'FaWhatsapp',
+            ],
+            'telegram' => [
+                'name' => 'Telegram',
+                'url' => 'https://t.me/share/url?url={url}',
+                'color' => 'bg-sky-500',
+                'icon' => 'FaTelegram',
+            ],
+            'linkedin' => [
+                'name' => 'LinkedIn',
+                'url' => 'https://www.linkedin.com/sharing/share-offsite/?url={url}',
+                'color' => 'bg-blue-700',
+                'icon' => 'FaLinkedin',
+            ],
+            'pinterest' => [
+                'name' => 'Pinterest',
+                'url' => 'https://pinterest.com/pin/create/button/?url={url}',
+                'color' => 'bg-red-600',
+                'icon' => 'FaPinterest',
+            ],
+            'twitter' => [
+                'name' => 'Twitter',
+                'url' => 'https://twitter.com/intent/tweet?url={url}',
+                'color' => 'bg-black',
+                'icon' => 'FaTwitter',
+            ],
+            'link' => [
+                'name' => 'Copy Link',
+                'url' => '{url}',
+                'color' => 'bg-gray-600',
+                'icon' => 'FaLink',
+            ],
+        ];
+    }
 
     public function index()
     {
-        $settings = Settings::first();
+        $settings = Setting::first();
+
+        /**
+         * ✅ Transform share buttons (CRITICAL FIX)
+         */
+        $shareButtons = collect($settings?->share_buttons ?? [])
+            ->map(function ($btn) {
+                $map = $this->shareMap();
+
+                return $map[$btn['type']] ?? null;
+            })
+            ->filter()
+            ->values();
+
         return response()->json([
 
             /*
@@ -23,17 +82,25 @@ class SettingsController extends Controller
             |--------------------------------------------------------------------------
             */
             'socials' => $settings?->footer_brand_soc ?? [],
-            'share' => $settings?->share_buttons ?? [],
             'headers' => $settings?->footer_headers ?? [],
             'contact' => $settings?->footer_contact_area ?? [],
 
             'brand_description' => $settings?->footer_brand_text ?? null,
-            'share_title' => $settings?->share_title ?? null,
             'copy' => $settings?->footer_copyright_text ?? null,
 
             /*
             |--------------------------------------------------------------------------
-            | CONTACT PAGE 🔥 (ეს გაკლდა)
+            | ✅ SHARE (FIXED)
+            |--------------------------------------------------------------------------
+            */
+            'share' => [
+                'share_title' => $settings?->share_title ?? null,
+                'share_buttons' => $shareButtons,
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | CONTACT PAGE
             |--------------------------------------------------------------------------
             */
             'contact_page' => [
@@ -49,10 +116,8 @@ class SettingsController extends Controller
                 'why_title' => $settings?->contact_page_why_title,
                 'why_items' => $settings?->contact_page_why_text ?? [],
 
-//                'cta_title' => $settings?->contact_page_cta_title,
                 'contact_info_title' => $settings?->contact_page_info_title,
             ],
         ]);
     }
-
 }

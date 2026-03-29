@@ -72,42 +72,61 @@ class AboutController extends Controller
             return About::with('media')->first();
         });
 
+        // ✅ SEO წამოღება
+        $seo = \App\Models\SeoPage::getByKey('about');
+
         if (!$about) {
             return response()->json([
-                'Hero' => null,
-                'Story' => null,
-                'Why' => null,
-                'Cta' => null,
+                'data' => [
+                    'Hero' => null,
+                    'Story' => null,
+                    'Why' => null,
+                    'Cta' => null,
+                ],
+                'seo' => [
+                    'meta' => $seo?->meta ?? [],
+                    'schema' => $seo?->schema_data ?? [],
+                ],
             ]);
         }
 
         return response()->json([
-            'Hero' => [
-                'title' => $about->hero_title,
-                'description' => $about->hero_description,
-                'trust_list' => $about->hero_trust_list ?? [],
-                'badge' => $about->hero_badge,
-                'image' => $about->image_url,
+
+            // 🔥 მთავარი FIX (ყველა გვერდის სტანდარტი)
+            'data' => [
+                'Hero' => [
+                    'title' => $about->hero_title,
+                    'description' => $about->hero_description,
+                    'trust_list' => $about->hero_trust_list ?? [],
+                    'badge' => $about->hero_badge,
+                    'image' => $about->image_url,
+                ],
+
+                'Story' => [
+                    'title' => $about->story_title,
+                    'description' => $about->story_title_description,
+                    'content' => $about->story_content,
+                    'stats' => $about->story_stats ?? [],
+                ],
+
+                'Why' => [
+                    'title' => $about->why_us_title,
+                    'description' => $about->why_us_title_description,
+                    'items' => $about->why_us_content ?? [],
+                ],
+
+                'Cta' => [
+                    'title' => $about->cta_title,
+                    'description' => $about->cta_title_description,
+                    'trust' => $about->cta_trust ?? [],
+                    'phone' => $about->cta_phone,
+                ],
             ],
 
-            'Story' => [
-                'title' => $about->story_title,
-                'description' => $about->story_title_description,
-                'content' => $about->story_content,
-                'stats' => $about->story_stats ?? [],
-            ],
-
-            'Why' => [
-                'title' => $about->why_us_title,
-                'description' => $about->why_us_title_description,
-                'items' => $about->why_us_content ?? [],
-            ],
-
-            'Cta' => [
-                'title' => $about->cta_title,
-                'description' => $about->cta_title_description,
-                'trust' => $about->cta_trust ?? [],
-                'phone' => $about->cta_phone,
+            // 🔥 SEO BLOCK (ძალიან მნიშვნელოვანი)
+            'seo' => [
+                'meta' => $seo?->meta ?? [],
+                'schema' => $seo?->schema_data ?? [],
             ],
         ]);
     }

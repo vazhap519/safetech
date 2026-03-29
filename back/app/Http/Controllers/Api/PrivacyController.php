@@ -19,10 +19,23 @@ class PrivacyController extends Controller
             return PrivacyPolicy::first();
         });
 
+        // ✅ SEO წამოღება
+        $seo = \App\Models\SeoPage::getByKey('privacy');
+
         return response()->json([
-            'title' => $privacy->title ?? '',
-            'highlight' => $privacy->highlight ?? '',
-            'content' => $privacy->content ?? '',
+
+            // 🔥 unified data (ყველა გვერდის მსგავსად)
+            'data' => [
+                'title' => $privacy->title ?? '',
+                'highlight' => $privacy->highlight ?? '',
+                'content' => $privacy->content ?? '',
+            ],
+
+            // 🔥 SEO BLOCK (ძალიან მნიშვნელოვანი)
+            'seo' => [
+                'meta' => $seo?->meta ?? [],
+                'schema' => $seo?->schema_data ?? [],
+            ],
         ]);
     }
 

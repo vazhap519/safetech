@@ -26,29 +26,22 @@ class SeoPageForm
                 ->schema([
 
                     /*
-                    |--------------------------------------------------------------------------
-                    | PAGE SELECT
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
+                    | PAGE
+                    |--------------------------------------------------
                     */
                     Select::make('key')
                         ->label('Page')
                         ->options(function () {
                             return collect(Route::getRoutes())
-                                ->filter(function ($route) {
-                                    $uri = $route->uri();
-
-                                    return
-                                        in_array('GET', $route->methods()) &&
-                                        str_starts_with($uri, 'api') &&
-                                        !str_contains($uri, '{') &&
-                                        !str_contains($uri, 'debug') &&
-                                        !str_contains($uri, 'sanctum');
-                                })
+                                ->filter(fn ($route) =>
+                                    in_array('GET', $route->methods()) &&
+                                    str_starts_with($route->uri(), 'api') &&
+                                    !str_contains($route->uri(), '{')
+                                )
                                 ->mapWithKeys(function ($route) {
-                                    $uri = $route->uri();
-
-                                    $key = preg_replace('#^api/?#', '', $uri);
-                                    $key = $key ?: 'home';
+                                    $uri = preg_replace('#^api/?#', '', $route->uri());
+                                    $key = $uri ?: 'home';
 
                                     return [
                                         $key => Str::of($key)->replace('-', ' ')->title()
@@ -66,9 +59,9 @@ class SeoPageForm
                         ),
 
                     /*
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
                     | SLUG
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
                     */
                     TextInput::make('slug')
                         ->label('URL')
@@ -76,9 +69,9 @@ class SeoPageForm
                         ->dehydrated(),
 
                     /*
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
                     | TITLE
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
                     */
                     TextInput::make('title')
                         ->label('SEO Title')
@@ -86,38 +79,40 @@ class SeoPageForm
                         ->live(),
 
                     /*
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
                     | DESCRIPTION
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
                     */
                     Textarea::make('description')
-                        ->label('Description')
                         ->rows(3)
                         ->live(),
 
                     /*
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
                     | KEYWORDS
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
                     */
                     Repeater::make('keywords')
-                        ->label('Keywords')
-                        ->simple(
-                            TextInput::make('value')
-                                ->placeholder('keyword...')
-                        )
+                        ->schema([
+                            TextInput::make('value')->required(),
+                        ])
                         ->formatStateUsing(fn ($state) =>
                         collect($state ?? [])
-                            ->map(fn ($item) => is_array($item) ? $item : ['value' => $item])
+                            ->map(fn ($i) => is_array($i) ? $i : ['value' => $i])
+                            ->toArray()
+                        )
+                        ->dehydrateStateUsing(fn ($state) =>
+                        collect($state ?? [])
+                            ->map(fn ($i) => is_array($i) ? $i : ['value' => $i])
                             ->toArray()
                         )
                         ->minItems(3)
                         ->maxItems(10),
 
                     /*
-                    |--------------------------------------------------------------------------
-                    | GENERATE SEO
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
+                    | AUTO SEO
+                    |--------------------------------------------------
                     */
                     Action::make('generate')
                         ->label('🤖 Generate SEO')
@@ -127,87 +122,255 @@ class SeoPageForm
                             $page = $get('key');
                             if (!$page) return;
 
-                            $titleBase = Str::title(str_replace('-', ' ', $page));
+                            $base = Str::title(str_replace('-', ' ', $page));
 
-                            // TITLE (40-60)
-                            $title = "{$titleBase} თბილისში | კომპიუტერული სერვისები";
+                            $set('title', mb_substr("{$base} თბილისში | კომპიუტერული სერვისები", 0, 60));
 
-                            if (mb_strlen($title) < 40) {
-                                $title .= " და ქსელების კონფიგურაცია";
-                            }
+                            $set('description', mb_substr(
+                                "{$base} თბილისში ✔ კომპიუტერული სერვისები ✔ ქსელები ✔ უსაფრთხოების სისტემები ✔ პროფესიონალური მომსახურება.",
+                                0,
+                                155
+                            ));
 
-                            $title = mb_substr($title, 0, 60);
-
-                            $set('title', $title);
-
-                            // DESCRIPTION (120-160)
-                            $base = "{$titleBase} თბილისში";
-                            $services = "კომპიუტერული სერვისები, ქსელების კონფიგურაცია, უსაფრთხოების სისტემები, როუტერებისა და სერვერების გამართვა";
-
-                            $variants = [
-                                "სწრაფი და პროფესიონალური მომსახურება.",
-                                "საუკეთესო ხარისხი და გარანტია.",
-                                "გამოცდილი სპეციალისტების გუნდი.",
-                            ];
-
-                            $cta = $variants[array_rand($variants)];
-
-                            $description = "{$base} ✔ {$services} ✔ {$cta}";
-
-                            while (mb_strlen($description) < 120) {
-                                $description .= " მაღალი ხარისხი.";
-                            }
-
-                            $description = mb_substr($description, 0, 155);
-
-                            $set('description', $description);
-
-                            // KEYWORDS
                             $set('keywords', collect([
-                                $titleBase,
-                                "{$titleBase} თბილისი",
-                                "{$titleBase} სერვისი",
+                                $base,
+                                "{$base} თბილისი",
                                 "IT სერვისი",
                                 "ქსელები",
-                                "როუტერი",
                                 "უსაფრთხოების სისტემები",
                             ])->map(fn ($k) => ['value' => $k])->toArray());
                         }),
 
                     /*
-                    |--------------------------------------------------------------------------
-                    | SEO SCORE
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
+                    | SCORE
+                    |--------------------------------------------------
                     */
                     Placeholder::make('seo_score')
-                        ->label('SEO Score')
                         ->content(function ($get) {
 
                             $score = 0;
 
-                            $titleLength = mb_strlen($get('title') ?? '');
-                            $descLength = mb_strlen($get('description') ?? '');
-                            $keywordsCount = count($get('keywords') ?? []);
-
-                            if ($titleLength >= 40 && $titleLength <= 60) $score += 30;
-                            if ($descLength >= 120 && $descLength <= 160) $score += 30;
-                            if ($keywordsCount >= 3) $score += 20;
-                            if (!empty($get('slug'))) $score += 20;
+                            if (mb_strlen($get('title') ?? '') >= 40) $score += 30;
+                            if (mb_strlen($get('description') ?? '') >= 120) $score += 30;
+                            if (count($get('keywords') ?? []) >= 3) $score += 20;
+                            if ($get('slug')) $score += 20;
 
                             return "Score: {$score}/100";
                         }),
 
                     /*
-                    |--------------------------------------------------------------------------
-                    | PREVIEW
-                    |--------------------------------------------------------------------------
+                    |--------------------------------------------------
+                    | SCHEMA TYPE
+                    |--------------------------------------------------
                     */
-                    View::make('filament.seo-preview')
-                        ->reactive(),
+                    Select::make('schema_type')
+                        ->options([
+                            'WebPage' => 'WebPage',
+                            'WebSite' => 'WebSite',
+                            'Article' => 'Article',
+                            'LocalBusiness' => 'LocalBusiness',
+                            'Service' => 'Service',
+                        ])
+                        ->default('WebPage')
+                        ->reactive()
+
+                        ->afterStateUpdated(function ($state, $set, $get) {
+
+                            // ❗ overwrite არ მოხდეს
+                            if ($get('schema')) return;
+
+                            $set('schema', self::generateSchema($state));
+                        })
+
+                        ->afterStateHydrated(function ($state, $set, $get) {
+
+                            if ($get('schema')) return;
+
+                            $set('schema', self::generateSchema($state));
+                        }),
+
+                    /*
+                    |--------------------------------------------------
+                    | SCHEMA JSON (VISIBLE FIX)
+                    |--------------------------------------------------
+                    */
+                    Textarea::make('schema')
+                        ->label('Schema JSON')
+                        ->rows(10)
+                        ->helperText('Auto-generated. You can edit.')
+                        ->rules([
+                            fn () => function ($attr, $value, $fail) {
+                                if (!$value) return;
+                                json_decode($value);
+                                if (json_last_error() !== JSON_ERROR_NONE) {
+                                    $fail('Invalid JSON');
+                                }
+                            }
+                        ]),
+
+                    /*
+                    |--------------------------------------------------
+                    | PREVIEW
+                    |--------------------------------------------------
+                    */
+                    View::make('filament.seo-preview')->reactive(),
 
                 ])
-                ->columnSpanFull(),
-
         ]);
+    }
+
+    /*
+    |--------------------------------------------------
+    | SCHEMA GENERATOR
+    |--------------------------------------------------
+    */
+    protected static function generateSchema($type): ?string
+    {
+        $baseUrl = config('app.url');
+        $name = config('app.name');
+
+        // ✅ სწორ ადგილას
+        $settings = settings();
+
+        return match ($type) {
+
+            /*
+            |--------------------------------------------------
+            | 🏠 WEBSITE
+            |--------------------------------------------------
+            */
+            'WebSite' => json_encode([
+                [
+                    "@context" => "https://schema.org",
+                    "@type" => "Organization",
+                    "name" => $name,
+                    "url" => $baseUrl,
+                    "logo" => $baseUrl . "/logo.png",
+                    "sameAs" => array_filter([
+                        $settings?->facebook,
+                        $settings?->linkedin,
+                        $settings?->instagram,
+                    ])
+                ],
+                [
+                    "@type" => "WebSite",
+                    "name" => $name,
+                    "url" => $baseUrl,
+                    "potentialAction" => [
+                        "@type" => "SearchAction",
+                        "target" => $baseUrl . "/search?q={search_term_string}",
+                        "query-input" => "required name=search_term_string"
+                    ]
+                ]
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+
+            /*
+            |--------------------------------------------------
+            | 📰 ARTICLE
+            |--------------------------------------------------
+            */
+            'Article' => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "Article",
+                "headline" => "Title",
+                "description" => "Description",
+                "author" => [
+                    "@type" => "Organization",
+                    "name" => $name
+                ],
+                "publisher" => [
+                    "@type" => "Organization",
+                    "name" => $name,
+                    "logo" => [
+                        "@type" => "ImageObject",
+                        "url" => $baseUrl . "/logo.png"
+                    ]
+                ],
+                "mainEntityOfPage" => $baseUrl,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+
+            /*
+            |--------------------------------------------------
+            | 🏢 LOCAL BUSINESS (🔥 FULL FIX)
+            |--------------------------------------------------
+            */
+            'LocalBusiness' => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "LocalBusiness",
+
+                "name" => $name,
+                "url" => $baseUrl,
+
+                // ✅ dynamic
+                "telephone" => $settings?->phone,
+                "email" => $settings?->email,
+
+                "address" => [
+                    "@type" => "PostalAddress",
+                    "streetAddress" => $settings?->address,
+                    "addressLocality" => $settings?->city,
+                    "addressCountry" => $settings?->country ?? 'GE',
+                ],
+
+                "geo" => [
+                    "@type" => "GeoCoordinates",
+                    "latitude" => $settings?->lat,
+                    "longitude" => $settings?->lng,
+                ],
+
+                "openingHoursSpecification" => [
+                    [
+                        "@type" => "OpeningHoursSpecification",
+                        "dayOfWeek" => [
+                            "Monday","Tuesday","Wednesday","Thursday","Friday"
+                        ],
+                        "opens" => $settings?->open_time ?? "09:00",
+                        "closes" => $settings?->close_time ?? "18:00"
+                    ]
+                ],
+
+                "sameAs" => array_filter([
+                    $settings?->facebook,
+                    $settings?->instagram,
+                    $settings?->linkedin,
+                ]),
+
+                "areaServed" => $settings?->country ?? 'Georgia'
+
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+
+            /*
+            |--------------------------------------------------
+            | ⚙️ SERVICE
+            |--------------------------------------------------
+            */
+            'Service' => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "Service",
+                "name" => "Service Name",
+                "provider" => [
+                    "@type" => "Organization",
+                    "name" => $name,
+                    "url" => $baseUrl
+                ],
+                "areaServed" => $settings?->country ?? "Georgia",
+                "description" => "Service description"
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+
+            /*
+            |--------------------------------------------------
+            | 📄 DEFAULT
+            |--------------------------------------------------
+            */
+            'WebPage' => json_encode([
+                "@context" => "https://schema.org",
+                "@type" => "WebPage",
+                "name" => $name,
+                "url" => $baseUrl
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+
+            default => null,
+        };
     }
 }

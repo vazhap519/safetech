@@ -11,6 +11,11 @@ class SeoPageSeeder extends Seeder
     {
         $pages = [
 
+            /*
+            |--------------------------------------------------
+            | 🏠 HOME
+            |--------------------------------------------------
+            */
             [
                 'key' => 'home',
                 'slug' => '/',
@@ -22,8 +27,14 @@ class SeoPageSeeder extends Seeder
                     ['value' => 'ქსელები'],
                     ['value' => 'როუტერი'],
                 ],
+                'schema_type' => 'WebSite',
             ],
 
+            /*
+            |--------------------------------------------------
+            | 🛠️ SERVICES
+            |--------------------------------------------------
+            */
             [
                 'key' => 'services',
                 'slug' => '/services',
@@ -34,8 +45,14 @@ class SeoPageSeeder extends Seeder
                     ['value' => 'IT სერვისი'],
                     ['value' => 'ქსელები'],
                 ],
+                'schema_type' => 'WebPage',
             ],
 
+            /*
+            |--------------------------------------------------
+            | 🔒 PRIVACY
+            |--------------------------------------------------
+            */
             [
                 'key' => 'privacy',
                 'slug' => '/privacy',
@@ -46,8 +63,14 @@ class SeoPageSeeder extends Seeder
                     ['value' => 'პოლიტიკა'],
                     ['value' => 'მონაცემთა დაცვა'],
                 ],
+                'schema_type' => 'WebPage',
             ],
 
+            /*
+            |--------------------------------------------------
+            | 🏢 ABOUT
+            |--------------------------------------------------
+            */
             [
                 'key' => 'about',
                 'slug' => '/about',
@@ -58,8 +81,14 @@ class SeoPageSeeder extends Seeder
                     ['value' => 'IT კომპანია თბილისი'],
                     ['value' => 'სერვისები'],
                 ],
+                'schema_type' => 'WebPage',
             ],
 
+            /*
+            |--------------------------------------------------
+            | 📰 BLOG
+            |--------------------------------------------------
+            */
             [
                 'key' => 'blog',
                 'slug' => '/blog',
@@ -70,13 +99,48 @@ class SeoPageSeeder extends Seeder
                     ['value' => 'IT რჩევები'],
                     ['value' => 'ტექნოლოგიები'],
                 ],
+                'schema_type' => 'WebPage',
+            ],
+
+            /*
+            |--------------------------------------------------
+            | ⚙️ SETTINGS (optional)
+            |--------------------------------------------------
+            */
+            [
+                'key' => 'settings',
+                'slug' => '/settings',
+                'title' => 'პარამეტრები | Safetech',
+                'description' => 'საიტის პარამეტრები და კონფიგურაცია.',
+                'keywords' => [
+                    ['value' => 'settings'],
+                    ['value' => 'config'],
+                ],
+                'schema_type' => 'WebPage',
+            ],
+
+            /*
+            |--------------------------------------------------
+            | 📞 CONTACT PAGE
+            |--------------------------------------------------
+            */
+            [
+                'key' => 'contact-page',
+                'slug' => '/contact-page',
+                'title' => 'კონტაქტი | Safetech',
+                'description' => 'დაგვიკავშირდით ✔ IT სერვისები ✔ სწრაფი პასუხი ✔ კონსულტაცია.',
+                'keywords' => [
+                    ['value' => 'კონტაქტი'],
+                    ['value' => 'IT კონსულტაცია'],
+                ],
+                'schema_type' => 'LocalBusiness',
             ],
 
         ];
 
         foreach ($pages as $page) {
-            SeoPage::updateOrCreate(
-                ['key' => $page['key']], // duplicate არ იქნება
+            \App\Models\SeoPage::updateOrCreate(
+                ['key' => $page['key']],
                 $page
             );
         }

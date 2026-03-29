@@ -7,7 +7,7 @@ use App\Filament\Resources\Settings\Pages\EditSettings;
 use App\Filament\Resources\Settings\Pages\ListSettings;
 use App\Filament\Resources\Settings\Schemas\SettingsForm;
 use App\Filament\Resources\Settings\Tables\SettingsTable;
-use App\Models\Settings;
+use App\Models\Setting;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -16,7 +16,7 @@ use Filament\Tables\Table;
 
 class SettingsResource extends Resource
 {
-    protected static ?string $model = Settings::class;
+    protected static ?string $model = Setting::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 

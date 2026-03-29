@@ -1,12 +1,12 @@
 <?php
 
-use App\Models\Settings;
+use App\Models\Setting;
 use App\Models\SeoPage;
 if (!function_exists('settings')) {
     function settings()
     {
         return cache()->remember('settings', now()->addMinutes(10), function () {
-            return Settings::first();
+            return Setting::first();
         });
     }
 }

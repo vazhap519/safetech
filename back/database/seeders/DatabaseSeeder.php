@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
             SeoPageSeeder::class,
             ContactPageSeeder::class,
             HomeSeeder::class,
-
+SettingsSeeder::class,
         ]);
     }
 }

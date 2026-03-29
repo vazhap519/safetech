@@ -52,90 +52,164 @@ export async function generateMetadata() {
 /* =========================
    PAGE
 ========================= */
+// export default async function Home() {
+//   const data = await getHome({
+//     next: { revalidate: 60 },
+//   });
+
+//   return (
+//     <main>
+
+//       {/* 🔥 JSON-LD */}
+//       <script
+//         type="application/ld+json"
+//         dangerouslySetInnerHTML={{
+//           __html: JSON.stringify({
+//             "@context": "https://schema.org",
+//             "@type": "Organization",
+//             name: "Safetech",
+//             url: "https://safetech.ge",
+//             logo: "https://safetech.ge/logo.png",
+//             contactPoint: {
+//               "@type": "ContactPoint",
+//               telephone: "+995599000000",
+//               contactType: "customer service",
+//             },
+//           }),
+//         }}
+//       />
+
+//       <script
+//         type="application/ld+json"
+//         dangerouslySetInnerHTML={{
+//           __html: JSON.stringify({
+//             "@context": "https://schema.org",
+//             "@type": "LocalBusiness",
+//             name: "Safetech",
+//             areaServed: "Georgia",
+//             telephone: "+995599000000",
+//           }),
+//         }}
+//       />
+// {/* 🟢 HERO */}
+// {hasContent(data?.homeHero) && (
+//   <HeroSection data={data.homeHero} />
+// )}
+
+// {/* 🟡 WHY US */}
+// {hasContent(data?.whyUs) && (
+//   <WhyUs data={data.whyUs} />
+// )}
+
+// {/* 🟢 SERVICES */}
+// {hasContent(data?.services) && (
+//   <ServicesPreview data={data} />
+// )}
+
+// {/* ⚙️ HOW IT WORKS */}
+// {hasContent(data?.howWork) && (
+//   <HowItWorks data={data.howWork} />
+// )}
+
+// {/* 🔵 TRUST (ლოგოები) */}
+// {hasContent(data?.trust) && (
+//   <TrustSection data={data.trust} />
+// )}
+
+// {/* ⭐ TESTIMONIALS */}
+// {hasContent(data?.testimonials) && (
+//   <Testimonials items={data.testimonials} />
+// )}
+
+// {/* 🟣 STATS */}
+// {hasContent(data?.stats) && (
+//   <StatsSection data={data.stats} />
+// )}
+
+// {/* 🔴 CTA */}
+// {hasContent(data?.Cta) && (
+//   <CTASection data={data.Cta} />
+// )}
+
+// {/* ❓ FAQ */}
+// {hasContent(data?.Faq) && (
+//   <FAQ data={data.Faq} />
+// )}
+
+//     </main>
+//   );
+// }
 export default async function Home() {
-  const data = await getHome({
+  const res = await getHome({
     next: { revalidate: 60 },
   });
 
+  const data = res.data;
+  const seo = res.seo;
+
   return (
-    <main>
-
-      {/* 🔥 JSON-LD */}
+    <>
+      {/* ✅ DYNAMIC SCHEMA */}
+   {seo?.schema && (
+  Array.isArray(seo.schema) ? (
+    seo.schema.map((schema, i) => (
       <script
+        key={i}
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            name: "Safetech",
-            url: "https://safetech.ge",
-            logo: "https://safetech.ge/logo.png",
-            contactPoint: {
-              "@type": "ContactPoint",
-              telephone: "+995599000000",
-              contactType: "customer service",
-            },
-          }),
+          __html: JSON.stringify(schema),
         }}
       />
-
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            name: "Safetech",
-            areaServed: "Georgia",
-            telephone: "+995599000000",
-          }),
-        }}
-      />
-{/* 🟢 HERO */}
-{hasContent(data?.homeHero) && (
-  <HeroSection data={data.homeHero} />
+    ))
+  ) : (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(seo.schema),
+      }}
+    />
+  )
 )}
 
-{/* 🟡 WHY US */}
-{hasContent(data?.whyUs) && (
-  <WhyUs data={data.whyUs} />
-)}
+      <main>
 
-{/* 🟢 SERVICES */}
-{hasContent(data?.services) && (
-  <ServicesPreview data={data} />
-)}
+        {hasContent(data?.homeHero) && (
+          <HeroSection data={data.homeHero} />
+        )}
 
-{/* ⚙️ HOW IT WORKS */}
-{hasContent(data?.howWork) && (
-  <HowItWorks data={data.howWork} />
-)}
+        {hasContent(data?.whyUs) && (
+          <WhyUs data={data.whyUs} />
+        )}
 
-{/* 🔵 TRUST (ლოგოები) */}
-{hasContent(data?.trust) && (
-  <TrustSection data={data.trust} />
-)}
+        {hasContent(data?.services) && (
+          <ServicesPreview data={data} />
+        )}
 
-{/* ⭐ TESTIMONIALS */}
-{hasContent(data?.testimonials) && (
-  <Testimonials items={data.testimonials} />
-)}
+        {hasContent(data?.howWork) && (
+          <HowItWorks data={data.howWork} />
+        )}
 
-{/* 🟣 STATS */}
-{hasContent(data?.stats) && (
-  <StatsSection data={data.stats} />
-)}
+        {hasContent(data?.trust) && (
+          <TrustSection data={data.trust} />
+        )}
 
-{/* 🔴 CTA */}
-{hasContent(data?.Cta) && (
-  <CTASection data={data.Cta} />
-)}
+        {hasContent(data?.testimonials) && (
+          <Testimonials items={data.testimonials} />
+        )}
 
-{/* ❓ FAQ */}
-{hasContent(data?.Faq) && (
-  <FAQ data={data.Faq} />
-)}
+        {hasContent(data?.stats) && (
+          <StatsSection data={data.stats} />
+        )}
 
-    </main>
+        {hasContent(data?.Cta) && (
+          <CTASection data={data.Cta} />
+        )}
+
+        {hasContent(data?.Faq) && (
+          <FAQ data={data.Faq} />
+        )}
+
+      </main>
+    </>
   );
 }

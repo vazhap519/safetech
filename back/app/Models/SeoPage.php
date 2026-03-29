@@ -183,4 +183,83 @@ class SeoPage extends Model implements HasMedia
             'keywords' => [],
         ];
     }
+
+    public function getSchemaDataAttribute(): array
+    {
+        /*
+        |------------------------------------------------------------
+        | 1. CUSTOM SCHEMA (FROM ADMIN)
+        |------------------------------------------------------------
+        */
+        if ($this->schema) {
+            return is_array($this->schema)
+                ? $this->schema
+                : json_decode($this->schema, true);
+        }
+
+        /*
+        |------------------------------------------------------------
+        | 2. AUTO SCHEMA (BASED ON TYPE)
+        |------------------------------------------------------------
+        */
+        switch ($this->schema_type) {
+
+            case 'WebSite':
+                return [
+                    [
+                        '@context' => 'https://schema.org',
+                        '@type' => 'Organization',
+                        'name' => config('app.name'),
+                        'url' => config('app.url'),
+                    ],
+                    [
+                        '@context' => 'https://schema.org',
+                        '@type' => 'WebSite',
+                        'name' => config('app.name'),
+                        'url' => config('app.url'),
+                    ],
+                ];
+
+            case 'Article':
+                return [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'Article',
+                    'headline' => $this->title,
+                    'description' => $this->description,
+                    'image' => $this->og_image_url,
+                    'datePublished' => $this->created_at,
+                    'author' => [
+                        '@type' => 'Organization',
+                        'name' => config('app.name'),
+                    ],
+                ];
+
+            case 'LocalBusiness':
+                return [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'LocalBusiness',
+                    'name' => config('app.name'),
+                    'url' => config('app.url'),
+                    'telephone' => '+995599000000',
+                    'areaServed' => 'Georgia',
+                ];
+
+            case 'Service':
+                return [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'Service',
+                    'name' => $this->title,
+                    'description' => $this->description,
+                ];
+
+            default:
+                return [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => $this->title,
+                    'description' => $this->description,
+                    'url' => $this->canonical,
+                ];
+        }
+    }
 }
