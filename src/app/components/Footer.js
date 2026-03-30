@@ -13,7 +13,21 @@ function getFooterTitle(headers, key, fallback) {
 }
 const copy=settings?.copy;
 const contact=settings?.contact
-const servicesRes = await getServices();
+// const servicesRes = await getServices();
+// const services = servicesRes?.data?.services ?? [];
+// const latestServices = services.slice(0, 5);
+
+const API =
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+
+const res = await fetch(`${API}/services?page=1`, {
+  next: { revalidate: 300 },
+});
+
+const servicesRes = await res.json();
+
+
+
 const services = servicesRes?.data?.services ?? [];
 const latestServices = services.slice(0, 5);
 

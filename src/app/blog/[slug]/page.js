@@ -359,7 +359,7 @@ import SEOSection from "@/app/components/SEOSection";
 import { injectInternalLinks } from "@/lib/internalLinks";
 import Share from "../../components/Share";
 import { getCurrentUrl } from "../../../lib/getUrl";
-
+export const dynamic = "force-dynamic";
 const DEFAULT_IMAGE = "/images/blog-placeholder.webp"
 /* =========================
    🔥 METADATA (FINAL FIX)

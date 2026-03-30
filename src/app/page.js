@@ -10,7 +10,7 @@ import Testimonials from "./components/home/Testimonials";
 
 import { getHome, getSeoByKey } from "@/lib/datafetch";
 import { buildMetadata } from "@/lib/seo";
-
+export const revalidate = 60;
 /* =========================
    HELPER
 ========================= */
