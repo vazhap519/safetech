@@ -9,9 +9,15 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
+            // 🔗 RELATION (ჯობია ზემოთ იყოს)
+            $table->foreignId('category_for_service_id')
+                ->nullable()
+                ->constrained('category_for_services')
+                ->nullOnDelete();
 
             $table->string('slug')->unique();
             $table->string('title');
+
             $table->text('description');
             $table->text('short_description');
 $table->longText('long_description');
@@ -28,6 +34,7 @@ $table->longText('long_description');
             $table->json('case_study')->nullable();
             $table->string('cta_title')->nullable();
             $table->string('cta_description')->nullable();
+
             $table->timestamps();
         });
     }

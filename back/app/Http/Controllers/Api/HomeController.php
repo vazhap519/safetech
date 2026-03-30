@@ -288,7 +288,7 @@ class HomeController extends Controller
                     'title' => $serviceSection->service_section_title,
                     'slug' => $serviceSection->slug,
                     'description' => $serviceSection->service_section_description,
-                    'image' => $this->getMediaUrl($serviceSection, 'services'),
+                    'image' => $serviceSection->image,
                 ] : null,
 
                 /* ========================= SERVICES ========================= */
@@ -297,7 +297,7 @@ class HomeController extends Controller
                         'title' => $service->title,
                         'description' => $service->description,
                         'slug' => $service->slug,
-                        'image' => $service->image_url,
+                        'image' => $service->image,
                     ];
                 }),
             ];

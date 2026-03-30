@@ -450,9 +450,49 @@ class BlogController extends Controller
     | 📌 BLOG LIST
     |--------------------------------------------------------------------------
     */
+//    public function index(Request $request): JsonResponse
+//    {
+//        $category = $request->string('category')->toString();
+//        $page = $request->integer('page', 1);
+//
+//        $cacheKey = "blog:index:{$category}:page:{$page}";
+//
+//        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($category) {
+//
+//            $query = Post::query()
+//                ->with([
+//                    'category:id,name,slug',
+//                    'author:id,name',
+//                    'media'
+//                ])
+//                ->where('is_published', true);
+//
+//            if ($category && $category !== 'all') {
+//                $query->whereHas('category', function ($q) use ($category) {
+//                    $q->where('slug', $category);
+//                });
+//            }
+//
+//            $posts = $query->latest()->paginate(9);
+//
+//            return [
+//                'data' => $posts->getCollection()
+//                    ->map(fn($post) => $this->transformPostCard($post)),
+//
+//                'meta' => [
+//                    'current_page' => $posts->currentPage(),
+//                    'last_page' => $posts->lastPage(),
+//                    'per_page' => $posts->perPage(),
+//                    'total' => $posts->total(),
+//                ]
+//            ];
+//        });
+//
+//        return response()->json($data);
+//    }
     public function index(Request $request): JsonResponse
     {
-        $category = $request->string('category')->toString();
+        $category = $request->get('category') ?? 'all';
         $page = $request->integer('page', 1);
 
         $cacheKey = "blog:index:{$category}:page:{$page}";
@@ -467,13 +507,15 @@ class BlogController extends Controller
                 ])
                 ->where('is_published', true);
 
-            if ($category && $category !== 'all') {
+            if ($category !== 'all') {
                 $query->whereHas('category', function ($q) use ($category) {
                     $q->where('slug', $category);
                 });
             }
 
-            $posts = $query->latest()->paginate(9);
+            $posts = $query->latest()->paginate(9)->appends([
+                'category' => $category,
+            ]);
 
             return [
                 'data' => $posts->getCollection()
@@ -484,13 +526,17 @@ class BlogController extends Controller
                     'last_page' => $posts->lastPage(),
                     'per_page' => $posts->perPage(),
                     'total' => $posts->total(),
-                ]
+                ],
+
+                'links' => [
+                    'next' => $posts->nextPageUrl(),
+                    'prev' => $posts->previousPageUrl(),
+                ],
             ];
         });
 
         return response()->json($data);
     }
-
     /*
     |--------------------------------------------------------------------------
     | 📌 SINGLE BLOG (SEO FIXED)

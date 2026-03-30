@@ -7,7 +7,11 @@ export default function FloatingButtons({ settings }) {
   const [open, setOpen] = useState(false);
 
   const phone =
-    settings?.contact?.find((item) => item.type === "phone")?.value;
+    settings?.contact?.find((item) => item.type === "phone")?.value || "";
+
+  const formattedPhone = phone ? `995${phone}` : null;
+
+  if (!formattedPhone) return null; // 🔥 არ აჩვენოს საერთოდ თუ phone არ არის
 
   return (
     <div className="fixed bottom-24 md:bottom-10 right-5 z-50 flex flex-col items-end gap-3">
@@ -23,19 +27,20 @@ export default function FloatingButtons({ settings }) {
 
         {/* WhatsApp */}
         <a
-          href={`https://wa.me/995${phone}`}
+          href={`https://wa.me/${formattedPhone}`}
           target="_blank"
+          rel="noopener noreferrer"
           className="bg-green-500 text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg hover:scale-110 transition"
         >
-          <FaWhatsapp />
+          <FaWhatsapp size={20} />
         </a>
 
         {/* Viber */}
         <a
-          href={`viber://chat?number=995${phone}`}
+          href={`viber://chat?number=${formattedPhone}`}
           className="bg-purple-600 text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg hover:scale-110 transition"
         >
-          <FaViber />
+          <FaViber size={20} />
         </a>
 
       </div>

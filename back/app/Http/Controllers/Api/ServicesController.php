@@ -13,29 +13,118 @@ use Illuminate\Support\Facades\Http;
 class ServicesController extends Controller
 {
 
+//    public function index(Request $request)
+//    {
+//        $page = $request->get('page', 1);
+//        $cacheKey = "services_list_page_{$page}";
+//
+//        /*
+//        |--------------------------------------------------
+//        | 1. CACHE ONLY DATA
+//        |--------------------------------------------------
+//        */
+//        $data = Cache::remember($cacheKey, 300, function () {
+//
+//            $services = Service::query()
+//                ->select([
+//                    'id',
+//                    'title',
+//                    'short_description',
+//                    'slug',
+//                ])
+//                ->with('media')
+//                ->latest()
+//                ->paginate(6);
+//
+//            $serviceHero = ServiceSection::first();
+//
+//            return [
+//                'services' => $services->getCollection()->map(fn($service) => [
+//                    'title' => $service->title,
+//                    'slug' => $service->slug,
+//                    'short_description' => $service->short_description,
+//                    'image' => $service->image,
+//                ]),
+//
+//                'meta' => [
+//                    'current_page' => $services->currentPage(),
+//                    'last_page' => $services->lastPage(),
+//                    'per_page' => $services->perPage(),
+//                    'total' => $services->total(),
+//                ],
+//
+//                'links' => [
+//                    'next' => $services->nextPageUrl(),
+//                    'prev' => $services->previousPageUrl(),
+//                ],
+//
+//                'serviceHero' => $serviceHero ? [
+//                    'title' => $serviceHero->service_section_title,
+//                    'description' => $serviceHero->service_section_description,
+//                    'image' => $serviceHero->image_url ?? null,
+//                ] : null,
+//            ];
+//        });
+//
+//        /*
+//        |--------------------------------------------------
+//        | 2. SEO (OUTSIDE CACHE)
+//        |--------------------------------------------------
+//        */
+//        $seo = SeoPage::getByKey('services');
+//
+//        /*
+//        |--------------------------------------------------
+//        | 3. FINAL RESPONSE
+//        |--------------------------------------------------
+//        */
+//        return response()->json([
+//            'success' => true,
+//
+//            'data' => $data,
+//
+//            'seo' => [
+//                'meta' => $seo?->meta ?? [],
+//                'schema' => $seo?->schema_data ?? [],
+//            ],
+//
+//            'share' => [
+//                'title' => settings()->share_title ?? '',
+//                'buttons' => settings()->share_buttons ?? [],
+//            ],
+//        ]);
+//    }
     public function index(Request $request)
     {
         $page = $request->get('page', 1);
-        $cacheKey = "services_list_page_{$page}";
+        $category = $request->get('category');
 
-        /*
-        |--------------------------------------------------
-        | 1. CACHE ONLY DATA
-        |--------------------------------------------------
-        */
-        $data = Cache::remember($cacheKey, 300, function () {
+        // 🔥 cache key უნდა შეიცვალოს
+        $cacheKey = "services_list_page_{$page}_cat_" . ($category ?? 'all');
 
-            $services = Service::query()
+        $data = Cache::remember($cacheKey, 300, function () use ($category) {
+
+            $query = Service::query()
                 ->select([
                     'id',
                     'title',
                     'short_description',
                     'slug',
+                    'category_for_service_id',
                 ])
-                ->with('media')
-                ->latest()
-                ->paginate(6);
+                ->with(['media', 'category'])
+                ->latest();
 
+            // 🔥 FILTER
+            if ($category) {
+                $query->whereHas('category', function ($q) use ($category) {
+                    $q->where('slug', $category);
+                });
+            }
+
+            $services = $query->paginate(6)->appends([
+                'category' => $category
+            ]);
             $serviceHero = ServiceSection::first();
 
             return [
@@ -44,6 +133,12 @@ class ServicesController extends Controller
                     'slug' => $service->slug,
                     'short_description' => $service->short_description,
                     'image' => $service->image,
+
+                    // 🔥 NEW
+                    'category' => [
+                        'name' => $service->category?->name,
+                        'slug' => $service->category?->slug,
+                    ],
                 ]),
 
                 'meta' => [
@@ -66,35 +161,21 @@ class ServicesController extends Controller
             ];
         });
 
-        /*
-        |--------------------------------------------------
-        | 2. SEO (OUTSIDE CACHE)
-        |--------------------------------------------------
-        */
         $seo = SeoPage::getByKey('services');
 
-        /*
-        |--------------------------------------------------
-        | 3. FINAL RESPONSE
-        |--------------------------------------------------
-        */
         return response()->json([
             'success' => true,
-
             'data' => $data,
-
             'seo' => [
                 'meta' => $seo?->meta ?? [],
                 'schema' => $seo?->schema_data ?? [],
             ],
-
             'share' => [
                 'title' => settings()->share_title ?? '',
                 'buttons' => settings()->share_buttons ?? [],
             ],
         ]);
     }
-
     /*
     |--------------------------------------------------------------------------
     | 🔥 SINGLE

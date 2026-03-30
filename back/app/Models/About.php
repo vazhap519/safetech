@@ -29,7 +29,8 @@ class About extends Model implements HasMedia
         'cta_title',
         'cta_title_description',
         'cta_trust',
-        'cta_phone'
+        'cta_phone',
+
     ];
 
     protected $casts = [
@@ -67,6 +68,7 @@ class About extends Model implements HasMedia
      */
     public function getImageUrlAttribute()
     {
-        return $this->getFirstMediaUrl('hero', 'webp') ?: null;
-    }
+        $url = $this->getFirstMediaUrl('hero', 'webp');
+
+        return $url ? url($url) : null;    }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Settings\Schemas;
 
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -15,7 +16,11 @@ class SettingsForm
     {
         return $schema
             ->components([
-
+                SpatieMediaLibraryFileUpload::make('favicon')
+                    ->collection('favicon')
+                    ->label('Favicon')
+                    ->image()
+                    ->imagePreviewHeight('80'),
                 /*
                 |--------------------------------------------------------------------------
                 | ✅ SHARE (FIXED - CLEAN)

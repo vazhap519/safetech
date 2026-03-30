@@ -17,7 +17,8 @@ class HomeHeroSection extends Model implements HasMedia
         'home_hero_list',
         'home_hero_call_button_text',
         'home_hero_call_button_number',
-        'home_hero_service_button_text'
+        'home_hero_service_button_text',
+        'image_url'
     ];
 
     protected $casts = [
@@ -52,9 +53,10 @@ class HomeHeroSection extends Model implements HasMedia
      */
     public function getImageUrlAttribute()
     {
-        return $this->getFirstMediaUrl('hero', 'webp') ?: null;
-    }
+        $url = $this->getFirstMediaUrl('hero', 'webp');
 
+        return $url ? url($url) : null;
+    }
     /**
      * ✅ Auto formatted phone
      */

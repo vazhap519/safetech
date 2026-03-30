@@ -25,7 +25,8 @@ class Post extends Model implements HasMedia
         'published_year',
         'is_published',
         'seo',
-
+        'category_id',
+        'author_id',
         'faq',
         'schema',
         'seo_author',

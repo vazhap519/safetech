@@ -16,7 +16,7 @@ class Service extends Model implements HasMedia
     protected $fillable = [
         'slug',
         'title',
-
+        'category_for_service_id',
         'phone',
         'button_text',
         'features',
@@ -98,21 +98,12 @@ class Service extends Model implements HasMedia
     }
 
 
-//    public function getImageUrlAttribute()
-//    {
-//        try {
-//            // თუ media არ არსებობს საერთოდ
-//            if (!$this->hasMedia('services')) {
-//                return null;
-//            }
-//
-//            // ❗ არ ვიყენებთ webp-ს (conversion შეიძლება არ იყოს მზად)
-//            return $this->getFirstMediaUrl('services');
-//
-//        } catch (\Throwable $e) {
-//            return null;
-//        }
-//    }
 
-
+    public function category()
+    {
+        return $this->belongsTo(
+            \App\Models\CategoryForService::class,
+            'category_for_service_id'
+        );
+    }
 }

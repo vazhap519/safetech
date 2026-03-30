@@ -75,7 +75,8 @@ class SettingsController extends Controller
             ->values();
 
         return response()->json([
-
+            'favicon' => $settings?->favicon_url,
+            'favicon_version' => $settings?->favicon_version,
             /*
             |--------------------------------------------------------------------------
             | FOOTER
@@ -117,7 +118,11 @@ class SettingsController extends Controller
                 'why_items' => $settings?->contact_page_why_text ?? [],
 
                 'contact_info_title' => $settings?->contact_page_info_title,
+
+
             ],
+
+
         ]);
     }
 }

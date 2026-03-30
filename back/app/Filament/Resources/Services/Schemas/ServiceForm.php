@@ -320,6 +320,39 @@ class ServiceForm
             ========================= */
             Section::make('ძირითადი ინფორმაცია')
                 ->schema([
+                    Select::make('category_for_service_id')
+                        ->label('კატეგორია')
+                        ->relationship('category', 'name')
+                        ->searchable()
+                        ->preload()
+                        ->required()
+
+                        // 🔥 INLINE CREATE FORM
+                        ->createOptionForm([
+
+                            TextInput::make('name')
+                                ->label('Category Name')
+                                ->required()
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    $set('slug', \Illuminate\Support\Str::slug($state));
+                                }),
+
+                            TextInput::make('slug')
+                                ->label('Slug')
+                                ->required()
+                                ->unique(\App\Models\CategoryForService::class, 'slug'),
+
+                        ])
+
+                        // 🔥 SAVE NEW CATEGORY
+                        ->createOptionUsing(function (array $data) {
+
+                            // safety slug
+                            $data['slug'] = \Illuminate\Support\Str::slug($data['name']);
+
+                            return \App\Models\CategoryForService::create($data)->id;
+                        }),
 
                     TextInput::make('title')
                         ->label('სათაური')

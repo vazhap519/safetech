@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
-class Setting extends Model
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+class Setting extends Model   implements HasMedia
 {
+    use InteractsWithMedia;
     protected $fillable = [
         'share_title',
         'share_buttons',
@@ -68,6 +70,26 @@ class Setting extends Model
         'seo'=> 'array',
 
     ];
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('favicon')->singleFile();
+    }
+    public function getFaviconUrlAttribute(): ?string
+    {
+        try {
+            return $this->getFirstMediaUrl('favicon') ?: '/favicon.ico';
+        } catch (\Throwable $e) {
+            return '/favicon.ico';
+        }
+    }
 
-
+    public function getFaviconVersionAttribute(): int
+    {
+        try {
+            $media = $this->getFirstMedia('favicon');
+            return $media?->updated_at?->timestamp ?? 1;
+        } catch (\Throwable $e) {
+            return 1;
+        }
+    }
 }

@@ -30,6 +30,7 @@ const hasContent = (value) => {
 
   return Boolean(value);
 };
+
 /* =========================
    SEO
 ========================= */
@@ -146,7 +147,16 @@ export default async function Home() {
 
   const data = res.data;
   const seo = res.seo;
-
+const isEmpty =
+  !hasContent(data?.homeHero) &&
+  !hasContent(data?.whyUs) &&
+  !hasContent(data?.services) &&
+  !hasContent(data?.howWork) &&
+  !hasContent(data?.trust) &&
+  !hasContent(data?.testimonials) &&
+  !hasContent(data?.stats) &&
+  !hasContent(data?.Cta) &&
+  !hasContent(data?.Faq);
   return (
     <>
       {/* ✅ DYNAMIC SCHEMA */}
@@ -171,7 +181,7 @@ export default async function Home() {
   )
 )}
 
-      <main>
+      {/* <main>
 
         {hasContent(data?.homeHero) && (
           <HeroSection data={data.homeHero} />
@@ -209,7 +219,55 @@ export default async function Home() {
           <FAQ data={data.Faq} />
         )}
 
-      </main>
+      </main> */}
+
+      <main>
+
+  {isEmpty && (
+    <div className="min-h-[60vh] flex items-center justify-center text-center">
+      <p className="text-gray-500">
+        კონტენტი დროებით არ არის
+      </p>
+    </div>
+  )}
+
+  {hasContent(data?.homeHero) && (
+    <HeroSection data={data.homeHero} />
+  )}
+
+  {hasContent(data?.whyUs) && (
+    <WhyUs data={data.whyUs} />
+  )}
+
+  {hasContent(data?.services) && (
+    <ServicesPreview data={data} />
+  )}
+
+  {hasContent(data?.howWork) && (
+    <HowItWorks data={data.howWork} />
+  )}
+
+  {hasContent(data?.trust) && (
+    <TrustSection data={data.trust} />
+  )}
+
+  {hasContent(data?.testimonials) && (
+    <Testimonials items={data.testimonials} />
+  )}
+
+  {hasContent(data?.stats) && (
+    <StatsSection data={data.stats} />
+  )}
+
+  {hasContent(data?.Cta) && (
+    <CTASection data={data.Cta} />
+  )}
+
+  {hasContent(data?.Faq) && (
+    <FAQ data={data.Faq} />
+  )}
+
+</main>
     </>
   );
 }
