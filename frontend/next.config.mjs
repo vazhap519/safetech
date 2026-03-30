@@ -3,7 +3,6 @@ const nextConfig = {
   reactCompiler: true,
 
   images: {
-    // 🔥 დატოვე მხოლოდ თუ იყენებ უკვე WebP + resized backend-ში
     unoptimized: true,
 
     remotePatterns: [
@@ -22,6 +21,13 @@ const nextConfig = {
         hostname: "127.0.0.1",
       },
 
+      // 🔥 შენი რეალური IP (ძალიან მნიშვნელოვანია)
+      {
+        protocol: "http",
+        hostname: "192.168.100.238",
+        port: "8000",
+      },
+
       // API server
       {
         protocol: "http",
@@ -34,7 +40,7 @@ const nextConfig = {
         port: "8000",
       },
 
-      // production API
+      // production
       {
         protocol: "https",
         hostname: "api.safetech.ge",
