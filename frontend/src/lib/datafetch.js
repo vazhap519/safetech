@@ -177,3 +177,9 @@ export const getContact = () =>
   fetcher(buildUrl(`/contact-page`), {
     next: { revalidate: 300, tags: ["contact-page"] },
   });
+  //Empty
+  export const getEmpty=()=>{
+     fetcher(buildUrl(`/blog`, params), {
+    cache: "no-store",
+  });
+  }

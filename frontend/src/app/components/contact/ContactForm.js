@@ -61,51 +61,100 @@ export default function ContactForm() {
   /* =========================
      SUBMIT
   ========================= */
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   // 🔒 honeypot
+  //   if (form.website) return;
+
+  //   const cleaned = {
+  //     ...form,
+  //     phone: form.phone.replace(/\D/g, ""),
+  //   };
+
+  //   const result = schema.safeParse(cleaned);
+
+  //   if (!result.success) {
+  //     const firstError =
+  //       result.error.issues?.[0]?.message || "დაფიქსირდა შეცდომა";
+
+  //     toast.error(firstError);
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   const toastId = toast.loading("იგზავნება...");
+
+  //   try {
+  //     const res = await sendContact(cleaned);
+
+  //     if (res?.error) throw new Error();
+
+  //     toast.success("შეტყობინება გაიგზავნა ✅", { id: toastId });
+
+  //     setForm({
+  //       name: "",
+  //       phone: "",
+  //       message: "",
+  //       website: "",
+  //     });
+
+  //   } catch {
+  //     toast.error("დაფიქსირდა შეცდომა ❌", { id: toastId });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // 🔒 honeypot
-    if (form.website) return;
+  if (form.website) return;
 
-    const cleaned = {
-      ...form,
-      phone: form.phone.replace(/\D/g, ""),
-    };
-
-    const result = schema.safeParse(cleaned);
-
-    if (!result.success) {
-      const firstError =
-        result.error.issues?.[0]?.message || "დაფიქსირდა შეცდომა";
-
-      toast.error(firstError);
-      return;
-    }
-
-    setLoading(true);
-    const toastId = toast.loading("იგზავნება...");
-
-    try {
-      const res = await sendContact(cleaned);
-
-      if (res?.error) throw new Error();
-
-      toast.success("შეტყობინება გაიგზავნა ✅", { id: toastId });
-
-      setForm({
-        name: "",
-        phone: "",
-        message: "",
-        website: "",
-      });
-
-    } catch {
-      toast.error("დაფიქსირდა შეცდომა ❌", { id: toastId });
-    } finally {
-      setLoading(false);
-    }
+  const cleaned = {
+    ...form,
+    phone: form.phone.replace(/\D/g, ""),
   };
 
+  const result = schema.safeParse(cleaned);
+
+  if (!result.success) {
+    const firstError =
+      result.error.issues?.[0]?.message || "დაფიქსირდა შეცდომა";
+
+    toast.error(firstError);
+    return;
+  }
+
+  setLoading(true);
+  const toastId = toast.loading("იგზავნება...");
+
+  try {
+    const res = await sendContact(cleaned);
+
+    // 🔥 FIXED
+    if (!res || !res.success) {
+      throw new Error(res?.message || "Request failed");
+    }
+
+    toast.success("შეტყობინება გაიგზავნა ✅", { id: toastId });
+
+    setForm({
+      name: "",
+      phone: "",
+      message: "",
+      website: "",
+    });
+
+  } catch (err) {
+    toast.error(err?.message || "დაფიქსირდა შეცდომა ❌", {
+      id: toastId,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
 

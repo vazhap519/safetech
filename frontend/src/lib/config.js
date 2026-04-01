@@ -7,5 +7,7 @@ export const getBaseUrl = () => {
     return `https://${process.env.VERCEL_URL}`;
   }
 
-  return "http://localhost:3000";
+ return process.env.NODE_ENV === "development"
+  ? "http://localhost:3000"
+  : "https://safetech.ge";
 };
