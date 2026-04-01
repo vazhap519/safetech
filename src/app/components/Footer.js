@@ -17,8 +17,11 @@ const contact=settings?.contact
 // const services = servicesRes?.data?.services ?? [];
 // const latestServices = services.slice(0, 5);
 
-const API =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API) {
+  throw new Error("❌ NEXT_PUBLIC_API_URL is not defined");
+}
 
 const res = await fetch(`${API}/services?page=1`, {
   next: { revalidate: 300 },
