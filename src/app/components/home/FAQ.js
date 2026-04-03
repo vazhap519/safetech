@@ -7,7 +7,7 @@ export default function FAQ({data}) {
    if (!data) return null;
   const [openIndex, setOpenIndex] = useState(null);
    const [ref, visible] = useFadeIn();
-console.log(data,'ყველაზე ხშირად დასმული კითხვები')
+
 
   return (
     <section
@@ -42,7 +42,7 @@ console.log(data,'ყველაზე ხშირად დასმული
         onClick={() => setOpenIndex(openIndex === i ? null : i)}
         className="w-full flex justify-between items-center p-5 text-left text-white"
       >
-        {faq.q}
+        {faq.question}
         <span className="text-[#00C2A8] text-xl">
           {openIndex === i ? "−" : "+"}
         </span>
@@ -50,7 +50,7 @@ console.log(data,'ყველაზე ხშირად დასმული
 
       {openIndex === i && (
         <div className="px-5 pb-5 text-gray-300 text-sm">
-          {faq.a}
+          {faq.answer}
         </div>
       )}
     </div>

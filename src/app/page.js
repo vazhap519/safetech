@@ -10,6 +10,8 @@ import Testimonials from "./components/home/Testimonials";
 
 import { getHome, getSeoByKey } from "@/lib/datafetch";
 import { buildMetadata } from "@/lib/seo";
+import EmptyState from "../app/components/ui/EmptyState";
+import  { getEmpty } from "@/lib/datafetch";  
 export const revalidate = 60;
 /* =========================
    HELPER
@@ -53,100 +55,15 @@ export async function generateMetadata() {
 /* =========================
    PAGE
 ========================= */
-// export default async function Home() {
-//   const data = await getHome({
-//     next: { revalidate: 60 },
-//   });
 
-//   return (
-//     <main>
-
-//       {/* 🔥 JSON-LD */}
-//       <script
-//         type="application/ld+json"
-//         dangerouslySetInnerHTML={{
-//           __html: JSON.stringify({
-//             "@context": "https://schema.org",
-//             "@type": "Organization",
-//             name: "Safetech",
-//             url: "https://safetech.ge",
-//             logo: "https://safetech.ge/logo.png",
-//             contactPoint: {
-//               "@type": "ContactPoint",
-//               telephone: "+995599000000",
-//               contactType: "customer service",
-//             },
-//           }),
-//         }}
-//       />
-
-//       <script
-//         type="application/ld+json"
-//         dangerouslySetInnerHTML={{
-//           __html: JSON.stringify({
-//             "@context": "https://schema.org",
-//             "@type": "LocalBusiness",
-//             name: "Safetech",
-//             areaServed: "Georgia",
-//             telephone: "+995599000000",
-//           }),
-//         }}
-//       />
-// {/* 🟢 HERO */}
-// {hasContent(data?.homeHero) && (
-//   <HeroSection data={data.homeHero} />
-// )}
-
-// {/* 🟡 WHY US */}
-// {hasContent(data?.whyUs) && (
-//   <WhyUs data={data.whyUs} />
-// )}
-
-// {/* 🟢 SERVICES */}
-// {hasContent(data?.services) && (
-//   <ServicesPreview data={data} />
-// )}
-
-// {/* ⚙️ HOW IT WORKS */}
-// {hasContent(data?.howWork) && (
-//   <HowItWorks data={data.howWork} />
-// )}
-
-// {/* 🔵 TRUST (ლოგოები) */}
-// {hasContent(data?.trust) && (
-//   <TrustSection data={data.trust} />
-// )}
-
-// {/* ⭐ TESTIMONIALS */}
-// {hasContent(data?.testimonials) && (
-//   <Testimonials items={data.testimonials} />
-// )}
-
-// {/* 🟣 STATS */}
-// {hasContent(data?.stats) && (
-//   <StatsSection data={data.stats} />
-// )}
-
-// {/* 🔴 CTA */}
-// {hasContent(data?.Cta) && (
-//   <CTASection data={data.Cta} />
-// )}
-
-// {/* ❓ FAQ */}
-// {hasContent(data?.Faq) && (
-//   <FAQ data={data.Faq} />
-// )}
-
-//     </main>
-//   );
-// }
 export default async function Home() {
   const res = await getHome({
     next: { revalidate: 60 },
   });
 
-  const data = res.data;
-  const seo = res.seo;
+  const data = res?.data || {};
+  const seo = res?.seo || {};
+    const empty = await getEmpty().catch(() => null);
 const isEmpty =
   !hasContent(data?.homeHero) &&
   !hasContent(data?.whyUs) &&
@@ -157,6 +74,13 @@ const isEmpty =
   !hasContent(data?.stats) &&
   !hasContent(data?.Cta) &&
   !hasContent(data?.Faq);
+  
+
+
+  /* 🔥 მთავარი */
+  if (!res || res.error || isEmpty) {
+    return <EmptyState empty={empty} />;
+  }
   return (
     <>
       {/* ✅ DYNAMIC SCHEMA */}
@@ -181,55 +105,11 @@ const isEmpty =
   )
 )}
 
-      {/* <main>
 
-        {hasContent(data?.homeHero) && (
-          <HeroSection data={data.homeHero} />
-        )}
-
-        {hasContent(data?.whyUs) && (
-          <WhyUs data={data.whyUs} />
-        )}
-
-        {hasContent(data?.services) && (
-          <ServicesPreview data={data} />
-        )}
-
-        {hasContent(data?.howWork) && (
-          <HowItWorks data={data.howWork} />
-        )}
-
-        {hasContent(data?.trust) && (
-          <TrustSection data={data.trust} />
-        )}
-
-        {hasContent(data?.testimonials) && (
-          <Testimonials items={data.testimonials} />
-        )}
-
-        {hasContent(data?.stats) && (
-          <StatsSection data={data.stats} />
-        )}
-
-        {hasContent(data?.Cta) && (
-          <CTASection data={data.Cta} />
-        )}
-
-        {hasContent(data?.Faq) && (
-          <FAQ data={data.Faq} />
-        )}
-
-      </main> */}
 
       <main>
 
-  {isEmpty && (
-    <div className="min-h-[60vh] flex items-center justify-center text-center">
-      <p className="text-gray-500">
-        კონტენტი დროებით არ არის
-      </p>
-    </div>
-  )}
+ 
 
   {hasContent(data?.homeHero) && (
     <HeroSection data={data.homeHero} />

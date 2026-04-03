@@ -2,7 +2,10 @@
 import Link from "next/link";
 import { getPrivacy, getSeoByKey } from "@/lib/datafetch";
 import { buildMetadata } from "@/lib/seo";
+import EmptyState from "../components/ui/EmptyState";
+import { getEmpty } from "@/lib/datafetch";
 export const revalidate = 300;
+
 /* =========================
    SEO
 ========================= */
@@ -29,17 +32,28 @@ export default async function PrivacyPage() {
 
   // ✅ unified response
   const res = await getPrivacy();
-
-  if (!res || res.error) {
-    return (
-      <div className="text-center py-20 text-red-500">
-        გვერდი ვერ ჩაიტვირთა 😔
-      </div>
-    );
+let empty = null;
+  try {
+    empty = await getEmpty();
+  } catch {
+    empty = null;
   }
 
-  const data = res.data;
-  const seo = res.seo;
+  if (!res || res.error) {
+    return <EmptyState empty={empty} />;
+  }
+
+  const data = res?.data || {};
+  const seo = res?.seo || {};
+
+  const isEmpty =
+    !data ||
+    Object.keys(data).length === 0 ||
+    !data.content;
+
+  if (isEmpty) {
+    return <EmptyState empty={empty} />;
+  }
 
   return (
     <>

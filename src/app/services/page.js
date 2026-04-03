@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { buildMetadata } from "@/lib/seo";
 import { getServices, getSeoByKey } from "@/lib/datafetch";
-import EmptyState from "../components/ui/EmptyState";
-export const dynamic = "force-dynamic";
 
+export const dynamic = "force-dynamic";
+import EmptyState from "../components/ui/EmptyState";
+import { getEmpty } from "@/lib/datafetch";
 /* =========================
    SEO (SERVICES 🔥)
 ========================= */
@@ -35,14 +36,7 @@ const page = Number(params?.page || 1);
 const category = params?.category || null;
 
 const res = await getServices({ page, category });
-
-  if (!res || res.error) {
-    return (
-      <div className="text-center py-20 text-red-500">
-        სერვისები ვერ ჩაიტვირთა 😔
-      </div>
-    );
-  }
+const empty=await getEmpty()
 
   const data = res.data;
   const seo = res.seo;
@@ -59,13 +53,12 @@ const pages = [];
 for (let i = start; i <= end; i++) {
   pages.push(i);
 }
- if (!hero && services.length === 0) {
-  return (
-    <main>
-      <EmptyState title="სერვისები არ არის დამატებული" />
-    </main>
-  );
-}
+  if (!res || res.error||services.length === 0) {
+    return (
+      <EmptyState empty={empty}/>
+    );
+  }
+
   return (
     <>
       {seo?.schema && (
