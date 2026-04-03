@@ -59,6 +59,9 @@ export default function Header({ settings }) {
             <Link href="/blog" className={linkClass("/blog")}>
               ბლოგი
             </Link>
+               <Link href="/projects" className={linkClass("/projects")}>
+              პროექტები
+            </Link>
             <Link href="/contact" className={linkClass("/contact")}>
               კონტაქტი
             </Link>
@@ -116,7 +119,9 @@ export default function Header({ settings }) {
               <Link href="/blog" onClick={() => setOpen(false)}>
                 ბლოგი
               </Link>
-
+  <Link href="/projects" onClick={() => setOpen(false)}>
+                პროექტები
+              </Link>
               <Link href="/contact" onClick={() => setOpen(false)}>
                 კონტაქტი
               </Link>

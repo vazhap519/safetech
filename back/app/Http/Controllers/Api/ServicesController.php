@@ -13,87 +13,6 @@ use Illuminate\Support\Facades\Http;
 class ServicesController extends Controller
 {
 
-//    public function index(Request $request)
-//    {
-//        $page = $request->get('page', 1);
-//        $cacheKey = "services_list_page_{$page}";
-//
-//        /*
-//        |--------------------------------------------------
-//        | 1. CACHE ONLY DATA
-//        |--------------------------------------------------
-//        */
-//        $data = Cache::remember($cacheKey, 300, function () {
-//
-//            $services = Service::query()
-//                ->select([
-//                    'id',
-//                    'title',
-//                    'short_description',
-//                    'slug',
-//                ])
-//                ->with('media')
-//                ->latest()
-//                ->paginate(6);
-//
-//            $serviceHero = ServiceSection::first();
-//
-//            return [
-//                'services' => $services->getCollection()->map(fn($service) => [
-//                    'title' => $service->title,
-//                    'slug' => $service->slug,
-//                    'short_description' => $service->short_description,
-//                    'image' => $service->image,
-//                ]),
-//
-//                'meta' => [
-//                    'current_page' => $services->currentPage(),
-//                    'last_page' => $services->lastPage(),
-//                    'per_page' => $services->perPage(),
-//                    'total' => $services->total(),
-//                ],
-//
-//                'links' => [
-//                    'next' => $services->nextPageUrl(),
-//                    'prev' => $services->previousPageUrl(),
-//                ],
-//
-//                'serviceHero' => $serviceHero ? [
-//                    'title' => $serviceHero->service_section_title,
-//                    'description' => $serviceHero->service_section_description,
-//                    'image' => $serviceHero->image_url ?? null,
-//                ] : null,
-//            ];
-//        });
-//
-//        /*
-//        |--------------------------------------------------
-//        | 2. SEO (OUTSIDE CACHE)
-//        |--------------------------------------------------
-//        */
-//        $seo = SeoPage::getByKey('services');
-//
-//        /*
-//        |--------------------------------------------------
-//        | 3. FINAL RESPONSE
-//        |--------------------------------------------------
-//        */
-//        return response()->json([
-//            'success' => true,
-//
-//            'data' => $data,
-//
-//            'seo' => [
-//                'meta' => $seo?->meta ?? [],
-//                'schema' => $seo?->schema_data ?? [],
-//            ],
-//
-//            'share' => [
-//                'title' => settings()->share_title ?? '',
-//                'buttons' => settings()->share_buttons ?? [],
-//            ],
-//        ]);
-//    }
     public function index(Request $request)
     {
         $page = $request->get('page', 1);
@@ -102,7 +21,7 @@ class ServicesController extends Controller
         // 🔥 cache key უნდა შეიცვალოს
         $cacheKey = "services_list_page_{$page}_cat_" . ($category ?? 'all');
 
-        $data = Cache::remember($cacheKey, 300, function () use ($category) {
+        $data = Cache::remember($cacheKey, 30, function () use ($category) {
 
             $query = Service::query()
                 ->select([
@@ -183,10 +102,21 @@ class ServicesController extends Controller
     */
     public function show($slug)
     {
-        $cacheKey = "service_{$slug}";
-
-        $service = Cache::remember($cacheKey, 300, function () use ($slug) {
+        $service = Cache::remember("service_{$slug}", 30, function () use ($slug) {
             return Service::query()
+                ->select([
+                    'id',
+                    'slug',
+                    'title',
+                    'short_description',
+                    'long_description',
+                    'features',
+                    'faq',
+                    'phone',
+                    'button_text',
+                    'cta_title',
+                    'cta_description',
+                ])
                 ->with('media')
                 ->where('slug', $slug)
                 ->first();
@@ -196,22 +126,43 @@ class ServicesController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
-        // ✅ 🔥 SHARE TRANSFORM (CRITICAL FIX)
-        $shareButtons = collect(settings()->share_buttons ?? [])
-            ->map(function ($btn) {
-                return $this->shareMap()[$btn['type']] ?? null;
+        // 🔥 SHARE BUILD (clean + dynamic)
+        $url = url("/services/{$service->slug}");
+
+        $shareButtons = collect($this->shareMap())
+            ->map(function ($btn) use ($url) {
+                return [
+                    'name' => $btn['name'],
+                    'icon' => $btn['icon'],
+                    'color' => $btn['color'],
+                    'url' => str_replace('{url}', urlencode($url), $btn['url']),
+                ];
             })
-            ->filter()
             ->values();
 
         return response()->json([
-            'service' => $this->transformService($service),
+            'service' => [
+                'title' => $service->title,
+                'short_description' => $service->short_description,
+                'long_description' => $service->long_description,
 
-            // ✅ FIXED STRUCTURE
-            'share' => [
-                'share_title' => settings()->share_title ?? null,
-                'share_buttons' => $shareButtons,
+                'image' => $service->image,
+
+                'features' => $service->features ?? [],
+                'faq' => $service->faq ?? [],
+
+                'phone' => $service->phone,
+                'button_text' => $service->button_text,
+
+                'cta_title' => $service->cta_title,
+                'cta_description' => $service->cta_description,
             ],
+
+            // ✅ CLEAN SHARE OUTPUT
+            'share' => [
+                'url' => $url,
+                'buttons' => $shareButtons,
+            ]
         ]);
     }
     private function shareMap()

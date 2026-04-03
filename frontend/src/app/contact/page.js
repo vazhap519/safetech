@@ -104,7 +104,8 @@ import ContactForm from "@/app/components/contact/ContactForm";
 import ContactWhyUs from "@/app/components/contact/ContactWhyUs";
 
 import { getContact, getSeoByKey } from "@/lib/datafetch";
-
+import EmptyState from "../components/ui/EmptyState";
+import { getEmpty } from "@/lib/datafetch";
 export const revalidate = 300;
 
 /* =========================
@@ -142,17 +143,38 @@ export async function generateMetadata() {
 export default async function ContactPage() {
   const res = await getContact();
 
-  // 🔥 FIX: აღარ ვიყენებთ res.error
-  if (!res) {
-    return (
-      <div className="text-center py-20 text-red-500">
-        გვერდი ვერ ჩაიტვირთა 😔
-      </div>
-    );
-  }
 
   const data = res?.data || {};
   const seo = res?.seo || {};
+
+
+  let empty = null;
+  try {
+    empty = await getEmpty();
+  } catch {
+    empty = null;
+  }
+
+  /* ❌ ERROR */
+  if (!res || res.error) {
+    return <EmptyState empty={empty} />;
+  }
+
+ 
+
+  /* 📭 EMPTY DATA (შენი სტრუქტურის მიხედვით) */
+  const isEmpty =
+    !data ||
+    Object.keys(data).length === 0;
+
+  if (isEmpty) {
+    return <EmptyState empty={empty} />;
+  }
+
+
+
+
+
 
   return (
     <>

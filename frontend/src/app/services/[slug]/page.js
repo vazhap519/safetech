@@ -1,5 +1,5 @@
-
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { getService } from "@/lib/datafetch";
 
 import FeaturesSection from "@/app/components/services/FeaturesSection";
@@ -8,60 +8,46 @@ import Share from "@/app/components/Share";
 import ServiceHero from "../../components/services/ServiceHero";
 import Short from "../../components/services/Short";
 import LongDesc from "../../components/services/LongDesc";
-import ProblemsSection from "@/app/components/services/ProblemsSection";
-import ResultsSection from "@/app/components/services/ResultsSection";
-import TestimonialsSection from "@/app/components/services/TestimonialsSection";
 import CTASection from "@/app/components/services/CTASection";
-import CaseStudySection from "@/app/components/services/CaseStudySection";
 import { getCurrentUrl } from "../../../lib/getUrl";
 
 const DEFAULT_IMAGE = "/images/service-placeholder.webp";
 
+/* 🔥 CACHE (CRITICAL FIX) */
+const getServiceCached = cache(async (slug) => {
+  return await getService(slug);
+});
+
 /* =========================
-   🔥 METADATA (FINAL FIX)
+   🔥 METADATA (OPTIMIZED)
 ========================= */
 export async function generateMetadata({ params }) {
   const { slug } = await params;
 
   if (!slug) return {};
 
-  const data = await getService(slug);
+  const data = await getServiceCached(slug);
 
   if (!data || data.error || !data.service) {
     return {};
   }
 
   const service = data.service;
-  const seo = service?.seo?.meta || {};
 
-  const title = seo.title || service.title;
-
+  const title = service.title;
   const description =
-    seo.description ||
-    service.short_description ||
-    service.long_description;
+    service.short_description || service.long_description;
 
-  // ✅ აღარ ვამატებთ BASE_URL-ს
-  const image =
-    service.image ||
-    DEFAULT_IMAGE;
+  const image = service.image || DEFAULT_IMAGE;
 
-  // ✅ 🔥 მთავარი FIX
   const url = await getCurrentUrl(`/services/${slug}`);
-
-  const keywords = Array.isArray(seo.keywords)
-    ? seo.keywords.join(", ")
-    : "";
 
   return {
     title,
     description,
-    keywords,
-
     alternates: {
       canonical: url,
     },
-
     openGraph: {
       title,
       description,
@@ -76,7 +62,6 @@ export async function generateMetadata({ params }) {
         },
       ],
     },
-
     twitter: {
       card: "summary_large_image",
       title,
@@ -87,41 +72,34 @@ export async function generateMetadata({ params }) {
 }
 
 /* =========================
-   🔥 SCHEMA (FIXED)
+   🔥 SCHEMA
 ========================= */
 function buildServiceSchema(service, url) {
   return {
     "@context": "https://schema.org",
     "@type": "Service",
-
     name: service.title,
-
     description:
       service.short_description || service.long_description,
-
-    // ✅ აღარ ვამატებთ BASE_URL-ს
     image: service.image || DEFAULT_IMAGE,
-
     url,
-
     provider: {
       "@type": "Organization",
       name: "Safetech",
-
-      // ✅ აქაც არ გვჭირდება BASE_URL
-      url: url,
+      url,
     },
   };
 }
+
 /* =========================
-   PAGE
+   🚀 PAGE (FAST)
 ========================= */
 export default async function ServicePage({ params }) {
   const { slug } = await params;
 
   if (!slug) return notFound();
 
-  const data = await getService(slug);
+  const data = await getServiceCached(slug);
 
   if (!data || data.error || !data.service) {
     return notFound();
@@ -129,7 +107,8 @@ export default async function ServicePage({ params }) {
 
   const service = data.service;
 
-const url = await getCurrentUrl(`/services/${slug}`);
+  const url = await getCurrentUrl(`/services/${slug}`);
+
   const features = Array.isArray(service.features)
     ? service.features
     : [];
@@ -138,10 +117,6 @@ const url = await getCurrentUrl(`/services/${slug}`);
     ? service.faq
     : [];
 
-  const short = service?.short_description;
-  const long = service?.long_description;
-
-  /* 🔥 SCHEMA */
   const serviceSchema = buildServiceSchema(service, url);
 
   const faqSchema =
@@ -181,40 +156,25 @@ const url = await getCurrentUrl(`/services/${slug}`);
         />
       )}
 
+      {/* 🔥 HERO (აქ არის image) */}
       <ServiceHero service={service} />
 
-      {/* ✅ CRITICAL FIX */}
-      <Share data={data?.share ?? {}} url={url} />
-
-      <Short short={short} />
-
-      {service.problems?.length > 0 && (
-        <ProblemsSection problems={service.problems} />
-      )}
+      <Short short={service.short_description} />
 
       {features.length > 0 && (
         <FeaturesSection features={features} />
       )}
 
-      {service.results?.length > 0 && (
-        <ResultsSection results={service.results} />
-      )}
-
-      {service.case_study?.title && (
-        <CaseStudySection data={service.case_study} />
-      )}
-
-      {service.testimonials?.length > 0 && (
-        <TestimonialsSection items={service.testimonials} />
-      )}
-
-      <LongDesc long={long} />
+      <LongDesc long={service.long_description} />
 
       {faq.length > 0 && (
         <FAQSection faq={faq} />
       )}
 
       <CTASection service={service} />
+
+      {/* 🔥 SHARE */}
+      <Share data={data?.share ?? {}} url={url} />
 
     </main>
   );

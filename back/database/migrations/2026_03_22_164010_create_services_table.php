@@ -9,7 +9,7 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-            // 🔗 RELATION (ჯობია ზემოთ იყოს)
+
             $table->foreignId('category_for_service_id')
                 ->nullable()
                 ->constrained('category_for_services')
@@ -18,27 +18,26 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('title');
 
-            $table->text('description');
-            $table->text('short_description');
-$table->longText('long_description');
-            $table->string('phone')->nullable(); // 🔥 ახალი
-            $table->string('button_text')->nullable(); // 🔥 ახალი
+            $table->text('short_description'); // 🔥 მთავარი ტექსტი
+            $table->longText('long_description')->nullable(); // optional
 
-            $table->json('features')->nullable(); // 🔥 nullable
-            $table->json('faq')->nullable(); // 🔥 nullable
+            $table->string('phone')->nullable();
+            $table->string('button_text')->default('დაგვიკავშირდი');
+
+            // ✅ მინიმალური dynamic content
+            $table->json('features')->nullable(); // max 3-5
+            $table->json('faq')->nullable();
+
+            // ✅ SEO untouched
             $table->json('seo')->nullable();
 
-            $table->json('problems')->nullable();
-            $table->json('results')->nullable();
-            $table->json('testimonials')->nullable();
-            $table->json('case_study')->nullable();
+            // 🔥 CTA (ძალიან მნიშვნელოვანი)
             $table->string('cta_title')->nullable();
             $table->string('cta_description')->nullable();
 
             $table->timestamps();
         });
     }
-
     public function down(): void
     {
         Schema::dropIfExists('services');

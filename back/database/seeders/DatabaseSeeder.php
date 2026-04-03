@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             ContactPageSeeder::class,
             HomeSeeder::class,
 SettingsSeeder::class,
+            ProjectSeeder::class,
         ]);
     }
 }

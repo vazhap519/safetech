@@ -6,6 +6,8 @@ import AboutWhyUs from "../components/about/AboutWhyUs";
 
 import { getAbout, getSeoByKey } from "@/lib/datafetch";
 import { buildMetadata } from "@/lib/seo";
+import EmptyState from "../components/ui/EmptyState";
+import { getEmpty } from "@/lib/datafetch";
 export const revalidate = 300;
 /* =========================
    SEO
@@ -33,14 +35,8 @@ export default async function AboutPage() {
 
   // ✅ backend unified response (როგორც services/blog)
   const res = await getAbout();
+const empty=await getEmpty();
 
-  if (!res || res.error) {
-    return (
-      <div className="text-center py-20 text-red-500">
-        გვერდი ვერ ჩაიტვირთა 😔
-      </div>
-    );
-  }
 
   const data = res.data;
   const seo = res.seo;
@@ -49,7 +45,16 @@ export default async function AboutPage() {
   const Story = data?.Story;
   const Why = data?.Why;
   const Cta = data?.Cta;
+const isEmpty =
+  !Hero ||
+  !Story ||
+  !Why ||
+  !Cta ||
+  Cta.length === 0;
 
+if (!res || res.error || isEmpty) {
+  return <EmptyState empty={empty} />;
+}
   return (
     <>
       {/* 🔥 DYNAMIC SCHEMA */}

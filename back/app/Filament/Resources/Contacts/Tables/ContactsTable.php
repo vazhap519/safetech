@@ -43,8 +43,7 @@ class ContactsTable
 
             ->defaultSort('created_at', 'desc')
 
-            ->rowClasses(fn ($record) => !$record->is_read ? 'bg-green-50' : null)
-
+            ->recordClasses(fn ($record) => !$record->is_read ? 'bg-green-50' : null)
             ->filters([
                 //
             ])

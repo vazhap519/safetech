@@ -12,36 +12,25 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class Service extends Model implements HasMedia
 {
     use InteractsWithMedia, HasFactory;
-
     protected $fillable = [
         'slug',
         'title',
         'category_for_service_id',
+        'short_description',
+        'long_description',
         'phone',
         'button_text',
         'features',
         'faq',
         'seo',
-        'short_description',
-         'description',
-'long_description',
-
-        'problems',
-'results',
-'testimonials',
-'case_study',
-'cta_title',
-'cta_description',
+        'cta_title',
+        'cta_description',
     ];
 
     protected $casts = [
         'features' => 'array',
         'faq' => 'array',
         'seo' => 'array',
-        'problems'=>'array',
-'results'=>'array',
-'testimonials'=>'array',
-'case_study'=>'array',
     ];
 
     /*

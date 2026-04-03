@@ -8,6 +8,9 @@ class EmptyPage extends Model
 {
     protected $fillable = [
         'socials',
+        'title',
+'description',
+'coming_soon',
     ];
 
     protected $casts = [

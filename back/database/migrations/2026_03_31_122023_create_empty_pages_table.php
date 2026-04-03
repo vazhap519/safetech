@@ -15,7 +15,9 @@ return new class extends Migration
             $table->id();
 
             $table->json('socials')->nullable(); // 🔥 მთავარი ნაწილი
-
+$table->longText('title')->nullable();
+$table->longText('description')->nullable();
+$table->longText('coming_soon')->nullable();
             $table->timestamps();
         });
     }

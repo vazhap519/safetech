@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ContactSectionController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\PrivacyController;
+use App\Http\Controllers\Api\ProjectsController;
 use App\Http\Controllers\Api\SeoController;
 use App\Http\Controllers\Api\ServicesController;
 
@@ -25,6 +26,14 @@ Route::get('/seo/{key}', [SeoController::class, 'show']);
 Route::get('/services/{slug}', [ServicesController::class, 'show'])->name('service');
 Route::get('/blog/{slug}', [\App\Http\Controllers\Api\BlogController::class, 'show']);
 
+Route::get('/empty', [\App\Http\Controllers\Api\EmptyController::class, 'index'])->name('empty');
+Route::post('/contact', [ContactController::class, 'store']);
+Route::get('/projects', [ProjectsController::class, 'index']);
+Route::get('/project-categories', [ProjectsController::class, 'categories']);
+Route::get('/projects/{slug}', [ProjectsController::class, 'show']);
+Route::get('/projects/{slug}/related', [ProjectsController::class, 'related']);
+
+
 // 🔥 REVALIDATE ROUTES
 Route::post('/home/revalidate', [HomeController::class, 'revalidate']);
 
@@ -41,4 +50,29 @@ Route::get('/categories', function () {
         $q->where('is_published', true);
     })->select('name', 'slug')->get();
 });
-Route::post('/contact', [ContactController::class, 'store']);
+
+Route::get('/manifest.json', function () {
+    $settings = \App\Models\Setting::first();
+
+    return response()->json([
+        "name" => config('app.name'),
+        "short_name" => config('app.name'),
+        "start_url" => "/",
+        "display" => "standalone",
+        "background_color" => "#ffffff",
+        "theme_color" => "#000000",
+        "icons" => [
+            [
+                "src" => $settings?->getFirstMediaUrl('favicon', 'android_192'),
+                "sizes" => "192x192",
+                "type" => "image/png"
+            ],
+            [
+                "src" => $settings?->getFirstMediaUrl('favicon', 'android_512'),
+                "sizes" => "512x512",
+                "type" => "image/png"
+            ]
+        ]
+    ]);
+});
+

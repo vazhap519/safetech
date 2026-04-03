@@ -14,6 +14,11 @@ class EmptyPageForm
     {
         return $schema
             ->components([
+                Section::make('empty_page_content')->label('ცარიელი გვერდის კონტენტი')->schema([
+                    TextInput::make('title')->label('სათაური'),
+                    TextInput::make('description')->label('აღწერა'),
+                    TextInput::make('coming_soon')->label('მალე დავბრუნდებით ტექქსტი'),
+                ]),
                 Section::make('Social Links')
                     ->schema([
 

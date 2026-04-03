@@ -29,4 +29,6 @@ if (!function_exists('geoToLatin')) {
     {
         return SeoPage::getByKey($key);
     }
+
+
 }

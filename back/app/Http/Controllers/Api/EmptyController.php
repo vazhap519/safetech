@@ -12,8 +12,15 @@ class EmptyController extends Controller
     {
         $data = EmptyPage::first();
 
-        return response()->json([
-            'data' => $data,
-        ]);
+        if (!$data) {
+            return response()->json([
+                'title' => null,
+                'description' => null,
+                'coming_soon' => null,
+                'social' => [],
+            ]);
+        }
+
+        return response()->json($data);
     }
 }
