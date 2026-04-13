@@ -2,10 +2,10 @@
 import useFadeIn from "../../hooks/useFadeIn";
 
 export default function HowItWorks({data}) {
-   if (!data) return null;
+
    const [ref, visible] = useFadeIn();
   
-
+   if (!data) return null;
   return (
     <section
    

@@ -8,7 +8,7 @@ import Footer from "./components/Footer";
 import { getSettings } from "@/lib/datafetch";
 import { Toaster } from "react-hot-toast";
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_API_URL;
 /* =========================
    FONT
 ========================= */
@@ -31,7 +31,7 @@ export async function generateMetadata() {
       process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
     ),
 
-    manifest: `${API_URL}/api/manifest.json`, // ✅ GLOBAL
+    manifest: `${API_URL}/manifest.json`, // ✅ GLOBAL
 
     icons: {
       icon: [

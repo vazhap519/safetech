@@ -51,11 +51,7 @@ export default function EmptyState({
   description,
   coming_soon,
 }) {
-  const [year, setYear] = useState(null);
-
-  useEffect(() => {
-    setYear(new Date().getFullYear());
-  }, []);
+const year = new Date().getFullYear();
 
   /* 🔥 TEXT FALLBACK */
   const finalTitle =
@@ -118,7 +114,7 @@ export default function EmptyState({
         </div>
 
         <p className="text-xs text-gray-400 mt-6">
-          © {year || ""}
+          © {year}
         </p>
       </div>
     </div>

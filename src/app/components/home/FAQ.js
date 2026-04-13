@@ -4,10 +4,10 @@ import { useState } from "react";
 import useFadeIn from "../../hooks/useFadeIn";
  
 export default function FAQ({data}) {
-   if (!data) return null;
+    const [ref, visible] = useFadeIn();
   const [openIndex, setOpenIndex] = useState(null);
-   const [ref, visible] = useFadeIn();
 
+  if (!data) return null;
 
   return (
     <section

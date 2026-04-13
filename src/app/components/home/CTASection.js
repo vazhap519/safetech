@@ -2,8 +2,9 @@
 import Link from "next/link";
 import useFadeIn from "../../hooks/useFadeIn";
 export default function CTASection({data}) {
-   if (!data) return null;
+  
    const [ref, visible] = useFadeIn();
+    if (!data) return null;
   return (
 
 

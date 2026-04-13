@@ -1,93 +1,3 @@
-// "use client";
-// import useFadeIn from "../../hooks/useFadeIn";
-// import {
-//   FaBolt,
-//   FaTools,
-//   FaShieldAlt,
-//   FaStar,
-//   FaMapMarkerAlt,
-//   FaHeadset,
-//   FaClock,
-//   FaRocket,
-//   FaCogs,
-//   FaCode,
-//   FaChartLine,
-//   FaUsers,
-//   FaLock,
-//   FaCheckCircle,
-//   FaLightbulb,
-//   FaCloud,
-//   FaDatabase,
-// } from "react-icons/fa";
-// const iconMap = {
-//   zap: FaBolt,
-//   tools: FaTools,
-//   shield: FaShieldAlt,
-//   star: FaStar,
-//   map: FaMapMarkerAlt,
-//   support: FaHeadset,
-//   clock: FaClock,
-//   rocket: FaRocket,
-
-//   settings: FaCogs,
-//   code: FaCode,
-//   chart: FaChartLine,
-//   team: FaUsers,
-//   lock: FaLock,
-//   verified: FaCheckCircle,
-//   idea: FaLightbulb,
-//   cloud: FaCloud,
-//   data: FaDatabase,
-// };
-// export default function WhyUs({ data }) {
-//   if (!data) return null;
-
-//   const [ref, visible] = useFadeIn();
-
-//   return (
-//     <section
-//   ref={ref}
-//   className={`py-24 bg-[#071E2F] text-white transition-all duration-700 ${
-//     visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-//   }`}
-// >
-//   <div className="max-w-7xl mx-auto px-6">
-
-//     <div className="text-center max-w-2xl mx-auto">
-//       <h2 className="text-4xl font-bold">{data.title}</h2>
-//       <p className="text-gray-400 mt-3">{data.description}</p>
-//     </div>
-
-//     <div className="grid md:grid-cols-4 gap-6 mt-16">
-//       {data.items.map((item, i) => (
-//         <div
-//           key={i}
-//           className="group p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-all hover:-translate-y-2 hover:shadow-2xl"
-//         >
-//           <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-[#00C2A8]/20 text-xl">
-//             {(() => {
-//     const Icon = iconMap[item.icon];
-//     return Icon ? <Icon size={22} /> : <FaBolt />;
-//   })()}
-//           </div>
-
-//           <h3 className="mt-4 font-semibold text-white group-hover:text-[#00C2A8]">
-//             {item.title}
-//           </h3>
-
-//           <p className="text-sm text-gray-400 mt-2">
-//             {item.description}
-//           </p>
-
-//           <div className="mt-4 h-[2px] w-0 bg-[#00C2A8] group-hover:w-full transition-all"></div>
-//         </div>
-//       ))}
-//     </div>
-
-//   </div>
-// </section>
-//   );
-// }
 
 
 
@@ -121,9 +31,9 @@ const iconMap = {
 };
 
 export default function WhyUs({ data }) {
-  if (!data) return null;
 
   const [ref, visible] = useFadeIn();
+  if (!data) return null;
 
   return (
   <section

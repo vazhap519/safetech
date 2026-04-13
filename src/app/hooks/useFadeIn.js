@@ -4,13 +4,11 @@ import { useEffect, useRef, useState } from "react";
 
 export default function useFadeIn(options = {}) {
   const ref = useRef(null);
-
   const [visible, setVisible] = useState(false);
-  const [mounted, setMounted] = useState(false); // 🔥 მთავარი fix
+
+  const { threshold = 0.15, rootMargin = "0px 0px -80px 0px" } = options;
 
   useEffect(() => {
-    setMounted(true); // 🔥 hydration fix
-
     const element = ref.current;
     if (!element) return;
 
@@ -21,18 +19,15 @@ export default function useFadeIn(options = {}) {
           observer.unobserve(element);
         }
       },
-      {
-        threshold: options.threshold || 0.15,
-        rootMargin: options.rootMargin || "0px 0px -80px 0px",
-      }
+      { threshold, rootMargin }
     );
 
     observer.observe(element);
 
     return () => {
-      if (element) observer.unobserve(element);
+      observer.disconnect();
     };
-  }, []);
+  }, [threshold, rootMargin]); // ✅ eslint fix
 
-  return [ref, mounted && visible]; // 🔥 critical change
+  return [ref, visible]; // ✅ clean return
 }

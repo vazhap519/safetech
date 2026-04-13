@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,16 +6,19 @@ import useFadeIn from "@/app/hooks/useFadeIn";
 export default function AboutStory({ Story }) {
   const [ref, visible] = useFadeIn();
 
-  // ✅ CLEAN COUNTER (NO LOOP)
+  // ? FIXED COUNTER (SAFE + NO CRASH)
   function Counter({ value, isVisible, duration = 1500 }) {
     const [count, setCount] = useState(0);
 
     useEffect(() => {
       if (!isVisible) return;
 
-      let start = 0;
-      const end = parseInt(value?.toString().replace(/\D/g, ""));
-      if (!end) return;
+      const end = Number(value) || 0;
+
+      if (end === 0) {
+        setCount(0);
+        return;
+      }
 
       const stepTime = 16;
       const totalSteps = duration / stepTime;
@@ -87,43 +87,54 @@ export default function AboutStory({ Story }) {
           {/* STATS */}
           <div className="grid grid-cols-2 gap-6">
 
-            {Story?.stats?.map((item, i) => {
-              const raw = item?.story_stats_numbers || "";
-              const number = raw.toString().replace(/\D/g, "");
-              const suffix = raw.toString().replace(/[0-9]/g, "");
+            {Array.isArray(Story?.stats) &&
+              Story.stats.map((item, i) => {
 
-              return (
-                <div
-                  key={i}
-                  className={`
-                    group
-                    bg-white
-                    border border-gray-200
-                    rounded-2xl
-                    p-6
-                    text-center
-                    transition-all duration-300
-                    hover:-translate-y-2
-                    hover:shadow-xl
-                    ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}
-                  `}
-                  style={{ transitionDelay: `${i * 120}ms` }}
-                >
+                // ? SAFE RAW VALUE
+                const raw = item?.story_stats_numbers ?? "";
 
-                  {/* NUMBER */}
-                  <h3 className="text-3xl font-bold text-[#00C2A8]">
-                    <Counter value={number} isVisible={visible} />
-                    {suffix}
-                  </h3>
+                // ? SAFE SPLIT (NUMBER + SUFFIX)
+                const match = String(raw).match(/^(\d+)(.*)$/);
 
-                  {/* LABEL */}
-                  <p className="text-sm text-gray-500 mt-2">
-                    {item?.story_stats_label}
-                  </p>
+                const number = match?.[1] ?? "0";
+                const suffix = match?.[2] ?? "";
 
-                </div>
-              );
-            })}
+                return (
+                  <div
+                    key={i}
+                    className={`
+                      group
+                      bg-white
+                      border border-gray-200
+                      rounded-2xl
+                      p-6
+                      text-center
+                      transition-all duration-300
+                      hover:-translate-y-2
+                      hover:shadow-xl
+                      ${
+                        visible
+                          ? "opacity-100 translate-y-0"
+                          : "opacity-0 translate-y-10"
+                      }
+                    `}
+                    style={{ transitionDelay: `${i * 120}ms` }}
+                  >
+
+                    {/* NUMBER */}
+                    <h3 className="text-3xl font-bold text-[#00C2A8]">
+                      <Counter value={number} isVisible={visible} />
+                      {suffix}
+                    </h3>
+
+                    {/* LABEL */}
+                    <p className="text-sm text-gray-500 mt-2">
+                      {item?.story_stats_label ?? ""}
+                    </p>
+
+                  </div>
+                );
+              })}
 
           </div>
 
