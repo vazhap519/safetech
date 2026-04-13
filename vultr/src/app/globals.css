@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+:root {
+  --background: #071A2B;
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  --color-primary: #00C2FF;
+  --color-darkbg: #071A2B;
+  --color-card: #0F2538;
+  --color-footer: #050F1A;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+
+/* FONT */
+
+body{
+  font-family:'Inter', sans-serif;
+}
+
+/* SMOOTH SCROLL */
+
+html{
+  scroll-behavior:smooth;
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards;
+}
+.fade-base {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease;
+}
+
+.fade-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+input, textarea {
+  transition: all 0.2s ease;
+}
+
+input:focus, textarea:focus {
+  transform: scale(1.01);
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  display: flex;
+  width: max-content;
+  animation: scroll 25s linear infinite;
+}
+
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

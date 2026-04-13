@@ -33,7 +33,24 @@ Route::get('/project-categories', [ProjectsController::class, 'categories']);
 Route::get('/projects/{slug}', [ProjectsController::class, 'show']);
 Route::get('/projects/{slug}/related', [ProjectsController::class, 'related']);
 
+Route::get('/service-categories', function () {
+    return \App\Models\CategoryForService::select('name', 'slug')->get();
+});
+Route::get('/seo-links', function () {
 
+    $services = \App\Models\Service::with('category')->get();
+
+    return $services->map(function ($service) {
+        return [
+            'keywords' => [
+                $service->title,
+                $service->category?->name,
+            ],
+            'url' => '/services/' . $service->slug,
+            'priority' => 1,
+        ];
+    });
+});
 // 🔥 REVALIDATE ROUTES
 Route::post('/home/revalidate', [HomeController::class, 'revalidate']);
 
