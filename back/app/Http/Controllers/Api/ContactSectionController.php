@@ -67,33 +67,107 @@ class ContactSectionController extends Controller
 //    }
 
 
+//    public function index()
+//    {
+//        try {
+//            $data = Cache::remember('contact_page', 300, function () {
+//                return ContactSection::first()?->toArray();
+//            });
+//
+//            $seo = null;
+//
+//            try {
+//                $seo = SeoPage::getByKey('contact');
+//            } catch (\Throwable $e) {}
+//
+//            return response()->json([
+//                'data' => [
+//                    'hero' => $data['contact_page_hero_title'] ? [
+//                        'title' => $data['contact_page_hero_title'],
+//                        'text' => $data['contact_page_hero_text'],
+//                    ] : null,
+//
+//                    'phone' => $data['contact_page_number'] ?? null,
+//
+//                    'why' => [
+//                        'title' => $data['contact_page_why_title'] ?? null,
+//                        'items' => $data['contact_page_why_text'] ?? [],
+//                    ],
+//
+//                    'info' => [
+//                        'title' => $data['contact_page_info_title'] ?? null,
+//                        'whatsapp' => $data['contact_page_whatsapp'] ?? null,
+//                        'viber' => $data['contact_page_viber'] ?? null,
+//                        'email' => $data['contact_page_email'] ?? null,
+//                        'address' => $data['contact_page_address'] ?? null,
+//                    ],
+//                ],
+//
+//                'seo' => [
+//                    'meta' => $seo?->meta ?? [],
+//                    'schema' => $seo?->schema_data ?? [],
+//                ],
+//            ]);
+//        } catch (\Throwable $e) {
+//            return response()->json([
+//                'data' => null,
+//                'seo' => [],
+//            ]);
+//        }
+//    }
+
+
+
     public function index()
     {
         try {
             $data = Cache::remember('contact_page', 300, function () {
-                return ContactSection::first()?->toArray();
+                return ContactSection::first();
             });
 
-            $seo = null;
+            // 🔒 თუ საერთოდ არ არსებობს ჩანაწერი
+            if (!$data) {
+                return response()->json([
+                    'data' => [],
+                    'seo' => [
+                        'meta' => [],
+                        'schema' => [],
+                    ],
+                ]);
+            }
 
+            // 👉 convert to array (safe)
+            $data = $data->toArray();
+
+            // 🔥 SEO safe fetch
+            $seo = null;
             try {
                 $seo = SeoPage::getByKey('contact');
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+                $seo = null;
+            }
 
             return response()->json([
                 'data' => [
-                    'hero' => $data['contact_page_hero_title'] ? [
+
+                    // ✅ HERO SAFE
+                    'hero' => !empty($data['contact_page_hero_title']) ? [
                         'title' => $data['contact_page_hero_title'],
-                        'text' => $data['contact_page_hero_text'],
+                        'text' => $data['contact_page_hero_text'] ?? '',
                     ] : null,
 
+                    // ✅ PHONE SAFE
                     'phone' => $data['contact_page_number'] ?? null,
 
+                    // ✅ WHY SAFE
                     'why' => [
                         'title' => $data['contact_page_why_title'] ?? null,
-                        'items' => $data['contact_page_why_text'] ?? [],
+                        'items' => is_array($data['contact_page_why_text'] ?? null)
+                            ? $data['contact_page_why_text']
+                            : [],
                     ],
 
+                    // ✅ INFO SAFE
                     'info' => [
                         'title' => $data['contact_page_info_title'] ?? null,
                         'whatsapp' => $data['contact_page_whatsapp'] ?? null,
@@ -109,10 +183,14 @@ class ContactSectionController extends Controller
                 ],
             ]);
         } catch (\Throwable $e) {
+
+            // 🔥 OPTIONAL: debug log
+            \Log::error('Contact API Error: ' . $e->getMessage());
+
             return response()->json([
-                'data' => null,
+                'data' => [],
                 'seo' => [],
-            ]);
+            ], 500);
         }
     }
 }

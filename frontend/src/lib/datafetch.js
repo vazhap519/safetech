@@ -1,6 +1,6 @@
 
 const API =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+  process.env.NEXT_PUBLIC_API_URL;
 
 
 async function fetcher(url, options = {}) {
@@ -13,11 +13,11 @@ async function fetcher(url, options = {}) {
     try {
       data = text ? JSON.parse(text) : null;
     } catch (e) {
-      console.warn("⚠️ JSON parse failed:", text);
+      console.warn("?? JSON parse failed:", text);
     }
 
     if (!res.ok) {
-      console.warn("❌ API ERROR:", url);
+      console.warn("? API ERROR:", url);
 
       return {
         error: true,
@@ -27,18 +27,18 @@ async function fetcher(url, options = {}) {
 
     return data;
   } catch (error) {
-    console.warn("❌ FETCH FAILED:", url);
+    console.warn("? FETCH FAILED:", url);
 
-    /* 🔥 აქ არის მთავარი */
+    /* ?? ?? ???? ??????? */
     return {
       error: true,
-      offline: true, // ✅ ვიგებთ რომ backend მკვდარია
+      offline: true, // ? ?????? ??? backend ????????
       data: null,
     };
   }
 }
 /* =========================
-   🔧 QUERY BUILDER
+   ?? QUERY BUILDER
 ========================= */
 function buildUrl(path, params = {}) {
   const query = new URLSearchParams(params).toString();
@@ -46,7 +46,7 @@ function buildUrl(path, params = {}) {
 }
 
 /* =========================
-   🔵 HOME (ISR)
+   ?? HOME (ISR)
 ========================= */
 export const getHome = () =>
   fetcher(buildUrl(`/`), {
@@ -54,7 +54,7 @@ export const getHome = () =>
   });
 
 /* =========================
-   🟢 SERVICES
+   ?? SERVICES
 ========================= */
 
 
@@ -70,14 +70,17 @@ export const getServices = ({ page = 1, category } = {}) =>
     }
   );
 
-// 🔥 SINGLE (ISR)
+// ?? SINGLE (ISR)
 export const getService = (slug) =>
   fetcher(buildUrl(`/services/${slug}`), {
     next: { revalidate: 30, tags: [`service-${slug}`] },
   });
-
+export const getServiceCategories = () =>
+  fetcher(buildUrl(`/service-categories`), {
+    next: { revalidate: 300, tags: ["service-categories"] },
+  });
 /* =========================
-   ⚙ SETTINGS (ISR)
+   ? SETTINGS (ISR)
 ========================= */
 export const getSettings = () =>
   fetcher(buildUrl(`/settings`), {
@@ -85,7 +88,7 @@ export const getSettings = () =>
   });
 
 /* =========================
-   🔒 PRIVACY (ISR)
+   ?? PRIVACY (ISR)
 ========================= */
 export const getPrivacy = () =>
   fetcher(buildUrl(`/privacy`), {
@@ -93,7 +96,7 @@ export const getPrivacy = () =>
   });
 
 /* =========================
-   📘 ABOUT (ISR)
+   ?? ABOUT (ISR)
 ========================= */
 export const getAbout = () =>
   fetcher(buildUrl(`/about`), {
@@ -101,10 +104,10 @@ export const getAbout = () =>
   });
 
 /* =========================
-   📰 BLOG
+   ?? BLOG
 ========================= */
 
-// 🔥 LIST (DYNAMIC)
+// ?? LIST (DYNAMIC)
 export const getBlog = ({ page = 1, category = "all" } = {}) => {
   const params = {
     page,
@@ -116,13 +119,13 @@ export const getBlog = ({ page = 1, category = "all" } = {}) => {
   });
 };
 /* =========================
-   📂 CATEGORIES (ISR)
+   ?? CATEGORIES (ISR)
 ========================= */
 export const getCategories = () =>
   fetcher(buildUrl(`/categories`), {
     next: { revalidate: 300, tags: ["categories"] },
   });
-// 🔥 SINGLE (ISR)
+// ?? SINGLE (ISR)
 export const getBlogPost = (slug) =>
   fetcher(buildUrl(`/blog/${slug}`), {
     next: { revalidate: 300, tags: [`post-${slug}`] },
@@ -131,23 +134,23 @@ export const getBlogPost = (slug) =>
 
 
 /* =========================
-   📂 SEO (ISR)
+   ?? SEO (ISR)
 ========================= */
 
-// ყველა SEO
+// ????? SEO
 export const getSeo = () =>
   fetcher(buildUrl(`/seo`), {
     next: { revalidate: 300, tags: ["seo"] },
   });
 
-// კონკრეტული გვერდის SEO
+// ?????????? ??????? SEO
 export const getSeoByKey = (key) =>
   fetcher(buildUrl(`/seo/${key}`), {
     next: { revalidate: 300, tags: [`seo-${key}`] },
   });
 
 /* =========================
-   📩 CONTACT
+   ?? CONTACT
 ========================= */
 
 // POST (always dynamic)
@@ -167,23 +170,10 @@ export const getContact = () =>
     next: { revalidate: 300, tags: ["contact-page"] },
   });
   //Empty
-export const getEmpty = async () => {
-  try {
-    const res = await fetch(buildUrl(`/empty`), {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      console.error("API ERROR:", res.status);
-      return null;
-    }
-
-    return await res.json();
-  } catch (error) {
-    console.error("FETCH ERROR:", error);
-    return null; // 👈 ყველაზე მნიშვნელოვანი
-  }
-};
+export const getEmpty = () =>
+  fetcher(buildUrl(`/empty`), {
+    next: { revalidate: 300, tags: ["empty"] },
+  });
 export const getProjects = ({ page = 1, category = "all" }) =>
   fetcher(buildUrl(`/projects?page=${page}&category=${category}`));
 export const getProject = (slug) =>
