@@ -1,18 +1,20 @@
 import { notFound } from "next/navigation";
-import { getProject, getSettings } from "@/lib/datafetch";
-import Share from "../../components/Share";
-import { getCurrentUrl } from "@/lib/getUrl";
 import Image from "next/image";
-import { getRelatedProjects } from "@/lib/datafetch";
+import { getBaseUrl } from "@/lib/config";
+import { getProject, getRelatedProjects, getSettings } from "@/lib/datafetch";
+import Share from "../../components/Share";
 import RelatedProjects from "../../components/projects/RelatedProjects";
-import MagneticCard from "../../components/projects/MagneticCard"
+
 export const dynamic = "force-dynamic";
 
-const DEFAULT_IMAGE = "/placeholder.jpg";
+const DEFAULT_IMAGE = "/services/1.jpg";
 
-/* =========================
-   🔥 METADATA
-========================= */
+const absoluteImage = (image) => {
+  if (!image) return `${getBaseUrl()}${DEFAULT_IMAGE}`;
+  if (image.startsWith("http")) return image;
+  return `${getBaseUrl()}${image.startsWith("/") ? image : `/${image}`}`;
+};
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
 
@@ -29,168 +31,135 @@ export async function generateMetadata({ params }) {
     if (!res || res.error || !res.data) {
       return {
         title: "პროექტი ვერ მოიძებნა",
-        description: "Safetech",
+        description: "Safetech პროექტები",
       };
     }
 
     const project = res.data;
     const seo = project?.seo || {};
-
     const title = seo.title || project.title;
     const description = seo.description || project.excerpt;
-
-    const image =
-      project.image ||
-      DEFAULT_IMAGE;
-
-    const url = await getCurrentUrl(`/projects/${slug}`);
+    const image = absoluteImage(project.image || DEFAULT_IMAGE);
+    const url = `${getBaseUrl()}/projects/${slug}`;
 
     return {
       title,
       description,
-
       alternates: {
         canonical: url,
       },
-
       openGraph: {
         title,
         description,
         url,
         type: "article",
-        images: [
-          {
-            url: image,
-            width: 1200,
-            height: 630,
-            alt: title,
-          },
-        ],
+        images: [{ url: image, width: 1200, height: 630, alt: title }],
+        locale: "ka_GE",
+        siteName: "Safetech",
       },
-
       twitter: {
         card: "summary_large_image",
         title,
         description,
         images: [image],
       },
+      robots: {
+        index: !seo.noindex,
+        follow: true,
+      },
     };
-
   } catch {
     return {
       title: "პროექტები",
-      description: "Safetech",
+      description: "Safetech პროექტები",
     };
   }
 }
 
-/* =========================
-   🔥 SCHEMA
-========================= */
 function buildSchema(project, url) {
   return {
     "@context": "https://schema.org",
     "@type": "CreativeWork",
-
+    "@id": `${url}#project`,
     name: project.title,
     description: project.excerpt,
-    image: project.image || DEFAULT_IMAGE,
-
+    image: absoluteImage(project.image),
     author: {
       "@type": "Organization",
       name: "Safetech",
+      url: getBaseUrl(),
     },
-
     publisher: {
       "@type": "Organization",
       name: "Safetech",
+      url: getBaseUrl(),
     },
-
-    datePublished:
-      project.published_at || new Date().toISOString(),
-
-    mainEntityOfPage: url,
+    datePublished: project.published_at || undefined,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+    inLanguage: "ka-GE",
   };
 }
 
-/* =========================
-   PAGE
-========================= */
 export default async function ProjectDetail({ params }) {
   const { slug } = await params;
 
   if (!slug) return notFound();
 
-  const res = await getProject(slug);
+  const [res, settings, relatedRes] = await Promise.all([
+    getProject(slug),
+    getSettings().catch(() => null),
+    getRelatedProjects(slug).catch(() => null),
+  ]);
 
   if (!res || res.error || !res.data) {
     return notFound();
   }
 
   const project = res.data;
-
-  /* 🔥 SETTINGS (როგორც blog-ში) */
-  const settings = await getSettings();
-
-  const url = await getCurrentUrl(`/projects/${project.slug}`);
+  const url = `${getBaseUrl()}/projects/${project.slug}`;
   const schema = buildSchema(project, url);
-const relatedRes = await getRelatedProjects(slug);
-const related = relatedRes?.data || [];
+  const related = relatedRes?.data || [];
+
   return (
     <main className="py-20 bg-[#F8FAFC]">
-
-      {/* 🔥 SCHEMA */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(schema),
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
 
       <article className="max-w-4xl mx-auto px-4">
-
-        {/* CATEGORY */}
         {project.category?.name && (
           <span className="inline-block mb-3 text-xs bg-[#00C2A8]/10 text-[#00C2A8] px-3 py-1 rounded-full">
             {project.category.name}
           </span>
         )}
 
-        {/* TITLE */}
-        <h1 className="text-4xl font-bold text-[#0B3C5D]">
-          {project.title}
-        </h1>
+        <h1 className="text-4xl font-bold text-[#0B3C5D]">{project.title}</h1>
 
-        {/* IMAGE */}
         <Image
-          src={project.image || DEFAULT_IMAGE}
+          src={absoluteImage(project.image)}
           alt={project.title}
           width={1000}
           height={600}
           className="mt-6 rounded-xl w-full"
         />
 
-        {/* EXCERPT */}
         {project.excerpt && (
-          <p className="mt-6 text-lg text-gray-600">
-            {project.excerpt}
-          </p>
+          <p className="mt-6 text-lg text-gray-600">{project.excerpt}</p>
         )}
 
-        {/* SHARE (FIXED LIKE BLOG) */}
         <Share data={settings?.share ?? {}} url={url} />
 
-        {/* CONTENT */}
         {project.content && (
           <div
             className="prose max-w-none mt-10"
-            dangerouslySetInnerHTML={{
-              __html: project.content,
-            }}
+            dangerouslySetInnerHTML={{ __html: project.content }}
           />
         )}
 
-        {/* GALLERY */}
         {project.gallery?.length > 0 && (
           <div className="mt-14">
             <h2 className="text-2xl font-bold text-[#0B3C5D] mb-4">
@@ -199,10 +168,10 @@ const related = relatedRes?.data || [];
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {project.gallery.map((img, i) => (
-                <a key={i} href={img.url} target="_blank">
+                <a key={i} href={img.url} target="_blank" rel="noreferrer">
                   <Image
-                    src={img.thumb}
-                    alt=""
+                    src={absoluteImage(img.thumb || img.url)}
+                    alt={`${project.title} ${i + 1}`}
                     width={400}
                     height={300}
                     className="rounded-xl hover:scale-105 transition"
@@ -213,24 +182,22 @@ const related = relatedRes?.data || [];
           </div>
         )}
 
-        {/* VIDEO */}
         {project.video_url && (
           <div className="mt-14">
-            <h2 className="text-2xl font-bold text-[#0B3C5D] mb-4">
-              ვიდეო
-            </h2>
+            <h2 className="text-2xl font-bold text-[#0B3C5D] mb-4">ვიდეო</h2>
 
             <div className="overflow-hidden rounded-2xl shadow">
               <iframe
                 src={project.video_url}
+                title={`${project.title} ვიდეო`}
                 className="w-full h-[400px]"
                 allowFullScreen
               />
             </div>
           </div>
         )}
-
       </article>
+
       <RelatedProjects projects={related} />
     </main>
   );

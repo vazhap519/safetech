@@ -7,8 +7,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { getSettings } from "@/lib/datafetch";
 import { Toaster } from "react-hot-toast";
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL;
+
 /* =========================
    FONT
 ========================= */
@@ -25,34 +24,27 @@ export async function generateMetadata() {
 
   const favicons = settings?.favicons || {};
   const version = settings?.favicon_version || 1;
+  const icon = (url, sizes) =>
+    url
+      ? {
+          url: `${url}?v=${version}`,
+          sizes,
+          type: "image/png",
+        }
+      : null;
+  const iconList = [icon(favicons["32"], "32x32"), icon(favicons["16"], "16x16")].filter(Boolean);
+  const appleIcon = icon(favicons["apple"], "180x180");
 
   return {
     metadataBase: new URL(
       process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
     ),
 
-    manifest: `${API_URL}/manifest.json`, // ✅ GLOBAL
+    manifest: "/manifest.json",
 
     icons: {
-      icon: [
-        {
-          url: `${favicons["32"]}?v=${version}`,
-          sizes: "32x32",
-          type: "image/png",
-        },
-        {
-          url: `${favicons["16"]}?v=${version}`,
-          sizes: "16x16",
-          type: "image/png",
-        },
-      ],
-      apple: [
-        {
-          url: `${favicons["apple"]}?v=${version}`,
-          sizes: "180x180",
-          type: "image/png",
-        },
-      ],
+      ...(iconList.length > 0 && { icon: iconList }),
+      ...(appleIcon && { apple: [appleIcon] }),
     },
   };
 }

@@ -1,32 +1,20 @@
-import { getBaseUrl } from "@/lib/config";
+import { normalizeBaseUrl, urlset, xmlResponse } from "@/lib/sitemap";
+
+export const revalidate = 300;
 
 export async function GET() {
-  const baseUrl = getBaseUrl();
+  const baseUrl = normalizeBaseUrl();
   const now = new Date().toISOString();
 
-  const pages = [
-    "",
-    "/about",
-    "/services",
-    "/blog",
-    "/projects",
-    "/contact",
-  ];
-
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pages
-  .map(
-    (p) => `
-  <url>
-    <loc>${baseUrl}${p}</loc>
-    <lastmod>${now}</lastmod>
-  </url>`
-  )
-  .join("")}
-</urlset>`;
-
-  return new Response(xml, {
-    headers: { "Content-Type": "application/xml" },
-  });
+  return xmlResponse(
+    urlset([
+      { loc: baseUrl, lastmod: now, changefreq: "daily", priority: "1.0" },
+      { loc: `${baseUrl}/about`, lastmod: now, changefreq: "monthly", priority: "0.6" },
+      { loc: `${baseUrl}/services`, lastmod: now, changefreq: "weekly", priority: "0.9" },
+      { loc: `${baseUrl}/blog`, lastmod: now, changefreq: "weekly", priority: "0.7" },
+      { loc: `${baseUrl}/projects`, lastmod: now, changefreq: "weekly", priority: "0.7" },
+      { loc: `${baseUrl}/contact`, lastmod: now, changefreq: "monthly", priority: "0.5" },
+      { loc: `${baseUrl}/privacy`, lastmod: now, changefreq: "yearly", priority: "0.2" },
+    ])
+  );
 }

@@ -174,8 +174,16 @@ export const getEmpty = () =>
   fetcher(buildUrl(`/empty`), {
     next: { revalidate: 300, tags: ["empty"] },
   });
-export const getProjects = ({ page = 1, category = "all" }) =>
-  fetcher(buildUrl(`/projects?page=${page}&category=${category}`));
+export const getProjects = ({ page = 1, category = "all" } = {}) =>
+  fetcher(
+    buildUrl(`/projects`, {
+      page,
+      ...(category !== "all" && { category }),
+    }),
+    {
+      next: { revalidate: 60, tags: ["projects"] },
+    }
+  );
 export const getProject = (slug) =>
   fetcher(buildUrl(`/projects/${slug}`), {
     next: { revalidate: 300, tags: ["projects"] },

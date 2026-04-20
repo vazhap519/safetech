@@ -1,12 +1,8 @@
-import { headers } from "next/headers";
+import { getBaseUrl } from "@/lib/config";
 
 export async function getCurrentUrl(path = "") {
-  const headersList = await headers(); // ✅ MUST
+  const baseUrl = getBaseUrl().replace(/\/$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
-  const host = headersList.get("host");
-
-  const protocol =
-    process.env.NODE_ENV === "development" ? "http" : "https";
-
-  return `${protocol}://${host}${path}`;
+  return `${baseUrl}${normalizedPath}`;
 }

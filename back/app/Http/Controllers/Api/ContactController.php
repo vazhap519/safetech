@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ContactSubmitted;
 class ContactController extends Controller
@@ -24,9 +25,16 @@ class ContactController extends Controller
 
         $contact = Contact::create($validated);
 
-        // 📩 EMAIL SEND
-//        Mail::to('safetechcomge@gmail.com')->send(new ContactSubmitted($contact));
-        Mail::to('your@email.com')->queue(new ContactSubmitted($contact));
+        try {
+            $to = config('mail.to.address', env('CONTACT_MAIL_TO', 'safetechcomge@gmail.com'));
+            Mail::to($to)->queue(new ContactSubmitted($contact));
+        } catch (\Throwable $e) {
+            Log::warning('Contact email queue failed', [
+                'contact_id' => $contact->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Message sent successfully',

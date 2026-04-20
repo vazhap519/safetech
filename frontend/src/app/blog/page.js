@@ -1,22 +1,20 @@
 import BlogList from "@/app/components/blog/BlogList";
-
-
 import { buildMetadata } from "@/lib/seo";
-import { getSeoByKey } from "@/lib/datafetch";
+import { getBaseUrl } from "@/lib/config";
+import { getBlog, getCategories, getEmpty, getSeoByKey } from "@/lib/datafetch";
 import EmptyState from "../components/ui/EmptyState";
-import { getEmpty } from "@/lib/datafetch";
-import { getBlog } from "@/lib/datafetch";
 
 /* =========================
    SEO (BLOG 🔥)
 ========================= */
 export async function generateMetadata({ searchParams }) {
+  const params = await searchParams;
   const seo = await getSeoByKey("blog");
   const data = seo?.data;
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-  const page = Number(searchParams?.page || 1);
-  const category = searchParams?.category;
+  const BASE_URL = getBaseUrl();
+  const page = Number(params?.page || 1);
+  const category = params?.category;
 
   let url = `${BASE_URL}/blog`;
 
@@ -68,12 +66,16 @@ export default async function BlogPage({ searchParams }) {
   const page = Number(params?.page || 1);
   const category = params?.category || "all";
 
-  const [res, emptyRes] = await Promise.all([
+  const [res, categoriesRes, emptyRes] = await Promise.all([
     getBlog({ page, category }),
+    getCategories().catch(() => null),
     getEmpty().catch(() => null),
   ]);
 
-const meta = res?.meta ?? {};
+  const meta = res?.meta ?? {};
+  const categories = Array.isArray(categoriesRes)
+    ? categoriesRes
+    : categoriesRes?.data || [];
   const empty = emptyRes?.data || emptyRes || null;
 
   /* ❌ backend down */
@@ -96,12 +98,13 @@ const meta = res?.meta ?? {};
           ბლოგი
         </h1>
 
-       <BlogList 
- posts={posts}
-  meta={meta}
-  page={page}
-  category={category}
-/>
+        <BlogList
+          posts={posts}
+          categories={categories}
+          meta={meta}
+          page={page}
+          category={category}
+        />
 
       </div>
     </main>

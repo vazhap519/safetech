@@ -1,22 +1,27 @@
-
-
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import { getBaseUrl } from "@/lib/config";
 import { getBlogPost, getSettings } from "@/lib/datafetch";
-import SEOSection from "@/app/components/SEOSection";
-import { injectInternalLinks } from "@/lib/internalLinks";
-import Share from "../../components/Share";
-import { getCurrentUrl } from "../../../lib/getUrl";
 import { getSeoLinks } from "@/lib/getSeoLinks";
+import { injectInternalLinks } from "@/lib/internalLinks";
+import SEOSection from "@/app/components/SEOSection";
+import Share from "../../components/Share";
+
 export const revalidate = 300;
 
-const DEFAULT_IMAGE = "/images/blog-placeholder.webp";
+const DEFAULT_IMAGE = "/services/1.jpg";
 
-/* =========================
-   🔥 METADATA
-========================= */
+const absoluteImage = (image) => {
+  if (!image) return `${getBaseUrl()}${DEFAULT_IMAGE}`;
+  if (image.startsWith("http")) return image;
+  if (image.startsWith("/storage") || image.startsWith("/uploads")) {
+    return `${process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, "")}${image}`;
+  }
+  return `${getBaseUrl()}${image.startsWith("/") ? image : `/${image}`}`;
+};
+
 export async function generateMetadata({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
 
   if (!slug) {
     return {
@@ -30,46 +35,33 @@ export async function generateMetadata({ params }) {
 
     if (!res || res.error || !res.data) {
       return {
-        title: "ბლოგი",
-        description: "სტატია ვერ მოიძებნა",
+        title: "სტატია ვერ მოიძებნა",
+        description: "Safetech ბლოგი",
       };
     }
 
     const post = res.data;
     const seo = post?.seo?.meta || {};
-
     const title = seo.title || post.title;
     const description = seo.description || post.excerpt;
-
-    const image =
-      seo.image ||
-      post.image ||
-      DEFAULT_IMAGE;
-
-    const url = await getCurrentUrl(`/blog/${slug}`);
+    const image = absoluteImage(seo.image || post.image);
+    const url = `${getBaseUrl()}/blog/${slug}`;
 
     return {
       title,
       description,
-
       alternates: {
         canonical: url,
       },
-
       openGraph: {
         title,
         description,
         url,
         type: "article",
-        images: [
-          {
-            url: image,
-            width: 1200,
-            height: 630,
-          },
-        ],
+        images: [{ url: image, width: 1200, height: 630, alt: title }],
+        locale: "ka_GE",
+        siteName: "Safetech",
       },
-
       twitter: {
         card: "summary_large_image",
         title,
@@ -77,7 +69,6 @@ export async function generateMetadata({ params }) {
         images: [image],
       },
     };
-
   } catch {
     return {
       title: "ბლოგი",
@@ -86,77 +77,54 @@ export async function generateMetadata({ params }) {
   }
 }
 
-/* =========================
-   🔥 BLOG SCHEMA (PRO)
-========================= */
-function buildSchema(post, url) {
+function buildArticleSchema(post, url) {
   const seo = post?.seo?.meta || {};
-
-  const image =
-    post.image?.startsWith("http")
-      ? post.image
-      : `${process.env.NEXT_PUBLIC_API_URL}${post.image || DEFAULT_IMAGE}`;
 
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "@id": url,
-
+    "@id": `${url}#article`,
     headline: seo.title || post.title,
     description: seo.description || post.excerpt,
-
     image: {
       "@type": "ImageObject",
-      url: image,
+      url: absoluteImage(seo.image || post.image),
       width: 1200,
       height: 630,
     },
-
     author: {
       "@type": "Organization",
-      name: post.author?.name || "SafeTech",
+      name: post.author?.name || "Safetech",
     },
-
     publisher: {
       "@type": "Organization",
-      name: "SafeTech",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://safetech.ge/logo.png",
-      },
+      name: "Safetech",
+      url: getBaseUrl(),
     },
-
     datePublished: post.created_at,
     dateModified: post.updated_at || post.created_at,
-
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": url,
     },
-
     inLanguage: "ka-GE",
   };
 }
 
-/* =========================
-   🔥 BREADCRUMB SCHEMA
-========================= */
 function buildBreadcrumbSchema(post, url) {
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-
-
+  const baseUrl = getBaseUrl();
   const items = [
     {
       "@type": "ListItem",
       position: 1,
       name: "მთავარი",
-      item: BASE_URL,
+      item: baseUrl,
     },
     {
       "@type": "ListItem",
       position: 2,
       name: "ბლოგი",
-      item: `${BASE_URL}/blog`,
+      item: `${baseUrl}/blog`,
     },
   ];
 
@@ -165,7 +133,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
       "@type": "ListItem",
       position: 3,
       name: post.category.name,
-      item: `${BASE_URL}/blog/category/${post.category.slug}`,
+      item: `${baseUrl}/blog/category/${post.category.slug}`,
     });
   }
 
@@ -183,96 +151,82 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
   };
 }
 
-/* =========================
-   🔥 FAQ SCHEMA
-========================= */
 function buildFaqSchema(post) {
-  if (!post.faq || !Array.isArray(post.faq)) return null;
+  if (!Array.isArray(post.faq) || post.faq.length === 0) return null;
 
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: post.faq.map((item) => ({
+  const mainEntity = post.faq
+    .filter((item) => item?.question && item?.answer)
+    .map((item) => ({
       "@type": "Question",
       name: item.question,
       acceptedAnswer: {
         "@type": "Answer",
         text: item.answer,
       },
-    })),
+    }));
+
+  if (mainEntity.length === 0) return null;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity,
   };
 }
 
-/* =========================
-   PAGE
-========================= */
 export default async function BlogDetailPage({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
 
   if (!slug) return notFound();
 
-  const res = await getBlogPost(slug);
+  const [res, settings, keywordMap] = await Promise.all([
+    getBlogPost(slug),
+    getSettings().catch(() => null),
+    getSeoLinks(),
+  ]);
 
   if (!res || res.error || !res.data) {
     return notFound();
   }
 
   const post = res.data;
-  const settings = await getSettings();
-
-  const url = await getCurrentUrl(`/blog/${post.slug}`);
-
-  const schema = buildSchema(post, url);
-  const breadcrumbSchema = buildBreadcrumbSchema(post, url);
-  const faqSchema = buildFaqSchema(post);
-
-  /* 🔥 INTERNAL LINK MAP */
-const keywordMap = await getSeoLinks();
+  const url = `${getBaseUrl()}/blog/${post.slug}`;
+  const schemas = [
+    buildArticleSchema(post, url),
+    buildBreadcrumbSchema(post, url),
+    buildFaqSchema(post),
+  ].filter(Boolean);
+  const links = Array.isArray(keywordMap) ? keywordMap : [];
 
   return (
     <main className="py-20 bg-[#F8FAFC]">
-
-      {/* 🔥 SCHEMAS */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-      />
-
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-
-      {faqSchema && (
+      {schemas.map((schema, i) => (
         <script
+          key={`blog-schema-${i}`}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
-      )}
+      ))}
 
       <article className="max-w-4xl mx-auto px-4">
-
-        <h1 className="text-4xl font-bold text-[#0B3C5D]">
-          {post.title}
-        </h1>
+        <h1 className="text-4xl font-bold text-[#0B3C5D]">{post.title}</h1>
 
         <Image
-          src={
-            post.image?.startsWith("http")
-              ? post.image
-              : `${process.env.NEXT_PUBLIC_API_URL}${post.image || DEFAULT_IMAGE}`
-          }
+          src={absoluteImage(post.image)}
           alt={post.title}
           width={1200}
           height={600}
           className="mt-6 rounded-xl w-full"
         />
 
-        <p className="mt-6 text-lg text-gray-600">
-           dangerouslySetInnerHTML={{
-    __html: injectInternalLinks(post.excerpt, keywordMap),
-  }}
-        </p>
+        {post.excerpt && (
+          <p
+            className="mt-6 text-lg text-gray-600"
+            dangerouslySetInnerHTML={{
+              __html: injectInternalLinks(post.excerpt, links),
+            }}
+          />
+        )}
 
         <Share data={settings?.share ?? {}} url={url} />
 
@@ -288,7 +242,8 @@ const keywordMap = await getSeoLinks();
               <div
                 className="mt-4"
                 dangerouslySetInnerHTML={{
-__html: injectInternalLinks(section.content, keywordMap),                }}
+                  __html: injectInternalLinks(section.content || "", links),
+                }}
               />
             </div>
           ))}
@@ -296,10 +251,9 @@ __html: injectInternalLinks(section.content, keywordMap),                }}
 
         <SEOSection
           title="დამატებითი ინფორმაცია"
-          paragraphs={post.seo?.content || [post.excerpt]}
+          paragraphs={post.seo?.content || [post.excerpt].filter(Boolean)}
           links={[]}
         />
-
       </article>
     </main>
   );

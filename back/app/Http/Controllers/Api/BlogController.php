@@ -441,6 +441,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\JsonResponse;
 
 class BlogController extends Controller
@@ -771,5 +772,44 @@ class BlogController extends Controller
                 'slug' => $item->slug,
                 'image' => $this->getImage($item),
             ]);
+    }
+
+    public function revalidate(): JsonResponse
+    {
+        Cache::flush();
+        $this->notifyFrontendRevalidate('blog');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Blog cache cleared',
+        ]);
+    }
+
+    public function revalidateSingle(string $slug): JsonResponse
+    {
+        Cache::forget("blog:post:{$slug}");
+        $this->notifyFrontendRevalidate("post-{$slug}");
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Blog post cache cleared',
+        ]);
+    }
+
+    private function notifyFrontendRevalidate(string $tag): void
+    {
+        $frontendUrl = rtrim((string) config('app.frontend_url', env('FRONTEND_URL', '')), '/');
+
+        if (!$frontendUrl) {
+            return;
+        }
+
+        try {
+            Http::timeout(3)->post("{$frontendUrl}/api/revalidate", [
+                'tag' => $tag,
+            ]);
+        } catch (\Throwable) {
+            //
+        }
     }
 }
