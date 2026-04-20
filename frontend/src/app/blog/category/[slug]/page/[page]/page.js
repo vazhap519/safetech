@@ -2,15 +2,15 @@ import BlogPage from "@/app/blog/page";
 import { getBaseUrl } from "@/lib/config";
 
 export async function generateMetadata({ params }) {
-  const { page } = await params;
+  const { slug, page } = await params;
   const currentPage = Number(page) || 1;
 
   return {
     alternates: {
       canonical:
         currentPage === 1
-          ? `${getBaseUrl()}/blog`
-          : `${getBaseUrl()}/blog/page/${currentPage}`,
+          ? `${getBaseUrl()}/blog/category/${slug}`
+          : `${getBaseUrl()}/blog/category/${slug}/page/${currentPage}`,
     },
     robots: {
       index: currentPage <= 5,
@@ -19,15 +19,14 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function BlogPaginatedPage({ params, searchParams }) {
-  const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
+export default async function BlogCategoryPaginatedPage({ params }) {
+  const { slug, page } = await params;
 
   return (
     <BlogPage
       searchParams={{
-        ...resolvedSearchParams,
-        page: Number(resolvedParams.page),
+        category: slug,
+        page: Number(page),
       }}
     />
   );

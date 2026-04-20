@@ -207,6 +207,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { buildMetadata } from "@/lib/seo";
+import { getBaseUrl } from "@/lib/config";
 
 import {
   getServices,
@@ -216,6 +217,8 @@ import {
 } from "@/lib/datafetch";
 
 import EmptyState from "../components/ui/EmptyState";
+import CategoryFilters from "../components/ui/CategoryFilters";
+import Pagination from "../components/ui/Pagination";
 
 
 export const revalidate = 60; // ? caching balance
@@ -288,11 +291,13 @@ export const revalidate = 60; // ? caching balance
 
 export async function generateMetadata({ searchParams }) {
   const params = await searchParams;
+  const seo = await getSeoByKey("services").catch(() => null);
+  const data = seo?.data || {};
 
   const page = Number(params?.page || 1);
   const category = params?.category || null;
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+  const BASE_URL = getBaseUrl();
   let url = `${BASE_URL}/services`;
 
   if (category) {
@@ -304,6 +309,17 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
   }
 
   return {
+    ...buildMetadata({
+      title: data?.title || "IT სერვისები",
+      description:
+        data?.description ||
+        "Safetech გთავაზობთ IT მხარდაჭერას, კომპიუტერულ სერვისებს, ქსელების გამართვას და უსაფრთხოების სისტემების მონტაჟს.",
+      image: data?.og?.image,
+      keywords: data?.keywords,
+      noindex: page > 5 || data?.noindex,
+      og: data?.og,
+      path: "/services",
+    }),
     alternates: {
       canonical: url,
     },
@@ -335,18 +351,15 @@ export default async function ServicesPage({ searchParams }) {
   const meta = data?.meta ?? {};
   const hero = data?.serviceHero;
 
-const categories = categoriesRes?.data ?? [];
+  const categories = Array.isArray(categoriesRes)
+    ? categoriesRes
+    : categoriesRes?.data ?? [];
 
   // ✅ FIX 2: აღარ ვაბრუნებთ მთელ გვერდს
   const isEmpty = !services.length;
 
   /* ?? PAGINATION */
   const totalPages = meta?.last_page || 1;
-  const start = Math.max(1, page - 2);
-  const end = Math.min(totalPages, page + 2);
-
-  const pages = [];
-  for (let i = start; i <= end; i++) pages.push(i);
 
   return (
     <>
@@ -382,33 +395,12 @@ const categories = categoriesRes?.data ?? [];
         )}
 
         {/* FILTERS */}
-        <div className="my-10 flex flex-wrap justify-center gap-3 px-4">
-
-          {/* ALL */}
-          <Link
-            href="/services"
-            className={`px-5 py-2 rounded-full text-sm font-medium border ${
-              !category
-                ? "bg-[#00C2A8] text-white"
-                : "bg-white text-[#0B3C5D]"
-            }`}
-          >
-            ყველა
-          </Link>
-
-          {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-             href={`/services/category/${cat.slug}`}
-              className={`px-5 py-2 rounded-full text-sm font-medium border ${
-                category === cat.slug
-                  ? "bg-[#00C2A8] text-white"
-                  : "bg-white text-[#0B3C5D]"
-              }`}
-            >
-              {cat.name}
-            </Link>
-          ))}
+        <div className="my-10 px-4">
+          <CategoryFilters
+            basePath="/services"
+            categories={categories}
+            currentCategory={category || "all"}
+          />
         </div>
 
         {/* SERVICES GRID */}
@@ -452,73 +444,12 @@ const categories = categoriesRes?.data ?? [];
           </div>
         </section>
 
-        {/* PAGINATION */}
-        {/* <div className="flex justify-center gap-2 mt-10">
-
-          {page > 1 && (
-            <Link href={`/services?page=${page - 1}${category ? `&category=${category}` : ""}`}>
-              ?
-            </Link>
-          )}
-
-          {pages.map((p) => (
-            <Link
-              key={p}
-              href={`/services?page=${p}${category ? `&category=${category}` : ""}`}
-              className={p === page ? "font-bold" : ""}
-            >
-              {p}
-            </Link>
-          ))}
-
-          {page < totalPages && (
-            <Link href={`/services?page=${page + 1}${category ? `&category=${category}` : ""}`}>
-              ?
-            </Link>
-          )}
-
-        </div> */}
-<div className="flex justify-center gap-2 mt-10">
-
-  {page > 1 && (
-    <Link
-      href={
-        category
-          ? `/services/category/${category}/page/${page - 1}`
-          : `/services/page/${page - 1}`
-      }
-    >
-      ←
-    </Link>
-  )}
-
-  {pages.map((p) => (
-    <Link
-      key={p}
-      href={
-        category
-          ? `/services/category/${category}/page/${p}`
-          : `/services/page/${p}`
-      }
-      className={p === page ? "font-bold" : ""}
-    >
-      {p}
-    </Link>
-  ))}
-
-  {page < totalPages && (
-    <Link
-      href={
-        category
-          ? `/services/category/${category}/page/${page + 1}`
-          : `/services/page/${page + 1}`
-      }
-    >
-      →
-    </Link>
-  )}
-
-</div>
+        <Pagination
+          basePath="/services"
+          category={category || "all"}
+          currentPage={page}
+          lastPage={totalPages}
+        />
       </main>
     </>
   );

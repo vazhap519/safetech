@@ -212,6 +212,46 @@ class ServicesController extends Controller
             ],
         ];
     }
+
+    public function revalidate()
+    {
+        Cache::flush();
+        $this->notifyFrontendRevalidate('services');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Services cache cleared',
+        ]);
+    }
+
+    public function revalidateSingle(string $slug)
+    {
+        Cache::forget("service_{$slug}");
+        $this->notifyFrontendRevalidate("service-{$slug}");
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Service cache cleared',
+        ]);
+    }
+
+    private function notifyFrontendRevalidate(string $tag): void
+    {
+        $frontendUrl = rtrim((string) config('app.frontend_url', env('FRONTEND_URL', '')), '/');
+
+        if (!$frontendUrl) {
+            return;
+        }
+
+        try {
+            Http::timeout(3)->post("{$frontendUrl}/api/revalidate", [
+                'tag' => $tag,
+            ]);
+        } catch (\Throwable) {
+            //
+        }
+    }
+
     /*
     |--------------------------------------------------------------------------
     | 🔥 TRANSFORMER

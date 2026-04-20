@@ -1,11 +1,13 @@
 import BlogPage from "@/app/blog/page";
 
-export default function BlogCategoryPaginatedPage({ params }) {
+export default async function BlogCategoryPaginatedPage({ params }) {
+  const { slug, page } = await params;
+
   return (
     <BlogPage
       searchParams={{
-        category: params.slug,
-        page: Number(params.page),
+        category: slug,
+        page: Number(page),
       }}
     />
   );

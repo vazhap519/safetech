@@ -1,4 +1,4 @@
-import BlogPage from "@/app/blog/page";
+import ProjectsPage from "@/app/projects/page";
 import { getBaseUrl } from "@/lib/config";
 
 export async function generateMetadata({ params }) {
@@ -9,8 +9,8 @@ export async function generateMetadata({ params }) {
     alternates: {
       canonical:
         currentPage === 1
-          ? `${getBaseUrl()}/blog`
-          : `${getBaseUrl()}/blog/page/${currentPage}`,
+          ? `${getBaseUrl()}/projects`
+          : `${getBaseUrl()}/projects/page/${currentPage}`,
     },
     robots: {
       index: currentPage <= 5,
@@ -19,12 +19,12 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function BlogPaginatedPage({ params, searchParams }) {
+export default async function ProjectsPaginatedPage({ params, searchParams }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
   return (
-    <BlogPage
+    <ProjectsPage
       searchParams={{
         ...resolvedSearchParams,
         page: Number(resolvedParams.page),

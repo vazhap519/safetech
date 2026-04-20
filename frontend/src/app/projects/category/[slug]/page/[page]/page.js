@@ -1,14 +1,16 @@
-import ServicesPage from "@/app/services/page";
+import ProjectsPage from "@/app/projects/page";
 import { getBaseUrl } from "@/lib/config";
 
 export async function generateMetadata({ params }) {
   const { slug, page } = await params;
   const currentPage = Number(page) || 1;
-  const url = `${getBaseUrl()}/services/category/${slug}/page/${currentPage}`;
 
   return {
     alternates: {
-      canonical: currentPage === 1 ? `${getBaseUrl()}/services/category/${slug}` : url,
+      canonical:
+        currentPage === 1
+          ? `${getBaseUrl()}/projects/category/${slug}`
+          : `${getBaseUrl()}/projects/category/${slug}/page/${currentPage}`,
     },
     robots: {
       index: currentPage <= 5,
@@ -17,11 +19,11 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function CategoryPaginatedPage({ params }) {
+export default async function ProjectCategoryPaginatedPage({ params }) {
   const { slug, page } = await params;
 
   return (
-    <ServicesPage
+    <ProjectsPage
       searchParams={{
         category: slug,
         page: Number(page),

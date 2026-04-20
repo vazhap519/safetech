@@ -331,9 +331,17 @@ class HomeController extends Controller
     {
         Cache::forget('home_api');
 
-        Http::post('http://localhost:3000/api/revalidate', [
-            'tag' => 'home'
-        ]);
+        $frontendUrl = rtrim((string) config('app.frontend_url', env('FRONTEND_URL', '')), '/');
+
+        if ($frontendUrl) {
+            try {
+                Http::timeout(3)->post("{$frontendUrl}/api/revalidate", [
+                    'tag' => 'home'
+                ]);
+            } catch (\Throwable) {
+                //
+            }
+        }
 
         return response()->json([
             'success' => true,

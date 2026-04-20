@@ -11,6 +11,10 @@ use App\Http\Controllers\Api\SeoController;
 use App\Http\Controllers\Api\ServicesController;
 
 use App\Http\Controllers\Api\SettingsController;
+use App\Models\Category;
+use App\Models\CategoryForService;
+use App\Models\Service;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -34,22 +38,30 @@ Route::get('/projects/{slug}', [ProjectsController::class, 'show']);
 Route::get('/projects/{slug}/related', [ProjectsController::class, 'related']);
 
 Route::get('/service-categories', function () {
-    return \App\Models\CategoryForService::select('name', 'slug')->get();
+    return CategoryForService::query()
+        ->whereHas('services')
+        ->select('name', 'slug')
+        ->orderBy('name')
+        ->get();
 });
 Route::get('/seo-links', function () {
 
-    $services = \App\Models\Service::with('category')->get();
+    $services = Service::query()
+        ->with('category:id,name,slug')
+        ->select('id', 'title', 'slug', 'category_for_service_id')
+        ->latest()
+        ->get();
 
     return $services->map(function ($service) {
         return [
-            'keywords' => [
+            'keywords' => array_values(array_filter([
                 $service->title,
                 $service->category?->name,
-            ],
+            ])),
             'url' => '/services/' . $service->slug,
             'priority' => 1,
         ];
-    });
+    })->filter(fn ($item) => !empty($item['keywords']))->values();
 });
 // 🔥 REVALIDATE ROUTES
 Route::post('/home/revalidate', [HomeController::class, 'revalidate']);
@@ -58,18 +70,17 @@ Route::post('/home/revalidate', [HomeController::class, 'revalidate']);
 Route::post('/about', [AboutController::class, 'update']);
 Route::post('/services/revalidate', [ServicesController::class, 'revalidate']);
 Route::post('/services/{slug}/revalidate', [ServicesController::class, 'revalidateSingle']);
-Route::get('/privacy', [PrivacyController::class, 'index']);
 Route::post('/privacy', [PrivacyController::class, 'update']);
 Route::post('/blog/revalidate', [BlogController::class, 'revalidate']);
 Route::post('/blog/{slug}/revalidate', [BlogController::class, 'revalidateSingle']);
 Route::get('/categories', function () {
-    return \App\Models\Category::whereHas('posts', function ($q) {
+    return Category::whereHas('posts', function ($q) {
         $q->where('is_published', true);
     })->select('name', 'slug')->get();
 });
 
 Route::get('/manifest.json', function () {
-    $settings = \App\Models\Setting::first();
+    $settings = Setting::first();
 
     return response()->json([
         "name" => config('app.name'),
@@ -92,4 +103,3 @@ Route::get('/manifest.json', function () {
         ]
     ]);
 });
-
