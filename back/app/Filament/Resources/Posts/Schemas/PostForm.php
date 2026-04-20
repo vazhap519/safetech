@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Posts\Schemas;
 
+use App\Support\SocialLinks;
 use Filament\Actions\Action;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -281,7 +282,7 @@ class PostForm
     */
     protected static function generateSchema($type, $title = null, $description = null): ?string
     {
-        $baseUrl = config('app.url');
+        $baseUrl = SocialLinks::frontendUrl('/');
         $name = config('app.name');
 
         return match ($type) {

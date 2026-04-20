@@ -187,6 +187,7 @@ export default function ServiceHero({ service }) {
             src={service.image || "/placeholder.jpg"}
             alt={service.title}
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover rounded-3xl shadow-2xl"
             priority
           />

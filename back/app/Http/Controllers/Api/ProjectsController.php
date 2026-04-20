@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\ProjectCategory;
+use App\Support\SocialLinks;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class ProjectsController extends Controller
 {
@@ -84,8 +86,23 @@ class ProjectsController extends Controller
     ========================= */
     public function categories()
     {
+        $columns = array_values(array_filter([
+            'id',
+            'name',
+            'slug',
+            'color',
+            'icon',
+            'seo_title',
+            'seo_description',
+            'seo_keywords',
+            'intro_text',
+            'faq',
+            'schema',
+            'noindex',
+        ], fn ($column) => Schema::hasColumn('project_categories', $column)));
+
         $categories = ProjectCategory::query()
-            ->select('id', 'name', 'slug')
+            ->select($columns)
             ->has('projects') // 🔥 only categories with projects
             ->orderBy('name')
             ->get();
@@ -111,6 +128,11 @@ class ProjectsController extends Controller
             ], 404);
         }
 
+        $url = SocialLinks::frontendUrl("/projects/{$project->slug}");
+        $seo = $project->seo ?? [];
+        $settings = settings();
+        $shareButtons = SocialLinks::shareButtons($settings?->share_buttons ?? []);
+
         return response()->json([
             'data' => [
                 'title' => $project->title,
@@ -132,11 +154,23 @@ class ProjectsController extends Controller
                 ],
 
                 /* 🔥 SEO */
-                'seo' => $project->seo,
+                'seo' => [
+                    ...$seo,
+                    'canonical' => data_get($seo, 'canonical', $url),
+                    'noindex' => (bool) data_get($seo, 'noindex', false),
+                    'image' => data_get($seo, 'image', $project->cover_url),
+                ],
 
                 /* 🔥 DATE */
                 'published_at' => $project->published_at,
-            ]
+            ],
+            'share' => [
+                'title' => $settings?->share_title ?? '',
+                'share_title' => $settings?->share_title ?? '',
+                'url' => $url,
+                'buttons' => $shareButtons,
+                'share_buttons' => $shareButtons,
+            ],
         ]);
     }
 

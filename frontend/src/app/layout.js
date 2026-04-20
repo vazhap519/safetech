@@ -1,20 +1,11 @@
 
 
 import "./globals.css";
-import { Noto_Sans_Georgian } from "next/font/google";
 import FloatingButtons from "./components/FloatingButtons";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { getSettings } from "@/lib/datafetch";
 import { Toaster } from "react-hot-toast";
-
-/* =========================
-   FONT
-========================= */
-const geoFont = Noto_Sans_Georgian({
-  subsets: ["georgian"],
-  weight: ["400", "500", "600", "700"],
-});
 
 /* =========================
    🔥 DYNAMIC SEO
@@ -51,19 +42,21 @@ export async function generateMetadata() {
 /* =========================
    LAYOUT
 ========================= */
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const settings = await getSettings().catch(() => null);
+
   return (
     <html lang="ka">
-      <body className={`${geoFont.className} bg-darkbg text-white`}>
+      <body className="bg-darkbg text-white">
         
-        <Header />
+        <Header settings={settings} />
 
         {/* HEADER OFFSET */}
         <main className="pt-[80px] bg-[#F8FAFC] min-h-screen">
           {children}
         </main>
 
-        <FloatingButtons />
+        <FloatingButtons settings={settings} />
         <Footer />
 
         {/* 🔥 TOAST GLOBAL */}

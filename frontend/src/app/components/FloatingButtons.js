@@ -1,22 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { FaWhatsapp, FaViber } from "react-icons/fa";
+import { FaCommentDots, FaTimes, FaWhatsapp, FaViber } from "react-icons/fa";
+
+function normalizePhone(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+
+  if (!digits) return null;
+  if (digits.startsWith("995")) return digits;
+
+  return `995${digits.replace(/^0+/, "")}`;
+}
 
 export default function FloatingButtons({ settings }) {
   const [open, setOpen] = useState(false);
 
-  const phone =
-    settings?.contact?.find((item) => item.type === "phone")?.value || "";
+  const rawPhone =
+    settings?.contact_page?.whatsapp ||
+    settings?.contact_page?.phone ||
+    settings?.contact?.find((item) => item.type === "phone")?.value;
+  const phone = normalizePhone(rawPhone);
 
-  const formattedPhone = phone ? `995${phone}` : null;
-
-  if (!formattedPhone) return null; // 🔥 არ აჩვენოს საერთოდ თუ phone არ არის
+  if (!phone) return null;
 
   return (
     <div className="fixed bottom-24 md:bottom-10 right-5 z-50 flex flex-col items-end gap-3">
-
-      {/* CHILD BUTTONS */}
       <div
         className={`flex flex-col items-end gap-3 transition-all duration-300 ${
           open
@@ -24,35 +32,33 @@ export default function FloatingButtons({ settings }) {
             : "opacity-0 translate-y-5 pointer-events-none"
         }`}
       >
-
-        {/* WhatsApp */}
         <a
-          href={`https://wa.me/${formattedPhone}`}
+          href={`https://wa.me/${phone}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-green-500 text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg hover:scale-110 transition"
+          aria-label="WhatsApp"
+          className="bg-green-500 text-white w-12 h-12 flex items-center justify-center rounded-lg shadow-lg hover:scale-105 transition"
         >
           <FaWhatsapp size={20} />
         </a>
 
-        {/* Viber */}
         <a
-          href={`viber://chat?number=${formattedPhone}`}
-          className="bg-purple-600 text-white w-12 h-12 flex items-center justify-center rounded-full shadow-lg hover:scale-110 transition"
+          href={`viber://chat?number=%2B${phone}`}
+          aria-label="Viber"
+          className="bg-purple-600 text-white w-12 h-12 flex items-center justify-center rounded-lg shadow-lg hover:scale-105 transition"
         >
           <FaViber size={20} />
         </a>
-
       </div>
 
-      {/* MAIN BUTTON */}
       <button
-        onClick={() => setOpen(!open)}
-        className="bg-[#00C2A8] text-white w-14 h-14 flex items-center justify-center rounded-full shadow-xl hover:scale-110 transition"
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-label="საკონტაქტო ღილაკები"
+        className="bg-[#00C2A8] text-white w-14 h-14 flex items-center justify-center rounded-lg shadow-xl hover:scale-105 transition"
       >
-        {open ? "✕" : "💬"}
+        {open ? <FaTimes size={18} /> : <FaCommentDots size={22} />}
       </button>
-
     </div>
   );
 }

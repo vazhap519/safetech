@@ -10,6 +10,7 @@ import Short from "../../components/services/Short";
 import LongDesc from "../../components/services/LongDesc";
 import CTASection from "@/app/components/services/CTASection";
 import { getCurrentUrl } from "../../../lib/getUrl";
+import { buildMetadata } from "@/lib/seo";
 
 const DEFAULT_IMAGE = "/services/1.jpg";
 
@@ -33,42 +34,18 @@ export async function generateMetadata({ params }) {
   }
 
   const service = data.service;
-
-  const title = service.title;
-  const description =
-    service.short_description || service.long_description;
-
-  const image = service.image || DEFAULT_IMAGE;
-
   const url = await getCurrentUrl(`/services/${slug}`);
+  const seo = service?.seo?.meta || {};
 
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: url,
-    },
-    openGraph: {
-      title,
-      description,
-      url,
-      type: "website",
-      images: [
-        {
-          url: image,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [image],
-    },
-  };
+  return buildMetadata({
+    title: seo.title || service.title,
+    description: seo.description || service.short_description || service.long_description,
+    image: seo.image || service.image || DEFAULT_IMAGE,
+    canonical: seo.canonical || url,
+    noindex: Boolean(seo.noindex),
+    path: `/services/${slug}`,
+    type: "website",
+  });
 }
 
 /* =========================
@@ -117,7 +94,11 @@ export default async function ServicePage({ params }) {
     ? service.faq
     : [];
 
-  const serviceSchema = buildServiceSchema(service, url);
+  const customSchema = service?.seo?.schema;
+  const serviceSchema = customSchema || buildServiceSchema(service, url);
+  const serviceSchemas = Array.isArray(serviceSchema)
+    ? serviceSchema.filter(Boolean)
+    : [serviceSchema].filter(Boolean);
 
   const faqSchema =
     faq.length > 0
@@ -139,12 +120,15 @@ export default async function ServicePage({ params }) {
     <main>
 
       {/* 🔥 SERVICE SCHEMA */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(serviceSchema),
-        }}
-      />
+      {serviceSchemas.map((schema, index) => (
+        <script
+          key={`service-schema-${index}`}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schema),
+          }}
+        />
+      ))}
 
       {/* 🔥 FAQ SCHEMA */}
       {faqSchema && (

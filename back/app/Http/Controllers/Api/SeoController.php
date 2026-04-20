@@ -84,8 +84,12 @@ class SeoController extends Controller
     {
         return match ($type) {
             'about' => \App\Models\About::class,
-            // 'post' => \App\Models\Post::class,
-            // 'service' => \App\Models\Service::class,
+            'post', 'blog' => \App\Models\Post::class,
+            'service' => \App\Models\Service::class,
+            'project' => \App\Models\Project::class,
+            'category' => \App\Models\Category::class,
+            'service-category' => \App\Models\CategoryForService::class,
+            'project-category' => \App\Models\ProjectCategory::class,
             default => null,
         };
     }

@@ -10,13 +10,25 @@ class ProjectCategory extends Model
     protected $fillable = [
         'name',
         'slug',
+        'color',
         'icon',
         'sort_order',
         'seo',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
+        'intro_text',
+        'faq',
+        'schema',
+        'noindex',
     ];
 
     protected $casts = [
         'seo' => 'array',
+        'seo_keywords' => 'array',
+        'faq' => 'array',
+        'schema' => 'array',
+        'noindex' => 'boolean',
     ];
 
     /* =========================

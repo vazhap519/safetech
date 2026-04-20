@@ -125,7 +125,7 @@ export function injectInternalLinks(content, keywordMap) {
 
         if (regex.test(updated)) {
           updated = updated.replace(regex, (match) => {
-            return `<a href="${item.url}" class="text-[#00C2A8] font-medium hover:underline">${match}</a>`;
+            return `<a href="${item.url}" class="text-[#007A6D] font-medium hover:underline">${match}</a>`;
           });
 
           used.add(item.url);

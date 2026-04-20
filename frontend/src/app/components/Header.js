@@ -28,7 +28,7 @@ export default function Header({ settings }) {
 
   const linkClass = (path) =>
     pathname === path
-      ? "text-[#00C2A8] font-semibold"
+      ? "text-[#007A6D] font-semibold"
       : "text-gray-700 hover:text-[#0B3C5D] transition";
 
   return (
@@ -45,7 +45,7 @@ export default function Header({ settings }) {
           {/* LOGO */}
           <Link href="/" className="text-2xl font-bold">
             <span className="text-[#0B3C5D]">Safe</span>
-            <span className="text-[#00C2A8]">tech</span>
+            <span className="text-[#007A6D]">tech</span>
           </Link>
 
           {/* DESKTOP NAV */}

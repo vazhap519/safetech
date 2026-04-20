@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SeoPages\Schemas;
 
+use App\Support\SocialLinks;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -199,6 +200,18 @@ class SeoPageForm
                         ->label('Schema JSON')
                         ->rows(10)
                         ->helperText('Auto-generated. You can edit.')
+                        ->dehydrateStateUsing(function ($state) {
+                            if (!$state) {
+                                return null;
+                            }
+
+                            $decoded = json_decode($state, true);
+
+                            return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+                        })
+                        ->formatStateUsing(fn ($state) => is_array($state)
+                            ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+                            : $state)
                         ->rules([
                             fn () => function ($attr, $value, $fail) {
                                 if (!$value) return;
@@ -227,7 +240,7 @@ class SeoPageForm
     */
     protected static function generateSchema($type): ?string
     {
-        $baseUrl = config('app.url');
+        $baseUrl = SocialLinks::frontendUrl('/');
         $name = config('app.name');
 
         // ✅ სწორ ადგილას
