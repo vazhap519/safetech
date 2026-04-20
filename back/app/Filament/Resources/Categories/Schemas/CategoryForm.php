@@ -1,18 +1,13 @@
 <?php
 
-namespace App\Filament\Resources\ProjectCategories\Schemas;
+namespace App\Filament\Resources\Categories\Schemas;
 
-use Filament\Forms\Components\ColorPicker;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Toggle;
+use Filament\Forms;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
-class ProjectCategoryForm
+class CategoryForm
 {
     public static function configure(Schema $schema): Schema
     {
@@ -20,69 +15,57 @@ class ProjectCategoryForm
             ->components([
                 Section::make('Category')
                     ->schema([
-
-                        TextInput::make('name')
+                        Forms\Components\TextInput::make('name')
+                            ->label('Name')
                             ->required()
+                            ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($set, $state) =>
-                            $set('slug', Str::slug($state))
-                            ),
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('slug', Str::slug($state));
+                            }),
 
-                        TextInput::make('slug')
-                            ->required(),
-
-                        /* 🎨 COLOR */
-                        ColorPicker::make('color')
-                            ->label('Color')
-                            ->default('#00C2A8'),
-
-                        /* 🎯 ICON */
-                        TextInput::make('icon')
-                            ->label('Icon (emoji or class)')
-                            ->placeholder('📷 or heroicon'),
-
-                        /* 🔢 ORDER */
-                        TextInput::make('sort_order')
-                            ->numeric()
-                            ->default(0),
-
+                        Forms\Components\TextInput::make('slug')
+                            ->label('Slug')
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true),
                     ])
                     ->columns(2),
 
                 Section::make('SEO')
                     ->schema([
-                        TextInput::make('seo_title')
+                        Forms\Components\TextInput::make('seo_title')
                             ->label('Meta title')
                             ->maxLength(70),
 
-                        Textarea::make('seo_description')
+                        Forms\Components\Textarea::make('seo_description')
                             ->label('Meta description')
                             ->rows(3)
                             ->maxLength(180)
                             ->columnSpanFull(),
 
-                        Repeater::make('seo_keywords')
+                        Forms\Components\Repeater::make('seo_keywords')
                             ->label('Keywords')
                             ->schema([
-                                TextInput::make('value')->required(),
+                                Forms\Components\TextInput::make('value')->required(),
                             ])
                             ->default([])
                             ->columnSpanFull(),
 
-                        RichEditor::make('intro_text')
+                        Forms\Components\RichEditor::make('intro_text')
                             ->label('Category intro text')
                             ->columnSpanFull(),
 
-                        Repeater::make('faq')
+                        Forms\Components\Repeater::make('faq')
                             ->label('FAQ')
                             ->schema([
-                                TextInput::make('question')->required(),
-                                Textarea::make('answer')->required(),
+                                Forms\Components\TextInput::make('question')->required(),
+                                Forms\Components\Textarea::make('answer')->required(),
                             ])
                             ->collapsible()
                             ->columnSpanFull(),
 
-                        Textarea::make('schema')
+                        Forms\Components\Textarea::make('schema')
                             ->label('Custom schema JSON')
                             ->rows(8)
                             ->dehydrateStateUsing(function ($state) {
@@ -99,7 +82,7 @@ class ProjectCategoryForm
                                 : $state)
                             ->columnSpanFull(),
 
-                        Toggle::make('noindex')
+                        Forms\Components\Toggle::make('noindex')
                             ->label('Noindex')
                             ->helperText('Use for thin or temporary category pages.'),
                     ])

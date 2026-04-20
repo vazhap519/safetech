@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SeoPage;
 use App\Models\Service;
 use App\Models\ServiceSection;
+use App\Support\SocialLinks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -82,6 +83,8 @@ class ServicesController extends Controller
 
         $seo = SeoPage::getByKey('services');
 
+        $settings = settings();
+
         return response()->json([
             'success' => true,
             'data' => $data,
@@ -90,8 +93,10 @@ class ServicesController extends Controller
                 'schema' => $seo?->schema_data ?? [],
             ],
             'share' => [
-                'title' => settings()->share_title ?? '',
-                'buttons' => settings()->share_buttons ?? [],
+                'title' => $settings?->share_title ?? '',
+                'share_title' => $settings?->share_title ?? '',
+                'buttons' => SocialLinks::shareButtons($settings?->share_buttons ?? []),
+                'share_buttons' => SocialLinks::shareButtons($settings?->share_buttons ?? []),
             ],
         ]);
     }
@@ -108,16 +113,19 @@ class ServicesController extends Controller
                     'id',
                     'slug',
                     'title',
+                    'category_for_service_id',
                     'short_description',
                     'long_description',
                     'features',
                     'faq',
+                    'seo',
                     'phone',
                     'button_text',
                     'cta_title',
                     'cta_description',
+                    'updated_at',
                 ])
-                ->with('media')
+                ->with(['media', 'category:id,name,slug'])
                 ->where('slug', $slug)
                 ->first();
         });
@@ -127,26 +135,23 @@ class ServicesController extends Controller
         }
 
         // 🔥 SHARE BUILD (clean + dynamic)
-        $url = url("/services/{$service->slug}");
-
-        $shareButtons = collect($this->shareMap())
-            ->map(function ($btn) use ($url) {
-                return [
-                    'name' => $btn['name'],
-                    'icon' => $btn['icon'],
-                    'color' => $btn['color'],
-                    'url' => str_replace('{url}', urlencode($url), $btn['url']),
-                ];
-            })
-            ->values();
+        $url = SocialLinks::frontendUrl("/services/{$service->slug}");
+        $settings = settings();
+        $shareButtons = SocialLinks::shareButtons($settings?->share_buttons ?? []);
+        $seo = $service->seo ?? [];
 
         return response()->json([
             'service' => [
                 'title' => $service->title,
+                'slug' => $service->slug,
                 'short_description' => $service->short_description,
                 'long_description' => $service->long_description,
 
                 'image' => $service->image,
+                'category' => [
+                    'name' => $service->category?->name,
+                    'slug' => $service->category?->slug,
+                ],
 
                 'features' => $service->features ?? [],
                 'faq' => $service->faq ?? [],
@@ -156,63 +161,35 @@ class ServicesController extends Controller
 
                 'cta_title' => $service->cta_title,
                 'cta_description' => $service->cta_description,
+                'updated_at' => $service->updated_at?->toISOString(),
+
+                'seo' => [
+                    'meta' => [
+                        'title' => data_get($seo, 'title', $service->title),
+                        'description' => data_get($seo, 'description', $service->short_description ?: $service->long_description),
+                        'keywords' => collect(data_get($seo, 'keywords', []))
+                            ->map(fn ($item) => is_array($item) ? ($item['value'] ?? null) : $item)
+                            ->filter()
+                            ->values(),
+                        'image' => $service->image,
+                        'canonical' => $url,
+                        'noindex' => (bool) data_get($seo, 'noindex', false),
+                    ],
+                    'faq' => $service->faq ?? [],
+                    'schema' => data_get($seo, 'schema'),
+                ],
             ],
 
             // ✅ CLEAN SHARE OUTPUT
             'share' => [
+                'title' => $settings?->share_title ?? '',
+                'share_title' => $settings?->share_title ?? '',
                 'url' => $url,
                 'buttons' => $shareButtons,
+                'share_buttons' => $shareButtons,
             ]
         ]);
     }
-    private function shareMap()
-    {
-        return [
-            'facebook' => [
-                'name' => 'Facebook',
-                'url' => 'https://www.facebook.com/sharer/sharer.php?u={url}',
-                'color' => 'bg-blue-600',
-                'icon' => 'FaFacebook',
-            ],
-            'whatsapp' => [
-                'name' => 'WhatsApp',
-                'url' => 'https://wa.me/?text={url}',
-                'color' => 'bg-green-500',
-                'icon' => 'FaWhatsapp',
-            ],
-            'telegram' => [
-                'name' => 'Telegram',
-                'url' => 'https://t.me/share/url?url={url}',
-                'color' => 'bg-sky-500',
-                'icon' => 'FaTelegram',
-            ],
-            'linkedin' => [
-                'name' => 'LinkedIn',
-                'url' => 'https://www.linkedin.com/sharing/share-offsite/?url={url}',
-                'color' => 'bg-blue-700',
-                'icon' => 'FaLinkedin',
-            ],
-            'pinterest' => [
-                'name' => 'Pinterest',
-                'url' => 'https://pinterest.com/pin/create/button/?url={url}',
-                'color' => 'bg-red-600',
-                'icon' => 'FaPinterest',
-            ],
-            'twitter' => [
-                'name' => 'Twitter',
-                'url' => 'https://twitter.com/intent/tweet?url={url}',
-                'color' => 'bg-black',
-                'icon' => 'FaTwitter',
-            ],
-            'link' => [
-                'name' => 'Copy Link',
-                'url' => '{url}',
-                'color' => 'bg-gray-600',
-                'icon' => 'FaLink',
-            ],
-        ];
-    }
-
     public function revalidate()
     {
         Cache::flush();

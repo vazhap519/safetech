@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SocialLinks;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Spatie\MediaLibrary\HasMedia;
@@ -22,11 +23,14 @@ class SeoPage extends Model implements HasMedia
         'og_description',
         'canonical',
         'noindex',
+        'schema_type',
+        'schema',
     ];
 
     protected $casts = [
         'keywords' => 'array',
         'noindex' => 'boolean',
+        'schema' => 'array',
     ];
 
     protected $appends = [
@@ -60,7 +64,7 @@ class SeoPage extends Model implements HasMedia
 
             if ($model->slug) {
                 $model->slug = '/' . ltrim($model->slug, '/');
-                $model->canonical = config('app.url') . $model->slug;
+                $model->canonical = SocialLinks::frontendUrl($model->slug);
             }
 
             if (is_array($model->keywords)) {
@@ -111,7 +115,7 @@ class SeoPage extends Model implements HasMedia
     public function getOgImageUrlAttribute(): string
     {
         return $this->getFirstMediaUrl('og_image', 'og')
-            ?: asset('default-og.jpg');
+            ?: SocialLinks::frontendUrl('/services/1.jpg');
     }
 
     public function getShareImageUrlAttribute(): string
@@ -122,7 +126,9 @@ class SeoPage extends Model implements HasMedia
 
     public function getKeywordsAttribute($value)
     {
-        $keywords = json_decode($value, true) ?? [];
+        $keywords = is_array($value)
+            ? $value
+            : (json_decode($value ?: '[]', true) ?: []);
 
         return collect($keywords)
             ->map(fn ($k) => is_array($k) ? $k : ['value' => $k])
@@ -149,6 +155,7 @@ class SeoPage extends Model implements HasMedia
             'keywords' => $this->keywords_list,
 
             'canonical' => $this->canonical,
+            'noindex' => $this->noindex,
             'robots' => $this->noindex ? 'noindex, nofollow' : 'index, follow',
 
             'og' => [
@@ -175,7 +182,21 @@ class SeoPage extends Model implements HasMedia
 
     public static function resolve(string $key = null, $model = null): array
     {
-        $seo = $key ? self::getByKey($key) : null;
+        $seo = null;
+
+        if ($model) {
+            $seo = Cache::remember(
+                "seo_model_" . get_class($model) . "_{$model->getKey()}",
+                3600,
+                fn () => self::where('seoable_type', get_class($model))
+                    ->where('seoable_id', $model->getKey())
+                    ->first()
+            );
+        }
+
+        if (!$seo && $key) {
+            $seo = self::getByKey($key);
+        }
 
         return $seo?->meta ?? [
             'title' => config('app.name'),
@@ -186,22 +207,18 @@ class SeoPage extends Model implements HasMedia
 
     public function getSchemaDataAttribute(): array
     {
-        /*
-        |------------------------------------------------------------
-        | 1. CUSTOM SCHEMA (FROM ADMIN)
-        |------------------------------------------------------------
-        */
         if ($this->schema) {
-            return is_array($this->schema)
+            $schema = is_array($this->schema)
                 ? $this->schema
                 : json_decode($this->schema, true);
+
+            return is_array($schema) ? $schema : [];
         }
 
-        /*
-        |------------------------------------------------------------
-        | 2. AUTO SCHEMA (BASED ON TYPE)
-        |------------------------------------------------------------
-        */
+        $settings = settings();
+        $baseUrl = SocialLinks::frontendUrl('/');
+        $sameAs = SocialLinks::sameAs($settings);
+
         switch ($this->schema_type) {
 
             case 'WebSite':
@@ -210,39 +227,62 @@ class SeoPage extends Model implements HasMedia
                         '@context' => 'https://schema.org',
                         '@type' => 'Organization',
                         'name' => config('app.name'),
-                        'url' => config('app.url'),
+                        'url' => $baseUrl,
+                        'sameAs' => $sameAs,
                     ],
                     [
                         '@context' => 'https://schema.org',
                         '@type' => 'WebSite',
                         'name' => config('app.name'),
-                        'url' => config('app.url'),
+                        'url' => $baseUrl,
                     ],
                 ];
 
             case 'Article':
-                return [
+                return array_filter([
                     '@context' => 'https://schema.org',
                     '@type' => 'Article',
                     'headline' => $this->title,
                     'description' => $this->description,
                     'image' => $this->og_image_url,
                     'datePublished' => $this->created_at,
+                    'mainEntityOfPage' => $this->canonical ?: $baseUrl,
                     'author' => [
                         '@type' => 'Organization',
                         'name' => config('app.name'),
                     ],
-                ];
+                ]);
 
             case 'LocalBusiness':
-                return [
+                return array_filter([
                     '@context' => 'https://schema.org',
                     '@type' => 'LocalBusiness',
                     'name' => config('app.name'),
-                    'url' => config('app.url'),
-                    'telephone' => '+995599000000',
-                    'areaServed' => 'Georgia',
-                ];
+                    'url' => $baseUrl,
+                    'telephone' => $settings?->phone,
+                    'email' => $settings?->email,
+                    'address' => array_filter([
+                        '@type' => 'PostalAddress',
+                        'streetAddress' => $settings?->address,
+                        'addressLocality' => $settings?->city,
+                        'addressCountry' => $settings?->country ?: 'GE',
+                    ]),
+                    'geo' => array_filter([
+                        '@type' => 'GeoCoordinates',
+                        'latitude' => $settings?->lat,
+                        'longitude' => $settings?->lng,
+                    ]),
+                    'openingHoursSpecification' => [
+                        array_filter([
+                            '@type' => 'OpeningHoursSpecification',
+                            'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                            'opens' => $settings?->open_time,
+                            'closes' => $settings?->close_time,
+                        ]),
+                    ],
+                    'sameAs' => $sameAs,
+                    'areaServed' => $settings?->country ?: 'Georgia',
+                ]);
 
             case 'Service':
                 return [
@@ -250,6 +290,11 @@ class SeoPage extends Model implements HasMedia
                     '@type' => 'Service',
                     'name' => $this->title,
                     'description' => $this->description,
+                    'provider' => [
+                        '@type' => 'Organization',
+                        'name' => config('app.name'),
+                        'url' => $baseUrl,
+                    ],
                 ];
 
             default:

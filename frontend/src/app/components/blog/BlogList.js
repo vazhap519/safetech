@@ -2,14 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import CategoryFilters from "@/app/components/ui/CategoryFilters";
 import Pagination from "@/app/components/ui/Pagination";
-
-const DEFAULT_IMAGE = "/services/1.jpg";
-
-function imageSrc(image) {
-  if (!image) return DEFAULT_IMAGE;
-  if (image.startsWith("http")) return image;
-  return `${process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, "")}${image}`;
-}
+import { mediaUrl } from "@/lib/media";
 
 export default function BlogList({
   posts = [],
@@ -37,10 +30,11 @@ export default function BlogList({
             className="block bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden"
           >
             <Image
-              src={imageSrc(post.image)}
+              src={mediaUrl(post.image)}
               alt={post.title}
               width={400}
               height={200}
+              sizes="(max-width: 768px) 100vw, 33vw"
               className="h-44 w-full object-cover"
             />
 

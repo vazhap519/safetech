@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { mediaUrl } from "@/lib/media";
 
 export default function MagneticCard({ project, i }) {
   return (
@@ -21,9 +22,10 @@ export default function MagneticCard({ project, i }) {
           <div className="relative h-64 overflow-hidden">
 
             <Image
-              src={project.image || "/placeholder.jpg"}
+              src={mediaUrl(project.image)}
               alt={project.title}
               fill
+              sizes="(max-width: 768px) 100vw, 33vw"
               className="object-cover transition duration-700 group-hover:scale-110"
             />
 

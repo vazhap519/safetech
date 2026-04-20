@@ -178,6 +178,15 @@ class ProjectForm
 
                     Textarea::make('seo.schema')
                         ->rows(12)
+                        ->dehydrateStateUsing(function ($state) {
+                            if (!$state) {
+                                return null;
+                            }
+
+                            $decoded = json_decode($state, true);
+
+                            return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+                        })
                         ->formatStateUsing(fn ($state) =>
                         is_array($state)
                             ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)

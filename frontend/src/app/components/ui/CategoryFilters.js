@@ -20,7 +20,7 @@ export default function CategoryFilters({
           <Link
             key={cat.slug}
             href={href}
-            className={`px-5 py-2 rounded-full text-sm font-medium border transition whitespace-nowrap ${
+            className={`px-5 py-2 rounded-lg text-sm font-medium border transition whitespace-nowrap ${
               active
                 ? "bg-[#00C2A8] text-white border-[#00C2A8]"
                 : "bg-white text-[#0B3C5D] border-gray-200 hover:border-[#00C2A8]"

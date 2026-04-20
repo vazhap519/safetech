@@ -16,6 +16,7 @@ use App\Models\CategoryForService;
 use App\Models\Service;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/services', [ServicesController::class, 'index'])->name('services');
@@ -26,6 +27,7 @@ Route::get('/settings', [SettingsController::class, 'index']);
 Route::get('/contact-page', [ContactSectionController::class, 'index']);
 
 Route::get('/seo', [SeoController::class, 'index']);
+Route::get('/seo/model/{type}/{id}', [SeoController::class, 'model']);
 Route::get('/seo/{key}', [SeoController::class, 'show']);
 Route::get('/services/{slug}', [ServicesController::class, 'show'])->name('service');
 Route::get('/blog/{slug}', [\App\Http\Controllers\Api\BlogController::class, 'show']);
@@ -38,9 +40,21 @@ Route::get('/projects/{slug}', [ProjectsController::class, 'show']);
 Route::get('/projects/{slug}/related', [ProjectsController::class, 'related']);
 
 Route::get('/service-categories', function () {
+    $columns = array_values(array_filter([
+        'name',
+        'slug',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
+        'intro_text',
+        'faq',
+        'schema',
+        'noindex',
+    ], fn ($column) => Schema::hasColumn('category_for_services', $column)));
+
     return CategoryForService::query()
         ->whereHas('services')
-        ->select('name', 'slug')
+        ->select($columns)
         ->orderBy('name')
         ->get();
 });
@@ -74,13 +88,37 @@ Route::post('/privacy', [PrivacyController::class, 'update']);
 Route::post('/blog/revalidate', [BlogController::class, 'revalidate']);
 Route::post('/blog/{slug}/revalidate', [BlogController::class, 'revalidateSingle']);
 Route::get('/categories', function () {
+    $columns = array_values(array_filter([
+        'name',
+        'slug',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
+        'intro_text',
+        'faq',
+        'schema',
+        'noindex',
+    ], fn ($column) => Schema::hasColumn('categories', $column)));
+
     return Category::whereHas('posts', function ($q) {
         $q->where('is_published', true);
-    })->select('name', 'slug')->get();
+    })->select($columns)->orderBy('name')->get();
 });
 
 Route::get('/manifest.json', function () {
     $settings = Setting::first();
+    $icons = collect([
+        [
+            "src" => $settings?->getFirstMediaUrl('favicon', 'android_192'),
+            "sizes" => "192x192",
+            "type" => "image/png"
+        ],
+        [
+            "src" => $settings?->getFirstMediaUrl('favicon', 'android_512'),
+            "sizes" => "512x512",
+            "type" => "image/png"
+        ]
+    ])->filter(fn ($icon) => !empty($icon['src']))->values()->all();
 
     return response()->json([
         "name" => config('app.name'),
@@ -89,17 +127,6 @@ Route::get('/manifest.json', function () {
         "display" => "standalone",
         "background_color" => "#ffffff",
         "theme_color" => "#000000",
-        "icons" => [
-            [
-                "src" => $settings?->getFirstMediaUrl('favicon', 'android_192'),
-                "sizes" => "192x192",
-                "type" => "image/png"
-            ],
-            [
-                "src" => $settings?->getFirstMediaUrl('favicon', 'android_512'),
-                "sizes" => "512x512",
-                "type" => "image/png"
-            ]
-        ]
+        "icons" => $icons,
     ]);
 });

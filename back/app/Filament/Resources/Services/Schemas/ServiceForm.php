@@ -4,6 +4,7 @@
 
 namespace App\Filament\Resources\Services\Schemas;
 
+use App\Support\SocialLinks;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -15,6 +16,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -146,6 +148,10 @@ class ServiceForm
                     TextInput::make('seo.title')
                         ->label('SEO Title')
                         ->maxLength(255),
+
+                    Toggle::make('seo.noindex')
+                        ->label('Noindex')
+                        ->default(false),
 
                     Textarea::make('seo.description')
                         ->rows(3),
@@ -309,7 +315,7 @@ class ServiceForm
     }
     protected static function generateSchema($type, $title = null, $description = null): ?string
     {
-        $baseUrl = config('app.url');
+        $baseUrl = SocialLinks::frontendUrl('/');
         $name = config('app.name');
 
         return match ($type) {

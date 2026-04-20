@@ -1,20 +1,22 @@
-import CTASection from "./components/home/CTASection";
-import FAQ from "./components/home/FAQ";
-import HeroSection from "./components/home/HeroSection";
-import HowItWorks from "./components/home/HowItWorks";
-import ServicesPreview from "./components/home/ServicesPreview";
-import WhyUs from "./components/home/WhyUs";
-import TrustSection from "./components/home/TrustSection";
-import StatsSection from "./components/home/StatsSection";
-import Testimonials from "./components/home/Testimonials";
 import EmptyState from "../app/components/ui/EmptyState";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 
 import { getHome, getSeoByKey, getEmpty } from "@/lib/datafetch";
 import { getBaseUrl } from "@/lib/config";
 import { getSeoLinks } from "@/lib/getSeoLinks";
 import { injectInternalLinks } from "@/lib/internalLinks";
 import { buildMetadata } from "@/lib/seo";
+
+const HeroSection = dynamic(() => import("./components/home/HeroSection"));
+const ServicesPreview = dynamic(() => import("./components/home/ServicesPreview"));
+const WhyUs = dynamic(() => import("./components/home/WhyUs"));
+const HowItWorks = dynamic(() => import("./components/home/HowItWorks"));
+const TrustSection = dynamic(() => import("./components/home/TrustSection"));
+const StatsSection = dynamic(() => import("./components/home/StatsSection"));
+const Testimonials = dynamic(() => import("./components/home/Testimonials"));
+const CTASection = dynamic(() => import("./components/home/CTASection"));
+const FAQ = dynamic(() => import("./components/home/FAQ"));
 
 export const revalidate = 60;
 
@@ -193,7 +195,7 @@ export default async function Home() {
 
         <section className="py-20 bg-white border-t border-gray-100">
           <div className="max-w-6xl mx-auto px-4">
-            <p className="text-[#00C2A8] uppercase text-sm tracking-widest mb-2">
+            <p className="text-[#007A6D] uppercase text-sm tracking-widest mb-2">
               IT მომსახურება საქართველოში
             </p>
             <h2 className="text-3xl font-bold text-[#0B3C5D] mb-6">
