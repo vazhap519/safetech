@@ -11,9 +11,6 @@ import {
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 
-/* =========================
-   ICON MAP
-========================= */
 const icons = {
   FaFacebook,
   FaWhatsapp,
@@ -24,9 +21,6 @@ const icons = {
   FaLink,
 };
 
-/* =========================
-   COLOR FALLBACK (🔥 FIX)
-========================= */
 const colorMap = {
   FaFacebook: "bg-blue-600 hover:bg-blue-700",
   FaWhatsapp: "bg-green-500 hover:bg-green-600",
@@ -37,19 +31,48 @@ const colorMap = {
   FaLink: "bg-gray-600 hover:bg-gray-700",
 };
 
-/* =========================
-   COPY BUTTON
-========================= */
+function getButtons(data) {
+  if (Array.isArray(data?.share_buttons)) return data.share_buttons;
+  if (Array.isArray(data?.buttons)) return data.buttons;
+  return [];
+}
+
+function fillTemplate(template, url, title) {
+  const encodedUrl = encodeURIComponent(url);
+  const encodedTitle = encodeURIComponent(title || "");
+
+  return String(template || url)
+    .replaceAll("{url}", encodedUrl)
+    .replaceAll("{title}", encodedTitle)
+    .replaceAll("{text}", encodedTitle);
+}
+
 function CopyButton({ url }) {
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(url);
-    toast.success("ლინკი დაკოპირდა ✅");
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const input = document.createElement("input");
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+      }
+
+      toast.success("ლინკი დაკოპირდა");
+    } catch {
+      toast.error("ლინკის დაკოპირება ვერ მოხერხდა");
+    }
   };
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
-      className="px-4 py-2 bg-gray-600 text-white rounded-full text-sm flex items-center gap-2 hover:scale-105 transition"
+      aria-label="ლინკის კოპირება"
+      className="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm flex items-center gap-2 hover:bg-gray-700 transition"
     >
       <FaLink size={14} />
       კოპირება
@@ -57,64 +80,45 @@ function CopyButton({ url }) {
   );
 }
 
-/* =========================
-   SHARE COMPONENT
-========================= */
 export default function Share({ data, url: propUrl }) {
-  if (!data || !Array.isArray(data.share_buttons)) return null;
+  const buttons = getButtons(data);
+
+  if (buttons.length === 0) return null;
 
   const url =
-    propUrl ||
-    (typeof window !== "undefined" ? window.location.href : "");
+    propUrl || data?.url || (typeof window !== "undefined" ? window.location.href : "");
+  const title = data?.share_title || data?.title || "გააზიარე";
 
-  const encodedUrl = encodeURIComponent(url);
+  if (!url) return null;
 
   return (
     <div className="py-10">
       <div className="max-w-4xl mx-auto px-4 text-center">
+        {title && <p className="text-sm text-gray-500 mb-4">{title}</p>}
 
-        {/* TITLE */}
-        {data.share_title && (
-          <p className="text-sm text-gray-500 mb-4">
-            {data.share_title}
-          </p>
-        )}
-
-        {/* BUTTONS */}
         <div className="flex flex-wrap justify-center gap-3">
+          {buttons.map((btn, index) => {
+            const Icon = icons[btn.icon] || FaLink;
+            const isCopy = btn.type === "link" || btn.icon === "FaLink";
 
-          {data.share_buttons.map((btn, i) => {
-            const Icon = icons[btn.icon];
-
-            if (btn.icon === "FaLink") {
-              return <CopyButton key={i} url={url} />;
+            if (isCopy) {
+              return <CopyButton key={`${btn.name || "copy"}-${index}`} url={url} />;
             }
-
-            const shareUrl = btn.url.replace("{url}", encodedUrl);
 
             return (
               <a
-                key={i}
-                href={shareUrl}
+                key={`${btn.name || btn.type}-${index}`}
+                href={fillTemplate(btn.url, url, title)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`
-                  px-4 py-2
-                  text-white
-                  rounded-full
-                  text-sm
-                  flex items-center gap-2
-                  transition
-                  hover:scale-105
-                  ${colorMap[btn.icon] || "bg-gray-500"}
-                `}
+                aria-label={btn.name || "Share"}
+                className={`px-4 py-2 text-white rounded-lg text-sm flex items-center gap-2 transition ${colorMap[btn.icon] || "bg-gray-500 hover:bg-gray-600"}`}
               >
-                {Icon && <Icon size={14} />}
+                <Icon size={14} />
                 {btn.name}
               </a>
             );
           })}
-
         </div>
       </div>
     </div>

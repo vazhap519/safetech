@@ -2,14 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import CategoryFilters from "@/app/components/ui/CategoryFilters";
 import Pagination from "@/app/components/ui/Pagination";
-
-const DEFAULT_IMAGE = "/services/1.jpg";
-
-function imageSrc(image) {
-  if (!image) return DEFAULT_IMAGE;
-  if (image.startsWith("http")) return image;
-  return image;
-}
+import { mediaUrl } from "@/lib/media";
 
 export default function ProjectList({
   projects = [],
@@ -38,10 +31,11 @@ export default function ProjectList({
           >
             <div className="relative overflow-hidden">
               <Image
-                src={imageSrc(project.image)}
+                src={mediaUrl(project.image)}
                 alt={project.title}
                 width={400}
                 height={300}
+                sizes="(max-width: 768px) 100vw, 33vw"
                 className="h-48 w-full object-cover"
               />
 

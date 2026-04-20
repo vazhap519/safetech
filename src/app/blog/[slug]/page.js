@@ -45,7 +45,7 @@ export async function generateMetadata({ params }) {
     const title = seo.title || post.title;
     const description = seo.description || post.excerpt;
     const image = absoluteImage(seo.image || post.image);
-    const url = `${getBaseUrl()}/blog/${slug}`;
+    const url = seo.canonical || `${getBaseUrl()}/blog/${slug}`;
 
     return {
       title,
@@ -67,6 +67,10 @@ export async function generateMetadata({ params }) {
         title,
         description,
         images: [image],
+      },
+      robots: {
+        index: !seo.noindex,
+        follow: true,
       },
     };
   } catch {
@@ -190,9 +194,13 @@ export default async function BlogDetailPage({ params }) {
   }
 
   const post = res.data;
-  const url = `${getBaseUrl()}/blog/${post.slug}`;
+  const url = post?.seo?.meta?.canonical || `${getBaseUrl()}/blog/${post.slug}`;
+  const customSchema = post?.seo?.schema;
+  const primarySchemas = customSchema
+    ? (Array.isArray(customSchema) ? customSchema : [customSchema])
+    : [buildArticleSchema(post, url)];
   const schemas = [
-    buildArticleSchema(post, url),
+    ...primarySchemas,
     buildBreadcrumbSchema(post, url),
     buildFaqSchema(post),
   ].filter(Boolean);
@@ -228,7 +236,7 @@ export default async function BlogDetailPage({ params }) {
           />
         )}
 
-        <Share data={settings?.share ?? {}} url={url} />
+        <Share data={res?.share ?? settings?.share ?? {}} url={url} />
 
         <div className="mt-10 space-y-6 text-gray-700">
           {post.sections?.map((section, i) => (

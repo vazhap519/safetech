@@ -12,6 +12,10 @@ const DEFAULT_IMAGE = "/services/1.jpg";
 const absoluteImage = (image) => {
   if (!image) return `${getBaseUrl()}${DEFAULT_IMAGE}`;
   if (image.startsWith("http")) return image;
+  if (image.startsWith("/storage") || image.startsWith("/uploads")) {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "");
+    return apiBase ? `${apiBase}${image}` : `${getBaseUrl()}${image}`;
+  }
   return `${getBaseUrl()}${image.startsWith("/") ? image : `/${image}`}`;
 };
 
@@ -39,8 +43,8 @@ export async function generateMetadata({ params }) {
     const seo = project?.seo || {};
     const title = seo.title || project.title;
     const description = seo.description || project.excerpt;
-    const image = absoluteImage(project.image || DEFAULT_IMAGE);
-    const url = `${getBaseUrl()}/projects/${slug}`;
+    const image = absoluteImage(seo.image || project.image || DEFAULT_IMAGE);
+    const url = seo.canonical || `${getBaseUrl()}/projects/${slug}`;
 
     return {
       title,
@@ -119,16 +123,22 @@ export default async function ProjectDetail({ params }) {
   }
 
   const project = res.data;
-  const url = `${getBaseUrl()}/projects/${project.slug}`;
-  const schema = buildSchema(project, url);
+  const url = project?.seo?.canonical || `${getBaseUrl()}/projects/${project.slug}`;
+  const customSchema = project?.seo?.schema;
+  const schemas = customSchema
+    ? (Array.isArray(customSchema) ? customSchema : [customSchema])
+    : [buildSchema(project, url)];
   const related = relatedRes?.data || [];
 
   return (
     <main className="py-20 bg-[#F8FAFC]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-      />
+      {schemas.filter(Boolean).map((schema, index) => (
+        <script
+          key={`project-schema-${index}`}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
 
       <article className="max-w-4xl mx-auto px-4">
         {project.category?.name && (
@@ -151,7 +161,7 @@ export default async function ProjectDetail({ params }) {
           <p className="mt-6 text-lg text-gray-600">{project.excerpt}</p>
         )}
 
-        <Share data={settings?.share ?? {}} url={url} />
+        <Share data={res?.share ?? settings?.share ?? {}} url={url} />
 
         {project.content && (
           <div
