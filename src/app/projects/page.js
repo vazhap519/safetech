@@ -1,25 +1,35 @@
 import ProjectList from "@/app/components/projects/ProjectList";
 import EmptyState from "../components/ui/EmptyState";
 
-import { getProjects, getEmpty, getSeoByKey } from "@/lib/datafetch";
+import { getBaseUrl } from "@/lib/config";
+import { getProjects, getEmpty, getProjectCategories, getSeoByKey } from "@/lib/datafetch";
 import { buildMetadata } from "@/lib/seo";
 
 /* =========================
    🔥 SEO (PROJECTS)
 ========================= */
-export async function generateMetadata() {
-  const seo = await getSeoByKey("projects"); // ⚠️ KEY შეცვალე თუ სხვაა
+export async function generateMetadata({ searchParams }) {
+  const params = await searchParams;
+  const page = Number(params?.page || 1);
+  const category = params?.category || "all";
+  const seo = await getSeoByKey("projects");
   const data = seo?.data;
+  const categoryPath =
+    category && category !== "all" ? `/projects/category/${category}` : "/projects";
+  const canonical =
+    page > 1
+      ? `${getBaseUrl()}${categoryPath}/page/${page}`
+      : `${getBaseUrl()}${categoryPath}`;
 
   return buildMetadata({
     title: data?.title || "პროექტები",
     description: data?.description || "Safetech პროექტები",
     image: data?.og?.image,
     keywords: data?.keywords,
-    canonical: data?.canonical,
-    noindex: data?.noindex,
+    canonical,
+    noindex: page > 5 || data?.noindex,
     og: data?.og,
-    path: data?.slug || "/projects",
+    path: "/projects",
   });
 }
 
@@ -32,8 +42,9 @@ export default async function ProjectsPage({ searchParams }) {
   const page = Number(params?.page || 1);
   const category = params?.category || "all";
 
-  const [res, emptyRes] = await Promise.all([
+  const [res, categoriesRes, emptyRes] = await Promise.all([
     getProjects({ page, category }),
+    getProjectCategories().catch(() => null),
     getEmpty().catch(() => null),
   ]);
 
@@ -45,6 +56,10 @@ export default async function ProjectsPage({ searchParams }) {
   }
 
   const projects = res?.data ?? [];
+  const categories = Array.isArray(categoriesRes)
+    ? categoriesRes
+    : categoriesRes?.data || [];
+  const meta = res?.meta || {};
 
   /* 📭 empty data */
   if (projects.length === 0) {
@@ -61,7 +76,13 @@ export default async function ProjectsPage({ searchParams }) {
         </h1>
 
         {/* LIST */}
-        <ProjectList page={page} category={category} />
+        <ProjectList
+          projects={projects}
+          categories={categories}
+          meta={meta}
+          page={page}
+          category={category}
+        />
 
       </div>
     </main>

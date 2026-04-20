@@ -11,7 +11,7 @@ import LongDesc from "../../components/services/LongDesc";
 import CTASection from "@/app/components/services/CTASection";
 import { getCurrentUrl } from "../../../lib/getUrl";
 
-const DEFAULT_IMAGE = "/images/service-placeholder.webp";
+const DEFAULT_IMAGE = "/services/1.jpg";
 
 /* 🔥 CACHE (CRITICAL FIX) */
 const getServiceCached = cache(async (slug) => {
@@ -86,7 +86,7 @@ function buildServiceSchema(service, url) {
     provider: {
       "@type": "Organization",
       name: "Safetech",
-      url,
+      url: process.env.NEXT_PUBLIC_SITE_URL || "https://safetech.ge",
     },
   };
 }
