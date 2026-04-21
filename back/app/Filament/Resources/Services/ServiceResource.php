@@ -13,11 +13,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-
+use UnitEnum;
 class ServiceResource extends Resource
 {
     protected static ?string $model = Service::class;
-
+    protected static string | UnitEnum | null $navigationGroup = 'Services';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     public static function form(Schema $schema): Schema

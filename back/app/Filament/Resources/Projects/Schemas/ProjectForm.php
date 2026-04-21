@@ -2,7 +2,8 @@
 
 namespace App\Filament\Resources\Projects\Schemas;
 
-use Filament\Actions\Action;
+use Filament\Forms\Components\Actions;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -21,9 +22,6 @@ class ProjectForm
     {
         return $schema->components([
 
-            /* =========================
-               🟢 BASIC
-            ========================= */
             Section::make('Basic')
                 ->schema([
 
@@ -39,7 +37,6 @@ class ProjectForm
                     Select::make('category_id')
                         ->relationship('category', 'name')
                         ->searchable()
-
                         ->createOptionForm([
                             TextInput::make('name')
                                 ->required()
@@ -49,7 +46,6 @@ class ProjectForm
                                 ),
                             TextInput::make('slug')->required(),
                         ])
-
                         ->editOptionForm([
                             TextInput::make('name')->required(),
                             TextInput::make('slug')->required(),
@@ -66,9 +62,6 @@ class ProjectForm
                 ])
                 ->columns(2),
 
-            /* =========================
-               📸 MEDIA
-            ========================= */
             Section::make('Media')
                 ->schema([
 
@@ -85,9 +78,6 @@ class ProjectForm
 
                 ]),
 
-            /* =========================
-               🔍 SEO
-            ========================= */
             Section::make('SEO (Google Optimization)')
                 ->schema([
 
@@ -110,38 +100,43 @@ class ProjectForm
                         ])
                         ->columnSpanFull(),
 
-                    Action::make('generate_seo')
-                        ->label('🤖 Generate SEO')
-                        ->color('success')
-                        ->action(function ($set, $get) {
+                    // ✅ FIXED ACTION
+                    Actions::make([
+                        Action::make('generate_seo')
+                            ->label('🤖 Generate SEO')
+                            ->color('success')
+                            ->action(function ($set, $get) {
 
-                            $title = $get('title');
-                            $content = $get('content');
+                                $title = $get('title');
+                                $content = $get('content');
 
-                            if (!$title) return;
+                                if (!$title) {
+                                    return;
+                                }
 
-                            $description = $content
-                                ? mb_substr(strip_tags($content), 0, 160)
-                                : $title;
+                                $description = $content
+                                    ? mb_substr(strip_tags($content), 0, 160)
+                                    : $title;
 
-                            $set('seo.title', $title . ' | Safetech');
-                            $set('seo.description', $description);
+                                $set('seo.title', $title . ' | Safetech');
+                                $set('seo.description', $description);
 
-                            $set('seo.keywords', [
-                                ['value' => $title],
-                                ['value' => 'IT პროექტები'],
-                            ]);
+                                $set('seo.keywords', [
+                                    ['value' => $title],
+                                    ['value' => 'IT პროექტები'],
+                                ]);
 
-                            $set('seo.content', [
-                                ['text' => $description],
-                            ]);
+                                $set('seo.content', [
+                                    ['text' => $description],
+                                ]);
 
-                            $set('seo.schema', self::generateSchema(
-                                $get('seo.schema_type') ?? 'project',
-                                $title,
-                                $description
-                            ));
-                        }),
+                                $set('seo.schema', self::generateSchema(
+                                    $get('seo.schema_type') ?? 'project',
+                                    $title,
+                                    $description
+                                ));
+                            }),
+                    ]),
 
                     Placeholder::make('seo_score')
                         ->content(function ($get) {
