@@ -3,9 +3,10 @@ import ActionLink from "@/components/ui/ActionLink";
 import Image from "@/components/ui/Image";
 import Typography from "@/components/ui/Typography";
 import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
 export default async function Hero() {
-    const { branding } = await getSiteSettings();
+    const { branding, locale, translations } = await getSiteSettings();
 
     return (
         <section
@@ -89,7 +90,16 @@ export default async function Hero() {
                                 md:text-sm
                             "
                         >
-                            Enterprise IT Solutions
+                            {translateText(
+                                translations,
+                                "home.hero.eyebrow",
+                                locale,
+                                {
+                                    ka: "ბიზნეს IT გადაწყვეტილებები",
+                                    en: "Enterprise IT Solutions",
+                                    ru: "Корпоративные IT-решения",
+                                },
+                            )}
                         </span>
                     </div>
 
@@ -136,7 +146,16 @@ export default async function Hero() {
                         "
                     >
                         <ConsultationTrigger className="inline-flex max-w-full items-center justify-center rounded-xl bg-primary-container px-8 py-4 text-center text-lg font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition-all hover:brightness-110 motion-safe:hover:-translate-y-1">
-                            კონსულტაციის მოთხოვნა
+                            {translateText(
+                                translations,
+                                "home.hero.primaryCta",
+                                locale,
+                                {
+                                    ka: "კონსულტაციის მოთხოვნა",
+                                    en: "Request Consultation",
+                                    ru: "Запросить консультацию",
+                                },
+                            )}
                         </ConsultationTrigger>
 
                         <ActionLink
@@ -144,7 +163,16 @@ export default async function Hero() {
                             variant="glass"
                             className="px-8 py-4 text-lg"
                         >
-                            სერვისების ნახვა
+                            {translateText(
+                                translations,
+                                "home.hero.secondaryCta",
+                                locale,
+                                {
+                                    ka: "სერვისების ნახვა",
+                                    en: "View Services",
+                                    ru: "Смотреть услуги",
+                                },
+                            )}
                         </ActionLink>
                     </div>
                 </div>

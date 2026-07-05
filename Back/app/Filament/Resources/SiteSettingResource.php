@@ -38,6 +38,7 @@ class SiteSettingResource extends Resource
                     'socials' => 'სოციალური ქსელები',
                     'branding' => 'ბრენდინგი',
                     'seo' => 'SEO',
+                    'translations' => 'თარგმანები',
                 ])
                 ->required()
                 ->unique(ignoreRecord: true)
@@ -147,6 +148,29 @@ class SiteSettingResource extends Resource
                 ->label('SEO მნიშვნელობები')
                 ->helperText('გამოიყენეთ legacy SEO პარამეტრებისთვის, მაგალითად site_name ან default_image.')
                 ->visible(fn (Get $get): bool => $get('key') === 'seo'),
+
+            Section::make('ინტერფეისის თარგმანები')
+                ->schema([
+                    Repeater::make('value.entries')
+                        ->label('Translation keys')
+                        ->schema([
+                            TextInput::make('key')
+                                ->label('Key')
+                                ->required()
+                                ->helperText('მაგ: nav.home, home.hero.eyebrow, projects.hero.eyebrow'),
+                            TextInput::make('ka')
+                                ->label('ქართული'),
+                            TextInput::make('en')
+                                ->label('English'),
+                            TextInput::make('ru')
+                                ->label('Русский'),
+                        ])
+                        ->columns(2)
+                        ->collapsible()
+                        ->reorderable()
+                        ->helperText('აქედან შეგიძლიათ მართოთ UI ტექსტები, page badges, navigation labels და სხვა მოკლე ტექსტები 3 ენაზე.'),
+                ])
+                ->visible(fn (Get $get): bool => $get('key') === 'translations'),
 
             Toggle::make('is_public')
                 ->label('Public API-ში გამოჩენა')

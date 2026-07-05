@@ -7,23 +7,33 @@ import Footer from "@/components/Footer/Footer";
 import Navbar from "@/components/Navbar/Navbar";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import ConsultationProvider from "@/components/consultation/ConsultationProvider";
+import LocalizationProvider from "@/components/providers/LocalizationProvider";
+import { getOgLocale } from "@/lib/locales";
 import { absoluteSiteUrl, SITE_NAME, SITE_URL } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-
-const siteDescription =
-    "ვიდეოსამეთვალყურეო, დაშვების კონტროლის, ქსელური და სერვერული ინფრასტრუქტურის პროფესიონალური გადაწყვეტილებები ბიზნესისთვის.";
+import { createTranslator } from "@/lib/translations";
 
 function withDynamicSiteTitle(title: string, siteName: string) {
     return title.includes(siteName) ? title : `${title} | ${siteName}`;
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-    const { branding } = await getSiteSettings();
+    const { branding, locale, translations } = await getSiteSettings();
     const siteName = branding.siteName || SITE_NAME;
+    const t = createTranslator(translations, locale);
     const title = withDynamicSiteTitle(
-        "IT ინფრასტრუქტურა და უსაფრთხოების სისტემები",
+        t("meta.default.title", {
+            ka: "IT ინფრასტრუქტურა და უსაფრთხოების სისტემები",
+            en: "IT Infrastructure and Security Systems",
+            ru: "IT-инфраструктура и системы безопасности",
+        }),
         siteName,
     );
+    const siteDescription = t("meta.default.description", {
+        ka: "ვიდეოსამეთვალყურეო, დაშვების კონტროლის, ქსელური და სერვერული ინფრასტრუქტურის პროფესიონალური გადაწყვეტილებები ბიზნესისთვის.",
+        en: "Professional CCTV, access control, networking, and server infrastructure solutions for businesses.",
+        ru: "Профессиональные решения для видеонаблюдения, контроля доступа, сетевой и серверной инфраструктуры для бизнеса.",
+    });
 
     return {
         metadataBase: new URL(SITE_URL),
@@ -43,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
         ],
         openGraph: {
             type: "website",
-            locale: "ka_GE",
+            locale: getOgLocale(locale),
             url: absoluteSiteUrl("/"),
             siteName,
             title,
@@ -91,7 +101,7 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const { contact, branding } = await getSiteSettings();
+    const { contact, branding, locale, translations } = await getSiteSettings();
     const siteName = branding.siteName || SITE_NAME;
     const organizationSchema = {
         "@context": "https://schema.org",
@@ -117,7 +127,7 @@ export default async function RootLayout({
                 telephone: contact.phone,
                 email: contact.email,
                 areaServed: "GE",
-                availableLanguage: ["ka", "en"],
+                availableLanguage: ["ka", "en", "ru"],
             },
         ],
         areaServed: "Georgia",
@@ -125,7 +135,7 @@ export default async function RootLayout({
 
     return (
         <html
-            lang="ka"
+            lang={locale}
             className="dark scroll-smooth"
             suppressHydrationWarning
         >
@@ -151,26 +161,31 @@ export default async function RootLayout({
                     }}
                 />
 
-                <ConsultationProvider>
-                    <div
-                        className="
-                            relative
-                            flex
-                            min-h-screen
-                            flex-col
-                        "
-                    >
-                        <Navbar />
+                <LocalizationProvider
+                    locale={locale}
+                    translations={translations}
+                >
+                    <ConsultationProvider>
+                        <div
+                            className="
+                                relative
+                                flex
+                                min-h-screen
+                                flex-col
+                            "
+                        >
+                            <Navbar />
 
-                        <main className="flex-1">{children}</main>
+                            <main className="flex-1">{children}</main>
 
-                        <Footer />
-                    </div>
-                    <FloatingWhatsApp
-                        phone={contact.whatsapp}
-                        message={contact.whatsappMessage}
-                    />
-                </ConsultationProvider>
+                            <Footer />
+                        </div>
+                        <FloatingWhatsApp
+                            phone={contact.whatsapp}
+                            message={contact.whatsappMessage}
+                        />
+                    </ConsultationProvider>
+                </LocalizationProvider>
             </body>
         </html>
     );

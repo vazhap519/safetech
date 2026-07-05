@@ -2,9 +2,55 @@ import Infrastructurecomponent from "@/components/Home/Infrastructurecomponent";
 import Image from "@/components/ui/Image";
 import Typography from "@/components/ui/Typography";
 import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
+
+const infrastructureItems = [
+    {
+        icon: "schema",
+        key: "home.infrastructure.items.0",
+        title: {
+            ka: "მასშტაბირებადი არქიტექტურა",
+            en: "Scalable Architecture",
+            ru: "Масштабируемая архитектура",
+        },
+        description: {
+            ka: "სისტემა, რომელიც ბიზნესის ზრდასთან ერთად მარტივად ვითარდება.",
+            en: "Infrastructure that grows cleanly with your business and future locations.",
+            ru: "Система, которая развивается вместе с ростом бизнеса.",
+        },
+    },
+    {
+        icon: "lan",
+        key: "home.infrastructure.items.1",
+        title: {
+            ka: "ერთიანი ქსელური ლოგიკა",
+            en: "Unified Network Logic",
+            ru: "Единая сетевая логика",
+        },
+        description: {
+            ka: "უსაფრთხოება, წვდომა და სერვერული სერვისები ერთიანად მუშაობს.",
+            en: "Security, access, and server layers operate as one coordinated environment.",
+            ru: "Безопасность, доступ и серверные сервисы работают согласованно.",
+        },
+    },
+    {
+        icon: "monitoring",
+        key: "home.infrastructure.items.2",
+        title: {
+            ka: "მართვადობა და მონიტორინგი",
+            en: "Manageability and Monitoring",
+            ru: "Управляемость и мониторинг",
+        },
+        description: {
+            ka: "ცენტრალიზებული ხილვადობა ამცირებს გაუთვალისწინებელ გაჩერებებს.",
+            en: "Centralized visibility reduces downtime and improves daily operations.",
+            ru: "Централизованная видимость снижает простои и повышает контроль.",
+        },
+    },
+];
 
 export default async function Infrastructure() {
-    const { branding } = await getSiteSettings();
+    const { branding, locale, translations } = await getSiteSettings();
 
     return (
         <section
@@ -107,7 +153,16 @@ export default async function Infrastructure() {
                                 tracking-widest
                             "
                         >
-                            Enterprise Architecture
+                            {translateText(
+                                translations,
+                                "home.infrastructure.eyebrow",
+                                locale,
+                                {
+                                    ka: "ინფრასტრუქტურული არქიტექტურა",
+                                    en: "Enterprise Architecture",
+                                    ru: "Архитектура инфраструктуры",
+                                },
+                            )}
                         </span>
                     </div>
 
@@ -141,9 +196,24 @@ export default async function Infrastructure() {
                             pt-2
                         "
                     >
-                        <Infrastructurecomponent />
-                        <Infrastructurecomponent />
-                        <Infrastructurecomponent />
+                        {infrastructureItems.map((item) => (
+                            <Infrastructurecomponent
+                                description={translateText(
+                                translations,
+                                `${item.key}.description`,
+                                locale,
+                                item.description,
+                            )}
+                                icon={item.icon}
+                                key={item.key}
+                                title={translateText(
+                                translations,
+                                `${item.key}.title`,
+                                locale,
+                                item.title,
+                            )}
+                            />
+                        ))}
                     </div>
                 </div>
             </div>

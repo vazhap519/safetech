@@ -1,21 +1,27 @@
 import Typography from "@/components/ui/Typography";
 
-export default function WhyComponent() {
+export default function WhyComponent({
+    description,
+    icon,
+    title,
+}: {
+    description: string;
+    icon: string;
+    title: string;
+}) {
     return (
-        <div className="glass-card p-unit-lg rounded-2xl text-center">
-            <span className="material-symbols-outlined text-primary text-3xl">architecture</span>
+        <div className="glass-card rounded-2xl p-unit-lg text-center">
+            <span className="material-symbols-outlined text-3xl text-primary">
+                {icon}
+            </span>
             <div>
-                <Typography
-                    as="h3"
-                    variant="why-component-header"
-                >პროფესიონალური დაგეგმვა</Typography>
-                <Typography
-                    as="p"
-                    variant="description"
-                >ჩვენ არ ვიწყებთ მუშაობას დეტალური ნახაზებისა და
-                    სქემების გარეშე.</Typography>
+                <Typography as="h3" variant="why-component-header">
+                    {title}
+                </Typography>
+                <Typography as="p" variant="description">
+                    {description}
+                </Typography>
             </div>
         </div>
-
-    )
+    );
 }

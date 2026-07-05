@@ -1,6 +1,7 @@
 "use client";
 
 import PrivacyConsent from "@/components/forms/PrivacyConsent";
+import { useLocalization } from "@/components/providers/LocalizationProvider";
 import Button from "@/components/ui/Button";
 import { Input, Select, Textarea } from "@/components/ui/Input";
 import Typography from "@/components/ui/Typography";
@@ -8,6 +9,7 @@ import { useLeadForm } from "@/hooks/useLeadForm";
 
 export default function Left() {
     const { status, message, submit } = useLeadForm("contact-page");
+    const { t } = useLocalization();
 
     return (
         <div
@@ -40,7 +42,11 @@ export default function Left() {
                 variant="section-title"
                 className="mb-unit-lg"
             >
-                საკონტაქტო ფორმა
+                {t("contact.form.title", {
+                    ka: "საკონტაქტო ფორმა",
+                    en: "Contact form",
+                    ru: "Контактная форма",
+                })}
             </Typography>
 
             <form className="space-y-unit-lg" onSubmit={submit}>
@@ -63,7 +69,11 @@ export default function Left() {
                     <Input
                         id="name"
                         name="name"
-                        label="სახელი და გვარი"
+                        label={t("forms.fullName", {
+                            ka: "სახელი და გვარი",
+                            en: "Full name",
+                            ru: "Имя и фамилия",
+                        })}
                         type="text"
                         autoComplete="name"
                         required
@@ -72,7 +82,11 @@ export default function Left() {
                     <Input
                         id="company"
                         name="company"
-                        label="კომპანია"
+                        label={t("forms.company", {
+                            ka: "კომპანია",
+                            en: "Company",
+                            ru: "Компания",
+                        })}
                         type="text"
                     />
                 </div>
@@ -81,7 +95,11 @@ export default function Left() {
                     <Input
                         id="phone"
                         name="phone"
-                        label="ტელეფონის ნომერი"
+                        label={t("forms.phoneNumber", {
+                            ka: "ტელეფონის ნომერი",
+                            en: "Phone number",
+                            ru: "Номер телефона",
+                        })}
                         type="tel"
                         autoComplete="tel"
                     />
@@ -89,49 +107,113 @@ export default function Left() {
                     <Input
                         id="email"
                         name="email"
-                        label="ელფოსტა"
+                        label={t("forms.email", {
+                            ka: "ელფოსტა",
+                            en: "Email",
+                            ru: "Email",
+                        })}
                         type="email"
                         autoComplete="email"
                     />
                 </div>
 
                 <p className="text-sm text-on-surface-variant">
-                    მიუთითეთ ტელეფონის ნომერი ან ელფოსტა, რომ დაგიკავშირდეთ.
+                    {t("forms.contactHint", {
+                        ka: "მიუთითეთ ტელეფონის ნომერი ან ელფოსტა, რომ დაგიკავშირდეთ.",
+                        en: "Provide a phone number or email address so we can contact you.",
+                        ru: "Укажите номер телефона или email, чтобы мы могли с вами связаться.",
+                    })}
                 </p>
 
                 <div className="grid gap-unit-md md:grid-cols-3">
                     <Select
                         id="service"
                         name="service"
-                        label="სერვისი"
+                        label={t("forms.service", {
+                            ka: "სერვისი",
+                            en: "Service",
+                            ru: "Услуга",
+                        })}
                         options={[
-                            "ვიდეოსამეთვალყურეო სისტემები",
-                            "დაშვების კონტროლი",
-                            "ქსელური ინფრასტრუქტურა",
-                            "სერვერული გადაწყვეტილებები",
+                            t("forms.options.service.cctv", {
+                                ka: "ვიდეოსამეთვალყურეო სისტემები",
+                                en: "CCTV systems",
+                                ru: "Системы видеонаблюдения",
+                            }),
+                            t("forms.options.service.access", {
+                                ka: "დაშვების კონტროლი",
+                                en: "Access control",
+                                ru: "Контроль доступа",
+                            }),
+                            t("forms.options.service.network", {
+                                ka: "ქსელური ინფრასტრუქტურა",
+                                en: "Network infrastructure",
+                                ru: "Сетевая инфраструктура",
+                            }),
+                            t("forms.options.service.server", {
+                                ka: "სერვერული გადაწყვეტილებები",
+                                en: "Server solutions",
+                                ru: "Серверные решения",
+                            }),
                         ]}
                     />
 
                     <Select
                         id="project-size"
                         name="project-size"
-                        label="პროექტის ზომა"
+                        label={t("forms.projectSize", {
+                            ka: "პროექტის ზომა",
+                            en: "Project size",
+                            ru: "Размер проекта",
+                        })}
                         options={[
-                            "მცირე (1-10 ერთეული)",
-                            "საშუალო (10-50 ერთეული)",
-                            "დიდი (50+ ერთეული)",
+                            t("forms.options.size.small", {
+                                ka: "მცირე (1-10 ერთეული)",
+                                en: "Small (1-10 units)",
+                                ru: "Малый (1-10 единиц)",
+                            }),
+                            t("forms.options.size.medium", {
+                                ka: "საშუალო (10-50 ერთეული)",
+                                en: "Medium (10-50 units)",
+                                ru: "Средний (10-50 единиц)",
+                            }),
+                            t("forms.options.size.large", {
+                                ka: "დიდი (50+ ერთეული)",
+                                en: "Large (50+ units)",
+                                ru: "Крупный (50+ единиц)",
+                            }),
                         ]}
                     />
 
                     <Select
                         id="property-type"
                         name="property-type"
-                        label="ობიექტის ტიპი"
+                        label={t("forms.propertyType", {
+                            ka: "ობიექტის ტიპი",
+                            en: "Property type",
+                            ru: "Тип объекта",
+                        })}
                         options={[
-                            "ბიზნეს ცენტრი",
-                            "საწყობი / ინდუსტრიული",
-                            "საცხოვრებელი კომპლექსი",
-                            "საცალო ვაჭრობა",
+                            t("forms.options.property.office", {
+                                ka: "ბიზნეს ცენტრი",
+                                en: "Business center",
+                                ru: "Бизнес-центр",
+                            }),
+                            t("forms.options.property.warehouse", {
+                                ka: "საწყობი / ინდუსტრიული",
+                                en: "Warehouse / industrial",
+                                ru: "Склад / промышленный объект",
+                            }),
+                            t("forms.options.property.residential", {
+                                ka: "საცხოვრებელი კომპლექსი",
+                                en: "Residential complex",
+                                ru: "Жилой комплекс",
+                            }),
+                            t("forms.options.property.retail", {
+                                ka: "საცალო ვაჭრობა",
+                                en: "Retail",
+                                ru: "Розничная торговля",
+                            }),
                         ]}
                     />
                 </div>
@@ -139,7 +221,11 @@ export default function Left() {
                 <Textarea
                     id="message"
                     name="message"
-                    label="შეტყობინება"
+                    label={t("forms.message", {
+                        ka: "შეტყობინება",
+                        en: "Message",
+                        ru: "Сообщение",
+                    })}
                     rows={5}
                 />
 
@@ -152,7 +238,17 @@ export default function Left() {
                     size="lg"
                     fullWidth
                 >
-                    {status === "submitting" ? "იგზავნება..." : "გაგზავნა"}
+                    {status === "submitting"
+                        ? t("forms.submitting", {
+                              ka: "იგზავნება...",
+                              en: "Sending...",
+                              ru: "Отправка...",
+                          })
+                        : t("forms.send", {
+                              ka: "გაგზავნა",
+                              en: "Send",
+                              ru: "Отправить",
+                          })}
                 </Button>
                 <p
                     aria-live="polite"

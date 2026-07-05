@@ -1,24 +1,30 @@
 import Typography from "@/components/ui/Typography";
 
-export default function HowComponent() {
-    return(
-        <div className="flex flex-col md:flex-row items-center gap-unit-md group">
-            <div className="md:w-1/2 md:text-right">
-                <Typography
-                    as="h3"
-                    className="
-        text-primary
-        font-bold
-        text-lg
-    "
-                >
-                    კონსულტაცია
-                </Typography>
-                <Typography as="p" variant="section-description" >მოთხოვნების დეტალური შესწავლა</Typography>
-            </div>
+export default function HowComponent({
+    align = "right",
+    description,
+    title,
+}: {
+    align?: "left" | "right";
+    description: string;
+    title: string;
+}) {
+    return (
+        <div className="group flex flex-col items-center gap-unit-md md:flex-row">
             <div
-                className="w-4 h-4 rounded-full bg-primary z-10 shadow-[0_0_15px_rgba(37,99,235,0.8)]"></div>
-            <div className="md:w-1/2"></div>
+                className={`md:w-1/2 ${
+                    align === "right" ? "md:text-right" : "md:order-3"
+                }`}
+            >
+                <Typography as="h3" className="text-lg font-bold text-primary">
+                    {title}
+                </Typography>
+                <Typography as="p" variant="section-description">
+                    {description}
+                </Typography>
+            </div>
+            <div className="z-10 h-4 w-4 rounded-full bg-primary shadow-[0_0_15px_rgba(37,99,235,0.8)]" />
+            <div className="md:w-1/2" />
         </div>
-    )
+    );
 }

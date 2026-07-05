@@ -1,15 +1,12 @@
-export default function FooterLang() {
-    return (
-        <div className="flex gap-unit-md">
+"use client";
 
-            <span className="text-on-surface">
-                Georgian
-            </span>
+import LocaleSwitcher from "@/components/LocaleSwitcher";
+import type { Locale } from "@/lib/locales";
 
-            <span className="text-on-surface-variant">
-                English
-            </span>
-
-        </div>
-    );
+export default function FooterLang({
+    currentLocale,
+}: {
+    currentLocale: Locale;
+}) {
+    return <LocaleSwitcher currentLocale={currentLocale} variant="footer" />;
 }

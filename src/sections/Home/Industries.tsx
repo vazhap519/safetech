@@ -1,7 +1,34 @@
-import Infrastructurecomponent from "@/components/Home/Infrastructurecomponent";
+import Industriescomponent from "@/components/Home/Industriescomponent";
 import Typography from "@/components/ui/Typography";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
-export default function Industries() {
+const industries = [
+    {
+        key: "home.industries.items.0",
+        icon: "apartment",
+        fallback: { ka: "ოფისები", en: "Offices", ru: "Офисы" },
+    },
+    {
+        key: "home.industries.items.1",
+        icon: "storefront",
+        fallback: { ka: "რიტეილი", en: "Retail", ru: "Ритейл" },
+    },
+    {
+        key: "home.industries.items.2",
+        icon: "warehouse",
+        fallback: { ka: "საწყობები", en: "Warehouses", ru: "Склады" },
+    },
+    {
+        key: "home.industries.items.3",
+        icon: "manufacturing",
+        fallback: { ka: "საწარმოები", en: "Factories", ru: "Производство" },
+    },
+];
+
+export default async function Industries() {
+    const { locale, translations } = await getSiteSettings();
+
     return (
         <section
             className="
@@ -28,18 +55,22 @@ export default function Industries() {
 
                 {/* Badge */}
                 <span
-                    className="
-                        inline-block
+                        className="
+                            inline-block
                         text-primary
                         font-mono-sm
                         text-mono-sm
                         uppercase
                         tracking-[0.3em]
                         mb-4
-                    "
-                >
-                    Industries
-                </span>
+                        "
+                    >
+                        {translateText(translations, "home.industries.eyebrow", locale, {
+                            ka: "ინდუსტრიები",
+                            en: "Industries",
+                            ru: "Отрасли",
+                        })}
+                    </span>
 
                 <Typography
                     as="h2"
@@ -75,10 +106,18 @@ export default function Industries() {
                 "
             >
 
-                <Infrastructurecomponent />
-                <Infrastructurecomponent />
-                <Infrastructurecomponent />
-                <Infrastructurecomponent />
+                {industries.map((item) => (
+                    <Industriescomponent
+                        icon={item.icon}
+                        key={item.key}
+                        title={translateText(
+                            translations,
+                            item.key,
+                            locale,
+                            item.fallback,
+                        )}
+                    />
+                ))}
             </div>
 
             {/* Background Glow */}

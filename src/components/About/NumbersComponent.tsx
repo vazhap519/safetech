@@ -1,11 +1,26 @@
-export default function NumbersComponent() {
-    return(
-        <div className="glass-card p-unit-md sm:p-unit-lg rounded-2xl text-center relative overflow-hidden group">
-        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="text-headline-xl font-display-lg text-primary mb-2">500+</div>
-        <div className="text-label-md text-on-surface-variant tracking-widest uppercase">კამერა</div>
-        <div className="mt-4 flex justify-center"><div className="w-12 h-1 bg-primary/20 rounded-full overflow-hidden">
-            <div className="h-full bg-primary w-3/4"></div></div></div>
+export default function NumbersComponent({
+    label,
+    progressClassName,
+    value,
+}: {
+    label: string;
+    progressClassName: string;
+    value: string;
+}) {
+    return (
+        <div className="glass-card group relative overflow-hidden rounded-2xl p-unit-md text-center sm:p-unit-lg">
+            <div className="absolute inset-0 bg-primary/5 opacity-0 transition-opacity group-hover:opacity-100" />
+            <div className="mb-2 text-headline-xl font-display-lg text-primary">
+                {value}
+            </div>
+            <div className="text-label-md uppercase tracking-widest text-on-surface-variant">
+                {label}
+            </div>
+            <div className="mt-4 flex justify-center">
+                <div className="h-1 w-12 overflow-hidden rounded-full bg-primary/20">
+                    <div className={`h-full bg-primary ${progressClassName}`} />
+                </div>
+            </div>
         </div>
-    )
+    );
 }

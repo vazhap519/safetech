@@ -1,23 +1,28 @@
 import Typography from "@/components/ui/Typography";
 
-export default function WhatComponent() {
+export default function WhatComponent({
+    description,
+    indexLabel,
+    title,
+}: {
+    description: string;
+    indexLabel: string;
+    title: string;
+}) {
     return (
-        <div className="p-unit-lg border-l border-primary/30 hover:border-primary transition-colors">
-            <div className="text-primary font-mono-sm mb-unit-sm">01 / PHILOSOPHY</div>
+        <div className="border-l border-primary/30 p-unit-lg transition-colors hover:border-primary">
+            <div className="mb-unit-sm font-mono-sm text-primary">
+                {indexLabel}
+            </div>
             <Typography
                 as="h3"
-                className="
-        text-xl
-        md:text-2xl
-        font-headline-md
-        mb-4
-    "
-            >  ინფრასტრუქტურა პირველ
-                ადგილზე</Typography>
-            <Typography as="p" variant={"section-description"}>
-                ჩვენ გვჯერა, რომ პროგრამული უზრუნველყოფა მხოლოდ მაშინ არის
-                ეფექტური, როცა აპარატურული ნაწილი უნაკლოა.
+                className="mb-4 text-xl font-headline-md md:text-2xl"
+            >
+                {title}
+            </Typography>
+            <Typography as="p" variant="section-description">
+                {description}
             </Typography>
         </div>
-    )
+    );
 }

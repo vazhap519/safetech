@@ -2,12 +2,16 @@ import Link from "next/link";
 
 import ConsultationTrigger from "@/components/consultation/ConsultationTrigger";
 import Image from "@/components/ui/Image";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
 import ServiceBreadcrumb from "../components/ServiceBreadcrumb";
 import ServiceShareButtons from "../components/ServiceShareButtons";
 import type { ServiceDetail } from "../model/types";
 
-export default function ServiceHero({ service }: { service: ServiceDetail }) {
+export default async function ServiceHero({ service }: { service: ServiceDetail }) {
+    const { locale, translations } = await getSiteSettings();
+
     return (
         <section className="relative flex min-h-[80vh] flex-col justify-center overflow-hidden px-margin-desktop py-unit-xl">
             <div aria-hidden="true" className="ambient-glow -left-20 -top-20" />
@@ -16,7 +20,12 @@ export default function ServiceHero({ service }: { service: ServiceDetail }) {
                 <div className="space-y-unit-lg">
                     <p className="inline-flex items-center gap-unit-sm rounded-full border border-primary/20 bg-primary/10 px-unit-md py-unit-xs font-label-md text-label-md uppercase tracking-wider text-primary">
                         <span aria-hidden="true" className="pulsing-dot" />{" "}
-                        {service.eyebrow}
+                        {translateText(
+                            translations,
+                            `service.${service.slug}.eyebrow`,
+                            locale,
+                            service.eyebrow,
+                        )}
                     </p>
                     <h1 className="max-w-4xl font-display-lg text-[34px] leading-[1.08] tracking-tight text-white min-[380px]:text-[38px] sm:text-[48px] md:text-[64px]">
                         {service.title}

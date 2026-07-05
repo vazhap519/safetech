@@ -1,8 +1,13 @@
 import Servicecomponent from "../../components/Home/Servicecomponent";
 import { getBackendServices } from "@/lib/backend";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
 export default async function Services() {
-    const services = await getBackendServices();
+    const [services, { locale, translations }] = await Promise.all([
+        getBackendServices(),
+        getSiteSettings(),
+    ]);
     return (
         <section
             className="
@@ -40,7 +45,11 @@ export default async function Services() {
                         mb-4
                     "
                 >
-                    Our Capabilities
+                    {translateText(translations, "home.services.eyebrow", locale, {
+                        ka: "ძირითადი შესაძლებლობები",
+                        en: "Our Capabilities",
+                        ru: "Наши возможности",
+                    })}
                 </span>
 
                 <h2

@@ -12,7 +12,7 @@ export default function ProjectHeroSection({ project }: { project: ProjectDetail
                 <div className="grid items-center gap-unit-xl lg:grid-cols-2">
                     <div>
                         <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-container/30 bg-primary-container/10 px-3 py-1 font-mono-sm text-mono-sm text-primary-fixed-dim">
-                            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-primary-container animate-pulse" /> Enterprise Infrastructure
+                            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-primary-container animate-pulse" /> ინფრასტრუქტურული პროექტი
                         </p>
                         <h1 className="mb-8 font-display-lg text-display-lg-mobile leading-tight text-white md:text-display-lg">{project.title}</h1>
                         <p className="mb-unit-lg max-w-2xl text-body-lg leading-relaxed text-on-surface-variant">{project.description}</p>

@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 
+import { useLocalization } from "@/components/providers/LocalizationProvider";
 import { trackEvent } from "@/lib/analytics";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
@@ -9,6 +10,7 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 export function useLeadForm(source: string) {
     const [status, setStatus] = useState<FormStatus>("idle");
     const [message, setMessage] = useState("");
+    const { t } = useLocalization();
 
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -30,7 +32,13 @@ export function useLeadForm(source: string) {
 
         if (!email && !phone) {
             setStatus("error");
-            setMessage("მიუთითეთ ელფოსტა ან ტელეფონის ნომერი.");
+            setMessage(
+                t("forms.validation.contact", {
+                    ka: "მიუთითეთ ელფოსტა ან ტელეფონის ნომერი.",
+                    en: "Please provide an email address or phone number.",
+                    ru: "Укажите email или номер телефона.",
+                }),
+            );
             return;
         }
 
@@ -41,7 +49,12 @@ export function useLeadForm(source: string) {
             const response = await fetch(`${apiBaseUrl}/contact-leads`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...normalizedPayload, email, phone, source }),
+                body: JSON.stringify({
+                    ...normalizedPayload,
+                    email,
+                    phone,
+                    source,
+                }),
             });
             const result = (await response.json()) as {
                 message?: string;
@@ -56,14 +69,23 @@ export function useLeadForm(source: string) {
                 throw new Error(
                     validationMessage ||
                         result.message ||
-                        "მოთხოვნის გაგზავნა ვერ მოხერხდა.",
+                        t("forms.error.submit", {
+                            ka: "მოთხოვნის გაგზავნა ვერ მოხერხდა.",
+                            en: "We couldn't send your request.",
+                            ru: "Не удалось отправить запрос.",
+                        }),
                 );
             }
 
             form.reset();
             setStatus("success");
             setMessage(
-                result.message || "მადლობა! მოთხოვნა წარმატებით გაიგზავნა.",
+                result.message ||
+                    t("forms.success.submit", {
+                        ka: "მადლობა! მოთხოვნა წარმატებით გაიგზავნა.",
+                        en: "Thank you! Your request has been sent successfully.",
+                        ru: "Спасибо! Ваш запрос успешно отправлен.",
+                    }),
             );
             trackEvent("generate_lead", { form_source: source });
         } catch (error) {
@@ -71,7 +93,11 @@ export function useLeadForm(source: string) {
             setMessage(
                 error instanceof Error && error.message !== "Failed to fetch"
                     ? error.message
-                    : "სერვერთან დაკავშირება ვერ მოხერხდა. სცადეთ ხელახლა.",
+                    : t("forms.error.network", {
+                          ka: "სერვერთან დაკავშირება ვერ მოხერხდა. სცადეთ ხელახლა.",
+                          en: "We couldn't reach the server. Please try again.",
+                          ru: "Не удалось связаться с сервером. Попробуйте снова.",
+                      }),
             );
         }
     }

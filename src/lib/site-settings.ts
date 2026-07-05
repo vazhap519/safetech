@@ -6,7 +6,13 @@ import {
     maybeBackendAsset,
     resolveBackendAsset,
 } from "@/lib/backend";
+import { getCurrentLocale } from "@/lib/locale-server";
+import type { Locale } from "@/lib/locales";
 import { DEFAULT_SOCIAL_IMAGE, SITE_NAME } from "@/lib/seo";
+import {
+    buildTranslationMap,
+    type TranslationMap,
+} from "@/lib/translations";
 
 export type SiteContact = {
     phone: string;
@@ -192,13 +198,17 @@ export const defaultSiteBranding: SiteBranding = {
 };
 
 export async function getSiteSettings() {
-    const content = await getBackendContent();
+    const [content, locale] = await Promise.all([
+        getBackendContent(),
+        getCurrentLocale(),
+    ]);
     const settings = isRecord(content.settings) ? content.settings : {};
     const configuredContact = isRecord(settings.contact) ? settings.contact : {};
     const configuredBranding = isRecord(settings.branding)
         ? settings.branding
         : {};
     const configuredSeo = isRecord(settings.seo) ? settings.seo : {};
+    const translations = buildTranslationMap(settings.translations);
 
     const socialLinks = parseSocialLinks(
         settings.socials,
@@ -256,5 +266,7 @@ export async function getSiteSettings() {
         contact,
         socialLinks,
         branding,
+        locale: locale satisfies Locale,
+        translations: translations satisfies TranslationMap,
     };
 }

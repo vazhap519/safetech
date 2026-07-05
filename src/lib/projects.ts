@@ -42,13 +42,13 @@ export const projectMetrics: ProjectMetric[] = [
     { value: "500+", label: "კამერა" },
     { value: "120+", label: "მოწყობილობა" },
     { value: "50+", label: "სერვერი" },
-    { value: "20+", label: "Enterprise პროექტი" },
+    { value: "20+", label: "კორპორატიული პროექტი" },
 ];
 
 export const featuredProjects: FeaturedProject[] = [
     {
-        title: "Bank Security Upgrade",
-        category: "Enterprise Security",
+        title: "ბანკის უსაფრთხოების განახლება",
+        category: "უსაფრთხოების ინფრასტრუქტურა",
         image: "/brand-preview.svg",
         imageAlt: "ბანკის უსაფრთხოების მონიტორინგის ინფრასტრუქტურა",
         specs: [
@@ -58,19 +58,19 @@ export const featuredProjects: FeaturedProject[] = [
         ],
     },
     {
-        title: "Data Center Topology",
-        category: "Network Architecture",
+        title: "მონაცემთა ცენტრის ტოპოლოგია",
+        category: "ქსელური არქიტექტურა",
         image: "/brand-preview.svg",
         imageAlt: "მონაცემთა ცენტრის ქსელური ტოპოლოგია",
         specs: [
-            { label: "Access Point", value: "48 კვანძი" },
-            { label: "Backbone", value: "40G QSFP+" },
+            { label: "წვდომის წერტილი", value: "48 კვანძი" },
+            { label: "მაგისტრალი", value: "40G QSFP+" },
             { label: "VLAN", value: "12 სეგმენტი" },
         ],
     },
     {
-        title: "Government Hub",
-        category: "Strategic Security",
+        title: "სახელმწიფო ჰაბი",
+        category: "სტრატეგიული უსაფრთხოება",
         image: "/brand-preview.svg",
         imageAlt: "მართვისა და მონიტორინგის უსაფრთხო ცენტრი",
         specs: [
@@ -83,8 +83,9 @@ export const featuredProjects: FeaturedProject[] = [
 
 export const projects: Project[] = [
     {
-        title: "Luxury Hotel Wi‑Fi",
-        description: "მაღალი სიმკვრივის უსადენო დაფარვა 200-ზე მეტი ნომრისთვის, უწყვეტი როუმინგით.",
+        title: "ლუქს სასტუმროს Wi‑Fi",
+        description:
+            "მაღალი სიმკვრივის უსადენო დაფარვა 200-ზე მეტი ნომრისთვის, უწყვეტი როუმინგით.",
         category: "hotels",
         icon: "wifi",
         accent: "primary",
@@ -92,24 +93,27 @@ export const projects: Project[] = [
     },
     {
         slug: "global-logistics-hub",
-        title: "Logistics Hub CCTV",
-        description: "5 000 მ² საწყობის ტერიტორიის ცენტრალიზებული ვიდეომონიტორინგი და ანალიტიკა.",
+        title: "ლოგისტიკური ჰაბის CCTV",
+        description:
+            "5 000 მ² საწყობის ტერიტორიის ცენტრალიზებული ვიდეომონიტორინგი და ანალიტიკა.",
         category: "warehouses",
         icon: "videocam",
         accent: "secondary",
         technology: "Synology",
     },
     {
-        title: "Industrial Server Cluster",
-        description: "წარმოებისთვის შექმნილი, შეფერხებებისადმი მდგრადი სერვერული ინფრასტრუქტურა.",
+        title: "ინდუსტრიული სერვერული კლასტერი",
+        description:
+            "წარმოებისათვის შექმნილი, შეფერხებებისადმი მდგრადი სერვერული ინფრასტრუქტურა.",
         category: "factories",
         icon: "dns",
         accent: "primary",
         technology: "Cisco",
     },
     {
-        title: "Smart Office Access",
-        description: "თანამშრომლებისა და სტუმრების ერთიანი დაშვების კონტროლი და სამუშაო დროის აღრიცხვა.",
+        title: "ჭკვიანი ოფისის დაშვება",
+        description:
+            "თანამშრომლებისა და სტუმრების ერთიანი დაშვების კონტროლი და სამუშაო დროის აღრიცხვა.",
         category: "offices",
         icon: "badge",
         accent: "secondary",
@@ -120,19 +124,22 @@ export const projects: Project[] = [
 export const projectStandards: ProjectStandard[] = [
     {
         title: "სტრუქტურირებული კაბელირება",
-        description: "მარკირება, საკაბელო არხების მართვა და ერთიანი საინჟინრო სტანდარტი ყველა კვანძში.",
+        description:
+            "მარკირება, საკაბელო არხების მართვა და ერთიანი საინჟინრო სტანდარტი ყველა კვანძში.",
         icon: "settings_input_component",
         accent: "primary",
     },
     {
         title: "VLAN არქიტექტურა",
-        description: "ქსელის ლოგიკური სეგმენტაცია, წვდომის კონტროლი და კრიტიკული რესურსების იზოლაცია.",
+        description:
+            "ქსელის ლოგიკური სეგმენტაცია, წვდომის კონტროლი და კრიტიკული რესურსების იზოლაცია.",
         icon: "hub",
         accent: "secondary",
     },
     {
         title: "დისტანციური მონიტორინგი",
-        description: "სისტემის მდგომარეობის უწყვეტი კონტროლი და პროაქტიული რეაგირება ნებისმიერი წერტილიდან.",
+        description:
+            "სისტემის მდგომარეობის უწყვეტი კონტროლი და პროაქტიული რეაგირება ნებისმიერი წერტილიდან.",
         icon: "visibility",
         accent: "primary",
     },

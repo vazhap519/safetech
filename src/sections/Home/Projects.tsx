@@ -1,8 +1,13 @@
 import FeaturedProjectCard from "@/components/Projects/FeaturedProjectCard";
 import { getBackendFeaturedProjects } from "@/lib/backend";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
 export default async function Projects() {
-    const projects = await getBackendFeaturedProjects();
+    const [projects, { locale, translations }] = await Promise.all([
+        getBackendFeaturedProjects(),
+        getSiteSettings(),
+    ]);
     return (
         <section
             className="
@@ -32,7 +37,11 @@ export default async function Projects() {
                         inline-block
                     "
                 >
-                    Featured Work
+                    {translateText(translations, "home.projects.eyebrow", locale, {
+                        ka: "გამორჩეული ნამუშევრები",
+                        en: "Featured Work",
+                        ru: "Избранные проекты",
+                    })}
                 </span>
 
                 <h2

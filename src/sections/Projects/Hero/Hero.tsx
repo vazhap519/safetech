@@ -1,9 +1,10 @@
 import Image from "@/components/ui/Image";
 
 import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
 export default async function ProjectsHeroSection() {
-    const { branding } = await getSiteSettings();
+    const { branding, locale, translations } = await getSiteSettings();
 
     return (
         <section className="relative flex min-h-[80vh] items-center justify-center overflow-hidden px-margin-desktop pb-unit-xl pt-28">
@@ -26,14 +27,23 @@ export default async function ProjectsHeroSection() {
                         className="h-2 w-2 shrink-0 rounded-full bg-secondary shadow-[0_0_10px_#4cd7f6]"
                     />
                     <span className="font-mono-sm text-[10px] leading-relaxed text-secondary uppercase min-[380px]:text-mono-sm">
-                        Enterprise Infrastructure Solutions
+                        {translateText(
+                            translations,
+                            "projects.hero.eyebrow",
+                            locale,
+                            {
+                                ka: "ინფრასტრუქტურული გადაწყვეტილებები",
+                                en: "Enterprise Infrastructure Solutions",
+                                ru: "Инфраструктурные решения",
+                            },
+                        )}
                     </span>
                 </div>
                 <h1 className="mb-6 font-display-lg text-display-lg-mobile text-white md:text-display-lg">
                     ინფრასტრუქტურული პროექტები
                 </h1>
                 <p className="mb-unit-lg font-body-lg text-body-lg leading-relaxed text-on-surface-variant">
-                    Enterprise კლასის უსაფრთხოების, ქსელური და სერვერული
+                    კორპორატიული კლასის უსაფრთხოების, ქსელური და სერვერული
                     ინფრასტრუქტურის რეალური დანერგვები.
                 </p>
             </div>

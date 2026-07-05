@@ -69,6 +69,7 @@ class ContentSeeder extends Seeder
             ]],
             'seo' => ['site_name'=>'SafeTech','default_image'=>'/demo.png'],
             'branding' => ['site_name'=>'SafeTech','tagline'=>'თქვენი ბიზნესის ტექნოლოგიური და უსაფრთხოების გარანტი.','logo'=>null,'footer_logo'=>null,'favicon'=>null,'default_image'=>null],
+            'translations' => ['entries'=>[]],
         ] as $key => $value) SiteSetting::query()->updateOrCreate(['key'=>$key],['group'=>'general','value'=>$value,'is_public'=>true]);
     }
 }
