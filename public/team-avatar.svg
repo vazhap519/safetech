@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 750" role="img" aria-labelledby="title desc">
+  <title id="title">Team placeholder portrait</title>
+  <desc id="desc">Stylized portrait placeholder for SafeTech team members.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#081121" />
+      <stop offset="100%" stop-color="#142341" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#4f7dff" stop-opacity=".45" />
+      <stop offset="100%" stop-color="#4f7dff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="600" height="750" fill="url(#bg)" rx="40" />
+  <circle cx="300" cy="190" r="150" fill="url(#glow)" />
+  <circle cx="300" cy="250" r="96" fill="#e9f0ff" opacity=".92" />
+  <path d="M162 564c28-96 106-158 196-158 92 0 166 59 190 158v66H162z" fill="#e9f0ff" opacity=".92" />
+  <path d="M230 470c21 20 45 34 72 34 29 0 56-12 83-34" fill="none" stroke="#8aa9ff" stroke-linecap="round" stroke-width="16" />
+  <rect x="64" y="616" width="472" height="54" rx="27" fill="#1d3157" opacity=".9" />
+  <rect x="126" y="634" width="168" height="18" rx="9" fill="#66e2ff" opacity=".85" />
+  <rect x="316" y="634" width="98" height="18" rx="9" fill="#88a5ff" opacity=".75" />
+</svg>

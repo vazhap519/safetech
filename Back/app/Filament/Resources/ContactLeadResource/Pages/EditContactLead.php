@@ -1,0 +1,1 @@
+<?php namespace App\Filament\Resources\ContactLeadResource\Pages;use App\Filament\Resources\ContactLeadResource;use Filament\Resources\Pages\EditRecord;class EditContactLead extends EditRecord{protected static string $resource=ContactLeadResource::class;}
