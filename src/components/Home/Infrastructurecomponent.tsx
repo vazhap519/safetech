@@ -1,3 +1,4 @@
+import Icon from "@/components/ui/Icon";
 import Typography from "@/components/ui/Typography";
 
 export default function Infrastructurecomponent({
@@ -11,9 +12,7 @@ export default function Infrastructurecomponent({
 }) {
     return (
         <div className="flex items-start gap-4">
-            <span className="material-symbols-outlined text-primary mt-1">
-                {icon}
-            </span>
+            <Icon className="mt-1 text-primary" name={icon} />
             <div>
                 <Typography className="font-headline-md text-headline-md text-on-surface" as={"h3"} variant={'section-title'}>
                     {title}

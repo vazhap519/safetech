@@ -1,3 +1,5 @@
+import Icon from "@/components/ui/Icon";
+
 type FaqProps = {
     question: string;
     answer: string;
@@ -48,19 +50,17 @@ export default function Faq({
                     {question}
                 </span>
 
-                <span
+                <Icon
+                    aria-hidden="true"
                     className="
-                        material-symbols-outlined
                         shrink-0
                         text-primary
                         transition-transform
                         duration-300
                         group-open:rotate-180
                     "
-                    aria-hidden="true"
-                >
-                    expand_more
-                </span>
+                    name="expand_more"
+                />
             </summary>
 
             <div

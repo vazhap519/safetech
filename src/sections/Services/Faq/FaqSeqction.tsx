@@ -1,4 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
+import Icon from "@/components/ui/Icon";
+
 export default function FaqSeqAction() {
     return (
         <section className="py-unit-xl px-margin-desktop max-w-container-max mx-auto">
@@ -16,8 +18,10 @@ export default function FaqSeqAction() {
                     <details className="glass-card rounded-xl overflow-hidden group">
                         <summary className="p-unit-md flex justify-between items-center cursor-pointer list-none">
                             <span className="font-headline-md text-[18px]">რა დრო სჭირდება კამერების მონტაჟს?</span>
-                            <span
-                                className="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+                            <Icon
+                                className="transition-transform group-open:rotate-180"
+                                name="expand_more"
+                            />
                         </summary>
                         <div
                             className="px-unit-md pb-unit-md text-on-surface-variant border-t border-outline-variant/10 pt-4">
@@ -28,8 +32,10 @@ export default function FaqSeqAction() {
                     <details className="glass-card rounded-xl overflow-hidden group">
                         <summary className="p-unit-md flex justify-between items-center cursor-pointer list-none">
                             <span className="font-headline-md text-[18px]">გაქვთ თუ არა გარანტია მოწყობილობებზე?</span>
-                            <span
-                                className="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+                            <Icon
+                                className="transition-transform group-open:rotate-180"
+                                name="expand_more"
+                            />
                         </summary>
                         <div
                             className="px-unit-md pb-unit-md text-on-surface-variant border-t border-outline-variant/10 pt-4">
@@ -40,8 +46,10 @@ export default function FaqSeqAction() {
                     <details className="glass-card rounded-xl overflow-hidden group">
                         <summary className="p-unit-md flex justify-between items-center cursor-pointer list-none">
                             <span className="font-headline-md text-[18px]">როგორ ხდება Wi-Fi დაფარვის გათვლა?</span>
-                            <span
-                                className="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+                            <Icon
+                                className="transition-transform group-open:rotate-180"
+                                name="expand_more"
+                            />
                         </summary>
                         <div
                             className="px-unit-md pb-unit-md text-on-surface-variant border-t border-outline-variant/10 pt-4">

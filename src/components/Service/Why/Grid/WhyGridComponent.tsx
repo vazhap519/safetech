@@ -1,9 +1,10 @@
+import Icon from "@/components/ui/Icon";
 import Typography from "@/components/ui/Typography";
 
 export default function WhyGridComponent() {
     return (
         <div className="glass-card p-unit-lg rounded-2xl text-center">
-            <span className="material-symbols-outlined text-primary text-[48px] mb-unit-md">shield</span>
+            <Icon className="mb-unit-md text-[48px] text-primary" name="shield" />
             <Typography as={"h5"} variant={"section-title"} className={"font-headline-md text-[20px] mb-2"}>
                 უმაღლესი დაცვა
             </Typography>

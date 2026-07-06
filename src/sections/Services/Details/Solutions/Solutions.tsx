@@ -1,5 +1,6 @@
 import SolutionHeaderH2 from "../../../../components/Service/Details/Solutions/SolutionsHeaders/SolutionHeaderH2";
 import SolutionHeaderH4 from "../../../../components/Service/Details/Solutions/SolutionsHeaders/SolutionHeaderH4";
+import Icon from "@/components/ui/Icon";
 import Image from "@/components/ui/Image";
 import { getSiteSettings } from "@/lib/site-settings";
 
@@ -35,28 +36,25 @@ export default async function Solutions(){
                     </div>
                 </div>
                 <div className="md:col-span-3 glass-card p-unit-md rounded-3xl flex flex-col gap-unit-sm">
-                    <span className="material-symbols-outlined text-secondary" data-icon="videocam">videocam</span>
+                    <Icon className="text-secondary" name="videocam" />
                     <h4 className="font-headline-md text-headline-md text-white">გარე კამერები</h4>
                     <p className="font-label-md text-label-md text-on-surface-variant">IP67 დაცვა, ღამის ხედვა და
                         ვანდალგამძლეობა.</p>
                 </div>
                 <div className="md:col-span-3 glass-card p-unit-md rounded-3xl flex flex-col gap-unit-sm">
-                        <span className="material-symbols-outlined text-secondary"
-                              data-icon="analytics">analytics</span>
+                    <Icon className="text-secondary" name="analytics" />
                     <h4 className="font-headline-md text-headline-md text-white">ვიდეო ანალიტიკა</h4>
                     <p className="font-label-md text-label-md text-on-surface-variant">ხალხის დათვლა, სახის ამოცნობა
                         და სითბური რუკები.</p>
                 </div>
                 <div className="md:col-span-3 glass-card p-unit-md rounded-3xl flex flex-col gap-unit-sm">
-                        <span className="material-symbols-outlined text-secondary"
-                              data-icon="directions_car">directions_car</span>
+                    <Icon className="text-secondary" name="directions_car" />
                     <h4 className="font-headline-md text-headline-md text-white">ANPR სისტემა</h4>
                     <p className="font-label-md text-label-md text-on-surface-variant">სახელმწიფო ნომრების
                         ავტომატური ამოცნობა და დაშვება.</p>
                 </div>
                 <div className="md:col-span-3 glass-card p-unit-md rounded-3xl flex flex-col gap-unit-sm">
-                        <span className="material-symbols-outlined text-secondary"
-                              data-icon="settings_overscan">settings_overscan</span>
+                    <Icon className="text-secondary" name="settings_overscan" />
                     <h4 className="font-headline-md text-headline-md text-white">PTZ კამერები</h4>
                     <p className="font-label-md text-label-md text-on-surface-variant">მართვადი კამერები ოპტიკური
                         ზუმით დიდი ტერიტორიებისთვის.</p>

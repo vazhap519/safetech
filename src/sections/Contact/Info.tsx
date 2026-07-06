@@ -1,3 +1,4 @@
+import Icon from "@/components/ui/Icon";
 import { getSiteSettings } from "@/lib/site-settings";
 import { createTranslator } from "@/lib/translations";
 
@@ -59,9 +60,10 @@ export default async function Info() {
                         key={item.label}
                         className="glass-panel rounded-xl p-unit-md text-center md:p-unit-lg"
                     >
-                        <span className="material-symbols-outlined mb-4 block text-2xl text-primary md:text-3xl">
-                            {item.icon}
-                        </span>
+                        <Icon
+                            className="mb-4 block text-2xl text-primary md:text-3xl"
+                            name={item.icon}
+                        />
 
                         <p className="mb-2 text-xs font-label-md uppercase tracking-tighter text-on-surface-variant md:text-label-md">
                             {item.label}

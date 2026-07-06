@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Icon from "@/components/ui/Icon";
 
 export default function BreadcrumbComponent(){
     return (
         <>
             <Link className="hover:text-primary transition-colors" href="#">მთავარი</Link>
-            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+            <Icon className="text-[14px]" name="chevron_right" />
         </>
     )
 }

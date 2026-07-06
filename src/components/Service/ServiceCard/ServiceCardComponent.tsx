@@ -1,26 +1,6 @@
-// export default function ServiceCardComponent() {
-//     return (
-//         <div className="glass-card rounded-2xl p-unit-lg flex flex-col h-full">
-//             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-unit-md">
-//                 <span className="material-symbols-outlined text-primary text-[28px]">videocam</span>
-//             </div>
-//             <h3 className="font-headline-md text-headline-md mb-unit-sm">IP კამერები &amp; CCTV</h3>
-//             <p className="font-body-md text-body-md text-on-surface-variant mb-unit-lg flex-grow">მაღალი
-//                 რეზოლუციის ვიდეომეთვალყურეობის სისტემების დაპროექტება და ინსტალაცია Hikvision და Dahua-ს
-//                 ბაზაზე.</p>
-//             <a className="inline-flex items-center text-primary font-label-md text-label-md gap-2 group"
-//                href="#">
-//                 დეტალურად
-//                 <span
-//                     className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-//             </a>
-//         </div>
-//
-//     )
-// }
-
-
 import Link from "next/link";
+
+import Icon from "@/components/ui/Icon";
 
 type Service = {
     slug: string;
@@ -33,34 +13,30 @@ type Props = {
     service: Service;
 };
 
-export default function ServiceCardComponent({
-                                                 service,
-                                             }: Props) {
+export default function ServiceCardComponent({ service }: Props) {
     return (
-        <div className="glass-card rounded-2xl p-unit-lg flex flex-col h-full">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-unit-md">
-                <span className="material-symbols-outlined text-primary text-[28px]">
-                    {service.icon}
-                </span>
+        <div className="glass-card flex h-full flex-col rounded-2xl p-unit-lg">
+            <div className="mb-unit-md flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <Icon className="text-[28px] text-primary" name={service.icon} />
             </div>
 
-            <h3 className="font-headline-md text-headline-md mb-unit-sm">
+            <h3 className="mb-unit-sm font-headline-md text-headline-md">
                 {service.title}
             </h3>
 
-            <p className="font-body-md text-body-md text-on-surface-variant mb-unit-lg flex-grow">
+            <p className="mb-unit-lg flex-grow font-body-md text-body-md text-on-surface-variant">
                 {service.description}
             </p>
 
             <Link
+                className="group inline-flex items-center gap-2 font-label-md text-label-md text-primary"
                 href={`/services/${service.slug}`}
-                className="inline-flex items-center text-primary font-label-md text-label-md gap-2 group"
             >
-                დეტალურად
-
-                <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">
-                    arrow_forward
-                </span>
+                áƒ“áƒ”áƒ¢áƒáƒšáƒ£áƒ áƒáƒ“
+                <Icon
+                    className="text-[18px] transition-transform group-hover:translate-x-1"
+                    name="arrow_forward"
+                />
             </Link>
         </div>
     );

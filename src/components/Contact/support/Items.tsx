@@ -1,3 +1,4 @@
+import Icon from "@/components/ui/Icon";
 import { getSiteSettings } from "@/lib/site-settings";
 import { createTranslator } from "@/lib/translations";
 
@@ -7,12 +8,7 @@ export default async function Items() {
 
     return (
         <li className="flex items-center gap-unit-sm text-on-surface">
-            <span
-                className="material-symbols-outlined text-secondary"
-                data-icon="check_circle"
-            >
-                check_circle
-            </span>
+            <Icon className="text-secondary" name="check_circle" />
             {t("contact.support.item.0", {
                 ka: "დისტანციური დიაგნოსტიკა და გამართვა",
                 en: "Remote diagnostics and system tuning",

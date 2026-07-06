@@ -5,14 +5,13 @@ import "./globals.css";
 import FloatingWhatsApp from "@/components/Contact/FloatingWhatsApp";
 import Footer from "@/components/Footer/Footer";
 import Navbar from "@/components/Navbar/Navbar";
-import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import ConsultationProvider from "@/components/consultation/ConsultationProvider";
 import LocalizationProvider from "@/components/providers/LocalizationProvider";
 import { getOgLocale } from "@/lib/locales";
 import { absoluteSiteUrl, SITE_NAME, SITE_URL } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { createTranslator } from "@/lib/translations";
-
+import { GoogleTagManager } from "@next/third-parties/google";
 function withDynamicSiteTitle(title: string, siteName: string) {
     return title.includes(siteName) ? title : `${title} | ${siteName}`;
 }
@@ -149,14 +148,6 @@ export default async function RootLayout({
             suppressHydrationWarning
         >
             <head>
-                <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-                <link rel="dns-prefetch" href="//fonts.gstatic.com" />
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link
-                    rel="preconnect"
-                    href="https://fonts.gstatic.com"
-                    crossOrigin="anonymous"
-                />
                 {publicApiOrigin ? (
                     <>
                         <link rel="dns-prefetch" href={publicApiOrigin} />
@@ -178,8 +169,7 @@ export default async function RootLayout({
                     min-h-screen
                 `}
             >
-                <GoogleAnalytics />
-
+                <GoogleTagManager gtmId="GTM-PHSJ3MHV" />
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{

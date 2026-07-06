@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Icon from "@/components/ui/Icon";
 
 export default function FaqComponent() {
     const [isOpen, setIsOpen] = useState(false);
@@ -15,16 +16,14 @@ export default function FaqComponent() {
                     რა დრო სჭირდება სისტემის ინსტალაციას?
                 </span>
 
-                <span
+                <Icon
                     className={`
-                        material-symbols-outlined
                         transition-transform
                         duration-300
                         ${isOpen ? "rotate-180" : ""}
                     `}
-                >
-                    expand_more
-                </span>
+                    name="expand_more"
+                />
             </button>
 
             <div

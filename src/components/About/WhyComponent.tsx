@@ -1,3 +1,4 @@
+import Icon from "@/components/ui/Icon";
 import Typography from "@/components/ui/Typography";
 
 export default function WhyComponent({
@@ -11,9 +12,7 @@ export default function WhyComponent({
 }) {
     return (
         <div className="glass-card rounded-2xl p-unit-lg text-center">
-            <span className="material-symbols-outlined text-3xl text-primary">
-                {icon}
-            </span>
+            <Icon className="text-3xl text-primary" name={icon} />
             <div>
                 <Typography as="h3" variant="why-component-header">
                     {title}

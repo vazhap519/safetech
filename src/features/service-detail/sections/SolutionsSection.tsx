@@ -1,3 +1,4 @@
+import Icon from "@/components/ui/Icon";
 import SectionHeading from "../components/SectionHeading";
 import type { ServiceDetail } from "../model/types";
 
@@ -13,7 +14,10 @@ export default function SolutionsSection({ service }: { service: ServiceDetail }
                     >
                         {solution.featured && <div aria-hidden="true" className={`absolute inset-0 bg-gradient-to-br ${index % 2 ? "from-secondary/20" : "from-primary/20"} to-transparent opacity-70`} />}
                         <div className="relative z-10">
-                            <span aria-hidden="true" className="material-symbols-outlined mb-unit-md text-3xl text-secondary">{solution.icon}</span>
+                            <Icon
+                                className="mb-unit-md text-3xl text-secondary"
+                                name={solution.icon}
+                            />
                             <h3 className="mb-unit-xs font-headline-md text-xl text-white">{solution.title}</h3>
                             <p className="leading-relaxed text-on-surface-variant">{solution.description}</p>
                         </div>

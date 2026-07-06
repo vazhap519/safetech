@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import ConsultationTrigger from "@/components/consultation/ConsultationTrigger";
+import Icon from "@/components/ui/Icon";
 import Image from "@/components/ui/Image";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
@@ -42,12 +43,7 @@ export default async function ServiceHero({ service }: { service: ServiceDetail 
                                 className="flex items-center gap-unit-sm font-label-md text-on-surface"
                                 key={highlight}
                             >
-                                <span
-                                    aria-hidden="true"
-                                    className="material-symbols-outlined text-primary"
-                                >
-                                    check_circle
-                                </span>
+                                <Icon className="text-primary" name="check_circle" />
                                 {highlight}
                             </li>
                         ))}
