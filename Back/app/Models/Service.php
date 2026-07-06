@@ -16,9 +16,16 @@ class Service extends Model
     protected function casts(): array
     {
         return [
-            'keywords' => 'array', 'highlights' => 'array', 'overview' => 'array',
-            'benefits' => 'array', 'solutions' => 'array', 'industries' => 'array',
-            'process' => 'array', 'brands' => 'array', 'is_published' => 'boolean',
+            'keywords' => 'array',
+            'highlights' => 'array',
+            'overview' => 'array',
+            'benefits' => 'array',
+            'solutions' => 'array',
+            'industries' => 'array',
+            'process' => 'array',
+            'brands' => 'array',
+            'lead_form' => 'array',
+            'is_published' => 'boolean',
         ];
     }
 
@@ -27,9 +34,48 @@ class Service extends Model
         return $this->hasMany(Faq::class)->orderBy('sort_order');
     }
 
+    public function analyticsEvents(): HasMany
+    {
+        return $this->hasMany(AnalyticsEvent::class);
+    }
+
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('is_published', true)->orderBy('sort_order');
+    }
+
+    public function scopeWithAnalyticsSummary(Builder $query): Builder
+    {
+        return $query
+            ->select('services.*')
+            ->selectSub(
+                AnalyticsEvent::query()
+                    ->serviceViews()
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('service_id', 'services.id'),
+                'total_views_count',
+            )
+            ->selectSub(
+                AnalyticsEvent::query()
+                    ->serviceViews()
+                    ->selectRaw('COUNT(DISTINCT visitor_hash)')
+                    ->whereColumn('service_id', 'services.id'),
+                'unique_viewers_count',
+            )
+            ->selectSub(
+                AnalyticsEvent::query()
+                    ->whatsAppClicks()
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('service_id', 'services.id'),
+                'whatsapp_clicks_count',
+            )
+            ->selectSub(
+                AnalyticsEvent::query()
+                    ->whatsAppClicks()
+                    ->selectRaw('COUNT(DISTINCT visitor_hash)')
+                    ->whereColumn('service_id', 'services.id'),
+                'unique_whatsapp_clickers_count',
+            );
     }
 
     public function getRouteKeyName(): string

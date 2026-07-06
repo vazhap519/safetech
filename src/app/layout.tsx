@@ -103,6 +103,15 @@ export default async function RootLayout({
 }>) {
     const { contact, branding, locale, translations } = await getSiteSettings();
     const siteName = branding.siteName || SITE_NAME;
+    const publicApiOrigin = (() => {
+        try {
+            return new URL(
+                process.env.NEXT_PUBLIC_API_URL || "",
+            ).origin;
+        } catch {
+            return "";
+        }
+    })();
     const organizationSchema = {
         "@context": "https://schema.org",
         "@type": "Organization",
@@ -139,6 +148,26 @@ export default async function RootLayout({
             className="dark scroll-smooth"
             suppressHydrationWarning
         >
+            <head>
+                <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+                <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link
+                    rel="preconnect"
+                    href="https://fonts.gstatic.com"
+                    crossOrigin="anonymous"
+                />
+                {publicApiOrigin ? (
+                    <>
+                        <link rel="dns-prefetch" href={publicApiOrigin} />
+                        <link
+                            rel="preconnect"
+                            href={publicApiOrigin}
+                            crossOrigin="anonymous"
+                        />
+                    </>
+                ) : null}
+            </head>
             <body
                 className={`
                     bg-background

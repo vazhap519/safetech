@@ -1,7 +1,14 @@
 import "server-only";
 
 import { getServiceDetail } from "@/features/service-detail/data/services";
+import { getPublicApiOrigin, getServerApiBase } from "@/lib/backend-api";
 import type { ServiceDetail } from "@/features/service-detail/model/types";
+import {
+    getDefaultLeadFormConfig,
+    localizeLeadFormConfig,
+    type ContactServiceOption,
+    type RawLeadFormConfig,
+} from "@/lib/lead-form";
 import { getCurrentLocale } from "@/lib/locale-server";
 import type { Locale } from "@/lib/locales";
 import { projectDetails, type ProjectDetail } from "@/lib/projectDetails";
@@ -21,19 +28,8 @@ import {
     type TranslationMap,
 } from "@/lib/translations";
 
-const apiBase = (
-    process.env.BACKEND_API_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:8000/api"
-).replace(/\/$/, "");
-
-const apiOrigin = (() => {
-    try {
-        return new URL(apiBase).origin;
-    } catch {
-        return "";
-    }
-})();
+const serverApiBase = getServerApiBase();
+const publicApiOrigin = getPublicApiOrigin();
 
 export type BackendContent = {
     team?: TeamMember[];
@@ -60,7 +56,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 async function fetchData<T>(path: string): Promise<T | undefined> {
     try {
-        const response = await fetch(`${apiBase}${path}`, {
+        const response = await fetch(`${serverApiBase}${path}`, {
             next: { revalidate: 300 },
             signal: AbortSignal.timeout(3000),
         });
@@ -80,7 +76,7 @@ export function resolveBackendAsset(
     if (!path) return fallback;
     if (path.startsWith("http") || path.startsWith("/")) return path;
 
-    return apiOrigin ? `${apiOrigin}/storage/${path}` : fallback;
+    return publicApiOrigin ? `${publicApiOrigin}/storage/${path}` : fallback;
 }
 
 export function maybeBackendAsset(path?: string | null) {
@@ -302,8 +298,51 @@ export async function getBackendServices() {
     }));
 }
 
+export async function getBackendContactServices(): Promise<
+    ContactServiceOption[]
+> {
+    const [{ locale, translations }, remote] = await Promise.all([
+        getTranslationContext(),
+        fetchData<
+            Array<{
+                slug: string;
+                name?: string;
+                title?: string;
+                leadForm?: RawLeadFormConfig | null;
+            }>
+        >("/services"),
+    ]);
+    const t = createTranslator(translations, locale);
+
+    const services = remote?.length
+        ? remote
+        : serviceCards.map((service) => ({
+              slug: service.slug,
+              name: service.title,
+              title: service.title,
+              leadForm: getDefaultLeadFormConfig(service.slug),
+          }));
+
+    return services.map((service) => ({
+        slug: service.slug,
+        label: t(
+            `service.${service.slug}.name`,
+            service.name || service.title || service.slug,
+        ),
+        leadForm: localizeLeadFormConfig(
+            service.leadForm ?? getDefaultLeadFormConfig(service.slug),
+            locale,
+        ),
+    }));
+}
+
 export async function getBackendServiceSlugs() {
-    return uniqueSlugs((await getBackendServices()).map(({ slug }) => slug));
+    const remote = await fetchData<Array<{ slug: string }>>("/services");
+
+    return uniqueSlugs([
+        ...serviceCards.map(({ slug }) => slug),
+        ...(remote?.map(({ slug }) => slug) ?? []),
+    ]);
 }
 
 export async function getBackendService(
@@ -487,9 +526,12 @@ export async function getBackendProject(
 }
 
 export async function getBackendProjectSlugs() {
-    return uniqueSlugs(
-        (await getBackendProjectCards()).map(({ slug }) => slug),
-    );
+    const remote = await fetchData<Array<{ slug: string }>>("/projects");
+
+    return uniqueSlugs([
+        ...projectDetails.map(({ slug }) => slug),
+        ...(remote?.map(({ slug }) => slug) ?? []),
+    ]);
 }
 
 export async function getBackendTeam(): Promise<TeamMember[]> {

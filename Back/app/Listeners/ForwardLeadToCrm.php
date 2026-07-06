@@ -11,14 +11,33 @@ final class ForwardLeadToCrm implements ShouldQueue
     public function handle(LeadCreated $event): void
     {
         $url = config('leads.crm_webhook_url');
-        if (! $url) return;
+
+        if (! $url) {
+            return;
+        }
 
         $request = Http::acceptJson()->timeout(10)->retry(2, 250);
-        if ($token = config('leads.crm_webhook_token')) $request = $request->withToken($token);
+
+        if ($token = config('leads.crm_webhook_token')) {
+            $request = $request->withToken($token);
+        }
 
         $request->post($url, $event->lead->only([
-            'id', 'name', 'first_name', 'last_name', 'company', 'phone', 'email',
-            'service', 'project_size', 'property_type', 'message', 'source', 'created_at',
+            'id',
+            'name',
+            'first_name',
+            'last_name',
+            'company',
+            'phone',
+            'email',
+            'service',
+            'service_slug',
+            'project_size',
+            'property_type',
+            'details',
+            'message',
+            'source',
+            'created_at',
         ]))->throw();
     }
 }

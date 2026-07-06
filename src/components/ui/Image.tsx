@@ -211,6 +211,9 @@ export default function Image({
 
                 className,
             )}
+            fetchPriority={
+                props.fetchPriority ?? (props.priority ? "high" : undefined)
+            }
             {...dimensions}
             {...props}
             onError={handleError}

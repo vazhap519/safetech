@@ -14,7 +14,7 @@ final class ContactLeadController extends Controller
         $lead = $action->execute($request->toData());
 
         return response()->json([
-            'message' => 'მადლობა! მოთხოვნა წარმატებით გაიგზავნა.',
+            'message' => 'მადლობა! თქვენი მოთხოვნა წარმატებით გაიგზავნა.',
             'data' => ['id' => $lead->getKey(), 'status' => $lead->status],
         ], 201);
     }

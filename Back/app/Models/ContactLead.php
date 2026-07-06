@@ -12,13 +12,30 @@ class ContactLead extends Model
     protected $attributes = ['status' => 'new'];
 
     protected $fillable = [
-        'name', 'first_name', 'last_name', 'company', 'phone', 'email', 'service',
-        'project_size', 'property_type', 'message', 'source', 'status', 'ip_hash',
-        'user_agent', 'privacy_accepted_at',
+        'name',
+        'first_name',
+        'last_name',
+        'company',
+        'phone',
+        'email',
+        'service',
+        'service_slug',
+        'project_size',
+        'property_type',
+        'details',
+        'message',
+        'source',
+        'status',
+        'ip_hash',
+        'user_agent',
+        'privacy_accepted_at',
     ];
 
     protected function casts(): array
     {
-        return ['privacy_accepted_at' => 'datetime'];
+        return [
+            'details' => 'array',
+            'privacy_accepted_at' => 'datetime',
+        ];
     }
 }

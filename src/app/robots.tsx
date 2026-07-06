@@ -12,6 +12,6 @@ export default function robots(): MetadataRoute.Robots {
             },
         ],
         sitemap: absoluteSiteUrl("/sitemap.xml"),
-        host: SITE_URL.replace(/\/$/, ""),
+        host: new URL(SITE_URL).host,
     };
 }

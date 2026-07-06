@@ -1,15 +1,92 @@
 "use client";
 
+import { useState } from "react";
+
 import PrivacyConsent from "@/components/forms/PrivacyConsent";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import Button from "@/components/ui/Button";
 import { Input, Select, Textarea } from "@/components/ui/Input";
 import Typography from "@/components/ui/Typography";
 import { useLeadForm } from "@/hooks/useLeadForm";
+import type { ContactServiceOption, LeadFormField } from "@/lib/lead-form";
 
-export default function Left() {
+type LeftProps = {
+    services: ContactServiceOption[];
+};
+
+type DynamicFieldProps = {
+    field: LeadFormField;
+};
+
+function DynamicField({ field }: DynamicFieldProps) {
+    const inputName = `details__${field.key}`;
+    const inputId = `details-${field.key}`;
+
+    return (
+        <div className={field.type === "textarea" ? "md:col-span-2" : undefined}>
+            <input
+                name={`details_label__${field.key}`}
+                readOnly
+                type="hidden"
+                value={field.label}
+            />
+            <input
+                name={`details_type__${field.key}`}
+                readOnly
+                type="hidden"
+                value={field.type}
+            />
+
+            {field.type === "select" ? (
+                <Select
+                    id={inputId}
+                    name={inputName}
+                    label={field.label}
+                    options={field.options}
+                    placeholder={field.placeholder}
+                    required={field.required}
+                />
+            ) : field.type === "textarea" ? (
+                <Textarea
+                    id={inputId}
+                    name={inputName}
+                    label={field.label}
+                    required={field.required}
+                    rows={4}
+                />
+            ) : (
+                <Input
+                    id={inputId}
+                    name={inputName}
+                    label={field.label}
+                    required={field.required}
+                    type={field.type === "number" ? "number" : "text"}
+                />
+            )}
+        </div>
+    );
+}
+
+export default function Left({ services }: LeftProps) {
     const { status, message, submit } = useLeadForm("contact-page");
     const { t } = useLocalization();
+    const [selectedServiceSlug, setSelectedServiceSlug] = useState(
+        services[0]?.slug ?? "",
+    );
+
+    const selectedService =
+        services.find((service) => service.slug === selectedServiceSlug) ??
+        services[0];
+
+    if (!selectedService) {
+        return null;
+    }
+
+    const chooseText = t("forms.choose", {
+        ka: "აირჩიეთ",
+        en: "Choose",
+        ru: "Выберите",
+    });
 
     return (
         <div
@@ -24,6 +101,7 @@ export default function Left() {
             "
         >
             <div
+                aria-hidden="true"
                 className="
                     absolute
                     left-0
@@ -125,97 +203,66 @@ export default function Left() {
                     })}
                 </p>
 
-                <div className="grid gap-unit-md md:grid-cols-3">
+                <div className="space-y-unit-md">
                     <Select
                         id="service"
-                        name="service"
+                        name="service_slug"
                         label={t("forms.service", {
                             ka: "სერვისი",
                             en: "Service",
                             ru: "Услуга",
                         })}
-                        options={[
-                            t("forms.options.service.cctv", {
-                                ka: "ვიდეოსამეთვალყურეო სისტემები",
-                                en: "CCTV systems",
-                                ru: "Системы видеонаблюдения",
-                            }),
-                            t("forms.options.service.access", {
-                                ka: "დაშვების კონტროლი",
-                                en: "Access control",
-                                ru: "Контроль доступа",
-                            }),
-                            t("forms.options.service.network", {
-                                ka: "ქსელური ინფრასტრუქტურა",
-                                en: "Network infrastructure",
-                                ru: "Сетевая инфраструктура",
-                            }),
-                            t("forms.options.service.server", {
-                                ka: "სერვერული გადაწყვეტილებები",
-                                en: "Server solutions",
-                                ru: "Серверные решения",
-                            }),
-                        ]}
+                        onChange={(event) =>
+                            setSelectedServiceSlug(event.target.value)
+                        }
+                        options={services.map((service) => ({
+                            value: service.slug,
+                            label: service.label,
+                        }))}
+                        required
+                        value={selectedService.slug}
                     />
+                    <input
+                        name="service"
+                        readOnly
+                        type="hidden"
+                        value={selectedService.label}
+                    />
+                </div>
 
+                <div
+                    className="grid gap-unit-md md:grid-cols-2"
+                    key={selectedService.slug}
+                >
                     <Select
                         id="project-size"
                         name="project-size"
-                        label={t("forms.projectSize", {
-                            ka: "პროექტის ზომა",
-                            en: "Project size",
-                            ru: "Размер проекта",
-                        })}
-                        options={[
-                            t("forms.options.size.small", {
-                                ka: "მცირე (1-10 ერთეული)",
-                                en: "Small (1-10 units)",
-                                ru: "Малый (1-10 единиц)",
+                        label={selectedService.leadForm.projectSizeLabel}
+                        options={selectedService.leadForm.projectSizeOptions.map(
+                            (option) => ({
+                                value: option.label,
+                                label: option.label,
                             }),
-                            t("forms.options.size.medium", {
-                                ka: "საშუალო (10-50 ერთეული)",
-                                en: "Medium (10-50 units)",
-                                ru: "Средний (10-50 единиц)",
-                            }),
-                            t("forms.options.size.large", {
-                                ka: "დიდი (50+ ერთეული)",
-                                en: "Large (50+ units)",
-                                ru: "Крупный (50+ единиц)",
-                            }),
-                        ]}
+                        )}
+                        placeholder={chooseText}
                     />
 
                     <Select
                         id="property-type"
                         name="property-type"
-                        label={t("forms.propertyType", {
-                            ka: "ობიექტის ტიპი",
-                            en: "Property type",
-                            ru: "Тип объекта",
-                        })}
-                        options={[
-                            t("forms.options.property.office", {
-                                ka: "ბიზნეს ცენტრი",
-                                en: "Business center",
-                                ru: "Бизнес-центр",
+                        label={selectedService.leadForm.propertyTypeLabel}
+                        options={selectedService.leadForm.propertyTypeOptions.map(
+                            (option) => ({
+                                value: option.label,
+                                label: option.label,
                             }),
-                            t("forms.options.property.warehouse", {
-                                ka: "საწყობი / ინდუსტრიული",
-                                en: "Warehouse / industrial",
-                                ru: "Склад / промышленный объект",
-                            }),
-                            t("forms.options.property.residential", {
-                                ka: "საცხოვრებელი კომპლექსი",
-                                en: "Residential complex",
-                                ru: "Жилой комплекс",
-                            }),
-                            t("forms.options.property.retail", {
-                                ka: "საცალო ვაჭრობა",
-                                en: "Retail",
-                                ru: "Розничная торговля",
-                            }),
-                        ]}
+                        )}
+                        placeholder={chooseText}
                     />
+
+                    {selectedService.leadForm.extraFields.map((field) => (
+                        <DynamicField field={field} key={field.key} />
+                    ))}
                 </div>
 
                 <Textarea

@@ -1,48 +1,30 @@
 import {
-    InputHTMLAttributes,
-    TextareaHTMLAttributes,
-    SelectHTMLAttributes,
+    type InputHTMLAttributes,
+    type SelectHTMLAttributes,
+    type TextareaHTMLAttributes,
 } from "react";
 
 import clsx from "clsx";
 
-/*
-|--------------------------------------------------------------------------
-| INPUT
-|--------------------------------------------------------------------------
-*/
-
 type InputProps = {
     label: string;
-
-    variant?:
-        | "default"
-        | "floating";
-
+    variant?: "default" | "floating";
     className?: string;
 } & InputHTMLAttributes<HTMLInputElement>;
 
 export function Input({
-                          label,
-                          variant = "floating",
-                          className,
-                          id,
-                          ...props
-                      }: InputProps) {
+    label,
+    variant = "floating",
+    className,
+    id,
+    ...props
+}: InputProps) {
     return (
         <div className="relative">
-
             <input
                 id={id}
                 placeholder=" "
                 className={clsx(
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | BASE
-                    |--------------------------------------------------------------------------
-                    */
-
                     `
                     peer
                     block
@@ -58,21 +40,13 @@ export function Input({
                     focus:border-primary
                     focus:ring-0
                     `,
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | FLOATING
-                    |--------------------------------------------------------------------------
-                    */
-
                     variant === "floating" &&
-                    `
+                        `
                         px-4
                         pt-6
                         pb-2
                         `,
-
-                    className
+                    className,
                 )}
                 {...props}
             />
@@ -103,32 +77,23 @@ export function Input({
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| TEXTAREA
-|--------------------------------------------------------------------------
-*/
-
 type TextareaProps = {
     label: string;
-
     className?: string;
 } & TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 export function Textarea({
-                             label,
-                             className,
-                             id,
-                             ...props
-                         }: TextareaProps) {
+    label,
+    className,
+    id,
+    ...props
+}: TextareaProps) {
     return (
         <div className="relative">
-
             <textarea
                 id={id}
                 placeholder=" "
                 className={clsx(
-
                     `
                     peer
                     block
@@ -148,8 +113,7 @@ export function Textarea({
                     focus:border-primary
                     focus:ring-0
                     `,
-
-                    className
+                    className,
                 )}
                 {...props}
             />
@@ -180,30 +144,36 @@ export function Textarea({
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| SELECT
-|--------------------------------------------------------------------------
-*/
+export type SelectOption =
+    | string
+    | {
+          label: string;
+          value: string;
+      };
 
 type SelectProps = {
     label: string;
-
-    options: string[];
-
+    options: SelectOption[];
+    placeholder?: string;
     className?: string;
 } & SelectHTMLAttributes<HTMLSelectElement>;
 
 export function Select({
-                           label,
-                           options,
-                           className,
-                           id,
-                           ...props
-                       }: SelectProps) {
+    label,
+    options,
+    placeholder,
+    className,
+    id,
+    ...props
+}: SelectProps) {
+    const normalizedOptions = options.map((option) =>
+        typeof option === "string"
+            ? { label: option, value: option }
+            : option,
+    );
+
     return (
         <div className="space-y-unit-xs">
-
             <label
                 htmlFor={id}
                 className="
@@ -234,16 +204,14 @@ export function Select({
                     focus:border-primary
                     focus:ring-0
                     `,
-                    className
+                    className,
                 )}
                 {...props}
             >
-                {options.map((option) => (
-                    <option
-                        key={option}
-                        value={option}
-                    >
-                        {option}
+                {placeholder ? <option value="">{placeholder}</option> : null}
+                {normalizedOptions.map((option) => (
+                    <option key={`${option.value}-${option.label}`} value={option.value}>
+                        {option.label}
                     </option>
                 ))}
             </select>

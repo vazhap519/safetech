@@ -1,8 +1,10 @@
-
 import Left from "@/components/Contact/Form/Left";
 import Right from "@/components/Contact/Form/Right";
+import { getBackendContactServices } from "@/lib/backend";
 
-export default function Form() {
+export default async function Form() {
+    const services = await getBackendContactServices();
+
     return (
         <section
             id="contact-form"
@@ -22,14 +24,13 @@ export default function Form() {
                     className="
                         grid
                         grid-cols-1
-                        lg:grid-cols-12
-                        gap-unit-lg
-                        lg:gap-unit-xl
                         items-start
+                        gap-unit-lg
+                        lg:grid-cols-12
+                        lg:gap-unit-xl
                     "
                 >
-                    <Left />
-
+                    <Left services={services} />
                     <Right />
                 </div>
             </div>

@@ -27,8 +27,38 @@ export function useLeadForm(source: string) {
                 typeof value === "string" ? value.trim() : value,
             ]),
         );
-        const email = String(normalizedPayload.email ?? "");
-        const phone = String(normalizedPayload.phone ?? "");
+
+        const details = Object.entries(normalizedPayload)
+            .filter(([key]) => key.startsWith("details__"))
+            .map(([key, value]) => {
+                const detailKey = key.replace("details__", "");
+
+                return {
+                    key: detailKey,
+                    label: String(
+                        normalizedPayload[`details_label__${detailKey}`] ??
+                            detailKey,
+                    ),
+                    type: String(
+                        normalizedPayload[`details_type__${detailKey}`] ??
+                            "text",
+                    ),
+                    value: typeof value === "string" ? value.trim() : String(value),
+                };
+            })
+            .filter((detail) => detail.value !== "");
+
+        const cleanedPayload = Object.fromEntries(
+            Object.entries(normalizedPayload).filter(
+                ([key]) =>
+                    !key.startsWith("details__") &&
+                    !key.startsWith("details_label__") &&
+                    !key.startsWith("details_type__"),
+            ),
+        );
+
+        const email = String(cleanedPayload.email ?? "");
+        const phone = String(cleanedPayload.phone ?? "");
 
         if (!email && !phone) {
             setStatus("error");
@@ -43,16 +73,14 @@ export function useLeadForm(source: string) {
         }
 
         try {
-            const apiBaseUrl = (
-                process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
-            ).replace(/\/$/, "");
-            const response = await fetch(`${apiBaseUrl}/contact-leads`, {
+            const response = await fetch("/api/contact-leads", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    ...normalizedPayload,
+                    ...cleanedPayload,
                     email,
                     phone,
+                    details,
                     source,
                 }),
             });
@@ -82,7 +110,7 @@ export function useLeadForm(source: string) {
             setMessage(
                 result.message ||
                     t("forms.success.submit", {
-                        ka: "მადლობა! მოთხოვნა წარმატებით გაიგზავნა.",
+                        ka: "მადლობა! თქვენი მოთხოვნა წარმატებით გაიგზავნა.",
                         en: "Thank you! Your request has been sent successfully.",
                         ru: "Спасибо! Ваш запрос успешно отправлен.",
                     }),

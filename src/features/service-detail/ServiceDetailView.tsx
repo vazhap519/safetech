@@ -1,4 +1,5 @@
 import type { ServiceDetail } from "./model/types";
+import ServiceViewTracker from "./components/ServiceViewTracker";
 import BenefitsSection from "./sections/BenefitsSection";
 import FaqSection from "./sections/FaqSection";
 import IndustriesSection from "./sections/IndustriesSection";
@@ -13,6 +14,7 @@ import SolutionsSection from "./sections/SolutionsSection";
 export default function ServiceDetailView({ service }: { service: ServiceDetail }) {
     return (
         <article className="pt-[80px]">
+            <ServiceViewTracker serviceSlug={service.slug} />
             <ServiceHero service={service} />
             <ServiceOverview service={service} />
             <BenefitsSection service={service} />
