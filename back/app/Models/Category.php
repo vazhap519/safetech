@@ -10,23 +10,10 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'slug',
-        'seo_title',
-        'seo_description',
-        'seo_keywords',
-        'intro_text',
-        'faq',
-        'schema',
-        'noindex',
-    ];
+    protected $fillable = ['name', 'slug', 'translations'];
 
     protected $casts = [
-        'seo_keywords' => 'array',
-        'faq' => 'array',
-        'schema' => 'array',
-        'noindex' => 'boolean',
+        'translations' => 'array',
     ];
 
     protected static function boot()
@@ -35,12 +22,6 @@ class Category extends Model
 
         static::creating(function ($category) {
             if (!$category->slug) {
-                $category->slug = Str::slug($category->name);
-            }
-        });
-
-        static::updating(function ($category) {
-            if ($category->isDirty('name') && !$category->isDirty('slug')) {
                 $category->slug = Str::slug($category->name);
             }
         });

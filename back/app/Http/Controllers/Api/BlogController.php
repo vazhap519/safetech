@@ -4,66 +4,39 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
-use App\Support\SocialLinks;
+use App\Support\MultilingualContent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 
 class BlogController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $category = $request->get('category', 'all');
-        $page = max(1, (int) $request->get('page', 1));
-        $cacheKey = "blog:index:{$category}:page:{$page}";
+        $category = $request->string('category')->toString();
+        $page = $request->integer('page', 1);
+        $locale = $this->locale($request);
 
-        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($category, $page) {
+        $cacheKey = "blog:index:{$locale}:{$category}:page:{$page}";
+
+        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($category, $locale) {
             $query = Post::query()
-                ->select([
-                    'id',
-                    'slug',
-                    'title',
-                    'excerpt',
-                    'created_at',
-                    'updated_at',
-                    'category_id',
-                    'author_id',
-                    'reading_time',
-                    'published_year',
-                ])
-                ->with([
-                    'category:id,name,slug',
-                    'author:id,name',
-                    'media',
-                ])
+                ->with(['category:id,name,slug,translations', 'media'])
                 ->where('is_published', true);
 
-            if ($category !== 'all') {
+            if ($category && $category !== 'all') {
                 $query->whereHas('category', fn ($q) => $q->where('slug', $category));
             }
 
-            $posts = $query->latest()->paginate(9, ['*'], 'page', $page);
+            $posts = $query->latest()->paginate(9);
 
             return [
-                'data' => $posts->getCollection()
-                    ->map(fn ($post) => $this->transformPostCard($post))
-                    ->values(),
-
+                'data' => $posts->getCollection()->map(fn ($post) => $this->transformPostCard($post, $locale)),
                 'meta' => [
                     'current_page' => $posts->currentPage(),
                     'last_page' => $posts->lastPage(),
                     'per_page' => $posts->perPage(),
                     'total' => $posts->total(),
-                ],
-
-                'links' => [
-                    'next' => $posts->hasMorePages()
-                        ? url('/api/blog?page=' . ($posts->currentPage() + 1) . ($category !== 'all' ? "&category={$category}" : ''))
-                        : null,
-                    'prev' => $posts->currentPage() > 1
-                        ? url('/api/blog?page=' . ($posts->currentPage() - 1) . ($category !== 'all' ? "&category={$category}" : ''))
-                        : null,
                 ],
             ];
         });
@@ -71,14 +44,15 @@ class BlogController extends Controller
         return response()->json($data);
     }
 
-    public function show(string $slug): JsonResponse
+    public function show(Request $request, string $slug): JsonResponse
     {
-        $cacheKey = "blog:post:{$slug}";
+        $locale = $this->locale($request);
+        $cacheKey = "blog:post:{$locale}:{$slug}";
 
-        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($slug) {
+        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($slug, $locale) {
             $post = Post::query()
                 ->with([
-                    'category:id,name,slug',
+                    'category:id,name,slug,translations',
                     'author',
                     'sections',
                     'media',
@@ -87,101 +61,94 @@ class BlogController extends Controller
                 ->where('is_published', true)
                 ->firstOrFail();
 
-            $seo = $post->seo ?? [];
-            $url = SocialLinks::frontendUrl("/blog/{$post->slug}");
-            $settings = settings();
-            $shareButtons = SocialLinks::shareButtons($settings?->share_buttons ?? []);
-
             return [
-                'data' => [
-                    ...$this->transformPostDetail($post),
-                    'seo' => [
-                        'meta' => [
-                            'title' => data_get($seo, 'title', $post->title),
-                            'description' => data_get($seo, 'description', $post->excerpt),
-                            'keywords' => collect(data_get($seo, 'keywords', []))
-                                ->map(fn ($item) => is_array($item) ? ($item['value'] ?? null) : $item)
-                                ->filter()
-                                ->values(),
-                            'image' => $this->getImage($post),
-                            'canonical' => data_get($seo, 'canonical', $url),
-                            'noindex' => (bool) data_get($seo, 'noindex', false),
-                        ],
-                        'faq' => $post->faq ?? [],
-                        'schema' => $post->schema ?? data_get($seo, 'schema'),
-                    ],
-                ],
-                'share' => [
-                    'title' => $settings?->share_title ?? '',
-                    'share_title' => $settings?->share_title ?? '',
-                    'url' => $url,
-                    'buttons' => $shareButtons,
-                    'share_buttons' => $shareButtons,
-                ],
+                'data' => $this->transformPostDetail($post, $locale),
             ];
         });
 
         return response()->json($data);
     }
 
-    private function transformPostCard($post): array
+    public function revalidate(): JsonResponse
+    {
+        Cache::flush();
+
+        return response()->json(['success' => true]);
+    }
+
+    private function transformPostCard(Post $post, string $locale): array
     {
         return [
-            'title' => $post->title,
+            'title' => $this->translated($post, 'title', $post->title, $locale),
             'slug' => $post->slug,
-            'excerpt' => $post->excerpt,
+            'excerpt' => $this->translated($post, 'excerpt', $post->excerpt, $locale),
             'image' => $this->getImage($post),
             'reading_time' => $post->reading_time,
             'published_year' => $post->published_year,
-            'created_at' => $post->created_at?->toDateString(),
-            'updated_at' => $post->updated_at?->toDateString(),
             'category' => [
-                'name' => $post->category?->name,
+                'name' => $post->category
+                    ? $this->translated($post->category, 'name', $post->category->name, $locale)
+                    : null,
                 'slug' => $post->category?->slug,
             ],
-            'author' => $post->author ? [
-                'name' => $post->author->name,
-            ] : null,
         ];
     }
 
-    private function transformPostDetail($post): array
+    private function transformPostDetail(Post $post, string $locale): array
     {
+        $title = $this->translated($post, 'title', $post->title, $locale);
+        $excerpt = $this->translated($post, 'excerpt', $post->excerpt, $locale);
+        $metaTitle = $this->translated($post, 'metaTitle', $post->meta_title ?: $post->title, $locale);
+        $metaDescription = $this->translated($post, 'metaDescription', $post->meta_description, $locale);
+
         return [
-            'title' => $post->title,
+            'title' => $title,
             'slug' => $post->slug,
-            'excerpt' => $post->excerpt,
+            'excerpt' => $excerpt,
             'image' => $this->getImage($post),
             'reading_time' => $post->reading_time,
             'published_year' => $post->published_year,
-            'created_at' => $post->created_at?->toDateString(),
-            'updated_at' => $post->updated_at?->toDateString(),
-            'faq' => $post->faq ?? [],
+            'meta' => [
+                'title' => $metaTitle ?: $title,
+                'description' => $metaDescription ?: $excerpt,
+                'image' => $this->getImage($post),
+            ],
             'category' => [
-                'name' => $post->category?->name,
+                'name' => $post->category
+                    ? $this->translated($post->category, 'name', $post->category->name, $locale)
+                    : null,
                 'slug' => $post->category?->slug,
             ],
             'author' => $post->author ? [
-                'name' => $post->author->name,
+                'name' => $this->translated($post->author, 'name', $post->author->name, $locale),
                 'avatar' => $this->getAuthorAvatar($post),
+                'socials' => $post->author->socials,
             ] : null,
-            'sections' => $post->sections->sortBy('position')->values(),
-            'related' => $this->getRelatedPosts($post),
+            'sections' => $post->sections
+                ->sortBy('position')
+                ->values()
+                ->map(fn ($section) => [
+                    'id' => $section->id,
+                    'title' => $this->translated($section, 'title', $section->title, $locale),
+                    'content' => $this->translated($section, 'content', $section->content, $locale),
+                    'position' => $section->position,
+                ]),
+            'related' => $this->getRelatedPosts($post, $locale),
         ];
     }
 
-    private function getImage($post): ?string
+    private function getImage(Post $post): ?string
     {
         try {
             $media = $post->getFirstMedia('cover');
 
-            return $media ? $media->getFullUrl('webp') : null;
+            return $media ? $media->getUrl('webp') : null;
         } catch (\Throwable) {
             return null;
         }
     }
 
-    private function getAuthorAvatar($post): ?string
+    private function getAuthorAvatar(Post $post): ?string
     {
         try {
             return $post->author?->getFirstMediaUrl('avatar') ?: null;
@@ -190,7 +157,7 @@ class BlogController extends Controller
         }
     }
 
-    private function getRelatedPosts($post)
+    private function getRelatedPosts(Post $post, string $locale)
     {
         return Post::query()
             ->where('category_id', $post->category_id)
@@ -200,49 +167,24 @@ class BlogController extends Controller
             ->limit(3)
             ->with('media')
             ->get()
-            ->map(fn ($item) => [
-                'title' => $item->title,
+            ->map(fn (Post $item) => [
+                'title' => $this->translated($item, 'title', $item->title, $locale),
                 'slug' => $item->slug,
                 'image' => $this->getImage($item),
             ]);
     }
 
-    public function revalidate(): JsonResponse
+    private function locale(Request $request): string
     {
-        Cache::flush();
-        $this->notifyFrontendRevalidate('blog');
+        $locale = $request->string('locale')->toString();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Blog cache cleared',
-        ]);
+        return in_array($locale, MultilingualContent::LOCALES, true) ? $locale : 'ka';
     }
 
-    public function revalidateSingle(string $slug): JsonResponse
+    private function translated($model, string $field, mixed $fallback, string $locale): string
     {
-        Cache::forget("blog:post:{$slug}");
-        $this->notifyFrontendRevalidate("post-{$slug}");
+        $values = MultilingualContent::valuesForField($model, $field, $fallback);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Blog post cache cleared',
-        ]);
-    }
-
-    private function notifyFrontendRevalidate(string $tag): void
-    {
-        $frontendUrl = rtrim((string) config('app.frontend_url', env('FRONTEND_URL', '')), '/');
-
-        if (!$frontendUrl) {
-            return;
-        }
-
-        try {
-            Http::timeout(3)->post("{$frontendUrl}/api/revalidate", [
-                'tag' => $tag,
-            ]);
-        } catch (\Throwable) {
-            //
-        }
+        return $values[$locale] ?: (is_string($fallback) ? $fallback : '');
     }
 }

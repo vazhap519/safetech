@@ -1,0 +1,15 @@
+[Unit]
+Description=SafeTech Laravel queue worker
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/safetech-api
+ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=1 --timeout=60
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

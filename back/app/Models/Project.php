@@ -1,108 +1,34 @@
 <?php
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Illuminate\Database\Eloquent\Model;
 
-class Project extends Model implements HasMedia
+class Project extends Model
 {
-    use InteractsWithMedia;
+    use FlushesPublicContentCache;
 
-    protected $fillable = [
-        'title',
-        'slug',
-        'excerpt',
-        'content',
-        'category_id',
-        'video_url',
-        'seo',
-        'is_published',
-        'published_at',
-        'sort_order',
-    ];
+    protected $guarded = ['id'];
 
-    protected $casts = [
-        'seo' => 'array',
-        'is_published' => 'boolean',
-        'published_at' => 'datetime',
-    ];
-
-    /* =========================
-       RELATION
-    ========================= */
-    public function category()
+    protected function casts(): array
     {
-        return $this->belongsTo(ProjectCategory::class)->withDefault();
+        return [
+            'meta' => 'array', 'scope' => 'array', 'specs' => 'array', 'challenges' => 'array',
+            'solutions' => 'array', 'process' => 'array', 'gallery' => 'array', 'results' => 'array',
+            'testimonial' => 'array', 'related' => 'array', 'is_featured' => 'boolean',
+            'translations' => 'array', 'is_published' => 'boolean', 'published_at' => 'datetime',
+        ];
     }
 
-    /* =========================
-       SCOPE
-    ========================= */
-    public function scopePublished(Builder $query)
+    public function scopePublished(Builder $query): Builder
     {
-        return $query->where('is_published', true);
+        return $query->where('is_published', true)->orderBy('sort_order');
     }
 
-    /* =========================
-       MEDIA COLLECTIONS
-    ========================= */
-    public function registerMediaCollections(): void
+    public function getRouteKeyName(): string
     {
-        $this->addMediaCollection('cover')
-            ->singleFile();
-
-        $this->addMediaCollection('gallery');
+        return 'slug';
     }
-
-    /* =========================
-       🔥 CRITICAL FIX
-    ========================= */
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        /* thumb (LIST VIEW) */
-        $this->addMediaConversion('thumb')
-            ->width(400)
-            ->height(300)
-            ->format('webp')
-            ->quality(80)
-            ->nonQueued(); // 🔥 ეს იყო პრობლემა
-
-        /* full webp */
-        $this->addMediaConversion('webp')
-            ->format('webp')
-            ->quality(80)
-            ->nonQueued(); // 🔥 ესეც აუცილებელია
-    }
-
-    /* =========================
-       ACCESSORS
-    ========================= */
-
-    public function getThumbUrlAttribute(): string
-    {
-        return $this->getFirstMediaUrl('cover', 'thumb')
-            ?: $this->getFirstMediaUrl('cover')
-                ?: '/placeholder.jpg';
-    }
-
-    public function getCoverUrlAttribute(): string
-    {
-        return $this->getFirstMediaUrl('cover', 'webp')
-            ?: $this->getFirstMediaUrl('cover')
-                ?: '/placeholder.jpg';
-    }
-
-    public function getGalleryUrlsAttribute(): array
-    {
-        return $this->getMedia('gallery')->map(function ($media) {
-            return [
-                'url' => $media->getUrl('webp') ?: $media->getUrl(),
-                'thumb' => $media->getUrl('thumb'),
-            ];
-        })->toArray();
-    }
-
 }

@@ -13,12 +13,14 @@ class PostSection extends Model
         'post_id',
         'title',
         'content',
+        'translations',
         'position', // ✅ FIXED (order → position)
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'translations' => 'array',
     ];
 
     /*

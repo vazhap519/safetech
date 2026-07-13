@@ -10,6 +10,11 @@ class PrivacyPolicy extends Model
         'title',
         'highlight',
         'content',
+        'translations',
+    ];
+
+    protected $casts = [
+        'translations' => 'array',
     ];
 
 }

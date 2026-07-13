@@ -20,10 +20,12 @@ class Author extends Model implements HasMedia
         'bio',
         'email',
         'socials',
+        'translations',
     ];
 
     protected $casts = [
         'socials' => 'array',
+        'translations' => 'array',
         'created_at' => 'datetime',
     ];
 

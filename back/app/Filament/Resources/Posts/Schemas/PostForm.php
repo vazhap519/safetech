@@ -2,26 +2,36 @@
 
 namespace App\Filament\Resources\Posts\Schemas;
 
-use App\Support\SocialLinks;
-use Filament\Actions\Action;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Schemas\Components\View;
 use Filament\Forms\Components\{
-    DateTimePicker,
     TextInput,
     Select,
     Toggle,
     Repeater,
     RichEditor,
-    Textarea,
-    Placeholder
+    Textarea
 };
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Illuminate\Support\Str;
 
 class PostForm
 {
+    /** @return array<int, TextInput|Textarea> */
+    private static function translationInputs(string $field, string $label, bool $textarea = false): array
+    {
+        return collect([
+            'ka' => 'ქართული',
+            'en' => 'English',
+            'ru' => 'Русский',
+        ])->map(
+            fn (string $localeLabel, string $locale) => ($textarea
+                ? Textarea::make("translations.fields.{$field}.{$locale}")->rows(3)
+                : TextInput::make("translations.fields.{$field}.{$locale}")
+            )->label("{$label} ({$localeLabel})"),
+        )->values()->all();
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -29,7 +39,7 @@ class PostForm
 
                 /*
                 |--------------------------------------------------------------------------
-                | 🟢 MAIN INFO
+                | MAIN INFO
                 |--------------------------------------------------------------------------
                 */
                 Section::make('Main Info')
@@ -37,49 +47,95 @@ class PostForm
 
                         TextInput::make('title')
                             ->required()
+                            ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, $set, $get) {
-
-                                $set('slug', Str::slug($state));
-
-                                // 🔥 update schema
-                                $type = $get('schema_type') ?: 'Article';
-
-                                $set('schema', self::generateSchema(
-                                    $type,
-                                    $state,
-                                    $get('excerpt')
-                                ));
-                            }),
+                            ->afterStateUpdated(fn ($state, callable $set) =>
+                            $set('slug', Str::slug($state))
+                            ),
 
                         TextInput::make('slug')
                             ->required()
-                            ->unique(ignoreRecord: true),
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255),
 
                         Textarea::make('excerpt')
+                            ->label('Short Description')
                             ->rows(3)
-                            ->columnSpanFull()
-                            ->afterStateUpdated(function ($state, $set, $get) {
+                            ->columnSpanFull(),
 
-                                $type = $get('schema_type') ?: 'Article';
-
-                                $set('schema', self::generateSchema(
-                                    $type,
-                                    $get('title'),
-                                    $state
-                                ));
-                            }),
-
+                        // 🔥 CATEGORY (AUTO CREATE)
                         Select::make('category_id')
                             ->relationship('category', 'name')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
 
+                                TextInput::make('name')
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn ($state, callable $set) =>
+                                    $set('slug', Str::slug($state))
+                                    ),
+
+                                TextInput::make('slug')
+                                    ->required()
+                                    ->unique(ignoreRecord: true),
+
+                                TextInput::make('translations.fields.name.en')
+                                    ->label('Name (EN)'),
+
+                                TextInput::make('translations.fields.name.ru')
+                                    ->label('Name (RU)'),
+
+                            ]),
+
+                        // 🔥 AUTHOR (AUTO CREATE)
                         Select::make('author_id')
                             ->relationship('author', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->createOptionForm([
+
+                                TextInput::make('name')
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn ($state, callable $set) =>
+                                    $set('slug', Str::slug($state))
+                                    ),
+
+                                TextInput::make('slug')
+                                    ->required()
+                                    ->unique(ignoreRecord: true),
+
+                                TextInput::make('email')
+                                    ->email(),
+
+                                Textarea::make('bio')
+                                    ->rows(2)
+                                    ->columnSpanFull(),
+
+                                TextInput::make('translations.fields.name.en')
+                                    ->label('Name (EN)'),
+
+                                TextInput::make('translations.fields.name.ru')
+                                    ->label('Name (RU)'),
+
+                                Textarea::make('translations.fields.bio.en')
+                                    ->label('Bio (EN)')
+                                    ->rows(2)
+                                    ->columnSpanFull(),
+
+                                Textarea::make('translations.fields.bio.ru')
+                                    ->label('Bio (RU)')
+                                    ->rows(2)
+                                    ->columnSpanFull(),
+
+                                SpatieMediaLibraryFileUpload::make('avatar')
+                                    ->collection('avatar')
+                                    ->image(),
+
+                            ]),
 
                         Toggle::make('is_published')
                             ->default(true),
@@ -89,20 +145,22 @@ class PostForm
 
                 /*
                 |--------------------------------------------------------------------------
-                | 🟣 MEDIA
+                | MEDIA
                 |--------------------------------------------------------------------------
                 */
                 Section::make('Media')
                     ->schema([
+
                         SpatieMediaLibraryFileUpload::make('cover')
                             ->collection('cover')
                             ->image()
                             ->required(),
+
                     ]),
 
                 /*
                 |--------------------------------------------------------------------------
-                | 🔵 CONTENT
+                | CONTENT SECTIONS
                 |--------------------------------------------------------------------------
                 */
                 Section::make('Content Sections')
@@ -111,211 +169,67 @@ class PostForm
                         Repeater::make('sections')
                             ->relationship()
                             ->schema([
-                                TextInput::make('title'),
-                                RichEditor::make('content')->required(),
+
+                                TextInput::make('title')
+                                    ->label('Section Title')
+                                    ->maxLength(255),
+
+                                RichEditor::make('content')
+                                    ->required()
+                                    ->columnSpanFull(),
+
+                                TextInput::make('translations.fields.title.en')
+                                    ->label('Section title (EN)'),
+                                TextInput::make('translations.fields.title.ru')
+                                    ->label('Section title (RU)'),
+                                Textarea::make('translations.fields.content.en')
+                                    ->label('Section content (EN)')
+                                    ->rows(4)
+                                    ->columnSpanFull(),
+                                Textarea::make('translations.fields.content.ru')
+                                    ->label('Section content (RU)')
+                                    ->rows(4)
+                                    ->columnSpanFull(),
+
+                                TextInput::make('position')
+                                    ->numeric()
+                                    ->default(0),
+
                             ])
                             ->orderColumn('position')
-                            ->reorderable()
+                            ->reorderable() // 🔥 drag & drop
                             ->collapsible()
                             ->cloneable()
                             ->columnSpanFull(),
 
                     ]),
-                /*
-              |--------------------------------------------------------------------------
-              | 🔥 FAQ
-              |--------------------------------------------------------------------------
-              */
-                Section::make('FAQ')
-                    ->schema([
-                        Repeater::make('faq')
-                            ->schema([
-                                TextInput::make('question')->required(),
-                                Textarea::make('answer')->required(),
-                            ])
-                            ->collapsible(),
-                    ]),
 
                 /*
                 |--------------------------------------------------------------------------
-                | 🟡 SEO (FIXED 100%)
+                | SEO
                 |--------------------------------------------------------------------------
                 */
                 Section::make('SEO')
                     ->schema([
 
-                        TextInput::make('seo.title')
-                            ->label('Meta Title')
-                            ->maxLength(60),
+                        TextInput::make('meta_title')
+                            ->maxLength(255),
 
-                        Textarea::make('seo.description')
-                            ->label('Meta Description')
-                            ->maxLength(160),
-
-                        Repeater::make('seo.keywords')
-                            ->label('Keywords')
-                            ->schema([
-                                TextInput::make('value')->required(),
-                            ])
-                            ->default([]),
-
-                        /*
-                        | 🔥 SCHEMA TYPE (FIXED)
-                        */
-                        Select::make('schema_type')
-                            ->label('Schema Type')
-                            ->options([
-                                'Article' => 'Article',
-                                'WebPage' => 'WebPage',
-                                'Service' => 'Service',
-                            ])
-                            ->default('Article') // ✅ CRITICAL FIX
-                            ->required()
-                            ->reactive()
-
-                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
-
-                                $type = $state ?: 'Article';
-
-                                $set('schema', self::generateSchema(
-                                    $type,
-                                    $get('title'),
-                                    $get('excerpt')
-                                ));
-                            })
-
-                            ->afterStateHydrated(function ($state, callable $set, callable $get) {
-
-                                if ($get('schema')) return;
-
-                                $type = $state ?: 'Article';
-
-                                $set('schema', self::generateSchema(
-                                    $type,
-                                    $get('title'),
-                                    $get('excerpt')
-                                ));
-                            }),
-
-                        /*
-                        | 🔥 SCHEMA JSON
-                        */
-                        Textarea::make('schema')
-                            ->label('Schema JSON (JSON-LD)')
-                            ->rows(12)
-                            ->helperText('Auto-generated, editable')
-
-                            ->dehydrateStateUsing(function ($state) {
-                                if (!$state) return null;
-
-                                $decoded = json_decode($state, true);
-
-                                return json_last_error() === JSON_ERROR_NONE
-                                    ? $decoded
-                                    : null;
-                            })
-
-                            ->formatStateUsing(function ($state) {
-                                if (is_array($state)) {
-                                    return json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-                                }
-                                return $state;
-                            }),
-
-                        /*
-                        | 🔥 SEO GENERATOR
-                        */
-                        Action::make('generate_seo')
-                            ->label('Generate SEO')
-                            ->action(function ($set, $get) {
-
-                                $title = $get('title');
-
-                                if (!$title) return;
-
-                                $set('seo.title', $title . ' | ' . config('app.name'));
-
-                                $set('seo.description',
-                                    Str::limit($get('excerpt') ?? $title, 150)
-                                );
-
-                                $set('seo.keywords', [
-                                    ['value' => $title],
-                                    ['value' => 'blog'],
-                                    ['value' => 'article'],
-                                ]);
-                            }),
-
-                        Placeholder::make('seo_score')
-                            ->content(fn ($get) =>
-                            $get('seo.title') && $get('seo.description')
-                                ? '✅ Good SEO'
-                                : '❌ Missing SEO'
-                            ),
-
-                        View::make('filament.seo-preview'),
+                        Textarea::make('meta_description')
+                            ->rows(3)
+                            ->columnSpanFull(),
 
                     ]),
 
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | ⚙️ ADVANCED
-                |--------------------------------------------------------------------------
-                */
-                Section::make('Advanced')
+                Section::make('Content and SEO in 3 languages')
                     ->schema([
+                        ...self::translationInputs('title', 'Title'),
+                        ...self::translationInputs('excerpt', 'Excerpt', true),
+                        ...self::translationInputs('metaTitle', 'Meta title'),
+                        ...self::translationInputs('metaDescription', 'Meta description', true),
+                    ])
+                    ->columns(3),
 
-                        TextInput::make('seo_author'),
-
-                        DateTimePicker::make('seo_published_at'),
-
-                    ]),
             ]);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 🔥 SCHEMA GENERATOR
-    |--------------------------------------------------------------------------
-    */
-    protected static function generateSchema($type, $title = null, $description = null): ?string
-    {
-        $baseUrl = SocialLinks::frontendUrl('/');
-        $name = config('app.name');
-
-        return match ($type) {
-
-            'BlogPosting' => json_encode([
-                "@context" => "https://schema.org",
-                "@type" => "BlogPosting",
-                "headline" => $title,
-                "description" => $description,
-                "image" => $baseUrl . "/images/placeholder.jpg",
-                "author" => [
-                    "@type" => "Organization",
-                    "name" => $name
-                ],
-                "publisher" => [
-                    "@type" => "Organization",
-                    "name" => $name
-                ],
-                "mainEntityOfPage" => $baseUrl,
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-
-            'Article' => json_encode([
-                "@context" => "https://schema.org",
-                "@type" => "Article",
-                "headline" => $title,
-                "description" => $description,
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-
-            default => json_encode([
-                "@context" => "https://schema.org",
-                "@type" => "WebPage",
-                "name" => $title,
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-        };
     }
 }

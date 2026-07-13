@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">SafeTech brand visual</title>
+  <desc id="desc">Abstract secure infrastructure illustration with network nodes, dashboards, and gradients.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#060915" />
+      <stop offset="55%" stop-color="#0b1120" />
+      <stop offset="100%" stop-color="#121d38" />
+    </linearGradient>
+    <radialGradient id="glowPrimary" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4f7dff" stop-opacity=".55" />
+      <stop offset="100%" stop-color="#4f7dff" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glowSecondary" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3ae8ff" stop-opacity=".45" />
+      <stop offset="100%" stop-color="#3ae8ff" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="panel" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#18233f" stop-opacity=".94" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity=".94" />
+    </linearGradient>
+    <linearGradient id="line" x1="0%" x2="100%" y1="0%" y2="0%">
+      <stop offset="0%" stop-color="#39d8ff" />
+      <stop offset="100%" stop-color="#5b7cff" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#bg)" rx="48" />
+  <circle cx="1180" cy="250" r="260" fill="url(#glowPrimary)" />
+  <circle cx="320" cy="720" r="220" fill="url(#glowSecondary)" />
+
+  <g opacity=".18" stroke="#4a5d90" stroke-width="2">
+    <path d="M120 170h1360" />
+    <path d="M120 290h1360" />
+    <path d="M120 410h1360" />
+    <path d="M120 530h1360" />
+    <path d="M120 650h1360" />
+    <path d="M120 770h1360" />
+    <path d="M250 90v820" />
+    <path d="M470 90v820" />
+    <path d="M690 90v820" />
+    <path d="M910 90v820" />
+    <path d="M1130 90v820" />
+    <path d="M1350 90v820" />
+  </g>
+
+  <g transform="translate(110 120)">
+    <rect width="590" height="760" rx="40" fill="url(#panel)" stroke="#334466" stroke-opacity=".7" />
+    <text x="48" y="92" fill="#7de6ff" font-family="Segoe UI, Arial, sans-serif" font-size="24" letter-spacing="7">SAFE TECH</text>
+    <rect x="48" y="154" width="330" height="34" rx="17" fill="#17253f" stroke="#35507f" />
+    <rect x="48" y="230" width="410" height="34" rx="17" fill="#eef4ff" opacity=".96" />
+    <rect x="48" y="284" width="448" height="34" rx="17" fill="#eef4ff" opacity=".96" />
+    <rect x="48" y="338" width="392" height="34" rx="17" fill="#9db6ff" opacity=".88" />
+    <rect x="48" y="430" width="330" height="18" rx="9" fill="#9fb0d7" opacity=".7" />
+    <rect x="48" y="464" width="410" height="18" rx="9" fill="#9fb0d7" opacity=".7" />
+    <rect x="48" y="498" width="286" height="18" rx="9" fill="#9fb0d7" opacity=".7" />
+
+    <g transform="translate(48 560)">
+      <rect width="210" height="74" rx="22" fill="#3368ff" />
+      <circle cx="58" cy="37" r="10" fill="#eef4ff" />
+      <rect x="82" y="29" width="88" height="16" rx="8" fill="#eef4ff" opacity=".92" />
+    </g>
+
+    <g transform="translate(300 560)">
+      <rect width="210" height="74" rx="22" fill="#11192d" stroke="#33517f" />
+      <rect x="40" y="29" width="130" height="16" rx="8" fill="#d7e1ff" opacity=".88" />
+    </g>
+  </g>
+
+  <g transform="translate(790 110)">
+    <rect width="700" height="780" rx="44" fill="#0d1528" fill-opacity=".72" stroke="#334466" />
+
+    <g transform="translate(66 80)">
+      <rect width="568" height="164" rx="28" fill="#131f38" stroke="#3b4f7d" />
+      <path d="M58 118h164l78-72 90 52 122-46 68 66" fill="none" stroke="url(#line)" stroke-linecap="round" stroke-linejoin="round" stroke-width="10" />
+      <circle cx="58" cy="118" r="12" fill="#39d8ff" />
+      <circle cx="222" cy="118" r="12" fill="#5b7cff" />
+      <circle cx="300" cy="46" r="12" fill="#39d8ff" />
+      <circle cx="390" cy="98" r="12" fill="#5b7cff" />
+      <circle cx="512" cy="52" r="12" fill="#39d8ff" />
+      <circle cx="580" cy="118" r="12" fill="#5b7cff" />
+    </g>
+
+    <g transform="translate(66 290)">
+      <rect width="258" height="250" rx="30" fill="#121d34" stroke="#32415e" />
+      <rect x="34" y="38" width="190" height="24" rx="12" fill="#223556" />
+      <rect x="34" y="88" width="114" height="18" rx="9" fill="#33517f" />
+      <rect x="34" y="132" width="190" height="18" rx="9" fill="#223556" />
+      <rect x="34" y="176" width="164" height="18" rx="9" fill="#223556" />
+      <rect x="34" y="206" width="84" height="14" rx="7" fill="#39d8ff" opacity=".7" />
+      <circle cx="206" cy="190" r="28" fill="#3368ff" opacity=".2" />
+      <path d="M190 190h32M206 174v32" stroke="#79a2ff" stroke-linecap="round" stroke-width="8" />
+    </g>
+
+    <g transform="translate(376 290)">
+      <rect width="258" height="250" rx="30" fill="#121d34" stroke="#32415e" />
+      <rect x="38" y="38" width="182" height="24" rx="12" fill="#223556" />
+      <rect x="38" y="102" width="52" height="104" rx="20" fill="#39d8ff" opacity=".42" />
+      <rect x="106" y="74" width="52" height="132" rx="20" fill="#5b7cff" opacity=".52" />
+      <rect x="174" y="122" width="52" height="84" rx="20" fill="#39d8ff" opacity=".3" />
+      <path d="M38 220h188" stroke="#2e4368" stroke-linecap="round" stroke-width="8" />
+    </g>
+
+    <g transform="translate(66 584)">
+      <rect width="568" height="186" rx="30" fill="#121d34" stroke="#32415e" />
+      <circle cx="92" cy="94" r="36" fill="#39d8ff" opacity=".16" />
+      <path d="M92 76v36l28 18" fill="none" stroke="#7de6ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="10" />
+      <rect x="168" y="50" width="142" height="22" rx="11" fill="#223556" />
+      <rect x="168" y="92" width="322" height="18" rx="9" fill="#2a3d62" />
+      <rect x="168" y="128" width="260" height="18" rx="9" fill="#2a3d62" />
+      <rect x="168" y="154" width="116" height="14" rx="7" fill="#5b7cff" opacity=".7" />
+    </g>
+  </g>
+</svg>

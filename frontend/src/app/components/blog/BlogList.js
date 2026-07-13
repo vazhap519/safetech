@@ -1,68 +1,144 @@
-import Link from "next/link";
-import Image from "next/image";
-import CategoryFilters from "@/app/components/ui/CategoryFilters";
-import Pagination from "@/app/components/ui/Pagination";
-import { mediaUrl } from "@/lib/media";
+"use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
-export default function BlogList({
-  posts = [],
-  categories = [],
-  meta = {},
-  page = 1,
-  category = "all",
-}) {
-  const currentPage = meta?.current_page || page || 1;
-  const lastPage = meta?.last_page || 1;
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { getBlog } from "@/lib/datafetch";
+
+const DEFAULT_IMAGE = "/brand-preview.svg";
+
+export default function BlogList({ category, locale }) {
+  const copy = {
+    ka: {
+      empty: "პოსტები ვერ მოიძებნა.",
+      loading: "იტვირთება...",
+      more: "ჩამოსქროლეთ მეტისთვის",
+    },
+    en: {
+      empty: "No posts found.",
+      loading: "Loading...",
+      more: "Scroll for more",
+    },
+    ru: {
+      empty: "Посты не найдены.",
+      loading: "Загрузка...",
+      more: "Прокрутите, чтобы увидеть больше",
+    },
+  }[locale] ?? {
+    empty: "No posts found.",
+    loading: "Loading...",
+    more: "Scroll for more",
+  };
+
+  const [posts, setPosts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const loaderRef = useRef(null);
+  const loadingRef = useRef(false);
+
+  const loadPosts = useCallback(
+    async (pageNum = 1, reset = false) => {
+      if (loadingRef.current) return;
+
+      loadingRef.current = true;
+      setLoading(true);
+
+      try {
+        const res = await getBlog({
+          page: pageNum,
+          category,
+          locale,
+        });
+        const newPosts = res?.data || [];
+
+        setPosts((prev) => (reset ? newPosts : [...prev, ...newPosts]));
+        setHasMore(Boolean(res?.meta && pageNum < res.meta.last_page));
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Blog load error:", error);
+        }
+      } finally {
+        loadingRef.current = false;
+        setLoading(false);
+      }
+    },
+    [category, locale],
+  );
+
+  useEffect(() => {
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
+    void loadPosts(1, true);
+  }, [category, loadPosts]);
+
+  useEffect(() => {
+    if (page === 1) return;
+    void loadPosts(page);
+  }, [loadPosts, page]);
+
+  useEffect(() => {
+    const loader = loaderRef.current;
+    if (!loader) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 0.5 },
+    );
+
+    observer.observe(loader);
+
+    return () => observer.disconnect();
+  }, [hasMore]);
 
   return (
-    <div className="mt-10">
-      <CategoryFilters
-        basePath="/blog"
-        categories={categories}
-        currentCategory={category}
-      />
-
-      <div className="grid md:grid-cols-3 gap-6">
+    <>
+      <div className="mt-10 grid gap-6 md:grid-cols-3">
         {posts.map((post) => (
-          <Link
-            key={post.slug}
-            href={`/blog/${post.slug}`}
-            className="block bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden"
-          >
-            <Image
-              src={mediaUrl(post.image)}
-              alt={post.title}
-              width={400}
-              height={200}
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="h-44 w-full object-cover"
-            />
+          <Link className="block h-full" key={post.slug} href={`/blog/${post.slug}`}>
+            <article className="h-full cursor-pointer overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4 shadow-card transition hover:-translate-y-1 hover:border-secondary/30 hover:bg-surface-container">
+              <div className="relative h-40 w-full overflow-hidden rounded-xl border border-outline-variant/20">
+                <Image
+                  src={post.image || DEFAULT_IMAGE}
+                  alt={post.title || "Blog image"}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover"
+                />
+              </div>
 
-            <div className="p-4">
-              {post.category?.name && (
-                <span className="text-xs text-[#00C2A8] font-semibold uppercase">
-                  {post.category.name}
-                </span>
-              )}
-
-              <h3 className="mt-1 font-semibold text-[#0B3C5D] line-clamp-2">
+              <h2 className="mt-4 line-clamp-2 font-semibold text-on-surface">
                 {post.title}
-              </h3>
+              </h2>
 
-              <p className="mt-2 text-sm text-gray-600 line-clamp-3">
-                {post.excerpt}
-              </p>
-            </div>
+              {post.excerpt ? (
+                <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-on-surface-variant">
+                  {post.excerpt}
+                </p>
+              ) : null}
+            </article>
           </Link>
         ))}
       </div>
 
-      <Pagination
-        basePath="/blog"
-        category={category}
-        currentPage={currentPage}
-        lastPage={lastPage}
-      />
-    </div>
+      {!loading && posts.length === 0 ? (
+        <div className="mt-10 text-center text-on-surface-variant">{copy.empty}</div>
+      ) : null}
+
+      {hasMore ? (
+        <div ref={loaderRef} className="flex h-20 items-center justify-center">
+          <span className="text-sm text-on-surface-variant">
+            {loading ? copy.loading : copy.more}
+          </span>
+        </div>
+      ) : null}
+    </>
   );
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\EstimatePdfController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -8,3 +9,6 @@ Route::get('/', function () {
         'status' => 'ok',
     ]);
 });
+
+Route::get('/admin/estimates/{estimate}/pdf', EstimatePdfController::class)
+    ->name('admin.estimates.pdf');

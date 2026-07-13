@@ -1,198 +1,105 @@
-
-const API =
-  process.env.NEXT_PUBLIC_API_URL;
-
+const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
 async function fetcher(url, options = {}) {
   try {
-    const res = await fetch(url, options);
-
+    const res = await fetch(url, {
+      ...options,
+      next: options.next || { revalidate: 60 },
+    });
     const text = await res.text();
-
-    let data = null;
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch (e) {
-      console.warn("?? JSON parse failed:", text);
-    }
+    const data = text ? JSON.parse(text) : null;
 
     if (!res.ok) {
-      console.warn("? API ERROR:", url);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("API error:", {
+          url,
+          status: res.status,
+          body: data,
+        });
+      }
 
       return {
         error: true,
-        data: null,
+        status: res.status,
+        data,
       };
     }
 
     return data;
   } catch (error) {
-    console.warn("? FETCH FAILED:", url);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Fetch failed:", error);
+    }
 
-    /* ?? ?? ???? ??????? */
     return {
       error: true,
-      offline: true, // ? ?????? ??? backend ????????
-      data: null,
+      message: error instanceof Error ? error.message : "fetch failed",
     };
   }
 }
-/* =========================
-   ?? QUERY BUILDER
-========================= */
+
 function buildUrl(path, params = {}) {
   const query = new URLSearchParams(params).toString();
   return `${API}${path}${query ? `?${query}` : ""}`;
 }
 
-/* =========================
-   ?? HOME (ISR)
-========================= */
-export const getHome = () =>
-  fetcher(buildUrl(`/`), {
-    next: { revalidate: 60, tags: ["home"] },
+export const getHome = (options = {}) =>
+  fetcher(buildUrl("/home"), {
+    next: { tags: ["home"] },
+    ...options,
   });
 
-/* =========================
-   ?? SERVICES
-========================= */
+export const getServices = ({ page = 1 } = {}, options = {}) =>
+  fetcher(buildUrl("/services", { page }), {
+    next: { tags: ["services"] },
+    ...options,
+  });
 
-
-
-export const getServices = ({ page = 1, category } = {}) =>
-  fetcher(
-    buildUrl(`/services`, {
-      page,
-      ...(category && { category }),
-    }),
-    {
-      next: { revalidate: 30, tags: ["services"] },
-    }
-  );
-
-// ?? SINGLE (ISR)
-export const getService = (slug) =>
+export const getService = (slug, options = {}) =>
   fetcher(buildUrl(`/services/${slug}`), {
-    next: { revalidate: 30, tags: [`service-${slug}`] },
-  });
-export const getServiceCategories = () =>
-  fetcher(buildUrl(`/service-categories`), {
-    next: { revalidate: 300, tags: ["service-categories"] },
-  });
-/* =========================
-   ? SETTINGS (ISR)
-========================= */
-export const getSettings = () =>
-  fetcher(buildUrl(`/settings`), {
-    next: { revalidate: 300, tags: ["settings"] },
+    next: { tags: [`service-${slug}`] },
+    ...options,
   });
 
-/* =========================
-   ?? PRIVACY (ISR)
-========================= */
-export const getPrivacy = () =>
-  fetcher(buildUrl(`/privacy`), {
-    next: { revalidate: 300, tags: ["privacy"] },
+export const getSettings = (options = {}) =>
+  fetcher(buildUrl("/settings"), {
+    next: { tags: ["settings"] },
+    ...options,
   });
 
-/* =========================
-   ?? ABOUT (ISR)
-========================= */
-export const getAbout = () =>
-  fetcher(buildUrl(`/about`), {
-    next: { revalidate: 300, tags: ["about"] },
+export const getPrivacy = ({ locale, ...options } = {}) =>
+  fetcher(buildUrl("/privacy", locale ? { locale } : {}), {
+    next: { tags: ["privacy"] },
+    ...options,
   });
 
-/* =========================
-   ?? BLOG
-========================= */
-
-// ?? LIST (DYNAMIC)
-export const getBlog = ({ page = 1, category = "all" } = {}) => {
-  const params = {
-    page,
-    ...(category !== "all" && { category }),
-  };
-
-  return fetcher(buildUrl(`/blog`, params), {
-    cache: "no-store",
-  });
-};
-/* =========================
-   ?? CATEGORIES (ISR)
-========================= */
-export const getCategories = () =>
-  fetcher(buildUrl(`/categories`), {
-    next: { revalidate: 300, tags: ["categories"] },
-  });
-// ?? SINGLE (ISR)
-export const getBlogPost = (slug) =>
-  fetcher(buildUrl(`/blog/${slug}`), {
-    next: { revalidate: 300, tags: [`post-${slug}`] },
+export const getAbout = (options = {}) =>
+  fetcher(buildUrl("/about"), {
+    next: { tags: ["about"] },
+    ...options,
   });
 
-
-
-/* =========================
-   ?? SEO (ISR)
-========================= */
-
-// ????? SEO
-export const getSeo = () =>
-  fetcher(buildUrl(`/seo`), {
-    next: { revalidate: 300, tags: ["seo"] },
-  });
-
-// ?????????? ??????? SEO
-export const getSeoByKey = (key) =>
-  fetcher(buildUrl(`/seo/${key}`), {
-    next: { revalidate: 300, tags: [`seo-${key}`] },
-  });
-
-/* =========================
-   ?? CONTACT
-========================= */
-
-// POST (always dynamic)
-export const sendContact = (payload) =>
-  fetcher(buildUrl(`/contact`), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  });
-
-// GET (ISR)
-export const getContact = () =>
-  fetcher(buildUrl(`/contact-page`), {
-    next: { revalidate: 300, tags: ["contact-page"] },
-  });
-  //Empty
-export const getEmpty = () =>
-  fetcher(buildUrl(`/empty`), {
-    next: { revalidate: 300, tags: ["empty"] },
-  });
-export const getProjects = ({ page = 1, category = "all" } = {}) =>
+export const getBlog = ({ page = 1, category = "all", locale } = {}, options = {}) =>
   fetcher(
-    buildUrl(`/projects`, {
+    buildUrl("/blog", {
       page,
-      ...(category !== "all" && { category }),
+      ...(locale ? { locale } : {}),
+      ...(category !== "all" ? { category } : {}),
     }),
     {
-      next: { revalidate: 60, tags: ["projects"] },
-    }
+      next: { tags: ["blog"] },
+      ...options,
+    },
   );
-export const getProject = (slug) =>
-  fetcher(buildUrl(`/projects/${slug}`), {
-    next: { revalidate: 300, tags: ["projects"] },
+
+export const getBlogPost = (slug, { locale, ...options } = {}) =>
+  fetcher(buildUrl(`/blog/${slug}`, locale ? { locale } : {}), {
+    next: { tags: [`post-${slug}`] },
+    ...options,
   });
-export const getProjectCategories  = () =>
-  fetcher(buildUrl(`/project-categories`), {
-    next: { revalidate: 300, tags: ["projects"] },
-  });
-  export const getRelatedProjects = (slug) =>
-  fetcher(buildUrl(`/projects/${slug}/related`), {
-    next: { revalidate: 300, tags: ["projects"] },
+
+export const getCategories = ({ locale, ...options } = {}) =>
+  fetcher(buildUrl("/categories", locale ? { locale } : {}), {
+    next: { tags: ["categories"] },
+    ...options,
   });

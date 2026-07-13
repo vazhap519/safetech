@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             // 🔥 RELATION
             $table->foreignId('post_id')
-                ->after('id')
                 ->constrained()
                 ->cascadeOnDelete();
 

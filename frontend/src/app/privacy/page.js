@@ -1,151 +1,61 @@
-
 import Link from "next/link";
-import { getPrivacy, getSeoByKey } from "@/lib/datafetch";
-import { buildMetadata } from "@/lib/seo";
-import EmptyState from "../components/ui/EmptyState";
-import { getEmpty } from "@/lib/datafetch";
-export const revalidate = 300;
 
-/* =========================
-   SEO
-========================= */
-export async function generateMetadata() {
-  const seo = await getSeoByKey("privacy");
-  const data = seo?.data;
+import { getPrivacy } from "@/lib/datafetch";
+import { getCurrentLocale } from "@/lib/locale-server";
 
-  return buildMetadata({
-    title: data?.title,
-    description: data?.description,
-    image: data?.og?.image,
-    keywords: data?.keywords,
-    canonical: data?.canonical,
-    noindex: data?.noindex,
-    og: data?.og,
-    path: data?.slug || "/privacy",
-  });
-}
-
-/* =========================
-   PAGE
-========================= */
 export default async function PrivacyPage() {
-
-  // ✅ unified response
-  const res = await getPrivacy();
-let empty = null;
-  try {
-    empty = await getEmpty();
-  } catch {
-    empty = null;
-  }
-
-  if (!res || res.error) {
-    return <EmptyState empty={empty} />;
-  }
-
-  const data = res?.data || {};
-  const seo = res?.seo || {};
-
-  const isEmpty =
-    !data ||
-    Object.keys(data).length === 0 ||
-    !data.content;
-
-  if (isEmpty) {
-    return <EmptyState empty={empty} />;
-  }
+  const locale = await getCurrentLocale();
+  const copy = {
+    ka: {
+      title: "კონფიდენციალურობის პოლიტიკა",
+      empty: "კონტენტი ჯერ არ არის დამატებული",
+      back: "← მთავარ გვერდზე დაბრუნება",
+    },
+    en: {
+      title: "Privacy Policy",
+      empty: "No content has been added yet",
+      back: "← Back to home",
+    },
+    ru: {
+      title: "Политика конфиденциальности",
+      empty: "Контент пока не добавлен",
+      back: "← Вернуться на главную",
+    },
+  }[locale];
+  const privacy = await getPrivacy({ locale });
 
   return (
-    <>
-      {/* 🔥 DYNAMIC SCHEMA */}
-      {seo?.schema && (
-        Array.isArray(seo.schema) ? (
-          seo.schema.map((schema, i) => (
-            <script
-              key={i}
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{
-                __html: JSON.stringify(schema),
-              }}
-            />
-          ))
-        ) : (
-          <script
-            type="application/ld+json"
+    <main className="bg-white text-gray-800">
+      <section className="bg-[#0B3C5D] py-20 text-white">
+        <div className="mx-auto max-w-5xl px-4 text-center">
+          <h1 className="mb-4 text-3xl font-bold md:text-4xl">
+            {privacy?.title || copy.title}
+          </h1>
+          <p className="mx-auto max-w-2xl text-gray-300">
+            {privacy?.highlight || copy.title}
+          </p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 py-20">
+        <div className="rounded-2xl bg-white p-6 shadow-lg md:p-10">
+          <div
+            className="prose max-w-none prose-lg prose-h2:mt-10 prose-h2:font-bold prose-h2:text-[#0B3C5D] prose-p:text-gray-600 prose-li:text-gray-600 prose-li:marker:text-[#00C2A8] prose-strong:text-[#0B3C5D] prose-a:text-[#00C2A8] prose-a:no-underline hover:prose-a:underline"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify(seo.schema),
+              __html: privacy?.content || `<p>${copy.empty}</p>`,
             }}
           />
-        )
-      )}
+        </div>
 
-      <main className="bg-white text-gray-900">
-
-        {/* HERO */}
-        <section className="
-          py-24
-          bg-gradient-to-br from-[#071A2B] via-[#0A2238] to-[#071A2B]
-          text-white
-        ">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-              {data?.title || "Privacy Policy"}
-            </h1>
-
-            <p className="mt-6 text-white/80 max-w-2xl mx-auto text-lg leading-relaxed">
-              {data?.highlight || "ჩვენ ვიცავთ თქვენს მონაცემებს"}
-            </p>
-
-          </div>
-        </section>
-
-        {/* CONTENT */}
-        <section className="py-24">
-          <div className="max-w-4xl mx-auto px-6">
-
-            <div className="
-              bg-white
-              border border-gray-200
-              rounded-3xl
-              p-8 md:p-12
-            ">
-
-              <div
-                className="
-                  prose prose-lg max-w-none
-                  prose-h2:mt-12
-                "
-                dangerouslySetInnerHTML={{
-                  __html: data?.content || "<p>No content</p>",
-                }}
-              />
-
-            </div>
-
-            {/* BACK BUTTON */}
-            <div className="pt-12 text-center">
-              <Link
-                href="/"
-                className="
-                  inline-flex items-center gap-2
-                  bg-[#00E0B8]
-                  text-black
-                  px-6 py-3
-                  rounded-2xl
-                  font-semibold
-                  hover:scale-105
-                  transition-all duration-300
-                "
-              >
-                ← მთავარ გვერდზე დაბრუნება
-              </Link>
-            </div>
-
-          </div>
-        </section>
-
-      </main>
-    </>
+        <div className="pt-12 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#00C2A8] px-6 py-3 text-white shadow transition hover:scale-105"
+          >
+            {copy.back}
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }

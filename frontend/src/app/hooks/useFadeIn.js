@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 export default function useFadeIn(options = {}) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
-
-  const { threshold = 0.15, rootMargin = "0px 0px -80px 0px" } = options;
+  const threshold = options.threshold ?? 0.15;
+  const rootMargin = options.rootMargin ?? "0px 0px -80px 0px";
 
   useEffect(() => {
     const element = ref.current;
@@ -19,15 +19,13 @@ export default function useFadeIn(options = {}) {
           observer.unobserve(element);
         }
       },
-      { threshold, rootMargin }
+      { threshold, rootMargin },
     );
 
     observer.observe(element);
 
-    return () => {
-      observer.disconnect();
-    };
-  }, [threshold, rootMargin]); // ✅ eslint fix
+    return () => observer.disconnect();
+  }, [rootMargin, threshold]);
 
-  return [ref, visible]; // ✅ clean return
+  return [ref, visible];
 }

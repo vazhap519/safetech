@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">SafeTech social preview</title>
+  <desc id="desc">Social preview banner for SafeTech with abstract infrastructure graphics.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#050814" />
+      <stop offset="100%" stop-color="#101a33" />
+    </linearGradient>
+    <radialGradient id="glow" cx="75%" cy="25%" r="60%">
+      <stop offset="0%" stop-color="#4d77ff" stop-opacity=".55" />
+      <stop offset="100%" stop-color="#4d77ff" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="line" x1="0%" x2="100%" y1="0%" y2="0%">
+      <stop offset="0%" stop-color="#55dfff" />
+      <stop offset="100%" stop-color="#7ea2ff" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" rx="32" />
+  <circle cx="920" cy="140" r="210" fill="url(#glow)" />
+  <g opacity=".15" stroke="#3b4a72" stroke-width="2">
+    <path d="M70 150h1060" />
+    <path d="M70 250h1060" />
+    <path d="M70 350h1060" />
+    <path d="M70 450h1060" />
+    <path d="M200 70v490" />
+    <path d="M380 70v490" />
+    <path d="M560 70v490" />
+    <path d="M740 70v490" />
+    <path d="M920 70v490" />
+  </g>
+  <text x="84" y="130" fill="#82e7ff" font-family="Segoe UI, Arial, sans-serif" font-size="24" letter-spacing="7">SAFE TECH</text>
+  <g transform="translate(84 196)">
+    <rect width="420" height="44" rx="22" fill="#131f38" stroke="#35507f" />
+    <rect y="74" width="470" height="28" rx="14" fill="#f2f6ff" opacity=".92" />
+    <rect y="122" width="390" height="28" rx="14" fill="#f2f6ff" opacity=".92" />
+    <rect y="170" width="438" height="28" rx="14" fill="#a4b8ff" opacity=".88" />
+    <rect y="248" width="250" height="18" rx="9" fill="#7f8fb4" opacity=".58" />
+    <rect y="282" width="322" height="18" rx="9" fill="#7f8fb4" opacity=".58" />
+    <rect y="316" width="280" height="18" rx="9" fill="#7f8fb4" opacity=".58" />
+  </g>
+  <g transform="translate(760 150)">
+    <rect width="320" height="110" rx="28" fill="#131f38" stroke="#35507f" />
+    <path d="M38 78h68l50-42 54 36 76-28 40 34" fill="none" stroke="url(#line)" stroke-linecap="round" stroke-linejoin="round" stroke-width="8" />
+    <circle cx="38" cy="78" r="9" fill="#55dfff" />
+    <circle cx="156" cy="36" r="9" fill="#7ea2ff" />
+    <circle cx="210" cy="72" r="9" fill="#55dfff" />
+    <circle cx="286" cy="44" r="9" fill="#7ea2ff" />
+  </g>
+  <g transform="translate(760 302)">
+    <rect width="148" height="168" rx="24" fill="#121d34" stroke="#31415e" />
+    <rect x="28" y="36" width="92" height="18" rx="9" fill="#273b62" />
+    <rect x="28" y="82" width="32" height="60" rx="16" fill="#55dfff" opacity=".4" />
+    <rect x="72" y="62" width="32" height="80" rx="16" fill="#7ea2ff" opacity=".55" />
+  </g>
+  <g transform="translate(932 302)">
+    <rect width="148" height="168" rx="24" fill="#121d34" stroke="#31415e" />
+    <circle cx="48" cy="84" r="24" fill="#55dfff" opacity=".16" />
+    <path d="M48 68v24l18 12" fill="none" stroke="#7ee8ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="7" />
+    <rect x="86" y="56" width="36" height="12" rx="6" fill="#273b62" />
+    <rect x="86" y="84" width="44" height="12" rx="6" fill="#273b62" />
+    <rect x="86" y="112" width="32" height="12" rx="6" fill="#7ea2ff" opacity=".7" />
+  </g>
+</svg>
