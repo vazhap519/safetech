@@ -18,7 +18,8 @@ class Project extends Model
             'meta' => 'array', 'scope' => 'array', 'specs' => 'array', 'challenges' => 'array',
             'solutions' => 'array', 'process' => 'array', 'gallery' => 'array', 'results' => 'array',
             'testimonial' => 'array', 'related' => 'array', 'is_featured' => 'boolean',
-            'translations' => 'array', 'is_published' => 'boolean', 'published_at' => 'datetime',
+            'seo' => 'array', 'translations' => 'array', 'is_published' => 'boolean',
+            'published_at' => 'datetime',
         ];
     }
 

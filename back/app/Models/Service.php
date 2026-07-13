@@ -24,6 +24,7 @@ class Service extends Model
             'industries' => 'array',
             'process' => 'array',
             'brands' => 'array',
+            'seo' => 'array',
             'lead_form' => 'array',
             'translations' => 'array',
             'is_published' => 'boolean',
