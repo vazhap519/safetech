@@ -58,7 +58,13 @@ class ContentSeeder extends Seeder
                 'icon' => 'videocam',
                 'title' => 'CCTV installation and monitoring',
                 'description' => 'Professional camera systems for offices, retail, warehouses, and residential buildings.',
+                'short_description' => 'Professional camera systems for offices, retail, warehouses, and residential buildings.',
+                'long_description' => 'We design, install, and maintain CCTV systems for business-critical spaces.',
                 'seo_description' => 'Professional CCTV installation, camera setup, recording, and monitoring services in Georgia.',
+                'seo' => [
+                    'title' => 'CCTV installation and monitoring',
+                    'description' => 'Professional CCTV installation, camera setup, recording, and monitoring services in Georgia.',
+                ],
                 'keywords' => ['CCTV', 'security cameras', 'video monitoring'],
                 'highlights' => ['Site audit', 'Camera placement plan', 'Recording setup'],
                 'overview' => [
@@ -81,7 +87,13 @@ class ContentSeeder extends Seeder
                 'icon' => 'lan',
                 'title' => 'Network Infrastructure',
                 'description' => 'Structured cabling, routers, switches, Wi-Fi coverage, and secure business networks.',
+                'short_description' => 'Structured cabling, routers, switches, Wi-Fi coverage, and secure business networks.',
+                'long_description' => 'We build reliable wired and wireless networks for growing teams.',
                 'seo_description' => 'Business network infrastructure, structured cabling, Wi-Fi, router, and switch setup in Georgia.',
+                'seo' => [
+                    'title' => 'Network Infrastructure',
+                    'description' => 'Business network infrastructure, structured cabling, Wi-Fi, router, and switch setup in Georgia.',
+                ],
                 'keywords' => ['networking', 'structured cabling', 'Wi-Fi'],
                 'highlights' => ['Stable coverage', 'Managed switching', 'Secure routing'],
                 'overview' => [
