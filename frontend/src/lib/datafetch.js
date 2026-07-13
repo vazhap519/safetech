@@ -103,3 +103,15 @@ export const getCategories = ({ locale, ...options } = {}) =>
     next: { tags: ["categories"] },
     ...options,
   });
+
+export const getServiceCategories = (options = {}) =>
+  fetcher(buildUrl("/service-categories"), {
+    next: { tags: ["service-categories"] },
+    ...options,
+  });
+
+export const getProjectCategories = (options = {}) =>
+  fetcher(buildUrl("/project-categories"), {
+    next: { tags: ["project-categories"] },
+    ...options,
+  });
