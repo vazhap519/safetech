@@ -3,7 +3,11 @@ import type { Locale } from "@/lib/locales";
 export type TranslationValues = Partial<Record<Locale, string>>;
 export type TranslationMap = Record<string, TranslationValues>;
 
-export type TranslationFallback = string | Partial<Record<Locale, string>>;
+export type TranslationFallback =
+    | string
+    | Partial<Record<Locale, string>>
+    | null
+    | undefined;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -62,7 +66,17 @@ export function translateText(
         return fallback;
     }
 
-    return fallback[locale] || fallback.ka || fallback.en || fallback.ru || "";
+    if (!isRecord(fallback)) {
+        return "";
+    }
+
+    return (
+        (typeof fallback[locale] === "string" ? fallback[locale] : "") ||
+        (typeof fallback.ka === "string" ? fallback.ka : "") ||
+        (typeof fallback.en === "string" ? fallback.en : "") ||
+        (typeof fallback.ru === "string" ? fallback.ru : "") ||
+        ""
+    );
 }
 
 export function createTranslator(
