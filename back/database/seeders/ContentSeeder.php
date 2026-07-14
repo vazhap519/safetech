@@ -11,36 +11,8 @@ class ContentSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach ([
-            'contact' => [
-                'phone' => '',
-                'email' => '',
-                'address' => '',
-                'whatsapp' => '',
-                'whatsapp_message' => '',
-                'hours' => '',
-                'lead_email' => 'safetechgeorgia@gmail.com',
-            ],
-            'socials' => [
-                'links' => [],
-            ],
-            'seo' => [
-                'site_name' => 'SafeTech',
-                'default_image' => null,
-            ],
-            'branding' => [
-                'site_name' => 'SafeTech',
-                'tagline' => '',
-                'logo' => null,
-                'footer_logo' => null,
-                'favicon' => null,
-                'default_image' => null,
-            ],
-            'translations' => [
-                'entries' => [],
-            ],
-        ] as $key => $value) {
-            SiteSetting::query()->updateOrCreate(
+        foreach ($this->defaultSiteSettings() as $key => $value) {
+            $setting = SiteSetting::query()->firstOrCreate(
                 ['key' => $key],
                 [
                     'group' => 'general',
@@ -48,6 +20,19 @@ class ContentSeeder extends Seeder
                     'is_public' => true,
                 ],
             );
+
+            if ($key === 'translations') {
+                $value = $this->mergeMissingTranslationEntries(
+                    $setting->value,
+                    $value,
+                );
+
+                $setting->forceFill([
+                    'group' => 'general',
+                    'value' => $value,
+                    'is_public' => true,
+                ])->save();
+            }
         }
 
         $services = [
@@ -112,13 +97,13 @@ class ContentSeeder extends Seeder
         ];
 
         foreach ($services as $service) {
-            Service::query()->updateOrCreate(
+            Service::query()->firstOrCreate(
                 ['slug' => $service['slug']],
                 $service,
             );
         }
 
-        Project::query()->updateOrCreate(
+        Project::query()->firstOrCreate(
             ['slug' => 'office-network-upgrade'],
             [
                 'name' => 'Office Network Upgrade',
@@ -146,5 +131,106 @@ class ContentSeeder extends Seeder
                 'published_at' => now(),
             ],
         );
+    }
+
+    private function defaultSiteSettings(): array
+    {
+        return [
+            'contact' => [
+                'phone' => '',
+                'email' => '',
+                'address' => '',
+                'whatsapp' => '',
+                'whatsapp_message' => '',
+                'hours' => '',
+                'lead_email' => 'safetechgeorgia@gmail.com',
+            ],
+            'socials' => [
+                'links' => [],
+            ],
+            'seo' => [
+                'site_name' => 'SafeTech',
+                'default_image' => null,
+            ],
+            'branding' => [
+                'site_name' => 'SafeTech',
+                'tagline' => '',
+                'logo' => null,
+                'footer_logo' => null,
+                'favicon' => null,
+                'default_image' => null,
+            ],
+            'translations' => [
+                'entries' => $this->defaultTranslationEntries(),
+            ],
+        ];
+    }
+
+    private function defaultTranslationEntries(): array
+    {
+        return [
+            ['key' => 'nav.home', 'ka' => 'მთავარი', 'en' => 'Home', 'ru' => 'Главная'],
+            ['key' => 'nav.services', 'ka' => 'სერვისები', 'en' => 'Services', 'ru' => 'Услуги'],
+            ['key' => 'nav.projects', 'ka' => 'პროექტები', 'en' => 'Projects', 'ru' => 'Проекты'],
+            ['key' => 'nav.about', 'ka' => 'ჩვენ შესახებ', 'en' => 'About', 'ru' => 'О нас'],
+            ['key' => 'nav.contact', 'ka' => 'კონტაქტი', 'en' => 'Contact', 'ru' => 'Контакты'],
+            ['key' => 'nav.consultation', 'ka' => 'კონსულტაცია', 'en' => 'Consultation', 'ru' => 'Консультация'],
+
+            ['key' => 'home.hero.eyebrow', 'ka' => 'ბიზნეს IT გადაწყვეტილებები', 'en' => 'Enterprise IT Solutions', 'ru' => 'Корпоративные IT-решения'],
+            ['key' => 'home.hero.titlePrefix', 'ka' => 'თანამედროვე ბიზნესის უსაფრთხო', 'en' => 'Secure', 'ru' => 'Надежная'],
+            ['key' => 'home.hero.titleAccent', 'ka' => 'IT ინფრასტრუქტურა', 'en' => 'IT infrastructure for modern business', 'ru' => 'IT-инфраструктура для современного бизнеса'],
+            ['key' => 'home.hero.description', 'ka' => 'ვიდეოსამეთვალყურეო, დაშვების კონტროლის, ქსელური და სერვერული ინფრასტრუქტურის პროფესიონალური გადაწყვეტები თანამედროვე ბიზნესისთვის.', 'en' => 'Professional CCTV, access control, networking, and server infrastructure solutions for modern businesses.', 'ru' => 'Профессиональные решения для видеонаблюдения, контроля доступа, сетевой и серверной инфраструктуры для современного бизнеса.'],
+            ['key' => 'home.hero.primaryCta', 'ka' => 'კონსულტაციის მოთხოვნა', 'en' => 'Request Consultation', 'ru' => 'Запросить консультацию'],
+            ['key' => 'home.hero.secondaryCta', 'ka' => 'სერვისების ნახვა', 'en' => 'View Services', 'ru' => 'Смотреть услуги'],
+            ['key' => 'home.hero.imageAlt', 'ka' => 'SafeTech-ის უსაფრთხოებისა და IT ინფრასტრუქტურის გადაწყვეტა', 'en' => 'SafeTech security and IT infrastructure solution', 'ru' => 'Решение SafeTech для безопасности и IT-инфраструктуры'],
+
+            ['key' => 'home.services.eyebrow', 'ka' => 'ძირითადი შესაძლებლობები', 'en' => 'Our Capabilities', 'ru' => 'Наши возможности'],
+            ['key' => 'home.services.title', 'ka' => 'ძირითადი სერვისები', 'en' => 'Core Services', 'ru' => 'Основные услуги'],
+            ['key' => 'home.services.description', 'ka' => 'თანამედროვე უსაფრთხოების, ქსელური და IT ინფრასტრუქტურის პროფესიონალური გადაწყვეტილებები ბიზნესისთვის.', 'en' => 'Professional security, networking, and IT infrastructure solutions for business.', 'ru' => 'Профессиональные решения для безопасности, сетевой и IT-инфраструктуры бизнеса.'],
+            ['key' => 'home.projects.eyebrow', 'ka' => 'გამორჩეული ნამუშევრები', 'en' => 'Featured Work', 'ru' => 'Избранные проекты'],
+            ['key' => 'home.projects.title', 'ka' => 'განხორციელებული პროექტები', 'en' => 'Completed Projects', 'ru' => 'Реализованные проекты'],
+            ['key' => 'home.projects.description', 'ka' => 'თანამედროვე უსაფრთხოების, ქსელური და IT ინფრასტრუქტურის წარმატებით განხორციელებული პროექტები.', 'en' => 'Successfully delivered security, networking, and IT infrastructure projects.', 'ru' => 'Успешно реализованные проекты по безопасности, сетевой и IT-инфраструктуре.'],
+
+            ['key' => 'meta.home.title', 'ka' => 'IT ინფრასტრუქტურა და უსაფრთხოების სისტემები ბიზნესისთვის', 'en' => 'IT Infrastructure and Security Systems for Business', 'ru' => 'IT-инфраструктура и системы безопасности для бизнеса'],
+            ['key' => 'meta.home.description', 'ka' => 'SafeTech უზრუნველყოფს ვიდეომეთვალყურეობას, დაშვების კონტროლს, ქსელურ და სერვერულ ინფრასტრუქტურას საქართველოში.', 'en' => 'SafeTech delivers CCTV, access control, networking, and server infrastructure solutions for businesses in Georgia.', 'ru' => 'SafeTech внедряет видеонаблюдение, контроль доступа, сетевую и серверную инфраструктуру для бизнеса в Грузии.'],
+            ['key' => 'meta.services.title', 'ka' => 'CCTV, ქსელები და IT სერვისები | SafeTech', 'en' => 'CCTV, Networking, and IT Services | SafeTech', 'ru' => 'CCTV, сети и IT-услуги | SafeTech'],
+            ['key' => 'meta.projects.title', 'ka' => 'განხორციელებული IT და უსაფრთხოების პროექტები | SafeTech', 'en' => 'Completed IT and Security Projects | SafeTech', 'ru' => 'Реализованные IT- и охранные проекты | SafeTech'],
+            ['key' => 'meta.about.title', 'ka' => 'ჩვენ შესახებ | SafeTech გუნდი და გამოცდილება', 'en' => 'About SafeTech | Team and Experience', 'ru' => 'О SafeTech | Команда и опыт'],
+            ['key' => 'meta.contact.title', 'ka' => 'კონტაქტი და კონსულტაცია | SafeTech', 'en' => 'Contact and Consultation | SafeTech', 'ru' => 'Контакты и консультация | SafeTech'],
+
+            ['key' => 'service.cctv.card.title', 'ka' => 'ვიდეოსამეთვალყურეო სისტემები', 'en' => 'CCTV Systems', 'ru' => 'Системы видеонаблюдения'],
+            ['key' => 'service.cctv.card.description', 'ka' => 'პროფესიონალური კამერები ოფისებისთვის, რიტეილისთვის, საწყობებისთვის და საცხოვრებელი სივრცეებისთვის.', 'en' => 'Professional camera systems for offices, retail, warehouses, and residential buildings.', 'ru' => 'Профессиональные камеры для офисов, ритейла, складов и жилых объектов.'],
+            ['key' => 'service.networking.card.title', 'ka' => 'ქსელური ინფრასტრუქტურა', 'en' => 'Network Infrastructure', 'ru' => 'Сетевая инфраструктура'],
+            ['key' => 'service.networking.card.description', 'ka' => 'სტრუქტურული კაბელირება, როუტერები, სვიჩები, Wi-Fi დაფარვა და დაცული ბიზნეს ქსელები.', 'en' => 'Structured cabling, routers, switches, Wi-Fi coverage, and secure business networks.', 'ru' => 'Структурированная кабельная система, роутеры, свичи, Wi-Fi покрытие и защищенные бизнес-сети.'],
+        ];
+    }
+
+    private function mergeMissingTranslationEntries(mixed $currentValue, array $defaults): array
+    {
+        if (! is_array($currentValue)) {
+            $currentValue = [];
+        }
+
+        $currentEntries = $currentValue['entries'] ?? [];
+        $defaultEntries = $defaults['entries'] ?? [];
+
+        if (! is_array($currentEntries)) {
+            $currentEntries = [];
+        }
+
+        $existingKeys = array_filter(array_column($currentEntries, 'key'));
+
+        foreach ($defaultEntries as $entry) {
+            if (! is_array($entry) || empty($entry['key'])) {
+                continue;
+            }
+
+            if (! in_array($entry['key'], $existingKeys, true)) {
+                $currentEntries[] = $entry;
+                $existingKeys[] = $entry['key'];
+            }
+        }
+
+        return array_merge($currentValue, ['entries' => $currentEntries]);
     }
 }
