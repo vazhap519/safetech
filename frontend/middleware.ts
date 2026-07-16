@@ -14,6 +14,26 @@ function buildInternalPath(pathname: string) {
     return localizedPath === "/" ? "/" : localizedPath;
 }
 
+function setRequestLocale(headers: Headers, locale: string) {
+    headers.set("x-safetech-locale", locale);
+
+    const cookieHeader = headers.get("cookie") || "";
+    const nextCookie = `${LOCALE_COOKIE_NAME}=${locale}`;
+
+    if (!cookieHeader) {
+        headers.set("cookie", nextCookie);
+        return;
+    }
+
+    const cookies = cookieHeader
+        .split(";")
+        .map((cookie) => cookie.trim())
+        .filter((cookie) => cookie && !cookie.startsWith(`${LOCALE_COOKIE_NAME}=`));
+
+    cookies.push(nextCookie);
+    headers.set("cookie", cookies.join("; "));
+}
+
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const firstSegment = pathname.split("/").filter(Boolean)[0];
@@ -25,18 +45,22 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(redirectUrl, 308);
     }
 
+    const requestHeaders = new Headers(request.headers);
+
     if (!isNonDefaultLocale(firstSegment)) {
-        return NextResponse.next();
+        setRequestLocale(requestHeaders, DEFAULT_LOCALE);
+
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
     }
 
     const locale = normalizeLocale(firstSegment);
-    const rewrittenUrl = request.nextUrl.clone();
-    rewrittenUrl.pathname = buildInternalPath(pathname);
+    setRequestLocale(requestHeaders, locale);
 
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-safetech-locale", locale);
-
-    const response = NextResponse.rewrite(rewrittenUrl, {
+    const response = NextResponse.next({
         request: {
             headers: requestHeaders,
         },

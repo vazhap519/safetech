@@ -131,7 +131,7 @@ export default async function Navbar() {
                             />
                         </svg>
                     </summary>
-                    <div className="absolute right-0 top-14 w-[min(20rem,calc(100vw-2.5rem))] rounded-2xl border border-outline-variant/20 bg-surface/95 p-5 shadow-2xl backdrop-blur-2xl">
+                    <div className="absolute right-0 top-14 hidden w-[min(20rem,calc(100vw-2.5rem))] rounded-2xl border border-outline-variant/20 bg-surface/95 p-5 shadow-2xl backdrop-blur-2xl group-open:block">
                         <ul className="flex flex-col gap-4">
                             {navigation.map((item) => (
                                 <li key={item.href}>

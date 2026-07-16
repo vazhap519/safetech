@@ -6,10 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    public function up(): void
+    {
+        if (Schema::hasTable('projects')) {
+            return;
+        }
 
-                public function up(): void
-                {
-                    Schema::create('projects', function (Blueprint $table) {
+        Schema::create('projects', function (Blueprint $table) {
                         $table->id();
 
                         /* =========================
@@ -61,11 +64,8 @@ return new class extends Migration
                         $table->index('slug');
                         $table->index('is_published');
                         $table->index('category_id');
-                    });
-                }
-
-
-
+        });
+    }
 
     /**
      * Reverse the migrations.

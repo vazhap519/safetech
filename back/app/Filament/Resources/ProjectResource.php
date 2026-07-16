@@ -11,6 +11,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -98,14 +99,14 @@ class ProjectResource extends Resource
                 ->label('SEO აღწერა')
                 ->required()
                 ->maxLength(320),
-            FileUpload::make('image')
+            SpatieMediaLibraryFileUpload::make('cover')
                 ->label('მთავარი ფოტო')
+                ->collection('cover')
                 ->image()
-                ->disk('public')
-                ->directory('projects'),
+                ->imagePreviewHeight('150'),
             TextInput::make('image_alt')
                 ->label('ფოტოს ALT ტექსტი')
-                ->requiredWith('image'),
+                ->requiredWith('cover'),
             Select::make('category')
                 ->label('კატეგორია')
                 ->options([
@@ -178,6 +179,12 @@ class ProjectResource extends Resource
                     Textarea::make('description')->label('აღწერა')->required(),
                 ])
                 ->columns(2),
+            SpatieMediaLibraryFileUpload::make('media_gallery')
+                ->label('Media gallery')
+                ->collection('gallery')
+                ->multiple()
+                ->reorderable()
+                ->image(),
             Repeater::make('gallery')
                 ->label('გალერეა')
                 ->schema([

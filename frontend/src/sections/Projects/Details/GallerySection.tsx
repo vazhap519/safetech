@@ -7,11 +7,20 @@ export default function GallerySection({
 }: {
     project: ProjectDetail;
 }) {
-    const [primary, ...secondary] = project.gallery;
+    const gallery = project.gallery.length
+        ? project.gallery
+        : project.image
+          ? [{ src: project.image, alt: project.imageAlt || project.title }]
+          : [];
+    const [primary, ...secondary] = gallery;
+
+    if (!primary) {
+        return null;
+    }
 
     return (
         <section
-            aria-label="პროექტის გალერეა"
+            aria-label={project.title}
             className="mx-auto max-w-container-max px-margin-desktop py-unit-xl"
         >
             <div className="grid grid-cols-1 gap-gutter lg:grid-cols-12">

@@ -1,12 +1,52 @@
 import { getBaseUrl } from "@/lib/config";
 
+const DEFAULT_API_BASE = "http://127.0.0.1:8000/api";
+
 export const sitemapHeaders = {
   "Content-Type": "application/xml; charset=utf-8",
   "Cache-Control": "public, max-age=300, s-maxage=300",
 };
 
+function normalizeApiBase(value) {
+  if (!value) return null;
+
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+
+  try {
+    return new URL(trimmed).toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
 export function normalizeBaseUrl() {
   return getBaseUrl().replace(/\/$/, "");
+}
+
+export function getSitemapApiBase() {
+  return (
+    normalizeApiBase(process.env.BACKEND_API_URL) ||
+    normalizeApiBase(process.env.NEXT_PUBLIC_API_URL) ||
+    DEFAULT_API_BASE
+  );
+}
+
+export function buildSitemapApiUrl(path, params = {}) {
+  const normalizedPath = String(path).startsWith("/") ? path : `/${path}`;
+  const url = new URL(`${getSitemapApiBase()}${normalizedPath}`);
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.set(key, String(value));
+    }
+  });
+
+  return url.toString();
+}
+
+export function getLastPage(json) {
+  return Number(json?.data?.meta?.last_page || json?.meta?.last_page || 1);
 }
 
 export function escapeXml(value = "") {
@@ -28,6 +68,23 @@ export function absoluteUrl(pathOrUrl) {
   return `${baseUrl}${path}`;
 }
 
+export function backendAssetUrl(pathOrUrl) {
+  if (!pathOrUrl) return "";
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+
+  const value = String(pathOrUrl);
+
+  if (value.startsWith("/storage") || value.startsWith("/uploads")) {
+    return `${new URL(getSitemapApiBase()).origin}${value}`;
+  }
+
+  if (value.startsWith("/")) {
+    return absoluteUrl(value);
+  }
+
+  return `${new URL(getSitemapApiBase()).origin}/storage/${value.replace(/^\/+/, "")}`;
+}
+
 export async function safeFetchJson(url) {
   try {
     const res = await fetch(url, { cache: "no-store" });
@@ -44,14 +101,12 @@ export async function fetchAllPaginated(path, params = {}) {
   const items = [];
 
   do {
-    const query = new URLSearchParams({
+    const query = {
       ...params,
       page: String(page),
-    });
+    };
 
-    const json = await safeFetchJson(
-      `${process.env.NEXT_PUBLIC_API_URL}${path}?${query.toString()}`
-    );
+    const json = await safeFetchJson(buildSitemapApiUrl(path, query));
 
     const pageItems = json?.data?.services || json?.data || [];
     const meta = json?.data?.meta || json?.meta || {};

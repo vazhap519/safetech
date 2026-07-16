@@ -1,4 +1,12 @@
-import { fetchAllPaginated, normalizeBaseUrl, safeFetchJson, urlset, xmlResponse } from "@/lib/sitemap";
+import {
+  buildSitemapApiUrl,
+  fetchAllPaginated,
+  getLastPage,
+  normalizeBaseUrl,
+  safeFetchJson,
+  urlset,
+  xmlResponse,
+} from "@/lib/sitemap";
 
 export const dynamic = "force-dynamic";
 
@@ -6,8 +14,8 @@ export async function GET() {
   const baseUrl = normalizeBaseUrl();
   const now = new Date().toISOString();
   const posts = await fetchAllPaginated("/blog");
-  const firstPage = await safeFetchJson(`${process.env.NEXT_PUBLIC_API_URL}/blog?page=1`);
-  const totalPages = Number(firstPage?.meta?.last_page || 1);
+  const firstPage = await safeFetchJson(buildSitemapApiUrl("/blog", { page: 1 }));
+  const totalPages = getLastPage(firstPage);
   const urls = posts.map((post) => ({
     loc: `${baseUrl}/blog/${post.slug}`,
     lastmod: post.updated_at || post.created_at || now,

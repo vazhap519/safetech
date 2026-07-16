@@ -7,9 +7,9 @@ use App\Models\Service;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -117,11 +117,11 @@ class ServiceResource extends Resource
                         ->required()
                         ->rows(3)
                         ->maxLength(320),
-                    FileUpload::make('hero_image')
+                    SpatieMediaLibraryFileUpload::make('services')
                         ->label('მთავარი ფოტო')
+                        ->collection('services')
                         ->image()
-                        ->disk('public')
-                        ->directory('services'),
+                        ->imagePreviewHeight('150'),
                     TagsInput::make('keywords')->label('SEO საკვანძო სიტყვები'),
                     TagsInput::make('highlights')->label('მთავარი უპირატესობები'),
                     TagsInput::make('industries')->label('ინდუსტრიები'),

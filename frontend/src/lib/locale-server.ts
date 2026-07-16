@@ -1,9 +1,9 @@
 import "server-only";
 
-import { cookies } from "next/headers";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import {
+    DEFAULT_LOCALE,
     LOCALE_COOKIE_NAME,
     normalizeLocale,
     type Locale,
@@ -15,6 +15,7 @@ export async function getCurrentLocale(): Promise<Locale> {
 
     return normalizeLocale(
         headerStore.get("x-safetech-locale") ||
-            cookieStore.get(LOCALE_COOKIE_NAME)?.value,
+            cookieStore.get(LOCALE_COOKIE_NAME)?.value ||
+            DEFAULT_LOCALE,
     );
 }

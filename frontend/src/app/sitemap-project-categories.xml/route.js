@@ -1,13 +1,18 @@
-import { normalizeBaseUrl, safeFetchJson, urlset, xmlResponse } from "@/lib/sitemap";
+import {
+  buildSitemapApiUrl,
+  getLastPage,
+  normalizeBaseUrl,
+  safeFetchJson,
+  urlset,
+  xmlResponse,
+} from "@/lib/sitemap";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const baseUrl = normalizeBaseUrl();
   const now = new Date().toISOString();
-  const categoriesRes = await safeFetchJson(
-    `${process.env.NEXT_PUBLIC_API_URL}/project-categories`
-  );
+  const categoriesRes = await safeFetchJson(buildSitemapApiUrl("/project-categories"));
   const categories = Array.isArray(categoriesRes)
     ? categoriesRes
     : categoriesRes?.data || [];
@@ -22,9 +27,9 @@ export async function GET() {
     });
 
     const categoryRes = await safeFetchJson(
-      `${process.env.NEXT_PUBLIC_API_URL}/projects?category=${category.slug}&page=1`
+      buildSitemapApiUrl("/projects", { category: category.slug, page: 1 })
     );
-    const lastPage = Number(categoryRes?.meta?.last_page || 1);
+    const lastPage = getLastPage(categoryRes);
 
     for (let page = 2; page <= lastPage; page += 1) {
       urls.push({

@@ -1,4 +1,4 @@
-import { absoluteUrl, fetchAllPaginated, imageUrlset, normalizeBaseUrl, xmlResponse } from "@/lib/sitemap";
+import { backendAssetUrl, fetchAllPaginated, imageUrlset, normalizeBaseUrl, xmlResponse } from "@/lib/sitemap";
 
 export const dynamic = "force-dynamic";
 
@@ -13,15 +13,15 @@ export async function GET() {
   const items = [
     ...services.map((service) => ({
       loc: `${baseUrl}/services/${service.slug}`,
-      image: absoluteUrl(service.image),
+      image: backendAssetUrl(service.image),
     })),
     ...projects.map((project) => ({
       loc: `${baseUrl}/projects/${project.slug}`,
-      image: absoluteUrl(project.image),
+      image: backendAssetUrl(project.image),
     })),
     ...posts.map((post) => ({
       loc: `${baseUrl}/blog/${post.slug}`,
-      image: absoluteUrl(post.image),
+      image: backendAssetUrl(post.image),
     })),
   ];
 
