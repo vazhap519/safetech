@@ -5,11 +5,18 @@ namespace App\Models;
 use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Service extends Model
+class Service extends Model implements HasMedia
 {
     use FlushesPublicContentCache;
+    use InteractsWithMedia;
 
     protected $guarded = ['id'];
 
@@ -24,11 +31,18 @@ class Service extends Model
             'industries' => 'array',
             'process' => 'array',
             'brands' => 'array',
+            'features' => 'array',
+            'faq' => 'array',
             'seo' => 'array',
             'lead_form' => 'array',
             'translations' => 'array',
             'is_published' => 'boolean',
         ];
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(CategoryForService::class, 'category_for_service_id');
     }
 
     public function faqs(): HasMany
@@ -83,5 +97,62 @@ class Service extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('services')
+            ->useDisk('public')
+            ->singleFile();
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('webp')
+            ->fit(Fit::Crop, 1400, 900)
+            ->format('webp')
+            ->quality(82)
+            ->performOnCollections('services')
+            ->nonQueued();
+
+        $this->addMediaConversion('thumb')
+            ->fit(Fit::Crop, 720, 480)
+            ->format('webp')
+            ->quality(78)
+            ->performOnCollections('services')
+            ->nonQueued();
+    }
+
+    public function getImageAttribute(): ?string
+    {
+        $media = $this->getFirstMedia('services');
+
+        if ($media) {
+            return $media->hasGeneratedConversion('webp')
+                ? $media->getUrl('webp')
+                : $media->getUrl();
+        }
+
+        return $this->publicStorageUrl($this->getRawOriginal('hero_image'));
+    }
+
+    public function getHeroImageUrlAttribute(): ?string
+    {
+        return $this->image;
+    }
+
+    private function publicStorageUrl(?string $path): ?string
+    {
+        $path = trim((string) $path);
+
+        if ($path === '') {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return Storage::disk('public')->url($path);
     }
 }

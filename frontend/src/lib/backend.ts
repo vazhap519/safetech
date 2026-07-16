@@ -65,7 +65,13 @@ export function resolveBackendAsset(
     fallback = DEFAULT_SOCIAL_IMAGE,
 ) {
     if (!path) return fallback;
-    if (path.startsWith("http") || path.startsWith("/")) return path;
+    if (path.startsWith("http")) return path;
+
+    if (path.startsWith("/storage") || path.startsWith("/uploads")) {
+        return publicApiOrigin ? `${publicApiOrigin}${path}` : path;
+    }
+
+    if (path.startsWith("/")) return path;
 
     return publicApiOrigin ? `${publicApiOrigin}/storage/${path}` : fallback;
 }

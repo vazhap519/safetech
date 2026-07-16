@@ -15,14 +15,22 @@ final class EloquentProjectRepository implements ProjectRepository
         $suffix = $featured === null ? 'all' : ($featured ? 'featured' : 'standard');
 
         return Cache::remember(PublicContentCache::key('projects:'.$suffix), now()->addHour(), function () use ($featured) {
-            return Project::query()->published()->when($featured !== null, fn ($query) => $query->where('is_featured', $featured))->get();
+            return Project::query()
+                ->published()
+                ->with(['category', 'media'])
+                ->when($featured !== null, fn ($query) => $query->where('is_featured', $featured))
+                ->get();
         });
     }
 
     public function findPublishedBySlug(string $slug): ?Project
     {
         return Cache::remember(PublicContentCache::key('project:'.$slug), now()->addHour(), fn () =>
-            Project::query()->published()->where('slug', $slug)->first()
+            Project::query()
+                ->published()
+                ->with(['category', 'media'])
+                ->where('slug', $slug)
+                ->first()
         );
     }
 }

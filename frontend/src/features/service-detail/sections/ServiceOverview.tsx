@@ -1,12 +1,16 @@
 import Image from "@/components/ui/Image";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
 import type { ServiceDetail } from "../model/types";
 
-export default function ServiceOverview({
+export default async function ServiceOverview({
     service,
 }: {
     service: ServiceDetail;
 }) {
+    const { locale, translations } = await getSiteSettings();
+
     return (
         <section
             aria-labelledby="service-overview-title"
@@ -14,7 +18,16 @@ export default function ServiceOverview({
         >
             <div className="group relative aspect-video overflow-hidden rounded-2xl glass-card">
                 <Image
-                    alt={`${service.name} ინფრასტრუქტურა`}
+                    alt={`${service.name} ${translateText(
+                        translations,
+                        "service.detail.overview.imageAltSuffix",
+                        locale,
+                        {
+                            ka: "ინფრასტრუქტურა",
+                            en: "infrastructure",
+                            ru: "инфраструктура",
+                        },
+                    )}`}
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"

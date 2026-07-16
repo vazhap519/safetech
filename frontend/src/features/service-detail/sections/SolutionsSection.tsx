@@ -1,11 +1,23 @@
 import Icon from "@/components/ui/Icon";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 import SectionHeading from "../components/SectionHeading";
 import type { ServiceDetail } from "../model/types";
 
-export default function SolutionsSection({ service }: { service: ServiceDetail }) {
+export default async function SolutionsSection({ service }: { service: ServiceDetail }) {
+    const { locale, translations } = await getSiteSettings();
+
     return (
         <section className="scroll-reveal px-margin-desktop py-unit-xl" aria-labelledby="solutions-title">
-            <div id="solutions-title"><SectionHeading eyebrow="მორგებული თქვენს საჭიროებებზე">სპეციალიზებული გადაწყვეტილებები</SectionHeading></div>
+            <div id="solutions-title"><SectionHeading eyebrow={translateText(translations, "service.detail.solutions.eyebrow", locale, {
+                ka: "მორგებული თქვენს საჭიროებებზე",
+                en: "Tailored to your needs",
+                ru: "Под ваши потребности",
+            })}>{translateText(translations, "service.detail.solutions.title", locale, {
+                ka: "სპეციალიზებული გადაწყვეტილებები",
+                en: "Specialized solutions",
+                ru: "Специализированные решения",
+            })}</SectionHeading></div>
             <div className="grid grid-cols-1 gap-unit-md md:grid-cols-12">
                 {service.solutions.map((solution, index) => (
                     <article

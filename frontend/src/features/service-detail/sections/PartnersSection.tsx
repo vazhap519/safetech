@@ -1,8 +1,17 @@
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
+
 const partners = ["Hikvision", "Dahua", "Uniview", "MikroTik", "Ubiquiti", "TP-Link", "Ruijie"];
 
-export default function PartnersSection() {
+export default async function PartnersSection() {
+    const { locale, translations } = await getSiteSettings();
+
     return (
-        <section aria-label="ტექნოლოგიური პარტნიორები" className="border-y border-white/5 bg-background px-margin-desktop py-unit-lg">
+        <section aria-label={translateText(translations, "service.detail.partners.ariaLabel", locale, {
+            ka: "ტექნოლოგიური პარტნიორები",
+            en: "Technology partners",
+            ru: "Технологические партнеры",
+        })} className="border-y border-white/5 bg-background px-margin-desktop py-unit-lg">
             <ul className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
                 {partners.map((partner) => (
                     <li
