@@ -4,6 +4,7 @@ import { absoluteLocalizedUrl } from "@/lib/seo";
 
 type ServiceShareButtonsProps = {
     locale: Locale;
+    shareLabel: string;
     service: {
         slug: string;
         name: string;
@@ -16,19 +17,9 @@ type ShareLink = {
     href: string;
 };
 
-function getShareHeading(locale: Locale) {
-    switch (locale) {
-        case "en":
-            return "Share";
-        case "ru":
-            return "Поделиться";
-        default:
-            return "გაზიარება";
-    }
-}
-
 export default function ServiceShareButtons({
     locale,
+    shareLabel,
     service,
 }: ServiceShareButtonsProps) {
     const url = absoluteLocalizedUrl(`/services/${service.slug}`, locale);
@@ -72,7 +63,7 @@ export default function ServiceShareButtons({
     return (
         <div className="space-y-3 pt-unit-sm">
             <p className="font-label-md text-label-md uppercase tracking-[0.2em] text-on-surface-variant">
-                {getShareHeading(locale)}
+                {shareLabel}
             </p>
             <div className="flex flex-wrap gap-3">
                 {links.map(({ network, label, href }) => {

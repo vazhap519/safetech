@@ -4,9 +4,6 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 
-import Link from "next/link";
-import Image from "next/image";
-import { motion } from "framer-motion";
 import MagneticCard from "./MagneticCard";
 export default function RelatedProjects({ projects = [] }) {
   if (!projects.length) return null;

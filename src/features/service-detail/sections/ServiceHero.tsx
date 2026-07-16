@@ -92,7 +92,20 @@ export default async function ServiceHero({
                             )}
                         </LocalizedLink>
                     </div>
-                    <ServiceShareButtons locale={locale} service={service} />
+                    <ServiceShareButtons
+                        locale={locale}
+                        service={service}
+                        shareLabel={translateText(
+                            translations,
+                            "service.share.title",
+                            locale,
+                            {
+                                ka: "გაზიარება",
+                                en: "Share",
+                                ru: "Поделиться",
+                            },
+                        )}
+                    />
                 </div>
                 <div className="relative mx-auto w-full max-w-[700px]">
                     <div

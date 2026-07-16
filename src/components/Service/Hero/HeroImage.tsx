@@ -1,8 +1,9 @@
 import Image from "@/components/ui/Image"
 import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
 export default async function HeroImage() {
-    const { branding } = await getSiteSettings();
+    const { branding, locale, translations } = await getSiteSettings();
 
     return (
         <div
@@ -22,7 +23,11 @@ export default async function HeroImage() {
         >
             <Image
                 src={branding.defaultImage}
-                alt="კიბერუსაფრთხოებისა და IT ინფრასტრუქტურის სერვისები"
+                alt={translateText(translations, "services.hero.imageAlt", locale, {
+                    ka: "კიბერუსაფრთხოებისა და IT ინფრასტრუქტურის სერვისები",
+                    en: "Cybersecurity and IT infrastructure services",
+                    ru: "Услуги кибербезопасности и IT-инфраструктуры",
+                })}
                 sizes="(max-width: 768px) 100vw, 50vw"
 
 width={610}
