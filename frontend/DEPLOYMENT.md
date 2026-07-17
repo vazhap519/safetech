@@ -12,12 +12,12 @@ Do not deploy the frontend and backend into one shared root. Your current split 
 1. If `https://api.safetech.ge` shows the default Laravel page, the API vhost is still pointed at the wrong directory.
 2. The API domain must point to `/var/www/safetech-api/public`, never to `/var/www/safetech-api`.
 3. The public site should run through Nginx with `listen 443 ssl http2;`, otherwise Lighthouse will keep reporting `http/1.1`.
-4. Use the sample configs in [deploy/nginx/safetech.example.conf](/F:/safetech/front/deploy/nginx/safetech.example.conf) and [deploy/systemd](/F:/safetech/front/deploy/systemd).
+4. Use the sample configs in [deploy/nginx/safetech.example.conf](/F:/safetech/frontend/deploy/nginx/safetech.example.conf) and [deploy/systemd](/F:/safetech/frontend/deploy/systemd).
 
 ## Frontend
 
-1. Upload the contents of local `front/` into `/var/www/safetech-next`.
-2. Copy [`.env.production.example`](/F:/safetech/front/.env.production.example) to `/var/www/safetech-next/.env.production`.
+1. Upload the contents of local `frontend/` into `/var/www/safetech-next`.
+2. Copy [`.env.production.example`](/F:/safetech/frontend/.env.production.example) to `/var/www/safetech-next/.env.production`.
 3. Set:
 
 ```env
@@ -47,8 +47,8 @@ sudo systemctl restart safetech-frontend
 
 ## Backend
 
-1. Upload the contents of local `Back/` into `/var/www/safetech-api`.
-2. Copy [`.env.production.example`](/F:/safetech/Back/.env.production.example) to `/var/www/safetech-api/.env`.
+1. Upload the contents of local `back/` into `/var/www/safetech-api`.
+2. Copy [`.env.production.example`](/F:/safetech/back/.env.production.example) to `/var/www/safetech-api/.env`.
 3. Set:
 
 ```env
@@ -93,7 +93,7 @@ sudo systemctl restart safetech-queue
 
 ## Nginx
 
-1. Copy [deploy/nginx/safetech.example.conf](/F:/safetech/front/deploy/nginx/safetech.example.conf) to your Nginx config directory, for example `/etc/nginx/sites-available/safetech.conf`.
+1. Copy [deploy/nginx/safetech.example.conf](/F:/safetech/frontend/deploy/nginx/safetech.example.conf) to your Nginx config directory, for example `/etc/nginx/sites-available/safetech.conf`.
 2. Canonical public domain is `https://safetech.ge`.
 3. The sample config also redirects these aliases to the canonical domain:
    - `http://safetech.ge`
