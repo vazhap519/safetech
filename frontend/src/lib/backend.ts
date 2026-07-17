@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import type { ServiceDetail } from "@/features/service-detail/model/types";
 import { getPublicApiOrigin, getServerApiBase } from "@/lib/backend-api";
 import {
@@ -85,7 +86,7 @@ function uniqueSlugs(slugs: Array<string | undefined>) {
     return [...new Set(slugs.filter((slug): slug is string => Boolean(slug)))];
 }
 
-async function getTranslationContext() {
+const getTranslationContext = cache(async () => {
     const [content, locale] = await Promise.all([
         getBackendContent(),
         getCurrentLocale(),
@@ -96,7 +97,7 @@ async function getTranslationContext() {
         locale: locale satisfies Locale,
         translations: buildTranslationMap(settings.translations) satisfies TranslationMap,
     };
-}
+});
 
 function localizeStringArray(
     values: string[],
@@ -497,6 +498,7 @@ export async function getBackendTeam(): Promise<TeamMember[]> {
     }));
 }
 
-export async function getBackendContent(): Promise<BackendContent> {
-    return (await fetchData<BackendContent>("/content")) ?? {};
-}
+export const getBackendContent = cache(
+    async (): Promise<BackendContent> =>
+        (await fetchData<BackendContent>("/content")) ?? {},
+);

@@ -47,7 +47,6 @@ export default function LocaleSwitcher({
         );
 
         router.push(nextPath);
-        router.refresh();
     }
 
     const wrapperClassName =

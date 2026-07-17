@@ -31,6 +31,7 @@ yarn-error.log*
 .pnpm-debug.log*
 .npm-cache/
 .next-start*.log
+.codex-frontend*.log
 .lighthouse-*.json
 .audit-*.png
 

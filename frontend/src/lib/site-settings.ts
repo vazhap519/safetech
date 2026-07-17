@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import type { SocialNetwork } from "@/components/ui/SocialIcon";
 import {
     getBackendContent,
@@ -185,7 +186,7 @@ export const defaultSiteBranding: SiteBranding = {
     defaultImage: DEFAULT_SOCIAL_IMAGE,
 };
 
-export async function getSiteSettings() {
+export const getSiteSettings = cache(async () => {
     const [content, locale] = await Promise.all([
         getBackendContent(),
         getCurrentLocale(),
@@ -258,4 +259,4 @@ export async function getSiteSettings() {
         locale: locale satisfies Locale,
         translations: translations satisfies TranslationMap,
     };
-}
+});

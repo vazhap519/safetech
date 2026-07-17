@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 
 import {
@@ -9,7 +10,7 @@ import {
     type Locale,
 } from "@/lib/locales";
 
-export async function getCurrentLocale(): Promise<Locale> {
+export const getCurrentLocale = cache(async (): Promise<Locale> => {
     const headerStore = await headers();
     const cookieStore = await cookies();
 
@@ -18,4 +19,4 @@ export async function getCurrentLocale(): Promise<Locale> {
             cookieStore.get(LOCALE_COOKIE_NAME)?.value ||
             DEFAULT_LOCALE,
     );
-}
+});

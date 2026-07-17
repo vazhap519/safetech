@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 
-import FloatingWhatsApp from "@/components/Contact/FloatingWhatsApp";
+import FloatingWhatsAppSlot from "@/components/Contact/FloatingWhatsAppSlot";
 import Footer from "@/components/Footer/Footer";
 import Navbar from "@/components/Navbar/Navbar";
 import ConsultationProvider from "@/components/consultation/ConsultationProvider";
@@ -119,6 +119,7 @@ export default async function RootLayout({
     const { contact, branding, locale, socialLinks, translations } =
         await getSiteSettings();
     const siteName = branding.siteName || SITE_NAME;
+    const gtmId = process.env.NEXT_PUBLIC_GTM_ID?.trim();
     const publicApiOrigin = (() => {
         try {
             return new URL(process.env.NEXT_PUBLIC_API_URL || "").origin;
@@ -197,7 +198,7 @@ export default async function RootLayout({
                     min-h-screen
                 `}
             >
-                <GoogleTagManager gtmId="GTM-PHSJ3MHV" />
+                {gtmId ? <GoogleTagManager gtmId={gtmId} /> : null}
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{
@@ -227,7 +228,7 @@ export default async function RootLayout({
 
                             <Footer />
                         </div>
-                        <FloatingWhatsApp
+                        <FloatingWhatsAppSlot
                             phone={contact.whatsapp}
                             message={contact.whatsappMessage}
                         />

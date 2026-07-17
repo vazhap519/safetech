@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import ConsultationForm from "@/components/consultation/ConsultationForm";
 import { CONSULTATION_POPOVER_ID } from "@/components/consultation/constants";
+import ConsultationFormSlot from "@/components/consultation/ConsultationFormSlot";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -70,7 +70,7 @@ export default async function ConsultationProvider({
                         type="button"
                     >
                         <span aria-hidden="true" className="text-2xl">
-                            ×
+                            &times;
                         </span>
                     </button>
 
@@ -88,8 +88,7 @@ export default async function ConsultationProvider({
                             {description}
                         </p>
                     </header>
-
-                    <ConsultationForm />
+                    <ConsultationFormSlot />
                 </div>
             </div>
         </>
