@@ -3,8 +3,11 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
+    DEFAULT_LOCALE,
+    isSupportedLocale,
     localeLabels,
     localizePath,
+    normalizeLocale,
     supportedLocales,
     type Locale,
 } from "@/lib/locales";
@@ -21,9 +24,17 @@ export default function LocaleSwitcher({
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const pathLocale = (() => {
+        const firstSegment = (pathname || "/").split("/").filter(Boolean)[0];
+
+        return isSupportedLocale(firstSegment)
+            ? normalizeLocale(firstSegment)
+            : DEFAULT_LOCALE;
+    })();
+    const activeLocale = pathLocale || currentLocale;
 
     async function handleLocaleChange(locale: Locale) {
-        if (locale === currentLocale) {
+        if (locale === activeLocale) {
             return;
         }
 
@@ -47,6 +58,7 @@ export default function LocaleSwitcher({
         );
 
         router.push(nextPath);
+        router.refresh();
     }
 
     const wrapperClassName =
@@ -57,7 +69,7 @@ export default function LocaleSwitcher({
     return (
         <div className={wrapperClassName}>
             {supportedLocales.map((locale) => {
-                const isActive = locale === currentLocale;
+                const isActive = locale === activeLocale;
 
                 return (
                     <button

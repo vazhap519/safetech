@@ -32,6 +32,7 @@ yarn-error.log*
 .npm-cache/
 .next-start*.log
 .codex-frontend*.log
+.codex-next*.log
 .lighthouse-*.json
 .audit-*.png
 
