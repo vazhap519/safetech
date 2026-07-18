@@ -1,8 +1,8 @@
 import TeamMemberCard from "@/components/About/TeamMemberCard";
 import { getBackendTeam } from "@/lib/backend";
-import type { TeamMember } from "@/lib/team";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import type { TeamMember } from "@/lib/team";
+import { translateText } from "@/lib/translations";
 
 function TeamList({
     members,
@@ -29,48 +29,58 @@ export default async function TeamSection() {
         getBackendTeam(),
         getSiteSettings(),
     ]);
-    const t = createTranslator(translations, locale);
+    const eyebrow = translateText(
+        translations,
+        "about.team.eyebrow",
+        locale,
+        null,
+    );
+    const title = translateText(translations, "about.team.title", locale, null);
+    const description = translateText(
+        translations,
+        "about.team.description",
+        locale,
+        null,
+    );
+    const regionLabel = translateText(
+        translations,
+        "about.team.regionLabel",
+        locale,
+        null,
+    );
 
     if (!teamMembers.length) return null;
 
     return (
         <section
-            aria-labelledby="team-title"
+            aria-labelledby={title ? "team-title" : undefined}
             className="overflow-hidden bg-surface-container-lowest py-unit-xl"
         >
-            <header className="mx-auto mb-unit-xl max-w-3xl px-margin-desktop text-center">
-                <p className="mb-unit-sm font-mono-sm text-mono-sm uppercase tracking-[0.25em] text-secondary">
-                    {t("about.team.eyebrow", {
-                        ka: "SafeTech გუნდი",
-                        en: "SafeTech Team",
-                        ru: "Команда SafeTech",
-                    })}
-                </p>
-                <h2
-                    className="font-headline-xl text-headline-xl text-white"
-                    id="team-title"
-                >
-                    {t("about.team.title", {
-                        ka: "ჩვენი გუნდი",
-                        en: "Our team",
-                        ru: "Наша команда",
-                    })}
-                </h2>
-                <p className="mx-auto mt-unit-md max-w-2xl font-body-md text-body-md leading-relaxed text-on-surface-variant">
-                    {t("about.team.description", {
-                        ka: "პროფესიონალები, რომლებიც ქმნიან უსაფრთხო და საიმედო ტექნოლოგიურ ინფრასტრუქტურას.",
-                        en: "Professionals building secure and dependable technology infrastructure.",
-                        ru: "Профессионалы, создающие безопасную и надежную технологическую инфраструктуру.",
-                    })}
-                </p>
-            </header>
+            {eyebrow || title || description ? (
+                <header className="mx-auto mb-unit-xl max-w-3xl px-margin-desktop text-center">
+                    {eyebrow ? (
+                        <p className="mb-unit-sm font-mono-sm text-mono-sm uppercase tracking-[0.25em] text-secondary">
+                            {eyebrow}
+                        </p>
+                    ) : null}
+                    {title ? (
+                        <h2
+                            className="font-headline-xl text-headline-xl text-white"
+                            id="team-title"
+                        >
+                            {title}
+                        </h2>
+                    ) : null}
+                    {description ? (
+                        <p className="mx-auto mt-unit-md max-w-2xl font-body-md text-body-md leading-relaxed text-on-surface-variant">
+                            {description}
+                        </p>
+                    ) : null}
+                </header>
+            ) : null}
 
             <div
-                aria-label={t("about.team.regionLabel", {
-                    ka: "თანამშრომლების სია",
-                    en: "Team members list",
-                    ru: "Список сотрудников",
-                })}
+                aria-label={regionLabel || undefined}
                 className="team-marquee"
                 role="region"
             >

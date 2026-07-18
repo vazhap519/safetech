@@ -21,15 +21,13 @@ class ProjectForm
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
-
             Section::make('Basic')
                 ->schema([
-
                     TextInput::make('title')
                         ->required()
                         ->live(onBlur: true)
-                        ->afterStateUpdated(fn ($set, $state) =>
-                        $set('slug', Str::slug($state))
+                        ->afterStateUpdated(
+                            fn ($set, $state) => $set('slug', Str::slug($state)),
                         ),
 
                     TextInput::make('slug')->required(),
@@ -37,12 +35,13 @@ class ProjectForm
                     Select::make('category_id')
                         ->relationship('category', 'name')
                         ->searchable()
+                        ->preload()
                         ->createOptionForm([
                             TextInput::make('name')
                                 ->required()
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(fn ($set, $state) =>
-                                $set('slug', Str::slug($state))
+                                ->afterStateUpdated(
+                                    fn ($set, $state) => $set('slug', Str::slug($state)),
                                 ),
                             TextInput::make('slug')->required(),
                         ])
@@ -57,14 +56,16 @@ class ProjectForm
                     Textarea::make('content')->rows(6),
 
                     TextInput::make('video_url')
-                        ->label('YouTube / Vimeo'),
-
+                        ->label('YouTube video URL')
+                        ->url()
+                        ->maxLength(2048)
+                        ->placeholder('https://www.youtube.com/watch?v=...')
+                        ->helperText('Paste a YouTube link here. The frontend will show it as a video on projects and project details.'),
                 ])
                 ->columns(2),
 
             Section::make('Media')
                 ->schema([
-
                     SpatieMediaLibraryFileUpload::make('cover')
                         ->collection('cover')
                         ->image()
@@ -75,12 +76,10 @@ class ProjectForm
                         ->multiple()
                         ->reorderable()
                         ->image(),
-
                 ]),
 
             Section::make('SEO (Google Optimization)')
                 ->schema([
-
                     TextInput::make('seo.title')
                         ->label('SEO Title')
                         ->maxLength(255),
@@ -90,9 +89,7 @@ class ProjectForm
                     Textarea::make('seo.description')->rows(3),
 
                     Repeater::make('seo.keywords')
-                        ->simple(
-                            TextInput::make('value')
-                        ),
+                        ->simple(TextInput::make('value')),
 
                     Repeater::make('seo.content')
                         ->schema([
@@ -100,17 +97,15 @@ class ProjectForm
                         ])
                         ->columnSpanFull(),
 
-                    // ✅ FIXED ACTION
                     Actions::make([
                         Action::make('generate_seo')
-                            ->label('🤖 Generate SEO')
+                            ->label('Generate SEO')
                             ->color('success')
-                            ->action(function ($set, $get) {
-
+                            ->action(function ($set, $get): void {
                                 $title = $get('title');
                                 $content = $get('content');
 
-                                if (!$title) {
+                                if (! $title) {
                                     return;
                                 }
 
@@ -118,36 +113,42 @@ class ProjectForm
                                     ? mb_substr(strip_tags($content), 0, 160)
                                     : $title;
 
-                                $set('seo.title', $title . ' | Safetech');
+                                $set('seo.title', $title . ' | SafeTech');
                                 $set('seo.description', $description);
-
                                 $set('seo.keywords', [
                                     ['value' => $title],
-                                    ['value' => 'IT პროექტები'],
+                                    ['value' => 'IT projects'],
                                 ]);
-
                                 $set('seo.content', [
                                     ['text' => $description],
                                 ]);
-
                                 $set('seo.schema', self::generateSchema(
                                     $get('seo.schema_type') ?? 'project',
                                     $title,
-                                    $description
+                                    $description,
                                 ));
                             }),
                     ]),
 
                     Placeholder::make('seo_score')
-                        ->content(function ($get) {
-
+                        ->content(function ($get): string {
                             $score = 0;
 
-                            if (strlen($get('seo.title')) >= 40) $score += 25;
-                            if (strlen($get('seo.description')) >= 120) $score += 25;
-                            if (!empty($get('seo.keywords'))) $score += 20;
-                            if (!empty($get('seo.content'))) $score += 20;
-                            if (!empty($get('seo.schema'))) $score += 10;
+                            if (strlen((string) $get('seo.title')) >= 40) {
+                                $score += 25;
+                            }
+                            if (strlen((string) $get('seo.description')) >= 120) {
+                                $score += 25;
+                            }
+                            if (! empty($get('seo.keywords'))) {
+                                $score += 20;
+                            }
+                            if (! empty($get('seo.content'))) {
+                                $score += 20;
+                            }
+                            if (! empty($get('seo.schema'))) {
+                                $score += 10;
+                            }
 
                             return "SEO Score: {$score}/100";
                         }),
@@ -163,18 +164,18 @@ class ProjectForm
                         ])
                         ->default('project')
                         ->reactive()
-                        ->afterStateUpdated(function ($state, $set, $get) {
+                        ->afterStateUpdated(function ($state, $set, $get): void {
                             $set('seo.schema', self::generateSchema(
                                 $state,
                                 $get('title'),
-                                $get('content')
+                                $get('content'),
                             ));
                         }),
 
                     Textarea::make('seo.schema')
                         ->rows(12)
                         ->dehydrateStateUsing(function ($state) {
-                            if (!$state) {
+                            if (! $state) {
                                 return null;
                             }
 
@@ -182,30 +183,28 @@ class ProjectForm
 
                             return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
                         })
-                        ->formatStateUsing(fn ($state) =>
-                        is_array($state)
-                            ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-                            : $state
+                        ->formatStateUsing(
+                            fn ($state) => is_array($state)
+                                ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+                                : $state,
                         ),
-
                 ])
                 ->columnSpanFull(),
-
         ]);
     }
 
     protected static function generateSchema($type, $title = null, $description = null): ?string
     {
         return json_encode([
-            "@context" => "https://schema.org",
-            "@type" => match ($type) {
+            '@context' => 'https://schema.org',
+            '@type' => match ($type) {
                 'project' => 'CreativeWork',
                 'Service' => 'Service',
                 'LocalBusiness' => 'LocalBusiness',
                 default => 'WebPage',
             },
-            "name" => $title,
-            "description" => $description,
+            'name' => $title,
+            'description' => $description,
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
 }

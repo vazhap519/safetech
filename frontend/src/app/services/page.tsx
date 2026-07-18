@@ -1,7 +1,7 @@
 import ServicesSchema from "@/components/seo/ServicesSchema";
 import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 import WhySection from "@/sections/About/Why";
 import CtaSection from "@/sections/Services/Cta/CtaSection";
 import FaqSeqAction from "@/sections/Services/Faq/FaqSeqction";
@@ -13,19 +13,15 @@ import WorkSection from "@/sections/Services/Work/WorkSection";
 
 export async function generateMetadata() {
     const { branding, locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
 
     return createMetadata({
-        title: t("meta.services.title", {
-            ka: "CCTV, ქსელები და IT სერვისები | SafeTech",
-            en: "CCTV, Networking, and IT Services | SafeTech",
-            ru: "CCTV, сети и IT-услуги | SafeTech",
-        }),
-        description: t("meta.services.description", {
-            ka: "იხილეთ SafeTech-ის CCTV, დაშვების კონტროლის, ქსელური, სერვერული და სხვა IT ინფრასტრუქტურული სერვისები.",
-            en: "Explore SafeTech CCTV, access control, networking, server, and other IT infrastructure services.",
-            ru: "Изучите услуги SafeTech: видеонаблюдение, контроль доступа, сети, серверы и другая IT-инфраструктура.",
-        }),
+        title: translateText(translations, "meta.services.title", locale, null),
+        description: translateText(
+            translations,
+            "meta.services.description",
+            locale,
+            null,
+        ),
         path: "/services",
         locale,
         keywords: [
@@ -40,13 +36,21 @@ export async function generateMetadata() {
     });
 }
 
-export default function Services() {
+type ServicesPageProps = {
+    searchParams?: Promise<{
+        category?: string;
+    }>;
+};
+
+export default async function Services({ searchParams }: ServicesPageProps) {
+    const category = (await searchParams)?.category;
+
     return (
         <div>
             <ServicesSchema />
             <HeroSection />
             <PartnerSection />
-            <ServiceSection />
+            <ServiceSection category={category} />
             <FeaturedSection />
             <WhySection />
             <WorkSection />

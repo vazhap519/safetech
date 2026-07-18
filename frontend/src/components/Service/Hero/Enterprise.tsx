@@ -1,20 +1,23 @@
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
-export default async function Enterprise(){
+export default async function Enterprise() {
     const { locale, translations } = await getSiteSettings();
+    const eyebrow = translateText(
+        translations,
+        "services.hero.eyebrow",
+        locale,
+        null,
+    );
+
+    if (!eyebrow) return null;
 
     return (
-        <div
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/10 border border-primary/20 mb-unit-md">
-            <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
-            <span className="font-mono-sm text-mono-sm text-primary uppercase tracking-widest">
-                {translateText(translations, "services.hero.eyebrow", locale, {
-                    ka: "უსაფრთხოების სერვისები",
-                    en: "Enterprise Security Solutions",
-                    ru: "Решения для безопасности",
-                })}
+        <div className="mb-unit-md inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-container/10 px-3 py-1">
+            <span className="flex h-2 w-2 animate-pulse rounded-full bg-primary" />
+            <span className="font-mono-sm text-mono-sm uppercase tracking-widest text-primary">
+                {eyebrow}
             </span>
         </div>
-    )
+    );
 }

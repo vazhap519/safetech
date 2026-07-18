@@ -5,33 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useLocalization } from "@/components/providers/LocalizationProvider";
 import { getBlog } from "@/lib/datafetch";
 
 const DEFAULT_IMAGE = "/brand-preview.svg";
 
 export default function BlogList({ category, locale }) {
-  const copy = {
-    ka: {
-      empty: "პოსტები ვერ მოიძებნა.",
-      loading: "იტვირთება...",
-      more: "ჩამოსქროლეთ მეტისთვის",
-    },
-    en: {
-      empty: "No posts found.",
-      loading: "Loading...",
-      more: "Scroll for more",
-    },
-    ru: {
-      empty: "Посты не найдены.",
-      loading: "Загрузка...",
-      more: "Прокрутите, чтобы увидеть больше",
-    },
-  }[locale] ?? {
-    empty: "No posts found.",
-    loading: "Loading...",
-    more: "Scroll for more",
-  };
-
+  const { t } = useLocalization();
+  const emptyLabel = t("blog.empty", null);
+  const loadingLabel = t("blog.loading", null);
+  const moreLabel = t("blog.more", null);
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -98,6 +81,8 @@ export default function BlogList({ category, locale }) {
     return () => observer.disconnect();
   }, [hasMore]);
 
+  const loaderLabel = loading ? loadingLabel : moreLabel;
+
   return (
     <>
       <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -107,16 +92,18 @@ export default function BlogList({ category, locale }) {
               <div className="relative h-40 w-full overflow-hidden rounded-xl border border-outline-variant/20">
                 <Image
                   src={post.image || DEFAULT_IMAGE}
-                  alt={post.title || "Blog image"}
+                  alt={post.title || ""}
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover"
                 />
               </div>
 
-              <h2 className="mt-4 line-clamp-2 font-semibold text-on-surface">
-                {post.title}
-              </h2>
+              {post.title ? (
+                <h2 className="mt-4 line-clamp-2 font-semibold text-on-surface">
+                  {post.title}
+                </h2>
+              ) : null}
 
               {post.excerpt ? (
                 <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-on-surface-variant">
@@ -128,15 +115,15 @@ export default function BlogList({ category, locale }) {
         ))}
       </div>
 
-      {!loading && posts.length === 0 ? (
-        <div className="mt-10 text-center text-on-surface-variant">{copy.empty}</div>
+      {!loading && posts.length === 0 && emptyLabel ? (
+        <div className="mt-10 text-center text-on-surface-variant">{emptyLabel}</div>
       ) : null}
 
       {hasMore ? (
         <div ref={loaderRef} className="flex h-20 items-center justify-center">
-          <span className="text-sm text-on-surface-variant">
-            {loading ? copy.loading : copy.more}
-          </span>
+          {loaderLabel ? (
+            <span className="text-sm text-on-surface-variant">{loaderLabel}</span>
+          ) : null}
         </div>
       ) : null}
     </>

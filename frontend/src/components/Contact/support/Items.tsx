@@ -1,19 +1,32 @@
 import Icon from "@/components/ui/Icon";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
+
+const itemIndexes = [0, 1, 2, 3, 4, 5];
 
 export default async function Items() {
     const { locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
+    const items = itemIndexes
+        .map((index) =>
+            translateText(
+                translations,
+                `contact.support.item.${index}`,
+                locale,
+                null,
+            ),
+        )
+        .filter(Boolean);
+
+    if (!items.length) return null;
 
     return (
-        <li className="flex items-center gap-unit-sm text-on-surface">
-            <Icon className="text-secondary" name="check_circle" />
-            {t("contact.support.item.0", {
-                ka: "დისტანციური დიაგნოსტიკა და გამართვა",
-                en: "Remote diagnostics and system tuning",
-                ru: "Удаленная диагностика и настройка системы",
-            })}
-        </li>
+        <>
+            {items.map((item) => (
+                <li className="flex items-center gap-unit-sm text-on-surface" key={item}>
+                    <Icon className="text-secondary" name="check_circle" />
+                    {item}
+                </li>
+            ))}
+        </>
     );
 }

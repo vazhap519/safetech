@@ -5,6 +5,8 @@ type SectionHeadingProps = {
 };
 
 export default function SectionHeading({ children, centered = false, eyebrow }: SectionHeadingProps) {
+    if (!eyebrow && !children) return null;
+
     return (
         <header className={centered ? "mx-auto mb-unit-xl max-w-3xl text-center" : "mb-unit-xl"}>
             {eyebrow && (
@@ -12,9 +14,11 @@ export default function SectionHeading({ children, centered = false, eyebrow }: 
                     {eyebrow}
                 </p>
             )}
-            <h2 className="font-headline-xl text-[30px] leading-tight text-white sm:text-[38px] md:text-[52px]">
-                {children}
-            </h2>
+            {children ? (
+                <h2 className="font-headline-xl text-[30px] leading-tight text-white sm:text-[38px] md:text-[52px]">
+                    {children}
+                </h2>
+            ) : null}
         </header>
     );
 }

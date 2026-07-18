@@ -40,8 +40,8 @@ function DynamicField({ field }: DynamicFieldProps) {
             {field.type === "select" ? (
                 <Select
                     id={inputId}
-                    name={inputName}
                     label={field.label}
+                    name={inputName}
                     options={field.options}
                     placeholder={field.placeholder}
                     required={field.required}
@@ -49,16 +49,16 @@ function DynamicField({ field }: DynamicFieldProps) {
             ) : field.type === "textarea" ? (
                 <Textarea
                     id={inputId}
-                    name={inputName}
                     label={field.label}
+                    name={inputName}
                     required={field.required}
                     rows={4}
                 />
             ) : (
                 <Input
                     id={inputId}
-                    name={inputName}
                     label={field.label}
+                    name={inputName}
                     required={field.required}
                     type={field.type === "number" ? "number" : "text"}
                 />
@@ -73,145 +73,109 @@ export default function Left({ services }: LeftProps) {
     const [selectedServiceSlug, setSelectedServiceSlug] = useState(
         services[0]?.slug ?? "",
     );
-    const hasServiceOptions = services.length > 0;
-
     const selectedService =
         services.find((service) => service.slug === selectedServiceSlug) ??
         services[0] ??
         null;
 
-    const chooseText = t("forms.choose", {
-        ka: "აირჩიეთ",
-        en: "Choose",
-        ru: "Выберите",
-    });
+    const title = t("contact.form.title", null);
+    const chooseText = t("forms.choose", null);
+    const contactHint = t("forms.contactHint", null);
+    const fullNameLabel = t("forms.fullName", null);
+    const companyLabel = t("forms.company", null);
+    const phoneLabel = t("forms.phoneNumber", null);
+    const emailLabel = t("forms.email", null);
+    const serviceLabel = t("forms.service", null);
+    const messageLabel = t("forms.message", null);
+    const generalInquiry = t("forms.generalInquiry", null);
+    const submittingLabel = t("forms.submitting", null);
+    const sendLabel = t("forms.send", null);
+    const privacyLabel = t("forms.privacy", null);
+
+    if (
+        !fullNameLabel ||
+        !phoneLabel ||
+        !emailLabel ||
+        !messageLabel ||
+        !sendLabel ||
+        !privacyLabel ||
+        (services.length > 0 && !serviceLabel)
+    ) {
+        return null;
+    }
 
     return (
-        <div
-            className="
-                glass-panel
-                relative
-                overflow-hidden
-                rounded-2xl
-                p-unit-md
-                sm:p-unit-lg
-                lg:col-span-7
-            "
-        >
+        <div className="glass-panel relative overflow-hidden rounded-2xl p-unit-md sm:p-unit-lg lg:col-span-7">
             <div
                 aria-hidden="true"
-                className="
-                    absolute
-                    left-0
-                    top-0
-                    h-1
-                    w-full
-                    bg-gradient-to-r
-                    from-primary
-                    to-secondary
-                    opacity-50
-                "
+                className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-primary to-secondary opacity-50"
             />
 
-            <Typography
-                as="h3"
-                variant="section-title"
-                className="mb-unit-lg"
-            >
-                {t("contact.form.title", {
-                    ka: "საკონტაქტო ფორმა",
-                    en: "Contact form",
-                    ru: "Контактная форма",
-                })}
-            </Typography>
+            {title ? (
+                <Typography as="h3" className="mb-unit-lg" variant="section-title">
+                    {title}
+                </Typography>
+            ) : null}
 
             <form className="space-y-unit-lg" onSubmit={submit}>
-                <div
+                <input
                     aria-hidden="true"
+                    autoComplete="off"
                     className="sr-only"
+                    name="website"
                     tabIndex={-1}
-                >
-                    <label htmlFor="contact-website">Website</label>
-                    <input
-                        autoComplete="off"
-                        id="contact-website"
-                        name="website"
-                        tabIndex={-1}
-                        type="text"
-                    />
-                </div>
+                    type="text"
+                />
 
                 <div className="grid gap-unit-md md:grid-cols-2">
                     <Input
-                        id="name"
-                        name="name"
-                        label={t("forms.fullName", {
-                            ka: "სახელი და გვარი",
-                            en: "Full name",
-                            ru: "Имя и фамилия",
-                        })}
-                        type="text"
                         autoComplete="name"
+                        id="name"
+                        label={fullNameLabel}
+                        name="name"
                         required
+                        type="text"
                     />
 
                     <Input
                         id="company"
+                        label={companyLabel}
                         name="company"
-                        label={t("forms.company", {
-                            ka: "კომპანია",
-                            en: "Company",
-                            ru: "Компания",
-                        })}
                         type="text"
                     />
                 </div>
 
                 <div className="grid gap-unit-md md:grid-cols-2">
                     <Input
-                        id="phone"
-                        name="phone"
-                        label={t("forms.phoneNumber", {
-                            ka: "ტელეფონის ნომერი",
-                            en: "Phone number",
-                            ru: "Номер телефона",
-                        })}
-                        type="tel"
                         autoComplete="tel"
+                        id="phone"
+                        label={phoneLabel}
+                        name="phone"
+                        type="tel"
                     />
 
                     <Input
-                        id="email"
-                        name="email"
-                        label={t("forms.email", {
-                            ka: "ელფოსტა",
-                            en: "Email",
-                            ru: "Email",
-                        })}
-                        type="email"
                         autoComplete="email"
+                        id="email"
+                        label={emailLabel}
+                        name="email"
+                        type="email"
                     />
                 </div>
 
-                <p className="text-sm text-on-surface-variant">
-                    {t("forms.contactHint", {
-                        ka: "მიუთითეთ ტელეფონის ნომერი ან ელფოსტა, რომ დაგიკავშირდეთ.",
-                        en: "Provide a phone number or email address so we can contact you.",
-                        ru: "Укажите номер телефона или email, чтобы мы могли с вами связаться.",
-                    })}
-                </p>
+                {contactHint ? (
+                    <p className="text-sm text-on-surface-variant">
+                        {contactHint}
+                    </p>
+                ) : null}
 
                 <div className="space-y-unit-md">
-                    {hasServiceOptions ? (
+                    {services.length ? (
                         <>
                             <Select
                                 id="service"
+                                label={serviceLabel}
                                 name="service_slug"
-                                label={t("forms.service", {
-                                    ka: "სერვისი",
-                                    en: "Service",
-                                    ru: "Услуга",
-                                })}
                                 onChange={(event) =>
                                     setSelectedServiceSlug(event.target.value)
                                 }
@@ -231,15 +195,11 @@ export default function Left({ services }: LeftProps) {
                                 />
                             ) : null}
                         </>
-                    ) : (
+                    ) : generalInquiry ? (
                         <p className="rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-low/30 px-4 py-3 text-sm text-on-surface-variant">
-                            {t("forms.generalInquiry", {
-                                ka: "ფორმა აქტიურია როგორც ზოგადი მოთხოვნის ფორმა. სერვისის დეტალური ველები გამოჩნდება მას შემდეგ, რაც ისინი ადმინისტრატორის მხრიდან დაემატება.",
-                                en: "The form is active as a general inquiry form. Service-specific fields will appear after they are added from the admin panel.",
-                                ru: "Форма активна как общая форма запроса. Детальные поля услуги появятся после добавления из админ-панели.",
-                            })}
+                            {generalInquiry}
                         </p>
-                    )}
+                    ) : null}
                 </div>
 
                 {selectedService ? (
@@ -250,8 +210,8 @@ export default function Left({ services }: LeftProps) {
                         {selectedService.leadForm.projectSizeOptions.length ? (
                             <Select
                                 id="project-size"
-                                name="project-size"
                                 label={selectedService.leadForm.projectSizeLabel}
+                                name="project-size"
                                 options={selectedService.leadForm.projectSizeOptions.map(
                                     (option) => ({
                                         value: option.label,
@@ -265,8 +225,8 @@ export default function Left({ services }: LeftProps) {
                         {selectedService.leadForm.propertyTypeOptions.length ? (
                             <Select
                                 id="property-type"
-                                name="property-type"
                                 label={selectedService.leadForm.propertyTypeLabel}
+                                name="property-type"
                                 options={selectedService.leadForm.propertyTypeOptions.map(
                                     (option) => ({
                                         value: option.label,
@@ -285,35 +245,21 @@ export default function Left({ services }: LeftProps) {
 
                 <Textarea
                     id="message"
+                    label={messageLabel}
                     name="message"
-                    label={t("forms.message", {
-                        ka: "შეტყობინება",
-                        en: "Message",
-                        ru: "Сообщение",
-                    })}
                     rows={5}
                 />
 
-                <PrivacyConsent />
+                <PrivacyConsent label={privacyLabel} />
 
                 <Button
                     disabled={status === "submitting"}
+                    fullWidth
+                    size="lg"
                     type="submit"
                     variant="primary"
-                    size="lg"
-                    fullWidth
                 >
-                    {status === "submitting"
-                        ? t("forms.submitting", {
-                              ka: "იგზავნება...",
-                              en: "Sending...",
-                              ru: "Отправка...",
-                          })
-                        : t("forms.send", {
-                              ka: "გაგზავნა",
-                              en: "Send",
-                              ru: "Отправить",
-                          })}
+                    {status === "submitting" ? submittingLabel || sendLabel : sendLabel}
                 </Button>
                 <p
                     aria-live="polite"

@@ -6,7 +6,7 @@ import ServiceStructuredData from "@/features/service-detail/components/ServiceS
 import { getBackendService } from "@/lib/backend";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 
 type ServicePageProps = {
     params: Promise<{ slug: string }>;
@@ -21,16 +21,16 @@ export async function generateMetadata({
         getBackendService(slug),
     ]);
     const siteName = branding.siteName;
-    const t = createTranslator(translations, locale);
 
     if (!service) {
         return {
             title: withSiteTitle(
-                t("meta.service.notFound", {
-                    ka: "სერვისი ვერ მოიძებნა",
-                    en: "Service Not Found",
-                    ru: "Услуга не найдена",
-                }),
+                translateText(
+                    translations,
+                    "meta.service.notFound",
+                    locale,
+                    null,
+                ),
                 siteName,
             ),
             robots: { index: false, follow: false },

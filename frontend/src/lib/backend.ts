@@ -16,12 +16,21 @@ import { DEFAULT_SOCIAL_IMAGE } from "@/lib/seo";
 import type { TeamMember } from "@/lib/team";
 import {
     buildTranslationMap,
-    createTranslator,
+    translateText,
+    type TranslationFallback,
     type TranslationMap,
 } from "@/lib/translations";
 
 const serverApiBase = getServerApiBase();
 const publicApiOrigin = getPublicApiOrigin();
+
+export type ContentFilterKind = "services" | "projects";
+
+export type ContentFilterCategory = {
+    id?: number;
+    name: string;
+    slug: string;
+};
 
 export type BackendContent = {
     team?: TeamMember[];
@@ -99,12 +108,57 @@ const getTranslationContext = cache(async () => {
     };
 });
 
+type ContentTranslator = (
+    key: string,
+    fallback: TranslationFallback,
+) => string;
+
+function contentFallbackText(fallback: TranslationFallback) {
+    return typeof fallback === "string" ? fallback.trim() : "";
+}
+
+function buildApiPath(
+    path: string,
+    params: Record<string, string | number | boolean | null | undefined> = {},
+) {
+    const query = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(params)) {
+        if (value === null || value === undefined || value === "") continue;
+        query.set(key, String(value));
+    }
+
+    const queryString = query.toString();
+
+    return queryString ? `${path}?${queryString}` : path;
+}
+
+function createContentTranslator(
+    translations: TranslationMap,
+    locale: Locale,
+): ContentTranslator {
+    return (key, fallback) =>
+        translateText(translations, key, locale, null) ||
+        contentFallbackText(fallback);
+}
+
 function localizeStringArray(
     values: string[],
     prefix: string,
-    t: ReturnType<typeof createTranslator>,
+    t: ContentTranslator,
 ) {
-    return values.map((value, index) => t(`${prefix}.${index}`, value));
+    return values
+        .map((value, index) => t(`${prefix}.${index}`, value))
+        .filter(Boolean);
+}
+
+type ProjectVideoFields = {
+    videoUrl?: string | null;
+    video_url?: string | null;
+};
+
+function normalizeProjectVideoUrl(project: ProjectVideoFields) {
+    return project.videoUrl || project.video_url || "";
 }
 
 function localizeServiceDetail(
@@ -112,7 +166,7 @@ function localizeServiceDetail(
     locale: Locale,
     translations: TranslationMap,
 ) {
-    const t = createTranslator(translations, locale);
+    const t = createContentTranslator(translations, locale);
     const prefix = `service.${service.slug}`;
 
     return {
@@ -186,7 +240,7 @@ function localizeProjectDetail(
     locale: Locale,
     translations: TranslationMap,
 ) {
-    const t = createTranslator(translations, locale);
+    const t = createContentTranslator(translations, locale);
     const prefix = `project.${project.slug}`;
 
     return {
@@ -264,12 +318,19 @@ function localizeProjectDetail(
     } satisfies ProjectDetail;
 }
 
-export async function getBackendServices() {
+export async function getBackendServices(category?: string) {
     const [{ locale, translations }, remote] = await Promise.all([
         getTranslationContext(),
-        fetchData<Array<ServiceDetail & { icon?: string }>>("/services"),
+        fetchData<
+            Array<
+                ServiceDetail & {
+                    category?: { slug?: string; name?: string };
+                    icon?: string;
+                }
+            >
+        >(buildApiPath("/services", { category })),
     ]);
-    const t = createTranslator(translations, locale);
+    const t = createContentTranslator(translations, locale);
 
     if (!remote?.length) return [];
 
@@ -283,8 +344,21 @@ export async function getBackendServices() {
             `service.${service.slug}.card.description`,
             service.description,
         ),
+        category: service.category?.slug || "",
         icon: service.icon || "settings",
     }));
+}
+
+export async function getBackendFilterCategories(kind: ContentFilterKind) {
+    const { locale } = await getTranslationContext();
+    const endpoint =
+        kind === "services" ? "/service-categories" : "/project-categories";
+
+    return (
+        (await fetchData<ContentFilterCategory[]>(
+            buildApiPath(endpoint, { locale }),
+        )) ?? []
+    ).filter((category) => category.slug && category.name);
 }
 
 export async function getBackendContactServices(): Promise<
@@ -301,7 +375,7 @@ export async function getBackendContactServices(): Promise<
             }>
         >("/services"),
     ]);
-    const t = createTranslator(translations, locale);
+    const t = createContentTranslator(translations, locale);
 
     if (!remote?.length) return [];
 
@@ -354,7 +428,7 @@ export async function getBackendService(
     );
 }
 
-export async function getBackendProjects() {
+export async function getBackendProjects(category?: string) {
     return (
         (await fetchData<
             Array<
@@ -365,20 +439,29 @@ export async function getBackendProjects() {
                     icon?: string;
                     accent?: "primary" | "secondary";
                     publishedAt?: string;
+                    videoUrl?: string | null;
+                    video_url?: string | null;
                 }
             >
-        >("/projects")) ?? []
+        >(buildApiPath("/projects", { category }))) ?? []
     );
 }
 
 export async function getBackendFeaturedProjects(): Promise<FeaturedProject[]> {
     const [{ locale, translations }, remote] = await Promise.all([
         getTranslationContext(),
-        fetchData<Array<ProjectDetail & { featured?: boolean }>>(
+        fetchData<
+            Array<
+                ProjectDetail & {
+                    featured?: boolean;
+                    video_url?: string | null;
+                }
+            >
+        >(
             "/projects?featured=1",
         ),
     ]);
-    const t = createTranslator(translations, locale);
+    const t = createContentTranslator(translations, locale);
 
     if (!remote?.length) return [];
 
@@ -396,6 +479,7 @@ export async function getBackendFeaturedProjects(): Promise<FeaturedProject[]> {
             `project.${item.slug}.featured.imageAlt`,
             item.imageAlt || item.name || item.title || item.slug,
         ),
+        videoUrl: normalizeProjectVideoUrl(item),
         specs: (item.specs ?? []).map((spec, index) => ({
             value: t(
                 `project.${item.slug}.featured.spec.${index}.value`,
@@ -409,12 +493,14 @@ export async function getBackendFeaturedProjects(): Promise<FeaturedProject[]> {
     }));
 }
 
-export async function getBackendProjectCards(): Promise<Project[]> {
+export async function getBackendProjectCards(
+    category?: string,
+): Promise<Project[]> {
     const [{ locale, translations }, remote] = await Promise.all([
         getTranslationContext(),
-        getBackendProjects(),
+        getBackendProjects(category),
     ]);
-    const t = createTranslator(translations, locale);
+    const t = createContentTranslator(translations, locale);
 
     if (!remote.length) return [];
 
@@ -428,13 +514,14 @@ export async function getBackendProjectCards(): Promise<Project[]> {
             `project.${item.slug}.card.description`,
             item.description,
         ),
-        category: (item.category as Project["category"]) || "offices",
+        category: item.category || "",
         icon: item.icon || "business",
         accent: item.accent || "primary",
         technology: t(
             `project.${item.slug}.technology`,
-            item.technology || "SafeTech",
+            item.technology || "",
         ),
+        videoUrl: normalizeProjectVideoUrl(item),
     }));
 }
 
@@ -443,7 +530,9 @@ export async function getBackendProject(
 ): Promise<ProjectDetail | undefined> {
     const [{ locale, translations }, remote] = await Promise.all([
         getTranslationContext(),
-        fetchData<ProjectDetail>(`/projects/${encodeURIComponent(slug)}`),
+        fetchData<ProjectDetail & { video_url?: string | null }>(
+            `/projects/${encodeURIComponent(slug)}`,
+        ),
     ]);
 
     if (!remote) return undefined;
@@ -452,6 +541,7 @@ export async function getBackendProject(
         {
             ...remote,
             image: resolveBackendAsset(remote.image),
+            videoUrl: normalizeProjectVideoUrl(remote),
             gallery: (remote.gallery ?? []).map((image) => ({
                 ...image,
                 src: resolveBackendAsset(image.src),
@@ -484,7 +574,7 @@ export async function getBackendTeam(): Promise<TeamMember[]> {
     ]);
     const settings = isRecord(content.settings) ? content.settings : {};
     const translations = buildTranslationMap(settings.translations);
-    const t = createTranslator(translations, locale);
+    const t = createContentTranslator(translations, locale);
 
     if (!content?.team?.length) return [];
 

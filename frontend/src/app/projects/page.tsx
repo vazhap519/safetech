@@ -1,7 +1,7 @@
 import ProjectsSchema from "@/components/seo/ProjectsSchema";
 import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 import ProjectsCtaSection from "@/sections/Projects/Cta/ProjectsCtaSection";
 import FeaturedProjectsSection from "@/sections/Projects/Featured/FeaturedProjectsSection";
 import ProjectsGallerySection from "@/sections/Projects/Gallery/ProjectsGallerySection";
@@ -11,19 +11,15 @@ import StandardsSection from "@/sections/Projects/Standards/StandardsSection";
 
 export async function generateMetadata() {
     const { branding, locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
 
     return createMetadata({
-        title: t("meta.projects.title", {
-            ka: "განხორციელებული IT და უსაფრთხოების პროექტები | SafeTech",
-            en: "Completed IT and Security Projects | SafeTech",
-            ru: "Реализованные IT- и охранные проекты | SafeTech",
-        }),
-        description: t("meta.projects.description", {
-            ka: "დაათვალიერეთ SafeTech-ის დასრულებული CCTV, ქსელური, სერვერული და უსაფრთხოების ინფრასტრუქტურის პროექტები.",
-            en: "Review completed SafeTech CCTV, networking, server, and security infrastructure projects.",
-            ru: "Посмотрите реализованные проекты SafeTech по видеонаблюдению, сетевой, серверной и охранной инфраструктуре.",
-        }),
+        title: translateText(translations, "meta.projects.title", locale, null),
+        description: translateText(
+            translations,
+            "meta.projects.description",
+            locale,
+            null,
+        ),
         path: "/projects",
         locale,
         keywords: [
@@ -38,14 +34,22 @@ export async function generateMetadata() {
     });
 }
 
-export default function ProjectsPage() {
+type ProjectsPageProps = {
+    searchParams?: Promise<{
+        category?: string;
+    }>;
+};
+
+export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
+    const category = (await searchParams)?.category;
+
     return (
         <>
             <ProjectsSchema />
             <ProjectsHeroSection />
             <MetricsSection />
             <FeaturedProjectsSection />
-            <ProjectsGallerySection />
+            <ProjectsGallerySection category={category} />
             <StandardsSection />
             <ProjectsCtaSection />
         </>

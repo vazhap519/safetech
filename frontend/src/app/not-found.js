@@ -1,43 +1,60 @@
 import Link from "next/link";
 
-export default function NotFound() {
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
+
+export default async function NotFound() {
+  const { locale, translations } = await getSiteSettings();
+  const title = translateText(translations, "notFound.title", locale, null);
+  const description = translateText(
+    translations,
+    "notFound.description",
+    locale,
+    null,
+  );
+  const homeLabel = translateText(translations, "notFound.home", locale, null);
+  const contactLabel = translateText(
+    translations,
+    "notFound.contact",
+    locale,
+    null,
+  );
+
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#071A2B] via-[#0A2238] to-[#071A2B] text-white px-6">
+    <section className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#071A2B] via-[#0A2238] to-[#071A2B] px-6 text-white">
+      <div className="max-w-xl text-center">
+        <h1 className="text-7xl font-bold text-[#00E0B8] md:text-9xl">404</h1>
 
-      <div className="text-center max-w-xl">
+        {title ? (
+          <h2 className="mt-6 text-2xl font-semibold md:text-3xl">{title}</h2>
+        ) : null}
 
-        <h1 className="text-7xl md:text-9xl font-bold text-[#00E0B8]">
-          404
-        </h1>
+        {description ? (
+          <p className="mt-4 text-white/70">{description}</p>
+        ) : null}
 
-        <h2 className="mt-6 text-2xl md:text-3xl font-semibold">
-          გვერდი ვერ მოიძებნა
-        </h2>
+        {homeLabel || contactLabel ? (
+          <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+            {homeLabel ? (
+              <Link
+                className="rounded-xl bg-[#00E0B8] px-8 py-3 font-semibold text-black transition hover:scale-105"
+                href="/"
+              >
+                {homeLabel}
+              </Link>
+            ) : null}
 
-        <p className="mt-4 text-white/70">
-          შესაძლოა ბმული არასწორია ან გვერდი წაშლილია
-        </p>
-
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-
-          <Link
-            href="/"
-            className="bg-[#00E0B8] text-black px-8 py-3 rounded-xl font-semibold hover:scale-105 transition"
-          >
-            მთავარ გვერდზე
-          </Link>
-
-          <Link
-            href="/contact"
-            className="border border-white/20 px-8 py-3 rounded-xl hover:bg-white/10 transition"
-          >
-            დაგვიკავშირდი
-          </Link>
-
-        </div>
-
+            {contactLabel ? (
+              <Link
+                className="rounded-xl border border-white/20 px-8 py-3 transition hover:bg-white/10"
+                href="/contact"
+              >
+                {contactLabel}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </div>
-
     </section>
   );
 }

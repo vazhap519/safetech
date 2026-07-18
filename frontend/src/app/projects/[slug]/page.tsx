@@ -5,7 +5,7 @@ import ProjectDetailSchema from "@/components/seo/ProjectDetailSchema";
 import { getBackendProject } from "@/lib/backend";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 import ChallengesSection from "@/sections/Projects/Details/ChallengesSection";
 import GallerySection from "@/sections/Projects/Details/GallerySection";
 import ProcessSection from "@/sections/Projects/Details/ProcessSection";
@@ -28,16 +28,16 @@ export async function generateMetadata({
         getBackendProject(slug),
     ]);
     const siteName = branding.siteName;
-    const t = createTranslator(translations, locale);
 
     if (!project) {
         return {
             title: withSiteTitle(
-                t("meta.project.notFound", {
-                    ka: "პროექტი ვერ მოიძებნა",
-                    en: "Project Not Found",
-                    ru: "Проект не найден",
-                }),
+                translateText(
+                    translations,
+                    "meta.project.notFound",
+                    locale,
+                    null,
+                ),
                 siteName,
             ),
             robots: { index: false, follow: false },

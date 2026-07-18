@@ -1,61 +1,46 @@
-
-
-import Typography from "@/components/ui/Typography";
 import Faq from "@/components/Contact/Faq/Faq";
+import Typography from "@/components/ui/Typography";
+import { getBackendContent } from "@/lib/backend";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
-export default function FaqSection() {
+export default async function FaqSection() {
+    const [content, { locale, translations }] = await Promise.all([
+        getBackendContent(),
+        getSiteSettings(),
+    ]);
+    const faqs = (content.faqs ?? [])
+        .filter((faq) => !faq.context || faq.context === "contact")
+        .filter((faq) => faq.question || faq.answer);
+    const title = translateText(translations, "contact.faq.title", locale, null);
+
+    if (!title && !faqs.length) return null;
+
     return (
-        <section
-            className="
-                py-unit-xl
-                bg-surface-container-low
-            "
-        >
-            <div
-                className="
-                    max-w-container-max
-                    mx-auto
-                    px-margin-desktop
-                "
-            >
-                {/* Title */}
-                <Typography
-                    as="h2"
-                    variant="contact-faq"
-                    className="
-                        max-w-4xl
-                        mx-auto
-                    "
-                >
-                    ხშირად დასმული კითხვები
-                </Typography>
+        <section className="bg-surface-container-low py-unit-xl">
+            <div className="mx-auto max-w-container-max px-margin-desktop">
+                {title ? (
+                    <Typography
+                        as="h2"
+                        className="mx-auto max-w-4xl"
+                        variant="contact-faq"
+                    >
+                        {title}
+                    </Typography>
+                ) : null}
 
-                {/* FAQ Container */}
-                <div
-                    className="
-                        max-w-3xl
-                        mx-auto
-
-                        space-y-4
-                        md:space-y-unit-md
-                    "
-                >
-                    <Faq
-                        question="რამდენ ხანში ხდება პროექტის შეფასება?"
-                        answer="პროექტის პირველადი შეფასება ხდება 24-48 საათის განმავლობაში."
-                        defaultOpen
-                    />
-
-                    <Faq
-                        question="აკეთებთ მონტაჟსაც?"
-                        answer="დიახ, ვახორციელებთ სრულ მონტაჟსა და კონფიგურაციას."
-                    />
-
-                    <Faq
-                        question="გაქვთ გარანტია?"
-                        answer="ყველა პროექტზე ვრცელდება ოფიციალური გარანტია."
-                    />
-                </div>
+                {faqs.length ? (
+                    <div className="mx-auto max-w-3xl space-y-4 md:space-y-unit-md">
+                        {faqs.map((faq, index) => (
+                            <Faq
+                                answer={faq.answer}
+                                defaultOpen={index === 0}
+                                key={`${faq.question}-${index}`}
+                                question={faq.question}
+                            />
+                        ))}
+                    </div>
+                ) : null}
             </div>
         </section>
     );

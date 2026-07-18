@@ -13,6 +13,7 @@ export type ProjectDetail = {
     seoDescription: string;
     image: string;
     imageAlt: string;
+    videoUrl?: string | null;
     meta: Array<{ label: string; value: string }>;
     scope: Array<{ value: string; label: string }>;
     specs: Array<{ value: string; label: string }>;

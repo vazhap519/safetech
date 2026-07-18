@@ -1,7 +1,7 @@
 import HomeSchema from "@/components/seo/HomeSchema";
 import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 import Cta from "@/sections/Home/Cta";
 import Hero from "@/sections/Home/Hero";
 import Industries from "@/sections/Home/Industries";
@@ -13,19 +13,15 @@ import Why from "@/sections/Home/Why";
 
 export async function generateMetadata() {
     const { branding, locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
 
     return createMetadata({
-        title: t("meta.home.title", {
-            ka: "IT ინფრასტრუქტურა და უსაფრთხოების სისტემები ბიზნესისთვის",
-            en: "IT Infrastructure and Security Systems for Business",
-            ru: "IT-инфраструктура и системы безопасности для бизнеса",
-        }),
-        description: t("meta.home.description", {
-            ka: "SafeTech უზრუნველყოფს ვიდეომეთვალყურეობას, დაშვების კონტროლს, ქსელურ და სერვერულ ინფრასტრუქტურას საქართველოში.",
-            en: "SafeTech delivers CCTV, access control, networking, and server infrastructure solutions for businesses in Georgia.",
-            ru: "SafeTech внедряет видеонаблюдение, контроль доступа, сетевую и серверную инфраструктуру для бизнеса в Грузии.",
-        }),
+        title: translateText(translations, "meta.home.title", locale, null),
+        description: translateText(
+            translations,
+            "meta.home.description",
+            locale,
+            null,
+        ),
         path: "/",
         locale,
         keywords: [

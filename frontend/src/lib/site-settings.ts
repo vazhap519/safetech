@@ -9,7 +9,7 @@ import {
 } from "@/lib/backend";
 import { getCurrentLocale } from "@/lib/locale-server";
 import type { Locale } from "@/lib/locales";
-import { DEFAULT_SOCIAL_IMAGE, SITE_NAME } from "@/lib/seo";
+import { DEFAULT_SOCIAL_IMAGE } from "@/lib/seo";
 import {
     buildTranslationMap,
     type TranslationMap,
@@ -178,7 +178,7 @@ export const defaultSiteContact: SiteContact = {
 export const defaultSiteSocialLinks: SiteSocialLink[] = [];
 
 export const defaultSiteBranding: SiteBranding = {
-    siteName: SITE_NAME,
+    siteName: "",
     tagline: "",
     logo: null,
     footerLogo: null,

@@ -3,121 +3,52 @@ import WorkTypographyComponent from "@/components/Service/Work/WorkTypographyCom
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
-const defaultSteps = [
-    {
-        title: {
-            ka: "კონსულტაცია",
-            en: "Consultation",
-            ru: "Консультация",
-        },
-        description: {
-            ka: "საჭიროებების განსაზღვრა",
-            en: "Define requirements",
-            ru: "Определяем потребности",
-        },
-    },
-    {
-        title: {
-            ka: "ობიექტის შეფასება",
-            en: "Site assessment",
-            ru: "Оценка объекта",
-        },
-        description: {
-            ka: "ვათვალიერებთ სივრცეს და ტექნიკურ პირობებს.",
-            en: "We inspect the space and technical conditions.",
-            ru: "Изучаем пространство и технические условия.",
-        },
-    },
-    {
-        title: {
-            ka: "პროექტირება",
-            en: "Planning",
-            ru: "Проектирование",
-        },
-        description: {
-            ka: "ვამზადებთ გადაწყვეტას, აღჭურვილობას და ვადებს.",
-            en: "We prepare the solution, equipment, and timeline.",
-            ru: "Готовим решение, оборудование и сроки.",
-        },
-    },
-    {
-        title: {
-            ka: "მონტაჟი",
-            en: "Installation",
-            ru: "Монтаж",
-        },
-        description: {
-            ka: "ვასრულებთ პროფესიონალურ ინსტალაციას.",
-            en: "We complete the professional installation.",
-            ru: "Выполняем профессиональную установку.",
-        },
-    },
-    {
-        title: {
-            ka: "გამართვა",
-            en: "Configuration",
-            ru: "Настройка",
-        },
-        description: {
-            ka: "ვაკონფიგურირებთ სისტემას და ვამოწმებთ მუშაობას.",
-            en: "We configure the system and test performance.",
-            ru: "Настраиваем систему и проверяем работу.",
-        },
-    },
-    {
-        title: {
-            ka: "მხარდაჭერა",
-            en: "Support",
-            ru: "Поддержка",
-        },
-        description: {
-            ka: "გთავაზობთ მომსახურებას გაშვების შემდეგაც.",
-            en: "We provide support after launch as well.",
-            ru: "Поддерживаем систему после запуска.",
-        },
-    },
-];
+const stepIndexes = [0, 1, 2, 3, 4, 5];
 
 export default async function WorkSection() {
     const { locale, translations } = await getSiteSettings();
-    const title = translateText(translations, "services.work.title", locale, {
-        ka: "მუშაობის პროცესი",
-        en: "Work process",
-        ru: "Процесс работы",
-    });
+    const title = translateText(translations, "services.work.title", locale, null);
+    const steps = stepIndexes
+        .map((index) => ({
+            description: translateText(
+                translations,
+                `services.work.step.${index}.description`,
+                locale,
+                null,
+            ),
+            index: index + 1,
+            title: translateText(
+                translations,
+                `services.work.step.${index}.title`,
+                locale,
+                null,
+            ),
+        }))
+        .filter((step) => step.title || step.description);
+
+    if (!title && !steps.length) return null;
 
     return (
-        <section className="py-unit-xl bg-surface-container-low/30 relative overflow-hidden">
-            <div className="ambient-glow -bottom-40 -right-40 opacity-30"></div>
-            <div className="px-margin-desktop max-w-container-max mx-auto">
-<WorkTypographyComponent title={title}/>
-                <div className="relative">
-
-                    <div className="hidden lg:block absolute top-12 left-0 w-full h-1 timeline-line opacity-20"></div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-unit-lg relative">
-
-                  {defaultSteps.map((step, index) => (
-                      <StepComponent
-                          description={translateText(
-                              translations,
-                              `services.work.step.${index}.description`,
-                              locale,
-                              step.description,
-                          )}
-                          index={index + 1}
-                          key={`work-step-${index}`}
-                          title={translateText(
-                              translations,
-                              `services.work.step.${index}.title`,
-                              locale,
-                              step.title,
-                          )}
-                      />
-                  ))}
-
+        <section className="relative overflow-hidden bg-surface-container-low/30 py-unit-xl">
+            <div className="ambient-glow -bottom-40 -right-40 opacity-30" />
+            <div className="mx-auto max-w-container-max px-margin-desktop">
+                {title ? <WorkTypographyComponent title={title} /> : null}
+                {steps.length ? (
+                    <div className="relative">
+                        <div className="timeline-line absolute left-0 top-12 hidden h-1 w-full opacity-20 lg:block" />
+                        <div className="relative grid grid-cols-1 gap-unit-lg sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                            {steps.map((step) => (
+                                <StepComponent
+                                    description={step.description}
+                                    index={step.index}
+                                    key={`work-step-${step.index}`}
+                                    title={step.title}
+                                />
+                            ))}
+                        </div>
                     </div>
-                </div>
+                ) : null}
             </div>
         </section>
-    )
+    );
 }

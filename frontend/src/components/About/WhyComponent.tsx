@@ -14,12 +14,16 @@ export default function WhyComponent({
         <div className="glass-card rounded-2xl p-unit-lg text-center">
             <Icon className="text-3xl text-primary" name={icon} />
             <div>
-                <Typography as="h3" variant="why-component-header">
-                    {title}
-                </Typography>
-                <Typography as="p" variant="description">
-                    {description}
-                </Typography>
+                {title ? (
+                    <Typography as="h3" variant="why-component-header">
+                        {title}
+                    </Typography>
+                ) : null}
+                {description ? (
+                    <Typography as="p" variant="description">
+                        {description}
+                    </Typography>
+                ) : null}
             </div>
         </div>
     );

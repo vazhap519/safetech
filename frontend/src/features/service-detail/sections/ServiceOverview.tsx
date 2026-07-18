@@ -10,24 +10,23 @@ export default async function ServiceOverview({
     service: ServiceDetail;
 }) {
     const { locale, translations } = await getSiteSettings();
+    const imageAltSuffix = translateText(
+        translations,
+        "service.detail.overview.imageAltSuffix",
+        locale,
+        null,
+    );
 
     return (
         <section
-            aria-labelledby="service-overview-title"
+            aria-labelledby={
+                service.overview.title ? "service-overview-title" : undefined
+            }
             className="scroll-reveal grid items-center gap-unit-xl px-margin-desktop py-unit-xl md:grid-cols-2"
         >
-            <div className="group relative aspect-video overflow-hidden rounded-2xl glass-card">
+            <div className="group glass-card relative aspect-video overflow-hidden rounded-2xl">
                 <Image
-                    alt={`${service.name} ${translateText(
-                        translations,
-                        "service.detail.overview.imageAltSuffix",
-                        locale,
-                        {
-                            ka: "ინფრასტრუქტურა",
-                            en: "infrastructure",
-                            ru: "инфраструктура",
-                        },
-                    )}`}
+                    alt={[service.name, imageAltSuffix].filter(Boolean).join(" ")}
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -40,29 +39,35 @@ export default async function ServiceOverview({
                 />
             </div>
             <div className="space-y-unit-lg">
-                <h2
-                    className="font-headline-xl text-[30px] leading-tight text-white sm:text-[38px] md:text-[52px]"
-                    id="service-overview-title"
-                >
-                    {service.overview.title}
-                </h2>
-                <div className="space-y-unit-md font-body-md leading-relaxed text-on-surface-variant">
-                    {service.overview.paragraphs.map((paragraph) => (
-                        <p key={paragraph}>{paragraph}</p>
-                    ))}
-                </div>
-                <dl className="grid grid-cols-2 gap-unit-lg sm:grid-cols-4">
-                    {service.overview.stats.map((stat) => (
-                        <div className="flex flex-col" key={stat.label}>
-                            <dt className="order-2 text-label-md text-on-surface-variant">
-                                {stat.label}
-                            </dt>
-                            <dd className="text-2xl font-bold text-secondary">
-                                {stat.value}
-                            </dd>
-                        </div>
-                    ))}
-                </dl>
+                {service.overview.title ? (
+                    <h2
+                        className="font-headline-xl text-[30px] leading-tight text-white sm:text-[38px] md:text-[52px]"
+                        id="service-overview-title"
+                    >
+                        {service.overview.title}
+                    </h2>
+                ) : null}
+                {service.overview.paragraphs.length ? (
+                    <div className="space-y-unit-md font-body-md leading-relaxed text-on-surface-variant">
+                        {service.overview.paragraphs.map((paragraph) => (
+                            <p key={paragraph}>{paragraph}</p>
+                        ))}
+                    </div>
+                ) : null}
+                {service.overview.stats.length ? (
+                    <dl className="grid grid-cols-2 gap-unit-lg sm:grid-cols-4">
+                        {service.overview.stats.map((stat) => (
+                            <div className="flex flex-col" key={stat.label}>
+                                <dt className="order-2 text-label-md text-on-surface-variant">
+                                    {stat.label}
+                                </dt>
+                                <dd className="text-2xl font-bold text-secondary">
+                                    {stat.value}
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+                ) : null}
             </div>
         </section>
     );

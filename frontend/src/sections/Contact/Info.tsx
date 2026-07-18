@@ -1,53 +1,53 @@
 import Icon from "@/components/ui/Icon";
+import { toEmailHref, toPhoneHref } from "@/lib/contact-links";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
-
-function toPhoneHref(phone: string) {
-    return `tel:${phone.replace(/[^\d+]/g, "")}`;
-}
+import { translateText } from "@/lib/translations";
 
 export default async function Info() {
     const { contact, locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
     const items = [
         {
             icon: "call",
-            label: t("contact.info.phone", {
-                ka: "ტელეფონი",
-                en: "Phone",
-                ru: "Телефон",
-            }),
+            label: translateText(
+                translations,
+                "contact.info.phone",
+                locale,
+                null,
+            ),
             value: contact.phone,
             href: contact.phone ? toPhoneHref(contact.phone) : "",
             valueClassName: "break-words",
         },
         {
             icon: "mail",
-            label: t("contact.info.email", {
-                ka: "ელფოსტა",
-                en: "Email",
-                ru: "Email",
-            }),
+            label: translateText(
+                translations,
+                "contact.info.email",
+                locale,
+                null,
+            ),
             value: contact.email,
-            href: contact.email ? `mailto:${contact.email}` : "",
+            href: contact.email ? toEmailHref(contact.email) : "",
             valueClassName: "break-all",
         },
         {
             icon: "location_on",
-            label: t("contact.info.address", {
-                ka: "მისამართი",
-                en: "Address",
-                ru: "Адрес",
-            }),
+            label: translateText(
+                translations,
+                "contact.info.address",
+                locale,
+                null,
+            ),
             value: contact.address,
         },
         {
             icon: "schedule",
-            label: t("contact.info.hours", {
-                ka: "სამუშაო საათები",
-                en: "Working hours",
-                ru: "Часы работы",
-            }),
+            label: translateText(
+                translations,
+                "contact.info.hours",
+                locale,
+                null,
+            ),
             value: contact.hours,
         },
     ].filter((item) => item.value);
@@ -59,7 +59,7 @@ export default async function Info() {
             <div className="mx-auto grid max-w-container-max grid-cols-1 gap-unit-md px-margin-desktop sm:grid-cols-2 lg:grid-cols-4">
                 {items.map((item) => (
                     <div
-                        key={item.label}
+                        key={`${item.icon}-${item.value}`}
                         className="glass-panel rounded-xl p-unit-md text-center md:p-unit-lg"
                     >
                         <Icon
@@ -67,9 +67,11 @@ export default async function Info() {
                             name={item.icon}
                         />
 
-                        <p className="mb-2 text-xs font-label-md uppercase tracking-tighter text-on-surface-variant md:text-label-md">
-                            {item.label}
-                        </p>
+                        {item.label ? (
+                            <p className="mb-2 text-xs font-label-md uppercase tracking-tighter text-on-surface-variant md:text-label-md">
+                                {item.label}
+                            </p>
+                        ) : null}
 
                         {item.href ? (
                             <a

@@ -164,10 +164,10 @@
 //     );
 // }
 
-import { ElementType, ReactNode } from "react";
+import { ElementType, HTMLAttributes, ReactNode } from "react";
 import clsx from "clsx";
 
-type TypographyProps = {
+type TypographyProps = HTMLAttributes<HTMLElement> & {
     children: ReactNode;
 
     variant?:
@@ -198,6 +198,7 @@ export default function Typography({
                                        variant = "section-title",
                                        as: Component = "p",
                                        className,
+                                       ...props
                                    }: TypographyProps) {
     return (
         <Component
@@ -473,6 +474,7 @@ text-on-surface-variant
 `,
                 className
             )}
+            {...props}
         >
             {children}
         </Component>

@@ -2,8 +2,15 @@
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 
-export default function PrivacyConsent() {
+type PrivacyConsentProps = {
+    label?: string | null;
+};
+
+export default function PrivacyConsent({ label }: PrivacyConsentProps) {
     const { t } = useLocalization();
+    const consentLabel = label ?? t("forms.privacy", null);
+
+    if (!consentLabel) return null;
 
     return (
         <label className="flex items-start gap-3 text-sm leading-relaxed text-on-surface-variant">
@@ -14,13 +21,7 @@ export default function PrivacyConsent() {
                 type="checkbox"
                 value="accepted"
             />
-            <span>
-                {t("forms.privacy", {
-                    ka: "ვეთანხმები ჩემი საკონტაქტო მონაცემების დამუშავებას მოთხოვნაზე პასუხის გასაცემად.",
-                    en: "I agree to the processing of my contact details for responding to my request.",
-                    ru: "Я согласен(на) на обработку моих контактных данных для ответа на мой запрос.",
-                })}
-            </span>
+            <span>{consentLabel}</span>
         </label>
     );
 }

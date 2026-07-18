@@ -2,15 +2,14 @@
 
 import {
   FaFacebookF,
+  FaGithub,
   FaInstagram,
   FaLinkedinIn,
+  FaTiktok,
   FaTwitter,
   FaYoutube,
-  FaTiktok,
-  FaGithub,
 } from "react-icons/fa";
 
-/* 🔥 ICON MAP */
 const socialIcons = {
   facebook: FaFacebookF,
   instagram: FaInstagram,
@@ -21,7 +20,6 @@ const socialIcons = {
   github: FaGithub,
 };
 
-/* 🎨 COLORS */
 const socialStyles = {
   facebook: "bg-[#1877F2] text-white",
   instagram:
@@ -33,88 +31,64 @@ const socialStyles = {
   github: "bg-black text-white",
 };
 
-/* 🔥 LOCAL FALLBACK SOCIALS */
-const defaultSocials = {
-  facebook: "#",
-  instagram: "#",
-  linkedin: "#",
-  twitter: "#",
-  youtube: "#",
-  tiktok: "#",
-  github: "#",
-};
-
 export default function EmptyState({
   empty,
   title,
   description,
   coming_soon,
 }) {
-const year = new Date().getFullYear();
+  const finalTitle = title || empty?.title || "";
+  const finalDescription = description || empty?.description || "";
+  const finalComingSoon = coming_soon || empty?.coming_soon || "";
+  const socials = empty?.socials || {};
+  const hasSocials = Object.keys(socials).length > 0;
 
-  /* 🔥 TEXT FALLBACK */
-  const finalTitle =
-    title || empty?.title || "მონაცემები ვერ მოიძებნა";
-
-  const finalDescription =
-    description ||
-    empty?.description ||
-    "ამ ეტაპზე ინფორმაცია არ არის ხელმისაწვდომი";
-
-  const finalComingSoon =
-    coming_soon ||
-    empty?.coming_soon ||
-    "🚀 გვერდზე მალე დაემატება ახალი კონტენტი";
-
-  /* 🔗 SOCIALS */
-  const socials = empty?.socials || defaultSocials;
+  if (!finalTitle && !finalDescription && !finalComingSoon && !hasSocials) {
+    return null;
+  }
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 bg-gradient-to-br from-[#eef6fb] to-[#ffffff]">
-      <div className="max-w-lg w-full text-center bg-white/80 backdrop-blur-md shadow-xl rounded-2xl p-8 border border-gray-100">
+    <div className="flex min-h-[70vh] items-center justify-center bg-gradient-to-br from-[#eef6fb] to-[#ffffff] px-4">
+      <div className="w-full max-w-lg rounded-2xl border border-gray-100 bg-white/80 p-8 text-center shadow-xl backdrop-blur-md">
+        {finalTitle ? (
+          <h2 className="text-2xl font-bold text-[#0B3C5D] md:text-3xl">
+            {finalTitle}
+          </h2>
+        ) : null}
 
-        <div className="text-6xl mb-4 animate-bounce">📭</div>
+        {finalDescription ? (
+          <p className="mt-3 text-gray-500">{finalDescription}</p>
+        ) : null}
 
-        <h2 className="text-2xl md:text-3xl font-bold text-[#0B3C5D]">
-          {finalTitle}
-        </h2>
+        {finalComingSoon ? (
+          <p className="mt-4 text-sm text-gray-400">{finalComingSoon}</p>
+        ) : null}
 
-        <p className="text-gray-500 mt-3">
-          {finalDescription}
-        </p>
+        {hasSocials ? (
+          <>
+            <div className="my-6 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+            <div className="flex flex-wrap justify-center gap-4">
+              {Object.entries(socials).map(([platform, url]) => {
+                const Icon = socialIcons[platform];
+                const style = socialStyles[platform] || "bg-gray-200 text-black";
 
-        <p className="mt-4 text-sm text-gray-400">
-          {finalComingSoon}
-        </p>
+                if (!Icon || !url) return null;
 
-        <div className="my-6 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
-
-        {/* 🔥 SOCIALS */}
-        <div className="flex justify-center gap-4 flex-wrap">
-          {Object.entries(socials).map(([platform, url]) => {
-            const Icon = socialIcons[platform];
-            const style =
-              socialStyles[platform] || "bg-gray-200 text-black";
-
-            if (!Icon) return null;
-
-            return (
-              <a
-                key={platform}
-                href={url || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-10 h-10 flex items-center justify-center rounded-full ${style} hover:scale-110 transition`}
-              >
-                <Icon />
-              </a>
-            );
-          })}
-        </div>
-
-        <p className="text-xs text-gray-400 mt-6">
-          © {year}
-        </p>
+                return (
+                  <a
+                    key={platform}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${style} transition hover:scale-110`}
+                  >
+                    <Icon />
+                  </a>
+                );
+              })}
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );

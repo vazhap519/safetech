@@ -1,11 +1,20 @@
 import { getLanguageTag } from "@/lib/locales";
-import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
+import { absoluteLocalizedUrl, absoluteSiteUrl, SITE_NAME } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 
 export default async function ContactSchema() {
     const { contact, branding, locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
+    const siteName = branding.siteName || SITE_NAME;
+    const description = translateText(
+        translations,
+        "meta.contact.description",
+        locale,
+        null,
+    );
+    const pageName =
+        translateText(translations, "meta.contact.title", locale, null) ||
+        siteName;
     const contactPoint =
         contact.phone || contact.email
             ? [
@@ -21,16 +30,12 @@ export default async function ContactSchema() {
 
     const mainEntity: Record<string, unknown> = {
         "@type": "Organization",
-        name: branding.siteName,
+        name: siteName,
         url: absoluteLocalizedUrl("/", locale),
         logo: absoluteSiteUrl(
             branding.logo || branding.footerLogo || branding.defaultImage,
         ),
-        description: t("meta.contact.description", {
-            ka: "დაგვიკავშირდით CCTV, ქსელური, სერვერული და უსაფრთხოების სისტემების პროექტებისთვის საქართველოში.",
-            en: "Contact SafeTech for CCTV, networking, server, and security system projects in Georgia.",
-            ru: "Свяжитесь с SafeTech по проектам видеонаблюдения, сетевой, серверной и охранной инфраструктуры в Грузии.",
-        }),
+        ...(description ? { description } : {}),
         ...(contact.phone ? { telephone: contact.phone } : {}),
         ...(contact.email ? { email: contact.email } : {}),
         ...(contact.address
@@ -49,11 +54,7 @@ export default async function ContactSchema() {
     const schema = {
         "@context": "https://schema.org",
         "@type": "ContactPage",
-        name: t("meta.contact.title", {
-            ka: "კონტაქტი და კონსულტაცია | SafeTech",
-            en: "Contact and Consultation | SafeTech",
-            ru: "Контакты и консультация | SafeTech",
-        }),
+        name: pageName,
         url: absoluteLocalizedUrl("/contact", locale),
         inLanguage: getLanguageTag(locale),
         mainEntity,

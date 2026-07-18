@@ -62,13 +62,7 @@ export function useLeadForm(source: string) {
 
         if (!email && !phone) {
             setStatus("error");
-            setMessage(
-                t("forms.validation.contact", {
-                    ka: "მიუთითეთ ელფოსტა ან ტელეფონის ნომერი.",
-                    en: "Please provide an email address or phone number.",
-                    ru: "Укажите email или номер телефона.",
-                }),
-            );
+            setMessage(t("forms.validation.contact", null));
             return;
         }
 
@@ -97,35 +91,20 @@ export function useLeadForm(source: string) {
                 throw new Error(
                     validationMessage ||
                         result.message ||
-                        t("forms.error.submit", {
-                            ka: "მოთხოვნის გაგზავნა ვერ მოხერხდა.",
-                            en: "We couldn't send your request.",
-                            ru: "Не удалось отправить запрос.",
-                        }),
+                        t("forms.error.submit", null),
                 );
             }
 
             form.reset();
             setStatus("success");
-            setMessage(
-                result.message ||
-                    t("forms.success.submit", {
-                        ka: "მადლობა! თქვენი მოთხოვნა წარმატებით გაიგზავნა.",
-                        en: "Thank you! Your request has been sent successfully.",
-                        ru: "Спасибо! Ваш запрос успешно отправлен.",
-                    }),
-            );
+            setMessage(result.message || t("forms.success.submit", null));
             trackEvent("generate_lead", { form_source: source });
         } catch (error) {
             setStatus("error");
             setMessage(
                 error instanceof Error && error.message !== "Failed to fetch"
                     ? error.message
-                    : t("forms.error.network", {
-                          ka: "სერვერთან დაკავშირება ვერ მოხერხდა. სცადეთ ხელახლა.",
-                          en: "We couldn't reach the server. Please try again.",
-                          ru: "Не удалось связаться с сервером. Попробуйте снова.",
-                      }),
+                    : t("forms.error.network", null),
             );
         }
     }

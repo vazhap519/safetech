@@ -28,6 +28,7 @@ class ProjectCategory extends Model
         'seo_keywords' => 'array',
         'faq' => 'array',
         'schema' => 'array',
+        'translations' => 'array',
         'noindex' => 'boolean',
     ];
 

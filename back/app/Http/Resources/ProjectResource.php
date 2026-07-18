@@ -21,6 +21,8 @@ class ProjectResource extends JsonResource
             'seoDescription' => $this->seo_description ?: data_get($this->seo, 'description', $description),
             'image' => $image,
             'imageAlt' => $this->image_alt ?: $this->title ?: $name,
+            'videoUrl' => $this->video_url,
+            'video_url' => $this->video_url,
             'category' => $this->category_slug,
             'categoryName' => $this->category_name,
             'technology' => $this->technology,

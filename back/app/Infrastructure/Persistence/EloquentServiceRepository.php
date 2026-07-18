@@ -8,11 +8,18 @@ use Illuminate\Support\Collection;
 
 final class EloquentServiceRepository implements ServiceRepository
 {
-    public function allPublished(): Collection
+    public function allPublished(?string $category = null): Collection
     {
         return Service::query()
             ->published()
             ->with(['category', 'media', 'faqs' => fn ($query) => $query->active()])
+            ->when(
+                $category && $category !== 'all',
+                fn ($query) => $query->whereHas(
+                    'category',
+                    fn ($categoryQuery) => $categoryQuery->where('slug', $category),
+                ),
+            )
             ->get();
     }
 

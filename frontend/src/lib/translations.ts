@@ -56,27 +56,23 @@ export function translateText(
     locale: Locale,
     fallback: TranslationFallback,
 ) {
+    void fallback;
+
     const configured = translations[key]?.[locale]?.trim();
 
     if (configured) {
         return configured;
     }
 
-    if (typeof fallback === "string") {
-        return fallback;
-    }
+    return "";
+}
 
-    if (!isRecord(fallback)) {
-        return "";
-    }
-
-    return (
-        (typeof fallback[locale] === "string" ? fallback[locale] : "") ||
-        (typeof fallback.ka === "string" ? fallback.ka : "") ||
-        (typeof fallback.en === "string" ? fallback.en : "") ||
-        (typeof fallback.ru === "string" ? fallback.ru : "") ||
-        ""
-    );
+export function hasTranslatedText(
+    translations: TranslationMap,
+    keys: string[],
+    locale: Locale,
+) {
+    return keys.some((key) => Boolean(translations[key]?.[locale]?.trim()));
 }
 
 export function createTranslator(

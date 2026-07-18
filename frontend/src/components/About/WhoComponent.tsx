@@ -13,12 +13,16 @@ export default function WhoComponent({
     return (
         <div className="glass-card flex flex-col gap-unit-md rounded-xl p-unit-lg">
             <Icon className="text-4xl text-primary" name={icon} />
-            <Typography as="h3" className="text-xl font-headline-md">
-                {title}
-            </Typography>
-            <Typography as="p" variant="section-description">
-                {description}
-            </Typography>
+            {title ? (
+                <Typography as="h3" className="text-xl font-headline-md">
+                    {title}
+                </Typography>
+            ) : null}
+            {description ? (
+                <Typography as="p" variant="section-description">
+                    {description}
+                </Typography>
+            ) : null}
         </div>
     );
 }

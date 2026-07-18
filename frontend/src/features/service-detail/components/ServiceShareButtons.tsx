@@ -79,7 +79,6 @@ export default function ServiceShareButtons({
                             target={isExternal ? "_blank" : undefined}
                         >
                             <SocialIcon className="size-4" network={network} />
-                            <span>{label}</span>
                         </a>
                     );
                 })}

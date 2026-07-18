@@ -9,169 +9,97 @@ import { useLeadForm } from "@/hooks/useLeadForm";
 export default function Cta() {
     const { status, message, submit } = useLeadForm("home-cta");
     const { t } = useLocalization();
+    const eyebrow = t("home.cta.eyebrow", null);
+    const title = t("home.cta.title", null);
+    const description = t("home.cta.description", null);
+    const emailLabel = t("home.cta.emailLabel", null);
+    const emailPlaceholder = t("home.cta.emailPlaceholder", null);
+    const submitLabel = t("home.cta.submit", null);
+    const submittingLabel = t("forms.submitting", null);
+    const privacyLabel = t("forms.privacy", null);
+    const note = t("home.cta.note", null);
+    const canRenderForm = Boolean(emailLabel && submitLabel && privacyLabel);
+
+    if (
+        !eyebrow &&
+        !title &&
+        !description &&
+        !canRenderForm &&
+        !note
+    ) {
+        return null;
+    }
 
     return (
-        <section
-            className="
-                relative
-                mx-auto
-                max-w-container-max
-                overflow-hidden
-                px-5
-                py-20
-                md:px-10
-                md:py-28
-                xl:px-margin-desktop
-            "
-        >
-            <div
-                className="
-                    mesh-gradient
-                    relative
-                    z-10
-                    overflow-hidden
-                    rounded-[28px]
-                    border
-                    border-outline-variant/20
-                    px-6
-                    py-14
-                    text-center
-                    sm:px-10
-                    md:rounded-[40px]
-                    md:px-16
-                    md:py-20
-                "
-            >
-                <div
-                    className="
-                        absolute
-                        inset-0
-                        bg-primary/5
-                        blur-[120px]
-                        opacity-70
-                    "
-                />
+        <section className="relative mx-auto max-w-container-max overflow-hidden px-5 py-20 md:px-10 md:py-28 xl:px-margin-desktop">
+            <div className="mesh-gradient relative z-10 overflow-hidden rounded-[28px] border border-outline-variant/20 px-6 py-14 text-center sm:px-10 md:rounded-[40px] md:px-16 md:py-20">
+                <div className="absolute inset-0 bg-primary/5 opacity-70 blur-[120px]" />
 
-                <div
-                    className="
-                        relative
-                        z-20
-                        mx-auto
-                        max-w-4xl
-                        space-y-8
-                    "
-                >
-                    <span
-                        className="
-                            inline-block
-                            font-mono-sm
-                            text-mono-sm
-                            uppercase
-                            tracking-[0.3em]
-                            text-primary
-                        "
-                    >
-                        {t("home.cta.eyebrow", {
-                            ka: "უფასო კონსულტაცია",
-                            en: "Free consultation",
-                            ru: "Бесплатная консультация",
-                        })}
-                    </span>
+                <div className="relative z-20 mx-auto max-w-4xl space-y-8">
+                    {eyebrow ? (
+                        <span className="inline-block font-mono-sm text-mono-sm uppercase tracking-[0.3em] text-primary">
+                            {eyebrow}
+                        </span>
+                    ) : null}
 
-                    <Typography as="h2" variant="cta-title">
-                        {t("home.cta.title", {
-                            ka: "დავგეგმოთ თქვენი უსაფრთხო IT ინფრასტრუქტურა",
-                            en: "Let's plan your secure IT infrastructure",
-                            ru: "Давайте спланируем вашу безопасную IT-инфраструктуру",
-                        })}
-                    </Typography>
+                    {title ? (
+                        <Typography as="h2" variant="cta-title">
+                            {title}
+                        </Typography>
+                    ) : null}
 
-                    <Typography
-                        as="p"
-                        variant="section-description"
-                        className="mx-auto max-w-2xl"
-                    >
-                        {t("home.cta.description", {
-                            ka: "ჩვენი ექსპერტები მზად არიან დაგეხმარონ საუკეთესო გადაწყვეტილების შერჩევაში.",
-                            en: "Our experts are ready to help you choose the right solution.",
-                            ru: "Наши эксперты готовы помочь вам выбрать оптимальное решение.",
-                        })}
-                    </Typography>
+                    {description ? (
+                        <Typography
+                            as="p"
+                            className="mx-auto max-w-2xl"
+                            variant="section-description"
+                        >
+                            {description}
+                        </Typography>
+                    ) : null}
 
-                    <form
-                        className="mx-auto w-full max-w-2xl space-y-4 pt-2"
-                        onSubmit={submit}
-                    >
-                        <input
-                            aria-hidden="true"
-                            autoComplete="off"
-                            className="sr-only"
-                            name="website"
-                            tabIndex={-1}
-                            type="text"
-                        />
-
-                        <div className="flex flex-col items-center justify-center gap-4 md:flex-row">
-                            <label className="sr-only" htmlFor="home-cta-email">
-                                {t("home.cta.emailLabel", {
-                                    ka: "თქვენი ელ-ფოსტა",
-                                    en: "Your email",
-                                    ru: "Ваш email",
-                                })}
-                            </label>
+                    {canRenderForm ? (
+                        <form
+                            className="mx-auto w-full max-w-2xl space-y-4 pt-2"
+                            onSubmit={submit}
+                        >
                             <input
-                                id="home-cta-email"
-                                autoComplete="email"
-                                className="
-                                    w-full
-                                    rounded-xl
-                                    border
-                                    border-outline-variant/30
-                                    bg-surface-container-highest/50
-                                    px-6
-                                    py-4
-                                    font-body-md
-                                    text-on-surface
-                                    outline-none
-                                    backdrop-blur-xl
-                                    transition-all
-                                    duration-300
-                                    focus:border-transparent
-                                    focus:ring-2
-                                    focus:ring-primary
-                                    md:flex-1
-                                "
-                                name="email"
-                                placeholder={t("home.cta.emailPlaceholder", {
-                                    ka: "თქვენი ელ-ფოსტა",
-                                    en: "Your email",
-                                    ru: "Ваш email",
-                                })}
-                                required
-                                type="email"
+                                aria-hidden="true"
+                                autoComplete="off"
+                                className="sr-only"
+                                name="website"
+                                tabIndex={-1}
+                                type="text"
                             />
 
-                            <Button
-                                variant="cta"
-                                size="lg"
-                                type="submit"
-                                disabled={status === "submitting"}
-                            >
-                                {status === "submitting"
-                                    ? t("forms.submitting", {
-                                          ka: "იგზავნება...",
-                                          en: "Sending...",
-                                          ru: "Отправка...",
-                                      })
-                                    : t("home.cta.submit", {
-                                          ka: "კონსულტაცია",
-                                          en: "Consultation",
-                                          ru: "Консультация",
-                                      })}
-                            </Button>
-                        </div>
-                        <PrivacyConsent />
-                    </form>
+                            <div className="flex flex-col items-center justify-center gap-4 md:flex-row">
+                                <label className="sr-only" htmlFor="home-cta-email">
+                                    {emailLabel}
+                                </label>
+                                <input
+                                    id="home-cta-email"
+                                    autoComplete="email"
+                                    className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-highest/50 px-6 py-4 font-body-md text-on-surface outline-none backdrop-blur-xl transition-all duration-300 focus:border-transparent focus:ring-2 focus:ring-primary md:flex-1"
+                                    name="email"
+                                    placeholder={emailPlaceholder}
+                                    required
+                                    type="email"
+                                />
+
+                                <Button
+                                    disabled={status === "submitting"}
+                                    size="lg"
+                                    type="submit"
+                                    variant="cta"
+                                >
+                                    {status === "submitting"
+                                        ? submittingLabel || submitLabel
+                                        : submitLabel}
+                                </Button>
+                            </div>
+                            <PrivacyConsent label={privacyLabel} />
+                        </form>
+                    ) : null}
                     <p
                         aria-live="polite"
                         className={status === "error" ? "text-error" : "text-success"}
@@ -180,37 +108,15 @@ export default function Cta() {
                         {message}
                     </p>
 
-                    <p
-                        className="
-                            text-sm
-                            font-label-md
-                            leading-relaxed
-                            text-on-surface-variant/50
-                            md:text-label-md
-                        "
-                    >
-                        {t("home.cta.note", {
-                            ka: "კონსულტაცია უფასოა და არ გაკისრებთ არანაირ ვალდებულებას.",
-                            en: "The consultation is free and does not obligate you in any way.",
-                            ru: "Консультация бесплатна и не накладывает на вас никаких обязательств.",
-                        })}
-                    </p>
+                    {note ? (
+                        <p className="text-sm font-label-md leading-relaxed text-on-surface-variant/50 md:text-label-md">
+                            {note}
+                        </p>
+                    ) : null}
                 </div>
             </div>
 
-            <div
-                className="
-                    absolute
-                    bottom-[-250px]
-                    left-[-250px]
-                    -z-10
-                    h-[600px]
-                    w-[600px]
-                    rounded-full
-                    bg-primary/5
-                    blur-[160px]
-                "
-            />
+            <div className="absolute bottom-[-250px] left-[-250px] -z-10 h-[600px] w-[600px] rounded-full bg-primary/5 blur-[160px]" />
         </section>
     );
 }

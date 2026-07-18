@@ -12,7 +12,6 @@ import {
     absoluteLocalizedUrl,
     absoluteSiteUrl,
     buildLanguageAlternates,
-    SITE_NAME,
     SITE_URL,
 } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -20,12 +19,15 @@ import { createTranslator } from "@/lib/translations";
 import { GoogleTagManager } from "@next/third-parties/google";
 
 function withDynamicSiteTitle(title: string, siteName: string) {
+    if (!title) return siteName;
+    if (!siteName) return title;
+
     return title.includes(siteName) ? title : `${title} | ${siteName}`;
 }
 
 export async function generateMetadata(): Promise<Metadata> {
     const { branding, locale, translations } = await getSiteSettings();
-    const siteName = branding.siteName || SITE_NAME;
+    const siteName = branding.siteName;
     const t = createTranslator(translations, locale);
     const canonical = absoluteLocalizedUrl("/", locale);
     const title = withDynamicSiteTitle(
@@ -48,7 +50,7 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
         metadataBase: new URL(SITE_URL),
         applicationName: siteName,
-        authors: [{ name: siteName, url: SITE_URL }],
+        authors: siteName ? [{ name: siteName, url: SITE_URL }] : [],
         creator: siteName,
         publisher: siteName,
         title,
@@ -118,7 +120,7 @@ export default async function RootLayout({
 }>) {
     const { contact, branding, locale, socialLinks, translations } =
         await getSiteSettings();
-    const siteName = branding.siteName || SITE_NAME;
+    const siteName = branding.siteName;
     const gtmId = process.env.NEXT_PUBLIC_GTM_ID?.trim();
     const publicApiOrigin = (() => {
         try {
@@ -142,7 +144,8 @@ export default async function RootLayout({
               ]
             : undefined;
 
-    const organizationSchema: Record<string, unknown> = {
+    const organizationSchema: Record<string, unknown> | null = siteName
+        ? {
         "@context": "https://schema.org",
         "@type": "Organization",
         "@id": `${absoluteSiteUrl("/")}#organization`,
@@ -168,7 +171,8 @@ export default async function RootLayout({
         ...(socialLinks.length
             ? { sameAs: socialLinks.map((item) => item.href) }
             : {}),
-    };
+    }
+        : null;
 
     return (
         <html
@@ -199,15 +203,17 @@ export default async function RootLayout({
                 `}
             >
                 {gtmId ? <GoogleTagManager gtmId={gtmId} /> : null}
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{
-                        __html: JSON.stringify(organizationSchema).replace(
-                            /</g,
-                            "\\u003c",
-                        ),
-                    }}
-                />
+                {organizationSchema ? (
+                    <script
+                        type="application/ld+json"
+                        dangerouslySetInnerHTML={{
+                            __html: JSON.stringify(organizationSchema).replace(
+                                /</g,
+                                "\\u003c",
+                            ),
+                        }}
+                    />
+                ) : null}
 
                 <LocalizationProvider
                     locale={locale}

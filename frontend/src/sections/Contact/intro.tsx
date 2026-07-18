@@ -1,84 +1,109 @@
 import Image from "@/components/ui/Image";
 import Typography from "@/components/ui/Typography";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { hasTranslatedText, translateText } from "@/lib/translations";
+
+const introKeys = [
+    "contact.intro.title",
+    "contact.intro.paragraph.0",
+    "contact.intro.paragraph.1",
+    "contact.intro.badge.0",
+    "contact.intro.badge.1",
+];
 
 export default async function Intro() {
     const { branding, locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
+
+    if (!hasTranslatedText(translations, introKeys, locale)) {
+        return null;
+    }
+
+    const title = translateText(translations, "contact.intro.title", locale, null);
+    const paragraphs = [
+        translateText(translations, "contact.intro.paragraph.0", locale, null),
+        translateText(translations, "contact.intro.paragraph.1", locale, null),
+    ].filter(Boolean);
+    const badges = [
+        {
+            className: "bg-secondary shadow-[0_0_8px_#4cd7f6]",
+            textClassName: "text-secondary",
+            label: translateText(
+                translations,
+                "contact.intro.badge.0",
+                locale,
+                null,
+            ),
+        },
+        {
+            className: "bg-primary shadow-[0_0_8px_#b4c5ff]",
+            textClassName: "text-primary",
+            label: translateText(
+                translations,
+                "contact.intro.badge.1",
+                locale,
+                null,
+            ),
+        },
+    ].filter((badge) => badge.label);
+    const imageAlt = translateText(
+        translations,
+        "contact.intro.imageAlt",
+        locale,
+        null,
+    );
 
     return (
         <section className="bg-background py-unit-xl">
             <div className="container mx-auto grid max-w-container-max grid-cols-1 items-center gap-unit-lg px-margin-desktop md:grid-cols-2 lg:gap-unit-xl">
                 <div className="order-2 md:order-1">
-                    <Typography
-                        as="h2"
-                        variant="contact-intro-title"
-                        className="mb-unit-md"
-                    >
-                        {t("contact.intro.title", {
-                            ka: "ციფრული გამძლეობა",
-                            en: "Digital resilience",
-                            ru: "Цифровая устойчивость",
-                        })}
-                    </Typography>
+                    {title ? (
+                        <Typography
+                            as="h2"
+                            className="mb-unit-md"
+                            variant="contact-intro-title"
+                        >
+                            {title}
+                        </Typography>
+                    ) : null}
 
-                    <div className="space-y-unit-md text-base leading-relaxed text-on-surface-variant md:text-lg">
-                        <p>
-                            {t("contact.intro.paragraph.0", {
-                                ka: "SafeTech-ის ექსპერტთა ჯგუფი უზრუნველყოფს კორპორატიული დონის ინფრასტრუქტურის დაპროექტებას, რომელიც პასუხობს უსაფრთხოების თანამედროვე გამოწვევებს.",
-                                en: "The SafeTech expert team designs enterprise-grade infrastructure aligned with modern security challenges.",
-                                ru: "Команда экспертов SafeTech проектирует инфраструктуру корпоративного уровня, отвечающую современным вызовам безопасности.",
-                            })}
-                        </p>
-
-                        <p>
-                            {t("contact.intro.paragraph.1", {
-                                ka: "ჩვენი მიდგომა ეფუძნება სისტემურ ანალიზს და მასშტაბირებად არქიტექტურას, რაც იცავს თქვენს მონაცემებსა და ფიზიკურ აქტივებს.",
-                                en: "Our approach is built on systems analysis and scalable architecture that protects your data and physical assets.",
-                                ru: "Наш подход основан на системном анализе и масштабируемой архитектуре, которая защищает ваши данные и физические активы.",
-                            })}
-                        </p>
-                    </div>
-
-                    <div className="mt-unit-lg flex flex-col gap-unit-md sm:flex-row">
-                        <div className="flex items-center gap-unit-xs">
-                            <span className="h-2 w-2 rounded-full bg-secondary shadow-[0_0_8px_#4cd7f6] animate-pulse" />
-                            <span className="text-xs uppercase tracking-widest text-secondary md:text-sm">
-                                {t("contact.intro.badge.0", {
-                                    ka: "აქტიური მონიტორინგი",
-                                    en: "Active monitoring",
-                                    ru: "Активный мониторинг",
-                                })}
-                            </span>
+                    {paragraphs.length ? (
+                        <div className="space-y-unit-md text-base leading-relaxed text-on-surface-variant md:text-lg">
+                            {paragraphs.map((paragraph) => (
+                                <p key={paragraph}>{paragraph}</p>
+                            ))}
                         </div>
+                    ) : null}
 
-                        <div className="flex items-center gap-unit-xs">
-                            <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_#b4c5ff] animate-pulse" />
-                            <span className="text-xs uppercase tracking-widest text-primary md:text-sm">
-                                {t("contact.intro.badge.1", {
-                                    ka: "კორპორატიული უსაფრთხოება",
-                                    en: "Enterprise security",
-                                    ru: "Корпоративная безопасность",
-                                })}
-                            </span>
+                    {badges.length ? (
+                        <div className="mt-unit-lg flex flex-col gap-unit-md sm:flex-row">
+                            {badges.map((badge) => (
+                                <div
+                                    className="flex items-center gap-unit-xs"
+                                    key={badge.label}
+                                >
+                                    <span
+                                        className={`h-2 w-2 animate-pulse rounded-full ${badge.className}`}
+                                    />
+                                    <span
+                                        className={`text-xs uppercase tracking-widest md:text-sm ${badge.textClassName}`}
+                                    >
+                                        {badge.label}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
-                    </div>
+                    ) : null}
                 </div>
 
                 <div className="order-1 md:order-2">
                     <div className="glass-panel group overflow-hidden rounded-xl p-2">
                         <Image
-                            variant="contact-intro"
-                            src={branding.defaultImage}
-                            alt={t("contact.intro.imageAlt", {
-                                ka: "სერვერული თაროების ვიზუალიზაცია",
-                                en: "Server rack visualization",
-                                ru: "Визуализация серверных стоек",
-                            })}
-                            width={610}
+                            alt={imageAlt || title}
                             height={410}
                             sizes="(max-width: 768px) 100vw, 50vw"
+                            src={branding.defaultImage}
+                            variant="contact-intro"
+                            width={610}
                         />
                     </div>
                 </div>

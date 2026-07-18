@@ -90,7 +90,14 @@ export function localizeHref<T extends string | { pathname?: string | null }>(
 }
 
 export function withSiteTitle(title: string, siteName = SITE_NAME): string {
-    return title.includes(siteName) ? title : `${title} | ${siteName}`;
+    const cleanTitle = cleanText(title);
+    const cleanSiteName = cleanText(siteName) || SITE_NAME;
+
+    if (!cleanTitle) return cleanSiteName;
+
+    return cleanTitle.includes(cleanSiteName)
+        ? cleanTitle
+        : `${cleanTitle} | ${cleanSiteName}`;
 }
 
 export function createMetadata({
@@ -104,7 +111,10 @@ export function createMetadata({
     type = "website",
 }: SeoProps): Metadata {
     const url = absoluteLocalizedUrl(path, locale);
-    const fullTitle = withSiteTitle(title, siteName);
+    const resolvedSiteName = cleanText(siteName) || SITE_NAME;
+    const resolvedTitle = cleanText(title) || resolvedSiteName;
+    const resolvedDescription = cleanText(description) || resolvedSiteName;
+    const fullTitle = withSiteTitle(resolvedTitle, resolvedSiteName);
     const socialImage = absoluteSiteUrl(image);
     const languageAlternates = buildLanguageAlternates(path);
     const alternateLocales = supportedLocales
@@ -115,7 +125,7 @@ export function createMetadata({
         title: {
             absolute: fullTitle,
         },
-        description,
+        description: resolvedDescription,
         keywords,
         alternates: {
             canonical: url,
@@ -126,23 +136,23 @@ export function createMetadata({
         },
         openGraph: {
             title: fullTitle,
-            description,
+            description: resolvedDescription,
             url,
-            siteName,
+            siteName: resolvedSiteName,
             locale: getOgLocale(locale),
             alternateLocale: alternateLocales,
             type,
             images: [
                 {
                     url: socialImage,
-                    alt: title,
+                    alt: resolvedTitle,
                 },
             ],
         },
         twitter: {
             card: "summary_large_image",
             title: fullTitle,
-            description,
+            description: resolvedDescription,
             images: [socialImage],
         },
         robots: {

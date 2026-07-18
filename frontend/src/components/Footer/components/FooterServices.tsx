@@ -9,18 +9,17 @@ export default async function FooterServices() {
         getSiteSettings(),
         getBackendServices(),
     ]);
+    const title = translateText(translations, "footer.services.title", locale, null);
 
     if (!services.length) return null;
 
     return (
-        <nav aria-label="სერვისები" className="space-y-4">
-            <Typography as="h2" variant="footer-title">
-                {translateText(translations, "footer.services.title", locale, {
-                    ka: "სერვისები",
-                    en: "Services",
-                    ru: "Услуги",
-                })}
-            </Typography>
+        <nav aria-label={title || undefined} className="space-y-4">
+            {title ? (
+                <Typography as="h2" variant="footer-title">
+                    {title}
+                </Typography>
+            ) : null}
             <ul className="space-y-2 font-body-md text-body-md text-on-surface-variant">
                 {services.slice(0, 6).map((service) => (
                     <li key={service.slug}>

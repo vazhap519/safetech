@@ -19,7 +19,7 @@ class ProjectsController extends Controller
         $perPage = (int) $request->get('per_page', 6); // 🔥 dynamic pagination
 
         $query = Project::published()
-            ->select('id', 'title', 'slug', 'excerpt', 'category_id')
+            ->select('id', 'title', 'slug', 'excerpt', 'category_id', 'video_url')
             ->with([
                 'category:id,name,slug',
                 'media'
@@ -54,6 +54,8 @@ class ProjectsController extends Controller
 
                 /* 🔥 IMAGE */
                 'image' => $project->thumb_url,
+                'videoUrl' => $project->video_url,
+                'video_url' => $project->video_url,
 
                 /* 🔥 CATEGORY */
                 'category' => [
@@ -145,6 +147,7 @@ class ProjectsController extends Controller
                 'gallery' => $project->gallery_urls,
 
                 /* 🔥 VIDEO */
+                'videoUrl' => $project->video_url,
                 'video_url' => $project->video_url,
 
                 /* 🔥 CATEGORY */
@@ -192,6 +195,8 @@ class ProjectsController extends Controller
                 'slug' => $project->slug,
                 'excerpt' => $project->excerpt,
                 'image' => $project->thumb_url,
+                'videoUrl' => $project->video_url,
+                'video_url' => $project->video_url,
 
                 'category' => [
                     'name' => $project->category->name,

@@ -1,92 +1,76 @@
-import LocalizedLink from "@/components/ui/LocalizedLink";
-
 import ConsultationTrigger from "@/components/consultation/ConsultationTrigger";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import Image from "@/components/ui/Image";
+import LocalizedLink from "@/components/ui/LocalizedLink";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 const navigation = [
-    {
-        href: "/",
-        key: "nav.home",
-        fallback: { ka: "მთავარი", en: "Home", ru: "Главная" },
-    },
-    {
-        href: "/services",
-        key: "nav.services",
-        fallback: { ka: "სერვისები", en: "Services", ru: "Услуги" },
-    },
-    {
-        href: "/projects",
-        key: "nav.projects",
-        fallback: { ka: "პროექტები", en: "Projects", ru: "Проекты" },
-    },
-    {
-        href: "/about",
-        key: "nav.about",
-        fallback: { ka: "ჩვენს შესახებ", en: "About", ru: "О нас" },
-    },
-    {
-        href: "/contact",
-        key: "nav.contact",
-        fallback: { ka: "კონტაქტი", en: "Contact", ru: "Контакты" },
-    },
+    { href: "/", key: "nav.home" },
+    { href: "/services", key: "nav.services" },
+    { href: "/projects", key: "nav.projects" },
+    { href: "/about", key: "nav.about" },
+    { href: "/contact", key: "nav.contact" },
 ];
 
 export default async function Navbar() {
     const { branding, locale, translations } = await getSiteSettings();
     const siteName = branding.siteName;
+    const homeLabel = translateText(translations, "nav.home", locale, null);
+    const navigationItems = navigation
+        .map((item) => ({
+            ...item,
+            label: translateText(translations, item.key, locale, null),
+        }))
+        .filter((item) => item.label);
     const consultationLabel = translateText(
         translations,
         "nav.consultation",
         locale,
-        {
-            ka: "კონსულტაცია",
-            en: "Consultation",
-            ru: "Консультация",
-        },
+        null,
     );
+    const hasBrand = Boolean(branding.logo || siteName);
 
     return (
         <nav
-            aria-label="მთავარი ნავიგაცია"
+            aria-label={translateText(translations, "nav.region", locale, null)}
             className="fixed top-0 z-50 w-full border-b border-outline-variant/20 bg-surface/90 shadow-2xl shadow-primary/5 backdrop-blur-xl"
         >
             <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-5 md:px-margin-desktop">
-                <LocalizedLink
-                    aria-label={`${siteName} - მთავარი`}
-                    className="flex min-h-11 items-center gap-3 text-primary"
-                    href="/"
-                >
-                    {branding.logo ? (
-                        <Image
-                            alt={siteName}
-                            className="h-11 w-auto object-contain"
-                            height={44}
-                            src={branding.logo}
-                            unoptimized
-                            width={160}
-                        />
-                    ) : null}
-                    <span className="font-headline-md text-headline-md font-bold tracking-tight">
-                        {siteName}
-                    </span>
-                </LocalizedLink>
+                {hasBrand ? (
+                    <LocalizedLink
+                        aria-label={homeLabel || siteName}
+                        className="flex min-h-11 items-center gap-3 text-primary"
+                        href="/"
+                    >
+                        {branding.logo ? (
+                            <Image
+                                alt={siteName || homeLabel}
+                                className="h-11 w-auto object-contain"
+                                height={44}
+                                src={branding.logo}
+                                unoptimized
+                                width={160}
+                            />
+                        ) : null}
+                        {siteName ? (
+                            <span className="font-headline-md text-headline-md font-bold tracking-tight">
+                                {siteName}
+                            </span>
+                        ) : null}
+                    </LocalizedLink>
+                ) : (
+                    <span aria-hidden="true" />
+                )}
 
                 <ul className="hidden items-center gap-unit-lg lg:flex">
-                    {navigation.map((item) => (
+                    {navigationItems.map((item) => (
                         <li key={item.href}>
                             <LocalizedLink
                                 className="inline-flex min-h-11 items-center font-label-md text-label-md text-on-surface-variant transition-colors hover:text-primary"
                                 href={item.href}
                             >
-                                {translateText(
-                                    translations,
-                                    item.key,
-                                    locale,
-                                    item.fallback,
-                                )}
+                                {item.label}
                             </LocalizedLink>
                         </li>
                     ))}
@@ -94,14 +78,21 @@ export default async function Navbar() {
 
                 <div className="hidden items-center gap-3 lg:flex">
                     <LocaleSwitcher currentLocale={locale} variant="header" />
-                    <ConsultationTrigger className="min-h-11 rounded-xl bg-primary-container px-6 py-3 font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition-all hover:brightness-110">
-                        {consultationLabel}
-                    </ConsultationTrigger>
+                    {consultationLabel ? (
+                        <ConsultationTrigger className="min-h-11 rounded-xl bg-primary-container px-6 py-3 font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition-all hover:brightness-110">
+                            {consultationLabel}
+                        </ConsultationTrigger>
+                    ) : null}
                 </div>
 
                 <details className="group relative lg:hidden">
                     <summary
-                        aria-label="ნავიგაციის მენიუს გახსნა"
+                        aria-label={translateText(
+                            translations,
+                            "nav.mobile.open",
+                            locale,
+                            null,
+                        )}
                         className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-outline-variant/30 bg-surface-container/50 text-on-surface backdrop-blur-xl marker:hidden hover:bg-surface-container-high"
                     >
                         <svg
@@ -133,18 +124,13 @@ export default async function Navbar() {
                     </summary>
                     <div className="absolute right-0 top-14 hidden w-[min(20rem,calc(100vw-2.5rem))] rounded-2xl border border-outline-variant/20 bg-surface/95 p-5 shadow-2xl backdrop-blur-2xl group-open:block">
                         <ul className="flex flex-col gap-4">
-                            {navigation.map((item) => (
+                            {navigationItems.map((item) => (
                                 <li key={item.href}>
                                     <LocalizedLink
                                         className="flex min-h-11 items-center text-on-surface-variant transition-colors hover:text-primary"
                                         href={item.href}
                                     >
-                                        {translateText(
-                                            translations,
-                                            item.key,
-                                            locale,
-                                            item.fallback,
-                                        )}
+                                        {item.label}
                                     </LocalizedLink>
                                 </li>
                             ))}
@@ -154,11 +140,13 @@ export default async function Navbar() {
                                     variant="header"
                                 />
                             </li>
-                            <li>
-                                <ConsultationTrigger className="min-h-11 w-full rounded-xl bg-primary-container px-6 py-3 text-center font-medium text-on-primary-container">
-                                    {consultationLabel}
-                                </ConsultationTrigger>
-                            </li>
+                            {consultationLabel ? (
+                                <li>
+                                    <ConsultationTrigger className="min-h-11 w-full rounded-xl bg-primary-container px-6 py-3 text-center font-medium text-on-primary-container">
+                                        {consultationLabel}
+                                    </ConsultationTrigger>
+                                </li>
+                            ) : null}
                         </ul>
                     </div>
                 </details>

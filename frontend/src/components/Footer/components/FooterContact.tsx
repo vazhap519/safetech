@@ -1,13 +1,11 @@
 import Typography from "@/components/ui/Typography";
+import { toEmailHref, toPhoneHref } from "@/lib/contact-links";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
-function toPhoneHref(phone: string) {
-    return `tel:${phone.replace(/[^\d+]/g, "")}`;
-}
-
 export default async function FooterContact() {
     const { contact, locale, translations } = await getSiteSettings();
+    const title = translateText(translations, "footer.contact.title", locale, null);
     const items = [
         contact.phone
             ? {
@@ -28,7 +26,7 @@ export default async function FooterContact() {
                   content: (
                       <a
                           className="inline-flex min-h-10 items-center break-all transition-colors hover:text-secondary"
-                          href={`mailto:${contact.email}`}
+                          href={toEmailHref(contact.email)}
                       >
                           {contact.email}
                       </a>
@@ -47,13 +45,11 @@ export default async function FooterContact() {
 
     return (
         <div className="space-y-4">
-            <Typography as="h2" variant="footer-title">
-                {translateText(translations, "footer.contact.title", locale, {
-                    ka: "კონტაქტი",
-                    en: "Contact",
-                    ru: "Контакты",
-                })}
-            </Typography>
+            {title ? (
+                <Typography as="h2" variant="footer-title">
+                    {title}
+                </Typography>
+            ) : null}
             <address className="not-italic">
                 <ul className="space-y-2 font-body-md text-body-md text-on-surface-variant">
                     {items.map((item) => (

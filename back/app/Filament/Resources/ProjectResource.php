@@ -26,6 +26,8 @@ class ProjectResource extends Resource
 {
     protected static ?string $model = Project::class;
 
+    protected static bool $isDiscovered = false;
+
     protected static ?string $navigationLabel = 'პროექტები';
 
     protected static ?string $modelLabel = 'პროექტი';
@@ -117,6 +119,12 @@ class ProjectResource extends Resource
                 ])
                 ->default('offices')
                 ->required(),
+            TextInput::make('video_url')
+                ->label('YouTube video URL')
+                ->url()
+                ->maxLength(2048)
+                ->placeholder('https://www.youtube.com/watch?v=...')
+                ->helperText('Paste a YouTube link here. The frontend will show it as a video on projects and project details.'),
             TextInput::make('technology')
                 ->label('ტექნოლოგია'),
             Section::make('კონტენტი და SEO 3 ენაზე')

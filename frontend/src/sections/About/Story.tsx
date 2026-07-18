@@ -1,16 +1,27 @@
+import StoryComponentsImage from "@/components/About/StoryComponents/StoryComponentsImage";
+import StoryComponentsTypography from "@/components/About/StoryComponents/StoryComponentsTypography";
+import { getSiteSettings } from "@/lib/site-settings";
+import { hasTranslatedText } from "@/lib/translations";
 
- import StoryomponentsTypography from "../../components/About/StoryComponents/StoryComponentsTypography";
-import StoryomponentsImage from "@/components/About/StoryComponents/StoryComponentsImage";
+const storyKeys = [
+    "about.story.title",
+    "about.story.paragraph.0",
+    "about.story.paragraph.1",
+];
 
-export default function StorySection() {
+export default async function StorySection() {
+    const { locale, translations } = await getSiteSettings();
+
+    if (!hasTranslatedText(translations, storyKeys, locale)) {
+        return null;
+    }
+
     return (
-        <section className="py-unit-xl bg-surface-container-lowest">
-            <div
-                className="max-w-container-max mx-auto px-margin-desktop grid grid-cols-1 md:grid-cols-2 gap-unit-xl items-center">
-                <StoryomponentsTypography/>
-<StoryomponentsImage/>
+        <section className="bg-surface-container-lowest py-unit-xl">
+            <div className="mx-auto grid max-w-container-max grid-cols-1 items-center gap-unit-xl px-margin-desktop md:grid-cols-2">
+                <StoryComponentsTypography />
+                <StoryComponentsImage />
             </div>
         </section>
-
-    )
+    );
 }

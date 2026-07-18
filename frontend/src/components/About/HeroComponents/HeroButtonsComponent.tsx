@@ -1,27 +1,34 @@
 import ActionLink from "@/components/ui/ActionLink";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 
 export default async function HeroButtons() {
     const { locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
+    const primaryLabel = translateText(
+        translations,
+        "about.hero.cta.primary",
+        locale,
+        null,
+    );
+    const secondaryLabel = translateText(
+        translations,
+        "about.hero.cta.secondary",
+        locale,
+        null,
+    );
+
+    if (!primaryLabel && !secondaryLabel) return null;
 
     return (
         <div className="flex flex-col items-center justify-center gap-unit-md pt-4 sm:flex-row">
-            <ActionLink href="/contact">
-                {t("about.hero.cta.primary", {
-                    ka: "მოთხოვნა",
-                    en: "Request service",
-                    ru: "Оставить заявку",
-                })}
-            </ActionLink>
-            <ActionLink href="/projects" variant="glass">
-                {t("about.hero.cta.secondary", {
-                    ka: "ჩვენი პროექტები",
-                    en: "Our projects",
-                    ru: "Наши проекты",
-                })}
-            </ActionLink>
+            {primaryLabel ? (
+                <ActionLink href="/contact">{primaryLabel}</ActionLink>
+            ) : null}
+            {secondaryLabel ? (
+                <ActionLink href="/projects" variant="glass">
+                    {secondaryLabel}
+                </ActionLink>
+            ) : null}
         </div>
     );
 }

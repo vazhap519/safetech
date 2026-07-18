@@ -1,14 +1,13 @@
 import ProjectMetric from "@/components/Projects/ProjectMetric";
 import { getBackendProjects } from "@/lib/backend";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 
 export default async function MetricsSection() {
     const [projects, { locale, translations }] = await Promise.all([
         getBackendProjects(),
         getSiteSettings(),
     ]);
-    const t = createTranslator(translations, locale);
 
     if (!projects.length) return null;
 
@@ -23,45 +22,54 @@ export default async function MetricsSection() {
     const metrics = [
         {
             value: String(projects.length),
-            label: t("projects.metrics.projects", {
-                ka: "პროექტი",
-                en: "Projects",
-                ru: "Проекты",
-            }),
+            label: translateText(
+                translations,
+                "projects.metrics.projects",
+                locale,
+                null,
+            ),
         },
         {
             value: String(featuredCount),
-            label: t("projects.metrics.featured", {
-                ka: "რჩეული",
-                en: "Featured",
-                ru: "Избранные",
-            }),
+            label: translateText(
+                translations,
+                "projects.metrics.featured",
+                locale,
+                null,
+            ),
         },
         {
             value: String(categoryCount),
-            label: t("projects.metrics.categories", {
-                ka: "კატეგორია",
-                en: "Categories",
-                ru: "Категории",
-            }),
+            label: translateText(
+                translations,
+                "projects.metrics.categories",
+                locale,
+                null,
+            ),
         },
         {
             value: String(technologyCount),
-            label: t("projects.metrics.technologies", {
-                ka: "ტექნოლოგია",
-                en: "Technologies",
-                ru: "Технологии",
-            }),
+            label: translateText(
+                translations,
+                "projects.metrics.technologies",
+                locale,
+                null,
+            ),
         },
-    ];
+    ].filter((metric) => metric.label);
+
+    if (!metrics.length) return null;
+
+    const regionLabel = translateText(
+        translations,
+        "projects.metrics.region",
+        locale,
+        null,
+    );
 
     return (
         <section
-            aria-label={t("projects.metrics.region", {
-                ka: "პროექტების სტატისტიკა",
-                en: "Project statistics",
-                ru: "Статистика проектов",
-            })}
+            aria-label={regionLabel || undefined}
             className="border-y border-outline-variant/10 bg-surface-container-lowest py-unit-xl"
         >
             <div className="mx-auto max-w-container-max px-margin-desktop">

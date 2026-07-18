@@ -1,50 +1,33 @@
-import ActionLink from "@/components/ui/ActionLink";
-import Typography from "@/components/ui/Typography";
+import CmsCtaSection from "@/components/cta/CmsCtaSection";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 
 export default async function FinalSection() {
     const { locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
+    const title = translateText(translations, "contact.final.title", locale, null);
+    const buttonLabel = translateText(
+        translations,
+        "contact.final.button",
+        locale,
+        null,
+    );
 
     return (
-        <section
-            className="
-                bg-gradient-to-b
-                from-surface-container-low
-                to-background
-                py-16
-                sm:py-20
-                md:py-24
-                lg:py-unit-xl
-            "
-        >
-            <div className="mx-auto flex max-w-container-max flex-col items-center justify-center px-4 sm:px-6 lg:px-margin-desktop">
-                <Typography
-                    as="h2"
-                    variant="contact-final-cta"
-                    className="mx-auto max-w-5xl text-balance text-center"
-                >
-                    {t("contact.final.title", {
-                        ka: "SafeTech - თანამედროვე ინფრასტრუქტურის პარტნიორი",
-                        en: "SafeTech - your partner for modern infrastructure",
-                        ru: "SafeTech - партнер в современной инфраструктуре",
-                    })}
-                </Typography>
-
-                <div className="mt-6 flex w-full justify-center md:mt-8">
-                    <ActionLink
-                        href="#contact-form"
-                        className="w-full max-w-xs sm:w-auto sm:max-w-none"
-                    >
-                        {t("contact.final.button", {
-                            ka: "კონსულტაციის მოთხოვნა",
-                            en: "Request consultation",
-                            ru: "Запросить консультацию",
-                        })}
-                    </ActionLink>
-                </div>
-            </div>
-        </section>
+        <CmsCtaSection
+            actions={[
+                {
+                    label: buttonLabel,
+                    href: "#contact-form",
+                    className: "w-full max-w-xs sm:w-auto sm:max-w-none",
+                },
+            ]}
+            actionsClassName="mt-6 flex w-full justify-center md:mt-8"
+            contentClassName="mx-auto flex max-w-container-max flex-col items-center justify-center px-4 sm:px-6 lg:px-margin-desktop"
+            panelClassName="contents"
+            sectionClassName="bg-gradient-to-b from-surface-container-low to-background py-16 sm:py-20 md:py-24 lg:py-unit-xl"
+            title={title}
+            titleClassName="mx-auto max-w-5xl text-balance text-center"
+            titleVariant="contact-final-cta"
+        />
     );
 }

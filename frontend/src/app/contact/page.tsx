@@ -1,7 +1,7 @@
 import ContactSchema from "@/components/seo/ContactSchema";
 import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 import FaqSection from "@/sections/Contact/FaqSection";
 import FinalSection from "@/sections/Contact/Final";
 import Form from "@/sections/Contact/Form";
@@ -12,19 +12,15 @@ import Support from "@/sections/Contact/Support";
 
 export async function generateMetadata() {
     const { branding, locale, translations } = await getSiteSettings();
-    const t = createTranslator(translations, locale);
 
     return createMetadata({
-        title: t("meta.contact.title", {
-            ka: "კონტაქტი და კონსულტაცია | SafeTech",
-            en: "Contact and Consultation | SafeTech",
-            ru: "Контакты и консультация | SafeTech",
-        }),
-        description: t("meta.contact.description", {
-            ka: "დაგვიკავშირდით CCTV, ქსელური, სერვერული და უსაფრთხოების სისტემების პროექტებისთვის საქართველოში.",
-            en: "Contact SafeTech for CCTV, networking, server, and security system projects in Georgia.",
-            ru: "Свяжитесь с SafeTech по проектам видеонаблюдения, сетевой, серверной и охранной инфраструктуры в Грузии.",
-        }),
+        title: translateText(translations, "meta.contact.title", locale, null),
+        description: translateText(
+            translations,
+            "meta.contact.description",
+            locale,
+            null,
+        ),
         path: "/contact",
         locale,
         keywords: [

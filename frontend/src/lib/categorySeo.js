@@ -20,18 +20,10 @@ export function keywordValues(category) {
     .filter(Boolean);
 }
 
-export function categoryMetadata({
-  category,
-  fallbackName,
-  fallbackTitle,
-  fallbackDescription,
-  canonical,
-}) {
-  const name = category?.name || fallbackName;
-
+export function categoryMetadata({ category, canonical }) {
   return buildMetadata({
-    title: category?.seo_title || fallbackTitle(name),
-    description: category?.seo_description || fallbackDescription(name),
+    title: category?.seo_title || category?.name || "",
+    description: category?.seo_description || "",
     keywords: keywordValues(category),
     canonical,
     noindex: Boolean(category?.noindex),
@@ -43,13 +35,11 @@ export function categoryMetadata({
   });
 }
 
-export function categorySchemas({ category, fallbackSchema }) {
+export function categorySchemas({ category }) {
   const schemas = [];
 
   if (category?.schema) {
     schemas.push(...(Array.isArray(category.schema) ? category.schema : [category.schema]));
-  } else if (fallbackSchema) {
-    schemas.push(fallbackSchema);
   }
 
   const faq = Array.isArray(category?.faq) ? category.faq : [];

@@ -13,7 +13,9 @@ final class ProjectController extends Controller
     public function index(Request $request, ProjectRepository $repository): AnonymousResourceCollection
     {
         $featured = $request->has('featured') ? $request->boolean('featured') : null;
-        return ProjectResource::collection($repository->allPublished($featured));
+        $category = $request->string('category')->toString() ?: null;
+
+        return ProjectResource::collection($repository->allPublished($featured, $category));
     }
 
     public function show(string $slug, ProjectRepository $repository): ProjectResource

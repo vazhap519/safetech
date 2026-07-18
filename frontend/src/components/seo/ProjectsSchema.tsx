@@ -3,9 +3,9 @@ import {
     getBackendProjectCards,
 } from "@/lib/backend";
 import { getLanguageTag } from "@/lib/locales";
-import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
+import { absoluteLocalizedUrl, absoluteSiteUrl, SITE_NAME } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { createTranslator } from "@/lib/translations";
+import { translateText } from "@/lib/translations";
 
 type ProjectSchemaItem = {
     name: string;
@@ -14,13 +14,22 @@ type ProjectSchemaItem = {
 };
 
 export default async function ProjectsSchema() {
-    const [{ locale, translations }, featuredProjects, projects] =
+    const [{ branding, locale, translations }, featuredProjects, projects] =
         await Promise.all([
             getSiteSettings(),
             getBackendFeaturedProjects(),
             getBackendProjectCards(),
         ]);
-    const t = createTranslator(translations, locale);
+    const siteName = branding.siteName || SITE_NAME;
+    const name =
+        translateText(translations, "meta.projects.title", locale, null) ||
+        siteName;
+    const description = translateText(
+        translations,
+        "meta.projects.description",
+        locale,
+        null,
+    );
 
     const seen = new Set<string>();
     const items: ProjectSchemaItem[] = [];
@@ -48,16 +57,8 @@ export default async function ProjectsSchema() {
     const schema = {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        name: t("meta.projects.title", {
-            ka: "განხორციელებული IT და უსაფრთხოების პროექტები | SafeTech",
-            en: "Completed IT and Security Projects | SafeTech",
-            ru: "Реализованные IT- и охранные проекты | SafeTech",
-        }),
-        description: t("meta.projects.description", {
-            ka: "დაათვალიერეთ SafeTech-ის დასრულებული CCTV, ქსელური, სერვერული და უსაფრთხოების ინფრასტრუქტურის პროექტები.",
-            en: "Review completed SafeTech CCTV, networking, server, and security infrastructure projects.",
-            ru: "Посмотрите реализованные проекты SafeTech по видеонаблюдению, сетевой, серверной и охранной инфраструктуре.",
-        }),
+        name,
+        ...(description ? { description } : {}),
         url: absoluteLocalizedUrl("/projects", locale),
         inLanguage: getLanguageTag(locale),
         mainEntity: {
