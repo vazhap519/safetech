@@ -11,11 +11,11 @@ class GeoRestrictionApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function enableGeoRestriction(): void
+    protected function enableGeoRestriction(bool $blockUnknown = true): void
     {
         Config::set('geo.enabled', true);
         Config::set('geo.allowed_countries', ['GE']);
-        Config::set('geo.block_unknown', true);
+        Config::set('geo.block_unknown', $blockUnknown);
     }
 
     public function test_it_allows_public_api_requests_from_georgia(): void
@@ -37,5 +37,13 @@ class GeoRestrictionApiTest extends TestCase
             ->assertForbidden()
             ->assertHeader('X-Robots-Tag', 'noindex, nofollow')
             ->assertJsonPath('message', 'This content is available in Georgia only.');
+    }
+
+    public function test_it_allows_unknown_country_when_strict_mode_is_disabled(): void
+    {
+        $this->seed(ContentSeeder::class);
+        $this->enableGeoRestriction(blockUnknown: false);
+
+        $this->getJson('/api/services')->assertOk();
     }
 }

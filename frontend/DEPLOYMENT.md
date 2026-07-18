@@ -26,7 +26,7 @@ NEXT_PUBLIC_API_URL=https://api.safetech.ge/api
 NEXT_PUBLIC_SITE_URL=https://safetech.ge
 GEO_BLOCK_ENABLED=true
 GEO_ALLOWED_COUNTRIES=GE
-GEO_BLOCK_UNKNOWN_COUNTRY=true
+GEO_BLOCK_UNKNOWN_COUNTRY=false
 NODE_ENV=production
 ```
 
@@ -64,7 +64,7 @@ FRONTEND_URL=https://safetech.ge
 REVALIDATE_SECRET=same_secret_as_frontend
 GEO_BLOCK_ENABLED=true
 GEO_ALLOWED_COUNTRIES=GE
-GEO_BLOCK_UNKNOWN_COUNTRY=true
+GEO_BLOCK_UNKNOWN_COUNTRY=false
 ```
 
 4. Configure PostgreSQL credentials in `.env`:
@@ -124,7 +124,7 @@ sudo certbot --nginx -d api.safetech.ge
 
 7. If Certbot creates a different lineage path than `/etc/letsencrypt/live/safetech.ge/`, update the certificate paths inside the Nginx file before reloading.
 8. Update the PHP-FPM socket path if your server differs.
-9. Configure a trusted country header before enabling `GEO_BLOCK_UNKNOWN_COUNTRY=true`. Recommended options:
+9. Configure a trusted country header before enabling strict unknown-country blocking. Keep `GEO_BLOCK_UNKNOWN_COUNTRY=false` until the header is verified, otherwise visitors from Georgia may be blocked when the country header is missing. Recommended options:
 
 ```nginx
 # Cloudflare example. Use only when the origin is protected from direct public access.
@@ -161,9 +161,10 @@ sudo systemctl reload nginx
 11. Confirm Georgia-only access works:
 
 ```bash
+curl -I https://safetech.ge/
 curl -I -H "X-Country-Code: GE" https://safetech.ge/
 curl -I -H "X-Country-Code: US" https://safetech.ge/
 curl -I -H "X-Country-Code: US" https://api.safetech.ge/api/services
 ```
 
-The Georgia request should return `200` or a normal redirect, while non-Georgia requests should return `403`.
+The no-header and Georgia requests should return `200` or a normal redirect, while non-Georgia requests with a trusted country header should return `403`.

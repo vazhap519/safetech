@@ -1,12 +1,12 @@
 <?php
 
 return [
-    'enabled' => (bool) env('GEO_BLOCK_ENABLED', false),
+    'enabled' => filter_var(env('GEO_BLOCK_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
     'allowed_countries' => array_values(array_filter(array_map(
         fn (string $country): string => strtoupper(trim($country)),
         explode(',', (string) env('GEO_ALLOWED_COUNTRIES', 'GE')),
     ))),
-    'block_unknown' => (bool) env('GEO_BLOCK_UNKNOWN_COUNTRY', true),
+    'block_unknown' => filter_var(env('GEO_BLOCK_UNKNOWN_COUNTRY', false), FILTER_VALIDATE_BOOLEAN),
     'country_headers' => [
         'cf-ipcountry',
         'x-country-code',

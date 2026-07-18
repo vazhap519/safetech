@@ -21,7 +21,7 @@ final class EnsureAllowedCountry
             return $next($request);
         }
 
-        if ($country === null && ! config('geo.block_unknown', true)) {
+        if ($country === null && ! config('geo.block_unknown', false)) {
             return $next($request);
         }
 

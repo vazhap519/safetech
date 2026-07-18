@@ -31,7 +31,7 @@ function geoRestrictionEnabled() {
 }
 
 function blockUnknownCountry() {
-    return parseBoolean(process.env.GEO_BLOCK_UNKNOWN_COUNTRY, true);
+    return parseBoolean(process.env.GEO_BLOCK_UNKNOWN_COUNTRY, false);
 }
 
 function allowedCountries() {
