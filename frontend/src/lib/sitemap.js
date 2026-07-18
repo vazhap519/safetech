@@ -1,4 +1,10 @@
 import { getBaseUrl } from "@/lib/config";
+import {
+  DEFAULT_LOCALE,
+  getLanguageTag,
+  localizePath,
+  supportedLocales,
+} from "@/lib/locales";
 
 const DEFAULT_API_BASE = "http://127.0.0.1:8000/api";
 
@@ -66,6 +72,26 @@ export function absoluteUrl(pathOrUrl) {
   const path = String(pathOrUrl).startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
 
   return `${baseUrl}${path}`;
+}
+
+export function localizedUrlEntries(path, metadata = {}) {
+  const normalizedPath = String(path || "/").startsWith("/") ? path : `/${path}`;
+  const defaultUrl = absoluteUrl(localizePath(normalizedPath, DEFAULT_LOCALE));
+  const alternates = {
+    ...Object.fromEntries(
+      supportedLocales.map((locale) => [
+        getLanguageTag(locale),
+        absoluteUrl(localizePath(normalizedPath, locale)),
+      ]),
+    ),
+    "x-default": defaultUrl,
+  };
+
+  return supportedLocales.map((locale) => ({
+    ...metadata,
+    loc: absoluteUrl(localizePath(normalizedPath, locale)),
+    alternates,
+  }));
 }
 
 export function backendAssetUrl(pathOrUrl) {
@@ -140,13 +166,18 @@ ${paths
 }
 
 export function urlset(urls) {
+  const hasAlternates = urls.some((item) => item?.alternates);
+
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${hasAlternates ? '\n  xmlns:xhtml="http://www.w3.org/1999/xhtml"' : ""}>
 ${urls
   .filter((item) => item?.loc)
   .map(
     (item) => `  <url>
     <loc>${escapeXml(item.loc)}</loc>
+    ${item.alternates ? Object.entries(item.alternates)
+      .map(([hreflang, href]) => `<xhtml:link rel="alternate" hreflang="${escapeXml(hreflang)}" href="${escapeXml(href)}" />`)
+      .join("\n    ") : ""}
     ${item.lastmod ? `<lastmod>${escapeXml(item.lastmod)}</lastmod>` : ""}
     ${item.changefreq ? `<changefreq>${escapeXml(item.changefreq)}</changefreq>` : ""}
     ${item.priority ? `<priority>${escapeXml(item.priority)}</priority>` : ""}

@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\SeoPage;
 use App\Models\Service;
 use App\Models\ServiceSection;
+use App\Support\FrontendRevalidator;
 use App\Support\SocialLinks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 
 class ServicesController extends Controller
 {
@@ -193,7 +193,7 @@ class ServicesController extends Controller
     public function revalidate()
     {
         Cache::flush();
-        $this->notifyFrontendRevalidate('services');
+        FrontendRevalidator::revalidate('services');
 
         return response()->json([
             'success' => true,
@@ -204,29 +204,12 @@ class ServicesController extends Controller
     public function revalidateSingle(string $slug)
     {
         Cache::forget("service_{$slug}");
-        $this->notifyFrontendRevalidate("service-{$slug}");
+        FrontendRevalidator::revalidate("service-{$slug}");
 
         return response()->json([
             'success' => true,
             'message' => 'Service cache cleared',
         ]);
-    }
-
-    private function notifyFrontendRevalidate(string $tag): void
-    {
-        $frontendUrl = rtrim((string) config('app.frontend_url', env('FRONTEND_URL', '')), '/');
-
-        if (!$frontendUrl) {
-            return;
-        }
-
-        try {
-            Http::timeout(3)->post("{$frontendUrl}/api/revalidate", [
-                'tag' => $tag,
-            ]);
-        } catch (\Throwable) {
-            //
-        }
     }
 
     /*

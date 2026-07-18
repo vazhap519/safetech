@@ -7,27 +7,37 @@ import Footer from "@/components/Footer/Footer";
 import Navbar from "@/components/Navbar/Navbar";
 import ConsultationProvider from "@/components/consultation/ConsultationProvider";
 import LocalizationProvider from "@/components/providers/LocalizationProvider";
-import { getOgLocale, supportedLocales } from "@/lib/locales";
+import { GoogleTagManager } from "@next/third-parties/google";
+import {
+    getLanguageTag,
+    getOgLocale,
+    supportedLocales,
+} from "@/lib/locales";
 import {
     absoluteLocalizedUrl,
     absoluteSiteUrl,
     buildLanguageAlternates,
+    SITE_NAME,
     SITE_URL,
 } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { createTranslator } from "@/lib/translations";
-import { GoogleTagManager } from "@next/third-parties/google";
 
 function withDynamicSiteTitle(title: string, siteName: string) {
-    if (!title) return siteName;
-    if (!siteName) return title;
+    const cleanTitle = title.trim();
+    const cleanSiteName = siteName.trim();
 
-    return title.includes(siteName) ? title : `${title} | ${siteName}`;
+    if (!cleanTitle) return cleanSiteName;
+    if (!cleanSiteName) return cleanTitle;
+
+    return cleanTitle.includes(cleanSiteName)
+        ? cleanTitle
+        : `${cleanTitle} | ${cleanSiteName}`;
 }
 
 export async function generateMetadata(): Promise<Metadata> {
     const { branding, locale, translations } = await getSiteSettings();
-    const siteName = branding.siteName;
+    const siteName = branding.siteName || SITE_NAME;
     const t = createTranslator(translations, locale);
     const canonical = absoluteLocalizedUrl("/", locale);
     const title = withDynamicSiteTitle(
@@ -39,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
         siteName,
     );
     const siteDescription = t("meta.default.description", {
-        ka: "SafeTech უზრუნველყოფს ვიდეომეთვალყურეობას, დაშვების კონტროლს, ქსელურ და სერვერულ ინფრასტრუქტურას ბიზნესისთვის.",
+        ka: "SafeTech უზრუნველყოფს ვიდეომეთვალყურეობის, დაშვების კონტროლის, ქსელური და სერვერული ინფრასტრუქტურის პროფესიონალურ გადაწყვეტილებებს ბიზნესისთვის.",
         en: "Professional CCTV, access control, networking, and server infrastructure solutions for businesses.",
         ru: "Профессиональные решения для видеонаблюдения, контроля доступа, сетевой и серверной инфраструктуры для бизнеса.",
     });
@@ -50,7 +60,7 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
         metadataBase: new URL(SITE_URL),
         applicationName: siteName,
-        authors: siteName ? [{ name: siteName, url: SITE_URL }] : [],
+        authors: [{ name: siteName, url: SITE_URL }],
         creator: siteName,
         publisher: siteName,
         title,
@@ -120,7 +130,7 @@ export default async function RootLayout({
 }>) {
     const { contact, branding, locale, socialLinks, translations } =
         await getSiteSettings();
-    const siteName = branding.siteName;
+    const siteName = branding.siteName || SITE_NAME;
     const gtmId = process.env.NEXT_PUBLIC_GTM_ID?.trim();
     const publicApiOrigin = (() => {
         try {
@@ -144,8 +154,7 @@ export default async function RootLayout({
               ]
             : undefined;
 
-    const organizationSchema: Record<string, unknown> | null = siteName
-        ? {
+    const organizationSchema: Record<string, unknown> = {
         "@context": "https://schema.org",
         "@type": "Organization",
         "@id": `${absoluteSiteUrl("/")}#organization`,
@@ -171,12 +180,11 @@ export default async function RootLayout({
         ...(socialLinks.length
             ? { sameAs: socialLinks.map((item) => item.href) }
             : {}),
-    }
-        : null;
+    };
 
     return (
         <html
-            lang={locale}
+            lang={getLanguageTag(locale)}
             className="dark scroll-smooth"
             suppressHydrationWarning
         >
@@ -193,27 +201,25 @@ export default async function RootLayout({
                 ) : null}
             </head>
             <body
-                className={`
+                className="
                     bg-background
                     text-on-background
                     font-body-md
                     antialiased
                     overflow-x-hidden
                     min-h-screen
-                `}
+                "
             >
                 {gtmId ? <GoogleTagManager gtmId={gtmId} /> : null}
-                {organizationSchema ? (
-                    <script
-                        type="application/ld+json"
-                        dangerouslySetInnerHTML={{
-                            __html: JSON.stringify(organizationSchema).replace(
-                                /</g,
-                                "\\u003c",
-                            ),
-                        }}
-                    />
-                ) : null}
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify(organizationSchema).replace(
+                            /</g,
+                            "\\u003c",
+                        ),
+                    }}
+                />
 
                 <LocalizationProvider
                     locale={locale}

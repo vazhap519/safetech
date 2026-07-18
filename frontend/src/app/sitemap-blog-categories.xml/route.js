@@ -1,7 +1,7 @@
 import {
   buildSitemapApiUrl,
   getLastPage,
-  normalizeBaseUrl,
+  localizedUrlEntries,
   safeFetchJson,
   urlset,
   xmlResponse,
@@ -10,7 +10,6 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const baseUrl = normalizeBaseUrl();
   const now = new Date().toISOString();
   const categoriesRes = await safeFetchJson(buildSitemapApiUrl("/categories"));
   const categories = Array.isArray(categoriesRes)
@@ -19,12 +18,11 @@ export async function GET() {
   const urls = [];
 
   for (const category of categories) {
-    urls.push({
-      loc: `${baseUrl}/blog/category/${category.slug}`,
+    urls.push(...localizedUrlEntries(`/blog/category/${category.slug}`, {
       lastmod: now,
       changefreq: "weekly",
       priority: "0.6",
-    });
+    }));
 
     const categoryRes = await safeFetchJson(
       buildSitemapApiUrl("/blog", { category: category.slug, page: 1 })
@@ -32,12 +30,11 @@ export async function GET() {
     const lastPage = getLastPage(categoryRes);
 
     for (let page = 2; page <= lastPage; page += 1) {
-      urls.push({
-        loc: `${baseUrl}/blog/category/${category.slug}/page/${page}`,
+      urls.push(...localizedUrlEntries(`/blog/category/${category.slug}/page/${page}`, {
         lastmod: now,
         changefreq: "weekly",
         priority: "0.4",
-      });
+      }));
     }
   }
 

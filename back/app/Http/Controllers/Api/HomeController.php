@@ -152,7 +152,7 @@
 //    {
 //        Cache::forget('home_api');
 //
-//        Http::post('http://localhost:3000/api/revalidate', [
+//        Next.js revalidation now goes through App\Support\FrontendRevalidator.
 //            'tag' => 'home'
 //        ]);
 //
@@ -190,9 +190,9 @@ use App\Models\HomeCtaSection;
 use App\Models\FaqSection;
 use App\Models\Service;
 use App\Models\SeoPage;
+use App\Support\FrontendRevalidator;
 
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 
 class HomeController extends Controller
 {
@@ -331,17 +331,7 @@ class HomeController extends Controller
     {
         Cache::forget('home_api');
 
-        $frontendUrl = rtrim((string) config('app.frontend_url', env('FRONTEND_URL', '')), '/');
-
-        if ($frontendUrl) {
-            try {
-                Http::timeout(3)->post("{$frontendUrl}/api/revalidate", [
-                    'tag' => 'home'
-                ]);
-            } catch (\Throwable) {
-                //
-            }
-        }
+        FrontendRevalidator::revalidate('home');
 
         return response()->json([
             'success' => true,

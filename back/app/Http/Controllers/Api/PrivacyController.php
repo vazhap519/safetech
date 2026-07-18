@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PrivacyPolicy;
+use App\Support\FrontendRevalidator;
 use App\Support\MultilingualContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 
 class PrivacyController extends Controller
 {
@@ -50,9 +50,7 @@ class PrivacyController extends Controller
         Cache::forget('privacy_page:en');
         Cache::forget('privacy_page:ru');
 
-        Http::post('http://localhost:3000/api/revalidate', [
-            'tag' => 'privacy',
-        ]);
+        FrontendRevalidator::revalidate('privacy');
 
         return response()->json([
             'success' => true,

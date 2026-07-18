@@ -16,6 +16,7 @@ const contentSecurityPolicy = [
   "font-src 'self' https://fonts.gstatic.com data:",
   `img-src 'self' data: blob: ${apiOrigin} https://www.google-analytics.com`,
   `connect-src 'self' ${apiOrigin} https://www.google-analytics.com https://region1.google-analytics.com`,
+  "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

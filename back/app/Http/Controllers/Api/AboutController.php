@@ -60,9 +60,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\About;
+use App\Support\FrontendRevalidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 
 class AboutController extends Controller
 {
@@ -147,10 +147,7 @@ class AboutController extends Controller
         // ✅ 1. Laravel cache წაშლა
         Cache::forget('about_page');
 
-        // ✅ 2. Next.js revalidate
-        Http::post('http://localhost:3000/api/revalidate', [
-            'tag' => 'about'
-        ]);
+        FrontendRevalidator::revalidate('about');
 
         return response()->json([
             'success' => true,

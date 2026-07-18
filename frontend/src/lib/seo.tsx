@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { getOgLocale, supportedLocales, type Locale } from "@/lib/locales";
+import {
+    getLanguageTag,
+    getOgLocale,
+    supportedLocales,
+    type Locale,
+} from "@/lib/locales";
 import { DEFAULT_LOCALE, localizePath } from "@/lib/locales";
 
 type SeoProps = {
@@ -56,7 +61,7 @@ export function absoluteLocalizedUrl(
 export function buildLanguageAlternates(path: string) {
     return Object.fromEntries(
         supportedLocales.map((locale) => [
-            locale,
+            getLanguageTag(locale),
             absoluteLocalizedUrl(path, locale),
         ]),
     );

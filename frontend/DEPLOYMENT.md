@@ -24,6 +24,9 @@ Do not deploy the frontend and backend into one shared root. Your current split 
 BACKEND_API_URL=https://api.safetech.ge/api
 NEXT_PUBLIC_API_URL=https://api.safetech.ge/api
 NEXT_PUBLIC_SITE_URL=https://safetech.ge
+GEO_BLOCK_ENABLED=true
+GEO_ALLOWED_COUNTRIES=GE
+GEO_BLOCK_UNKNOWN_COUNTRY=true
 NODE_ENV=production
 ```
 
@@ -57,6 +60,11 @@ APP_ENV=production
 APP_DEBUG=false
 FILESYSTEM_DISK=public
 LEADS_NOTIFICATION_EMAIL=safetechgeorgia@gmail.com
+FRONTEND_URL=https://safetech.ge
+REVALIDATE_SECRET=same_secret_as_frontend
+GEO_BLOCK_ENABLED=true
+GEO_ALLOWED_COUNTRIES=GE
+GEO_BLOCK_UNKNOWN_COUNTRY=true
 ```
 
 4. Configure PostgreSQL credentials in `.env`:
@@ -116,7 +124,19 @@ sudo certbot --nginx -d api.safetech.ge
 
 7. If Certbot creates a different lineage path than `/etc/letsencrypt/live/safetech.ge/`, update the certificate paths inside the Nginx file before reloading.
 8. Update the PHP-FPM socket path if your server differs.
-9. Enable and reload:
+9. Configure a trusted country header before enabling `GEO_BLOCK_UNKNOWN_COUNTRY=true`. Recommended options:
+
+```nginx
+# Cloudflare example. Use only when the origin is protected from direct public access.
+proxy_set_header X-Country-Code $http_cf_ipcountry;
+fastcgi_param HTTP_X_COUNTRY_CODE $http_cf_ipcountry;
+
+# Nginx GeoIP2 alternative:
+# proxy_set_header X-Country-Code $geoip2_data_country_code;
+# fastcgi_param HTTP_X_COUNTRY_CODE $geoip2_data_country_code;
+```
+
+10. Enable and reload:
 
 ```bash
 sudo mkdir -p /var/www/_letsencrypt
@@ -138,3 +158,12 @@ sudo systemctl reload nginx
 8. Confirm `https://safetech.ge/sitemap.xml` contains alternate language entries.
 9. Confirm `https://safetech.ge/robots.txt` loads.
 10. In browser DevTools, confirm the public site negotiates `h2` or `h3`.
+11. Confirm Georgia-only access works:
+
+```bash
+curl -I -H "X-Country-Code: GE" https://safetech.ge/
+curl -I -H "X-Country-Code: US" https://safetech.ge/
+curl -I -H "X-Country-Code: US" https://api.safetech.ge/api/services
+```
+
+The Georgia request should return `200` or a normal redirect, while non-Georgia requests should return `403`.
