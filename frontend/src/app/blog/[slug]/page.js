@@ -2,9 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import BlogPostSchema from "@/components/seo/BlogPostSchema";
+import JsonLd from "@/components/seo/JsonLd";
 import { getBlogPost } from "@/lib/datafetch";
 import { getCurrentLocale } from "@/lib/locale-server";
-import { generateSeo } from "@/lib/seoEngine";
+import { createMetadata, localizeHref, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -14,12 +16,30 @@ export async function generateMetadata({ params }) {
   const { slug } = await params;
 
   if (!slug) return {};
-  const locale = await getCurrentLocale();
+  const [locale, settings] = await Promise.all([
+    getCurrentLocale(),
+    getSiteSettings(),
+  ]);
+  const response = await getBlogPost(slug, { locale });
+  const post = response?.data;
 
-  return generateSeo({
-    type: "blog",
-    slug,
+  if (!post) {
+    return {
+      title: withSiteTitle("Article not found", settings.branding.siteName),
+      robots: { index: false, follow: false },
+    };
+  }
+
+  return createMetadata({
+    title: post.meta?.title || post.title,
+    description: post.meta?.description || post.excerpt,
+    path: `/blog/${post.slug}`,
     locale,
+    keywords: post.meta?.keywords || [],
+    image: post.meta?.image || post.image || settings.branding.defaultImage,
+    siteName: settings.branding.siteName,
+    type: "article",
+    noindex: Boolean(post.meta?.noindex),
   });
 }
 
@@ -45,7 +65,21 @@ export default async function BlogDetailPage({ params }) {
   const sectionLabel = translateText(translations, "blog.section", locale, null);
 
   return (
-    <main className="bg-background px-4 pb-20 pt-28 sm:pt-32">
+    <div className="bg-background px-4 pb-20 pt-28 sm:pt-32">
+      {post.meta?.schema ? (
+        <JsonLd data={post.meta.schema} />
+      ) : (
+        <BlogPostSchema
+          author={post.meta?.author || post.author?.name}
+          description={post.meta?.description || post.excerpt || post.title}
+          image={post.meta?.image || post.image || DEFAULT_IMAGE}
+          locale={locale}
+          publishedAt={post.published_at}
+          slug={post.slug}
+          title={post.meta?.title || post.title}
+          updatedAt={post.updated_at}
+        />
+      )}
       <div className="mx-auto grid max-w-6xl gap-10 px-4 md:grid-cols-3">
         <article className="md:col-span-2">
           {homeLabel || blogLabel ? (
@@ -61,7 +95,7 @@ export default async function BlogDetailPage({ params }) {
               {homeLabel ? (
                 <>
                   <Link
-                    href="/"
+                    href={localizeHref("/", locale)}
                     className="inline-flex min-h-10 items-center hover:text-secondary"
                   >
                     {homeLabel}
@@ -72,7 +106,7 @@ export default async function BlogDetailPage({ params }) {
               {blogLabel ? (
                 <>
                   <Link
-                    href="/blog"
+                    href={localizeHref("/blog", locale)}
                     className="inline-flex min-h-10 items-center hover:text-secondary"
                   >
                     {blogLabel}
@@ -179,7 +213,11 @@ export default async function BlogDetailPage({ params }) {
 
               <div className="grid gap-6 md:grid-cols-3">
                 {post.related.map((item) => (
-                  <Link className="block h-full" key={item.slug} href={`/blog/${item.slug}`}>
+                  <Link
+                    className="block h-full"
+                    key={item.slug}
+                    href={localizeHref(`/blog/${item.slug}`, locale)}
+                  >
                     <article className="h-full overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-card transition hover:-translate-y-1 hover:border-secondary/30">
                       <div className="relative h-32 w-full">
                         <Image
@@ -230,6 +268,6 @@ export default async function BlogDetailPage({ params }) {
           </aside>
         ) : null}
       </div>
-    </main>
+    </div>
   );
 }

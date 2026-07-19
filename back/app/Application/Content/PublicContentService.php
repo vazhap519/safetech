@@ -41,6 +41,17 @@ final class PublicContentService
 
     private function sanitizeSetting(SiteSetting $setting): mixed
     {
+        if ($setting->key === 'branding' && is_array($setting->value)) {
+            $value = $setting->value;
+
+            foreach (['logo', 'footer_logo', 'favicon', 'default_image'] as $collection) {
+                $value[$collection] = $setting->brandingMediaUrl($collection)
+                    ?: ($value[$collection] ?? null);
+            }
+
+            return $value;
+        }
+
         if ($setting->key !== 'contact' || ! is_array($setting->value)) {
             return $setting->value;
         }
@@ -67,6 +78,7 @@ final class PublicContentService
                     'eyebrow' => 'eyebrow',
                     'title' => 'title',
                     'description' => 'description',
+                    'seoTitle' => fn (Service $model) => data_get($model->seo, 'title', $model->title),
                     'seoDescription' => 'seo_description',
                     'card.title' => fn (Service $model) => $model->name ?: $model->title,
                     'card.description' => 'description',
@@ -90,6 +102,7 @@ final class PublicContentService
                     'name' => 'name',
                     'title' => 'title',
                     'description' => 'description',
+                    'seoTitle' => fn (Project $model) => data_get($model->seo, 'title', $model->title),
                     'seoDescription' => 'seo_description',
                     'imageAlt' => 'image_alt',
                     'technology' => 'technology',

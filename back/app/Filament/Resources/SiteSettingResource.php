@@ -7,10 +7,9 @@ use App\Models\SiteSetting;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -38,6 +37,7 @@ class SiteSettingResource extends Resource
                     'socials' => 'სოციალური ქსელები',
                     'branding' => 'ბრენდინგი',
                     'seo' => 'SEO',
+                    'integrations' => 'Analytics და საძიებო სისტემები',
                     'translations' => 'თარგმანები',
                 ])
                 ->required()
@@ -108,6 +108,21 @@ class SiteSettingResource extends Resource
                         ->columns(3)
                         ->collapsible()
                         ->reorderable(),
+                    TextInput::make('value.share_title')
+                        ->label('გაზიარების სათაური'),
+                    Repeater::make('value.share_buttons')
+                        ->label('გაზიარების ღილაკები')
+                        ->simple(
+                            Select::make('type')->options([
+                                'facebook' => 'Facebook',
+                                'whatsapp' => 'WhatsApp',
+                                'telegram' => 'Telegram',
+                                'linkedin' => 'LinkedIn',
+                                'pinterest' => 'Pinterest',
+                                'twitter' => 'X',
+                                'link' => 'ბმულის კოპირება',
+                            ]),
+                        ),
                 ])
                 ->visible(fn (Get $get): bool => $get('key') === 'socials'),
 
@@ -119,35 +134,73 @@ class SiteSettingResource extends Resource
                     TextInput::make('value.tagline')
                         ->label('სლოგანი')
                         ->helperText('გამოჩნდება footer-ში ტექსტურად.'),
-                    FileUpload::make('value.logo')
+                    SpatieMediaLibraryFileUpload::make('branding_logo')
                         ->label('Header ლოგო')
+                        ->collection('logo')
                         ->image()
-                        ->disk('public')
-                        ->directory('branding'),
-                    FileUpload::make('value.footer_logo')
+                        ->imageEditor(),
+                    SpatieMediaLibraryFileUpload::make('branding_footer_logo')
                         ->label('Footer ლოგო')
+                        ->collection('footer_logo')
                         ->image()
-                        ->disk('public')
-                        ->directory('branding'),
-                    FileUpload::make('value.favicon')
+                        ->imageEditor(),
+                    SpatieMediaLibraryFileUpload::make('branding_favicon')
                         ->label('Favicon / App Icon')
+                        ->collection('favicon')
                         ->image()
-                        ->disk('public')
-                        ->directory('branding'),
-                    FileUpload::make('value.default_image')
+                        ->imageEditor(),
+                    SpatieMediaLibraryFileUpload::make('branding_default_image')
                         ->label('საერთო fallback სურათი')
+                        ->collection('default_image')
                         ->image()
-                        ->disk('public')
-                        ->directory('branding')
+                        ->imageEditor()
                         ->helperText('გამოიყენება ლოგოს გარდა იმ საერთო ვიზუალებში და preview-ებში, სადაც კონკრეტული სურათი არ არის შევსებული.'),
                 ])
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'branding'),
 
-            KeyValue::make('value')
-                ->label('SEO მნიშვნელობები')
-                ->helperText('გამოიყენეთ legacy SEO პარამეტრებისთვის, მაგალითად site_name ან default_image.')
+            Section::make('საიტისა და LocalBusiness SEO')
+                ->schema([
+                    TextInput::make('value.site_name')->label('საიტის სახელი')->default('SafeTech'),
+                    Textarea::make('value.site_description')->label('ორგანიზაციის აღწერა')->rows(3),
+                    TextInput::make('value.city')->label('ქალაქი'),
+                    TextInput::make('value.country')->label('ქვეყნის კოდი')->default('GE')->maxLength(2),
+                    TextInput::make('value.postal_code')->label('საფოსტო ინდექსი'),
+                    TextInput::make('value.lat')->label('Latitude')->numeric(),
+                    TextInput::make('value.lng')->label('Longitude')->numeric(),
+                    TextInput::make('value.open_time')->label('გახსნის დრო')->type('time'),
+                    TextInput::make('value.close_time')->label('დახურვის დრო')->type('time'),
+                ])
+                ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'seo'),
+
+            Section::make('Analytics, Pixel და ვერიფიკაცია')
+                ->description('ID-ები საჯაროდ იტვირთება მხოლოდ მაშინ, როდესაც შესაბამისი ინტეგრაცია ჩართულია. GTM-ის გამოყენებისას GA4 tag თავად GTM-ში დაამატეთ, რათა page view ორჯერ არ ჩაითვალოს.')
+                ->schema([
+                    Toggle::make('value.marketing_enabled')
+                        ->label('Analytics და სარეკლამო კოდების ჩართვა')
+                        ->default(false),
+                    TextInput::make('value.google_tag_manager_id')
+                        ->label('Google Tag Manager ID')
+                        ->placeholder('GTM-XXXXXXX'),
+                    TextInput::make('value.google_analytics_id')
+                        ->label('Google Analytics 4 ID')
+                        ->placeholder('G-XXXXXXXXXX'),
+                    TextInput::make('value.meta_pixel_id')
+                        ->label('Meta / Facebook Pixel ID')
+                        ->placeholder('123456789012345'),
+                    TextInput::make('value.google_site_verification')
+                        ->label('Google Search Console verification'),
+                    TextInput::make('value.bing_site_verification')
+                        ->label('Bing Webmaster Tools verification'),
+                    TextInput::make('value.yandex_site_verification')
+                        ->label('Yandex Webmaster verification'),
+                    TextInput::make('value.indexnow_key')
+                        ->label('IndexNow key')
+                        ->helperText('გამოიყენება Bing/Yandex-ისთვის URL-ების სწრაფად გასაგზავნად.'),
+                ])
+                ->columns(2)
+                ->visible(fn (Get $get): bool => $get('key') === 'integrations'),
 
             Section::make('ინტერფეისის თარგმანები')
                 ->schema([

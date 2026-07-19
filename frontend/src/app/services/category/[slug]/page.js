@@ -1,55 +1,42 @@
-import SEOCategoryBlock from "@/app/components/SEOCategoryBlock";
-import ServicesPage from "@/app/services/page";
-import {
-  categoryMetadata,
-  categorySchemas,
-  findCategory,
-} from "@/lib/categorySeo";
-import { getBaseUrl } from "@/lib/config";
-import { getSeoLinks } from "@/lib/getSeoLinks";
-import { getServiceCategories } from "@/lib/datafetch";
+import { notFound } from "next/navigation";
 
-async function getCategory(slug) {
-  const response = await getServiceCategories().catch(() => null);
-  return findCategory(response, slug) || { name: slug, slug };
-}
+import ServicesPage from "@/app/services/page";
+import CategorySeoContent from "@/components/seo/CategorySeoContent";
+import { getCategoryPageData } from "@/lib/category-data";
+import { categoryMetadata } from "@/lib/categorySeo";
+import { createMetadata } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const category = await getCategory(slug);
-  const url = `${getBaseUrl()}/services/category/${slug}`;
+  const { category, locale, path } = await getCategoryPageData("services", slug);
+
+  if (!category) {
+    return createMetadata({
+      title: "Category not found",
+      description: "The requested service category does not exist.",
+      path,
+      locale,
+      noindex: true,
+    });
+  }
 
   return categoryMetadata({
     category,
-    canonical: url,
+    path,
+    locale,
   });
 }
 
 export default async function CategoryPage({ params }) {
   const { slug } = await params;
-  const [keywordMap, category] = await Promise.all([
-    getSeoLinks(),
-    getCategory(slug),
-  ]);
-  const schemas = categorySchemas({ category });
+  const { category } = await getCategoryPageData("services", slug);
+
+  if (!category) notFound();
 
   return (
     <>
-      {schemas.map((schema, index) => (
-        <script
-          key={`service-category-schema-${index}`}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-        />
-      ))}
-
       <ServicesPage searchParams={{ category: slug }} />
-
-      <SEOCategoryBlock
-        title={category?.name || ""}
-        html={category?.intro_text || ""}
-        links={keywordMap}
-      />
+      <CategorySeoContent category={category} />
     </>
   );
 }

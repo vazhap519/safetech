@@ -11,11 +11,11 @@ const apiOrigin = (() => {
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com${isDevelopment ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net${isDevelopment ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  `img-src 'self' data: blob: ${apiOrigin} https://www.google-analytics.com`,
-  `connect-src 'self' ${apiOrigin} https://www.google-analytics.com https://region1.google-analytics.com`,
+  `img-src 'self' data: blob: ${apiOrigin} https://www.google-analytics.com https://www.facebook.com`,
+  `connect-src 'self' ${apiOrigin} https://www.google-analytics.com https://region1.google-analytics.com https://www.facebook.com https://connect.facebook.net`,
   "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
   "object-src 'none'",
   "base-uri 'self'",

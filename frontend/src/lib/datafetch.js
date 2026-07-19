@@ -104,14 +104,14 @@ export const getCategories = ({ locale, ...options } = {}) =>
     ...options,
   });
 
-export const getServiceCategories = (options = {}) =>
-  fetcher(buildUrl("/service-categories"), {
+export const getServiceCategories = ({ locale, ...options } = {}) =>
+  fetcher(buildUrl("/service-categories", locale ? { locale } : {}), {
     next: { tags: ["service-categories"] },
     ...options,
   });
 
-export const getProjectCategories = (options = {}) =>
-  fetcher(buildUrl("/project-categories"), {
+export const getProjectCategories = ({ locale, ...options } = {}) =>
+  fetcher(buildUrl("/project-categories", locale ? { locale } : {}), {
     next: { tags: ["project-categories"] },
     ...options,
   });

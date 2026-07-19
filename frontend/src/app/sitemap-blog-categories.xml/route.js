@@ -10,16 +10,15 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const now = new Date().toISOString();
   const categoriesRes = await safeFetchJson(buildSitemapApiUrl("/categories"));
   const categories = Array.isArray(categoriesRes)
     ? categoriesRes
     : categoriesRes?.data || [];
   const urls = [];
 
-  for (const category of categories) {
+  for (const category of categories.filter((item) => item?.slug && !item?.noindex)) {
     urls.push(...localizedUrlEntries(`/blog/category/${category.slug}`, {
-      lastmod: now,
+      ...(category.updated_at ? { lastmod: category.updated_at } : {}),
       changefreq: "weekly",
       priority: "0.6",
     }));
@@ -31,7 +30,6 @@ export async function GET() {
 
     for (let page = 2; page <= lastPage; page += 1) {
       urls.push(...localizedUrlEntries(`/blog/category/${category.slug}/page/${page}`, {
-        lastmod: now,
         changefreq: "weekly",
         priority: "0.4",
       }));

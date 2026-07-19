@@ -16,6 +16,7 @@ class SeoPagesTable
         return $table
             ->columns([
                 TextColumn::make('key')
+                    ->label('გვერდი')
                     ->searchable()
                     ->sortable(),
 
@@ -23,6 +24,7 @@ class SeoPagesTable
                     ->label('URL'),
 
                 TextColumn::make('title')
+                    ->label('SEO სათაური')
                     ->limit(40),
 
                 IconColumn::make('noindex')
@@ -30,6 +32,7 @@ class SeoPagesTable
                     ->label('NoIndex'),
 
                 TextColumn::make('updated_at')
+                    ->label('განახლდა')
                     ->dateTime('Y-m-d H:i')
                     ->sortable(),
             ])

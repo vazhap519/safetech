@@ -6,11 +6,12 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 const navigation = [
-    { href: "/", key: "nav.home" },
-    { href: "/services", key: "nav.services" },
-    { href: "/projects", key: "nav.projects" },
-    { href: "/about", key: "nav.about" },
-    { href: "/contact", key: "nav.contact" },
+    { href: "/", key: "nav.home", fallback: { ka: "მთავარი", en: "Home", ru: "Главная" } },
+    { href: "/services", key: "nav.services", fallback: { ka: "სერვისები", en: "Services", ru: "Услуги" } },
+    { href: "/service-calculator", key: "nav.calculator", fallback: { ka: "კალკულატორი", en: "Calculator", ru: "Калькулятор" } },
+    { href: "/projects", key: "nav.projects", fallback: { ka: "პროექტები", en: "Projects", ru: "Проекты" } },
+    { href: "/about", key: "nav.about", fallback: { ka: "ჩვენ შესახებ", en: "About", ru: "О нас" } },
+    { href: "/contact", key: "nav.contact", fallback: { ka: "კონტაქტი", en: "Contact", ru: "Контакты" } },
 ];
 
 export default async function Navbar() {
@@ -20,7 +21,7 @@ export default async function Navbar() {
     const navigationItems = navigation
         .map((item) => ({
             ...item,
-            label: translateText(translations, item.key, locale, null),
+            label: translateText(translations, item.key, locale, item.fallback),
         }))
         .filter((item) => item.label);
     const consultationLabel = translateText(

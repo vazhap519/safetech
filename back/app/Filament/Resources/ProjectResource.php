@@ -26,8 +26,6 @@ class ProjectResource extends Resource
 {
     protected static ?string $model = Project::class;
 
-    protected static bool $isDiscovered = false;
-
     protected static ?string $navigationLabel = 'პროექტები';
 
     protected static ?string $modelLabel = 'პროექტი';
@@ -105,6 +103,7 @@ class ProjectResource extends Resource
                 ->label('მთავარი ფოტო')
                 ->collection('cover')
                 ->image()
+                ->imageEditor()
                 ->imagePreviewHeight('150'),
             TextInput::make('image_alt')
                 ->label('ფოტოს ALT ტექსტი')
@@ -133,6 +132,7 @@ class ProjectResource extends Resource
                     ...self::translationInputs('name', 'პროექტის სახელი'),
                     ...self::translationInputs('title', 'სათაური'),
                     ...self::translationInputs('description', 'აღწერა', true),
+                    ...self::translationInputs('seoTitle', 'SEO სათაური'),
                     ...self::translationInputs('seoDescription', 'SEO აღწერა', true),
                     ...self::translationInputs('imageAlt', 'ფოტოს ALT'),
                     ...self::translationInputs('technology', 'ტექნოლოგია'),
@@ -192,21 +192,8 @@ class ProjectResource extends Resource
                 ->collection('gallery')
                 ->multiple()
                 ->reorderable()
-                ->image(),
-            Repeater::make('gallery')
-                ->label('გალერეა')
-                ->schema([
-                    FileUpload::make('src')
-                        ->label('სურათი')
-                        ->image()
-                        ->disk('public')
-                        ->directory('projects/gallery')
-                        ->required(),
-                    TextInput::make('alt')
-                        ->label('ALT ტექსტი')
-                        ->required(),
-                ])
-                ->columns(2),
+                ->image()
+                ->imageEditor(),
             Repeater::make('results')
                 ->label('შედეგები')
                 ->schema([

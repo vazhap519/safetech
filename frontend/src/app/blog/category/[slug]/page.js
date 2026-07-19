@@ -1,55 +1,46 @@
 import BlogPage from "@/app/blog/page";
-import SEOCategoryBlock from "@/app/components/SEOCategoryBlock";
-import {
-  categoryMetadata,
-  categorySchemas,
-  findCategory,
-} from "@/lib/categorySeo";
-import { getBaseUrl } from "@/lib/config";
-import { getCategories } from "@/lib/datafetch";
-import { getSeoLinks } from "@/lib/getSeoLinks";
+import { notFound } from "next/navigation";
 
-async function getCategory(slug) {
-  const response = await getCategories().catch(() => null);
-  return findCategory(response, slug) || { name: slug, slug };
-}
+import CategorySeoContent from "@/components/seo/CategorySeoContent";
+import { getCategoryPageData } from "@/lib/category-data";
+import { categoryMetadata } from "@/lib/categorySeo";
+import { createMetadata } from "@/lib/seo";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const category = await getCategory(slug);
-  const url = `${getBaseUrl()}/blog/category/${slug}`;
+  const { category, locale, path } = await getCategoryPageData("blog", slug);
+
+  if (!category) {
+    return createMetadata({
+      title: "Category not found",
+      description: "The requested blog category does not exist.",
+      path,
+      locale,
+      noindex: true,
+    });
+  }
 
   return categoryMetadata({
     category,
-    canonical: url,
+    path,
+    locale,
   });
 }
 
 export default async function BlogCategoryPage({ params }) {
   const { slug } = await params;
-  const [category, keywordMap] = await Promise.all([
-    getCategory(slug),
-    getSeoLinks(),
-  ]);
-  const schemas = categorySchemas({ category });
+  const { category } = await getCategoryPageData("blog", slug);
+
+  if (!category) notFound();
 
   return (
     <>
-      {schemas.map((schema, index) => (
-        <script
-          key={`blog-category-schema-${index}`}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-        />
-      ))}
-
-      <BlogPage searchParams={{ category: slug }} />
-
-      <SEOCategoryBlock
-        title={category?.name || ""}
-        html={category?.intro_text || ""}
-        links={keywordMap}
+      <BlogPage
+        heading={category.name}
+        searchParams={{ category: slug }}
+        showPageSchema={false}
       />
+      <CategorySeoContent category={category} />
     </>
   );
 }

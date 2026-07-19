@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SeoPage;
+use App\Support\MultilingualContent;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class SeoController extends Controller
 {
@@ -14,13 +16,22 @@ class SeoController extends Controller
      * =====================================
      * /api/seo/services
      */
-    public function show(string $key): JsonResponse
+    public function show(Request $request, string $key): JsonResponse
     {
-        $seo = SeoPage::resolve($key);
+        $locale = $request->string('locale')->toString();
+        $locale = in_array($locale, MultilingualContent::LOCALES, true) ? $locale : 'ka';
+        $seo = SeoPage::getByKey($key);
+
+        if (! $seo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'SEO page not found.',
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
-            'data' => $seo,
+            'data' => $seo->localizedMeta($locale),
         ]);
     }
 
@@ -66,7 +77,7 @@ class SeoController extends Controller
     public function index(): JsonResponse
     {
         $pages = SeoPage::query()
-            ->select(['key', 'slug', 'title', 'updated_at'])
+            ->select(['key', 'slug', 'title', 'noindex', 'updated_at'])
             ->get();
 
         return response()->json([

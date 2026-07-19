@@ -4,10 +4,11 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 const companyLinks = [
-    { href: "/about", key: "footer.company.about" },
-    { href: "/projects", key: "footer.company.projects" },
-    { href: "/services", key: "footer.company.services" },
-    { href: "/contact", key: "footer.company.contact" },
+    { href: "/about", key: "footer.company.about", fallback: { ka: "ჩვენ შესახებ", en: "About", ru: "О нас" } },
+    { href: "/projects", key: "footer.company.projects", fallback: { ka: "პროექტები", en: "Projects", ru: "Проекты" } },
+    { href: "/services", key: "footer.company.services", fallback: { ka: "სერვისები", en: "Services", ru: "Услуги" } },
+    { href: "/service-calculator", key: "footer.company.calculator", fallback: { ka: "კალკულატორი", en: "Calculator", ru: "Калькулятор" } },
+    { href: "/contact", key: "footer.company.contact", fallback: { ka: "კონტაქტი", en: "Contact", ru: "Контакты" } },
 ];
 
 export default async function FooterCompany() {
@@ -16,7 +17,7 @@ export default async function FooterCompany() {
     const links = companyLinks
         .map((item) => ({
             ...item,
-            label: translateText(translations, item.key, locale, null),
+            label: translateText(translations, item.key, locale, item.fallback),
         }))
         .filter((item) => item.label);
 

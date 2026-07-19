@@ -1,6 +1,5 @@
 import {
   buildSitemapApiUrl,
-  getLastPage,
   localizedUrlEntries,
   safeFetchJson,
   urlset,
@@ -10,33 +9,17 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const now = new Date().toISOString();
   const categoriesRes = await safeFetchJson(buildSitemapApiUrl("/service-categories"));
   const categories = Array.isArray(categoriesRes)
     ? categoriesRes
     : categoriesRes?.data || [];
-  const urls = [];
-
-  for (const category of categories) {
-    urls.push(...localizedUrlEntries(`/services/category/${category.slug}`, {
-      lastmod: now,
+  const urls = categories
+    .filter((category) => category?.slug && !category?.noindex)
+    .flatMap((category) => localizedUrlEntries(`/services/category/${category.slug}`, {
+      ...(category.updated_at ? { lastmod: category.updated_at } : {}),
       changefreq: "weekly",
       priority: "0.7",
     }));
-
-    const categoryRes = await safeFetchJson(
-      buildSitemapApiUrl("/services", { category: category.slug, page: 1 })
-    );
-    const lastPage = getLastPage(categoryRes);
-
-    for (let page = 2; page <= lastPage; page += 1) {
-      urls.push(...localizedUrlEntries(`/services/category/${category.slug}/page/${page}`, {
-        lastmod: now,
-        changefreq: "weekly",
-        priority: "0.4",
-      }));
-    }
-  }
 
   return xmlResponse(urlset(urls));
 }

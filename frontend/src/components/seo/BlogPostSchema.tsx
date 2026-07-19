@@ -1,4 +1,6 @@
-import { absoluteSiteUrl } from "@/lib/seo";
+import type { Locale } from "@/lib/locales";
+import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
+import JsonLd from "@/components/seo/JsonLd";
 
 export default function BlogPostSchema({
                                            title,
@@ -7,14 +9,19 @@ export default function BlogPostSchema({
                                            publishedAt,
                                            updatedAt,
                                            slug,
+                                           locale,
+                                           author,
                                        }: {
     title: string;
     description: string;
     image: string;
-    publishedAt: string;
+    publishedAt?: string;
     updatedAt?: string;
     slug: string;
+    locale: Locale;
+    author?: string;
 }) {
+    const published = publishedAt || updatedAt;
     const schema = {
         "@context": "https://schema.org",
 
@@ -24,22 +31,22 @@ export default function BlogPostSchema({
 
         description,
 
-        image: [image],
+        image: [absoluteSiteUrl(image)],
 
-        datePublished: publishedAt,
+        ...(published ? { datePublished: published } : {}),
 
-        dateModified: updatedAt || publishedAt,
+        ...(updatedAt || published ? { dateModified: updatedAt || published } : {}),
 
         mainEntityOfPage: {
             "@type": "WebPage",
 
-            "@id": absoluteSiteUrl(`/blog/${slug}`),
+            "@id": absoluteLocalizedUrl(`/blog/${slug}`, locale),
         },
 
         author: {
             "@type": "Organization",
 
-            name: "SafeTech",
+            name: author || "SafeTech",
         },
 
         publisher: {
@@ -54,12 +61,5 @@ export default function BlogPostSchema({
         },
     };
 
-    return (
-        <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-                __html: JSON.stringify(schema),
-            }}
-        />
-    );
+    return <JsonLd data={schema} />;
 }

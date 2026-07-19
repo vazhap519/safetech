@@ -1,7 +1,7 @@
 import ServicesSchema from "@/components/seo/ServicesSchema";
-import { createMetadata } from "@/lib/seo";
-import { getSiteSettings } from "@/lib/site-settings";
-import { translateText } from "@/lib/translations";
+import CmsPageSchema from "@/components/seo/CmsPageSchema";
+import { createCmsPageMetadata } from "@/lib/cms-metadata";
+import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
 import WhySection from "@/sections/About/Why";
 import CtaSection from "@/sections/Services/Cta/CtaSection";
 import FaqSeqAction from "@/sections/Services/Faq/FaqSeqction";
@@ -12,28 +12,7 @@ import ServiceSection from "@/sections/Services/Service/ServiceSection";
 import WorkSection from "@/sections/Services/Work/WorkSection";
 
 export async function generateMetadata() {
-    const { branding, locale, translations } = await getSiteSettings();
-
-    return createMetadata({
-        title: translateText(translations, "meta.services.title", locale, null),
-        description: translateText(
-            translations,
-            "meta.services.description",
-            locale,
-            null,
-        ),
-        path: "/services",
-        locale,
-        keywords: [
-            "CCTV",
-            "access control",
-            "networking",
-            "servers",
-            "IT infrastructure",
-        ],
-        image: branding.defaultImage,
-        siteName: branding.siteName,
-    });
+    return createCmsPageMetadata(PAGE_SEO_PRESETS.services);
 }
 
 type ServicesPageProps = {
@@ -47,7 +26,7 @@ export default async function Services({ searchParams }: ServicesPageProps) {
 
     return (
         <div>
-            <ServicesSchema />
+            <CmsPageSchema pageKey="services" fallback={<ServicesSchema />} />
             <HeroSection />
             <PartnerSection />
             <ServiceSection category={category} />

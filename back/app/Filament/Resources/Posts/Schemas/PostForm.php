@@ -10,7 +10,8 @@ use Filament\Forms\Components\{
     Toggle,
     Repeater,
     RichEditor,
-    Textarea
+    Textarea,
+    DateTimePicker
 };
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Illuminate\Support\Str;
@@ -154,6 +155,7 @@ class PostForm
                         SpatieMediaLibraryFileUpload::make('cover')
                             ->collection('cover')
                             ->image()
+                            ->imageEditor()
                             ->required(),
 
                     ]),
@@ -182,13 +184,11 @@ class PostForm
                                     ->label('Section title (EN)'),
                                 TextInput::make('translations.fields.title.ru')
                                     ->label('Section title (RU)'),
-                                Textarea::make('translations.fields.content.en')
+                                RichEditor::make('translations.fields.content.en')
                                     ->label('Section content (EN)')
-                                    ->rows(4)
                                     ->columnSpanFull(),
-                                Textarea::make('translations.fields.content.ru')
+                                RichEditor::make('translations.fields.content.ru')
                                     ->label('Section content (RU)')
-                                    ->rows(4)
                                     ->columnSpanFull(),
 
                                 TextInput::make('position')
@@ -219,6 +219,44 @@ class PostForm
                             ->rows(3)
                             ->columnSpanFull(),
 
+                        Repeater::make('seo_keywords')
+                            ->label('საკვანძო სიტყვები')
+                            ->simple(TextInput::make('value'))
+                            ->default([]),
+
+                        Toggle::make('noindex')
+                            ->label('საძიებო სისტემებში არ გამოჩნდეს')
+                            ->default(false),
+
+                        TextInput::make('seo_author')
+                            ->label('Schema ავტორი'),
+
+                        DateTimePicker::make('seo_published_at')
+                            ->label('Schema გამოქვეყნების თარიღი'),
+
+                        Repeater::make('faq')
+                            ->label('FAQ rich results')
+                            ->schema([
+                                TextInput::make('question')->label('კითხვა')->required(),
+                                Textarea::make('answer')->label('პასუხი')->required(),
+                            ])
+                            ->columnSpanFull(),
+
+                        Textarea::make('schema')
+                            ->label('Custom Schema JSON-LD')
+                            ->rows(10)
+                            ->dehydrateStateUsing(function ($state) {
+                                if (! $state) return null;
+
+                                $decoded = json_decode($state, true);
+
+                                return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+                            })
+                            ->formatStateUsing(fn ($state) => is_array($state)
+                                ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+                                : $state)
+                            ->columnSpanFull(),
+
                     ]),
 
                 Section::make('Content and SEO in 3 languages')
@@ -227,6 +265,15 @@ class PostForm
                         ...self::translationInputs('excerpt', 'Excerpt', true),
                         ...self::translationInputs('metaTitle', 'Meta title'),
                         ...self::translationInputs('metaDescription', 'Meta description', true),
+                        Repeater::make('translations.keywords.ka')
+                            ->label('Keywords (ქართული)')
+                            ->simple(TextInput::make('value')),
+                        Repeater::make('translations.keywords.en')
+                            ->label('Keywords (English)')
+                            ->simple(TextInput::make('value')),
+                        Repeater::make('translations.keywords.ru')
+                            ->label('Keywords (Русский)')
+                            ->simple(TextInput::make('value')),
                     ])
                     ->columns(3),
 

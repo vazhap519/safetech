@@ -24,6 +24,7 @@ class ServiceResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'updated_at' => $this->updated_at?->toAtomString(),
             'slug' => $this->slug,
             'name' => $name,
             'eyebrow' => $this->eyebrow,

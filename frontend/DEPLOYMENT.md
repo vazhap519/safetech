@@ -24,7 +24,7 @@ Do not deploy the frontend and backend into one shared root. Your current split 
 BACKEND_API_URL=https://api.safetech.ge/api
 NEXT_PUBLIC_API_URL=https://api.safetech.ge/api
 NEXT_PUBLIC_SITE_URL=https://safetech.ge
-GEO_BLOCK_ENABLED=true
+GEO_BLOCK_ENABLED=false
 GEO_ALLOWED_COUNTRIES=GE
 GEO_BLOCK_UNKNOWN_COUNTRY=false
 NODE_ENV=production
@@ -61,8 +61,9 @@ APP_DEBUG=false
 FILESYSTEM_DISK=public
 LEADS_NOTIFICATION_EMAIL=safetechgeorgia@gmail.com
 FRONTEND_URL=https://safetech.ge
+FRONTEND_URLS=https://safetech.ge,https://www.safetech.ge
 REVALIDATE_SECRET=same_secret_as_frontend
-GEO_BLOCK_ENABLED=true
+GEO_BLOCK_ENABLED=false
 GEO_ALLOWED_COUNTRIES=GE
 GEO_BLOCK_UNKNOWN_COUNTRY=false
 ```
@@ -86,6 +87,7 @@ cd /var/www/safetech-api
 composer install --no-dev --optimize-autoloader
 php artisan key:generate
 php artisan migrate --force
+php artisan db:seed --force
 php artisan storage:link
 php artisan optimize
 ```
@@ -158,7 +160,9 @@ sudo systemctl reload nginx
 8. Confirm `https://safetech.ge/sitemap.xml` contains alternate language entries.
 9. Confirm `https://safetech.ge/robots.txt` loads.
 10. In browser DevTools, confirm the public site negotiates `h2` or `h3`.
-11. Confirm Georgia-only access works:
+11. Keep country blocking disabled on an SEO-facing public site. Googlebot and other search crawlers can originate outside Georgia; strict country blocking prevents reliable crawling and indexing.
+
+12. If country blocking is an explicit business requirement, confirm it separately:
 
 ```bash
 curl -I https://safetech.ge/

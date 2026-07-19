@@ -17,6 +17,7 @@ class ProjectResource extends JsonResource
 
         return [
             'id' => $this->id, 'slug' => $this->slug, 'name' => $name,
+            'updated_at' => $this->updated_at?->toAtomString(),
             'title' => $this->title ?: $name, 'description' => $description,
             'seoDescription' => $this->seo_description ?: data_get($this->seo, 'description', $description),
             'image' => $image,

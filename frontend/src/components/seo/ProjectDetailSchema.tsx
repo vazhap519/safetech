@@ -1,4 +1,5 @@
 import type { ProjectDetail } from "@/lib/projectDetails";
+import JsonLd from "@/components/seo/JsonLd";
 import { getLanguageTag } from "@/lib/locales";
 import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -86,6 +87,10 @@ export default async function ProjectDetailSchema({
             },
         ],
     };
+
+    if (project.seo?.schema) {
+        return <JsonLd data={project.seo.schema} />;
+    }
 
     return (
         <script

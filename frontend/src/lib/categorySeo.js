@@ -1,4 +1,4 @@
-import { buildMetadata } from "@/lib/seo";
+import { createMetadata } from "@/lib/seo";
 
 export function asList(response) {
   if (Array.isArray(response)) return response;
@@ -20,18 +20,14 @@ export function keywordValues(category) {
     .filter(Boolean);
 }
 
-export function categoryMetadata({ category, canonical }) {
-  return buildMetadata({
+export function categoryMetadata({ category, path, locale }) {
+  return createMetadata({
     title: category?.seo_title || category?.name || "",
-    description: category?.seo_description || "",
+    description: category?.seo_description || category?.intro_text || "",
     keywords: keywordValues(category),
-    canonical,
+    path,
+    locale,
     noindex: Boolean(category?.noindex),
-    path: canonical,
-    og: {
-      title: category?.seo_title,
-      description: category?.seo_description,
-    },
   });
 }
 

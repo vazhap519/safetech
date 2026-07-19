@@ -54,15 +54,44 @@ function DynamicField({ field }: DynamicFieldProps) {
                     required={field.required}
                     rows={4}
                 />
+            ) : field.type === "checkbox" ? (
+                <label
+                    className="flex min-h-12 items-center gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 px-4 py-3 text-sm text-on-surface"
+                    htmlFor={inputId}
+                >
+                    <input
+                        className="size-5 accent-primary"
+                        defaultChecked={Boolean(field.defaultValue)}
+                        id={inputId}
+                        name={inputName}
+                        required={field.required}
+                        type="checkbox"
+                        value="yes"
+                    />
+                    <span>{field.label}</span>
+                </label>
             ) : (
                 <Input
+                    defaultValue={
+                        typeof field.defaultValue === "boolean"
+                            ? undefined
+                            : field.defaultValue
+                    }
                     id={inputId}
                     label={field.label}
+                    max={field.max}
+                    min={field.min}
                     name={inputName}
                     required={field.required}
+                    step={field.step}
                     type={field.type === "number" ? "number" : "text"}
                 />
             )}
+            {field.help ? (
+                <p className="mt-2 text-xs text-on-surface-variant">
+                    {field.help}
+                </p>
+            ) : null}
         </div>
     );
 }

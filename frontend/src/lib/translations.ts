@@ -56,12 +56,24 @@ export function translateText(
     locale: Locale,
     fallback: TranslationFallback,
 ) {
-    void fallback;
-
     const configured = translations[key]?.[locale]?.trim();
 
     if (configured) {
         return configured;
+    }
+
+    if (typeof fallback === "string") {
+        return fallback.trim();
+    }
+
+    if (fallback && typeof fallback === "object") {
+        return (
+            fallback[locale]?.trim() ||
+            fallback.ka?.trim() ||
+            fallback.en?.trim() ||
+            fallback.ru?.trim() ||
+            ""
+        );
     }
 
     return "";

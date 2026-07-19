@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SeoPages\Schemas;
 
+use App\Support\SiteSettings;
 use App\Support\SocialLinks;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
@@ -12,9 +13,11 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\View;
 
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 class SeoPageForm
@@ -32,32 +35,24 @@ class SeoPageForm
                     |--------------------------------------------------
                     */
                     Select::make('key')
-                        ->label('Page')
-                        ->options(function () {
-                            return collect(Route::getRoutes())
-                                ->filter(fn ($route) =>
-                                    in_array('GET', $route->methods()) &&
-                                    str_starts_with($route->uri(), 'api') &&
-                                    !str_contains($route->uri(), '{')
-                                )
-                                ->mapWithKeys(function ($route) {
-                                    $uri = preg_replace('#^api/?#', '', $route->uri());
-                                    $key = $uri ?: 'home';
-
-                                    return [
-                                        $key => Str::of($key)->replace('-', ' ')->title()
-                                    ];
-                                })
-                                ->unique()
-                                ->sortKeys()
-                                ->toArray();
-                        })
+                        ->label('გვერდი')
+                        ->options([
+                            'home' => 'მთავარი',
+                            'about' => 'ჩვენ შესახებ',
+                            'services' => 'სერვისები',
+                            'service-calculator' => 'სერვისების კალკულატორი',
+                            'projects' => 'პროექტები',
+                            'blog' => 'ბლოგი',
+                            'contact' => 'კონტაქტი',
+                            'privacy' => 'კონფიდენციალურობა',
+                        ])
                         ->required()
                         ->reactive()
                         ->searchable()
-                        ->afterStateUpdated(fn ($state, $set) =>
-                        $set('slug', '/' . trim($state, '/'))
-                        ),
+                        ->afterStateUpdated(fn ($state, $set) => $set(
+                            'slug',
+                            $state === 'home' ? '/' : '/'.trim((string) $state, '/'),
+                        )),
 
                     /*
                     |--------------------------------------------------
@@ -75,7 +70,7 @@ class SeoPageForm
                     |--------------------------------------------------
                     */
                     TextInput::make('title')
-                        ->label('SEO Title')
+                        ->label('SEO სათაური (ქართული fallback)')
                         ->required()
                         ->live(),
 
@@ -85,6 +80,7 @@ class SeoPageForm
                     |--------------------------------------------------
                     */
                     Textarea::make('description')
+                        ->label('Meta აღწერა (ქართული fallback)')
                         ->rows(3)
                         ->live(),
 
@@ -94,6 +90,7 @@ class SeoPageForm
                     |--------------------------------------------------
                     */
                     Repeater::make('keywords')
+                        ->label('საკვანძო სიტყვები (ქართული fallback)')
                         ->schema([
                             TextInput::make('value')->required(),
                         ])
@@ -116,7 +113,7 @@ class SeoPageForm
                     |--------------------------------------------------
                     */
                     Action::make('generate')
-                        ->label('🤖 Generate SEO')
+                        ->label('SEO ტექსტის შექმნა')
                         ->color('success')
                         ->action(function ($set, $get) {
 
@@ -166,6 +163,7 @@ class SeoPageForm
                     |--------------------------------------------------
                     */
                     Select::make('schema_type')
+                        ->label('Schema ტიპი')
                         ->options([
                             'WebPage' => 'WebPage',
                             'WebSite' => 'WebSite',
@@ -222,6 +220,22 @@ class SeoPageForm
                             }
                         ]),
 
+                    Toggle::make('noindex')
+                        ->label('საძიებო სისტემებში არ გამოჩნდეს')
+                        ->default(false),
+
+                    SpatieMediaLibraryFileUpload::make('og_image')
+                        ->label('Google / Open Graph სურათი (1200x630)')
+                        ->collection('og_image')
+                        ->image()
+                        ->imageEditor(),
+
+                    SpatieMediaLibraryFileUpload::make('share_image')
+                        ->label('Social share სურათი (1200x630)')
+                        ->collection('share_image')
+                        ->image()
+                        ->imageEditor(),
+
                     /*
                     |--------------------------------------------------
                     | PREVIEW
@@ -229,8 +243,36 @@ class SeoPageForm
                     */
                     View::make('filament.seo-preview')->reactive(),
 
+                ]),
+
+            Section::make('SEO ტექსტები 3 ენაზე')
+                ->description('თითოეულ ენას აქვს დამოუკიდებელი title, description, Open Graph ტექსტი და keywords. ცარიელი ველი ქართულ fallback-ს გამოიყენებს.')
+                ->schema([
+                    ...self::translationInputs('title', 'SEO სათაური'),
+                    ...self::translationInputs('description', 'Meta აღწერა', true),
+                    ...self::translationInputs('og_title', 'Open Graph სათაური'),
+                    ...self::translationInputs('og_description', 'Open Graph აღწერა', true),
+                    TagsInput::make('translations.keywords.ka')->label('Keywords (ქართული)'),
+                    TagsInput::make('translations.keywords.en')->label('Keywords (English)'),
+                    TagsInput::make('translations.keywords.ru')->label('Keywords (Русский)'),
                 ])
+                ->columns(3),
         ]);
+    }
+
+    /** @return array<int, TextInput|Textarea> */
+    private static function translationInputs(string $field, string $label, bool $textarea = false): array
+    {
+        return collect([
+            'ka' => 'ქართული',
+            'en' => 'English',
+            'ru' => 'Русский',
+        ])->map(
+            fn (string $localeLabel, string $locale) => ($textarea
+                ? Textarea::make("translations.fields.{$field}.{$locale}")->rows(3)
+                : TextInput::make("translations.fields.{$field}.{$locale}")
+            )->label("{$label} ({$localeLabel})"),
+        )->values()->all();
     }
 
     /*
@@ -244,7 +286,7 @@ class SeoPageForm
         $name = config('app.name');
 
         // ✅ სწორ ადგილას
-        $settings = settings();
+        $settings = SiteSettings::businessProfile();
 
         return match ($type) {
 

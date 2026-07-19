@@ -46,4 +46,12 @@ export type ServiceDetail = {
     process: ServiceStep[];
     faqs: ServiceFaq[];
     related: RelatedService[];
+    seo?: {
+        title?: string;
+        description?: string;
+        keywords?: string[];
+        image?: string;
+        noindex?: boolean;
+        schema?: Record<string, unknown> | Array<Record<string, unknown>>;
+    };
 };

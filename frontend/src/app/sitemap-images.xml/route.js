@@ -11,17 +11,20 @@ export async function GET() {
   ]);
 
   const items = [
-    ...services.map((service) => ({
+    ...services.filter((service) => !service?.seo?.noindex).map((service) => ({
       loc: `${baseUrl}/services/${service.slug}`,
       image: backendAssetUrl(service.image),
+      title: service.title || service.name,
     })),
-    ...projects.map((project) => ({
+    ...projects.filter((project) => !project?.seo?.noindex).map((project) => ({
       loc: `${baseUrl}/projects/${project.slug}`,
       image: backendAssetUrl(project.image),
+      title: project.title || project.name,
     })),
-    ...posts.map((post) => ({
+    ...posts.filter((post) => !post?.meta?.noindex).map((post) => ({
       loc: `${baseUrl}/blog/${post.slug}`,
       image: backendAssetUrl(post.image),
+      title: post.title,
     })),
   ];
 

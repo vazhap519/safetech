@@ -1,7 +1,7 @@
 import AboutSchema from "@/components/seo/AboutSchema";
-import { createMetadata } from "@/lib/seo";
-import { getSiteSettings } from "@/lib/site-settings";
-import { translateText } from "@/lib/translations";
+import CmsPageSchema from "@/components/seo/CmsPageSchema";
+import { createCmsPageMetadata } from "@/lib/cms-metadata";
+import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
 import CtaSection from "@/sections/About/CtaSection";
 import HeroSection from "@/sections/About/Hero";
 import HowSection from "@/sections/About/How";
@@ -13,33 +13,13 @@ import WhoSection from "@/sections/About/Who";
 import WhySection from "@/sections/About/Why";
 
 export async function generateMetadata() {
-    const { branding, locale, translations } = await getSiteSettings();
-
-    return createMetadata({
-        title: translateText(translations, "meta.about.title", locale, null),
-        description: translateText(
-            translations,
-            "meta.about.description",
-            locale,
-            null,
-        ),
-        path: "/about",
-        locale,
-        keywords: [
-            "SafeTech",
-            "about safetech",
-            "IT company Georgia",
-            "security systems integrator",
-        ],
-        image: branding.defaultImage,
-        siteName: branding.siteName,
-    });
+    return createCmsPageMetadata(PAGE_SEO_PRESETS.about);
 }
 
 export default function About() {
     return (
         <>
-            <AboutSchema />
+            <CmsPageSchema pageKey="about" fallback={<AboutSchema />} />
             <HeroSection />
             <StorySection />
             <WhoSection />

@@ -7,7 +7,7 @@ import {
 } from "@/lib/locales";
 import { DEFAULT_LOCALE, localizePath } from "@/lib/locales";
 
-type SeoProps = {
+export type SeoProps = {
     title: string;
     description: string;
     path: string;
@@ -16,6 +16,7 @@ type SeoProps = {
     image?: string;
     siteName?: string;
     type?: "website" | "article";
+    noindex?: boolean;
 };
 
 type LegacySeoProps = {
@@ -114,6 +115,7 @@ export function createMetadata({
     image = DEFAULT_SOCIAL_IMAGE,
     siteName = SITE_NAME,
     type = "website",
+    noindex = false,
 }: SeoProps): Metadata {
     const url = absoluteLocalizedUrl(path, locale);
     const resolvedSiteName = cleanText(siteName) || SITE_NAME;
@@ -161,11 +163,11 @@ export function createMetadata({
             images: [socialImage],
         },
         robots: {
-            index: true,
-            follow: true,
+            index: !noindex,
+            follow: !noindex,
             googleBot: {
-                index: true,
-                follow: true,
+                index: !noindex,
+                follow: !noindex,
                 "max-image-preview": "large",
                 "max-snippet": -1,
                 "max-video-preview": -1,

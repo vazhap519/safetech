@@ -45,13 +45,18 @@ export async function generateMetadata({
     }
 
     return createMetadata({
-        title: project.title || project.name,
-        description: project.seoDescription || project.description,
+        title: project.seo?.title || project.title || project.name,
+        description:
+            project.seo?.description ||
+            project.seoDescription ||
+            project.description,
         path: `/projects/${project.slug}`,
         locale,
-        image: project.image || branding.defaultImage,
+        keywords: project.seo?.keywords,
+        image: project.seo?.image || project.image || branding.defaultImage,
         siteName,
         type: "article",
+        noindex: Boolean(project.seo?.noindex),
     });
 }
 

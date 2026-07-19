@@ -1,7 +1,7 @@
 import ProjectsSchema from "@/components/seo/ProjectsSchema";
-import { createMetadata } from "@/lib/seo";
-import { getSiteSettings } from "@/lib/site-settings";
-import { translateText } from "@/lib/translations";
+import CmsPageSchema from "@/components/seo/CmsPageSchema";
+import { createCmsPageMetadata } from "@/lib/cms-metadata";
+import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
 import ProjectsCtaSection from "@/sections/Projects/Cta/ProjectsCtaSection";
 import FeaturedProjectsSection from "@/sections/Projects/Featured/FeaturedProjectsSection";
 import ProjectsGallerySection from "@/sections/Projects/Gallery/ProjectsGallerySection";
@@ -10,28 +10,7 @@ import MetricsSection from "@/sections/Projects/Metrics/MetricsSection";
 import StandardsSection from "@/sections/Projects/Standards/StandardsSection";
 
 export async function generateMetadata() {
-    const { branding, locale, translations } = await getSiteSettings();
-
-    return createMetadata({
-        title: translateText(translations, "meta.projects.title", locale, null),
-        description: translateText(
-            translations,
-            "meta.projects.description",
-            locale,
-            null,
-        ),
-        path: "/projects",
-        locale,
-        keywords: [
-            "IT projects",
-            "CCTV projects",
-            "network infrastructure",
-            "server infrastructure",
-            "SafeTech",
-        ],
-        image: branding.defaultImage,
-        siteName: branding.siteName,
-    });
+    return createCmsPageMetadata(PAGE_SEO_PRESETS.projects);
 }
 
 type ProjectsPageProps = {
@@ -45,7 +24,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 
     return (
         <>
-            <ProjectsSchema />
+            <CmsPageSchema pageKey="projects" fallback={<ProjectsSchema />} />
             <ProjectsHeroSection />
             <MetricsSection />
             <FeaturedProjectsSection />

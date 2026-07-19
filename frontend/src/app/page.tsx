@@ -1,7 +1,7 @@
 import HomeSchema from "@/components/seo/HomeSchema";
-import { createMetadata } from "@/lib/seo";
-import { getSiteSettings } from "@/lib/site-settings";
-import { translateText } from "@/lib/translations";
+import CmsPageSchema from "@/components/seo/CmsPageSchema";
+import { createCmsPageMetadata } from "@/lib/cms-metadata";
+import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
 import Cta from "@/sections/Home/Cta";
 import Hero from "@/sections/Home/Hero";
 import Industries from "@/sections/Home/Industries";
@@ -12,34 +12,13 @@ import Trust from "@/sections/Home/Trust";
 import Why from "@/sections/Home/Why";
 
 export async function generateMetadata() {
-    const { branding, locale, translations } = await getSiteSettings();
-
-    return createMetadata({
-        title: translateText(translations, "meta.home.title", locale, null),
-        description: translateText(
-            translations,
-            "meta.home.description",
-            locale,
-            null,
-        ),
-        path: "/",
-        locale,
-        keywords: [
-            "CCTV",
-            "IT infrastructure",
-            "networking",
-            "server systems",
-            "security systems",
-        ],
-        image: branding.defaultImage,
-        siteName: branding.siteName,
-    });
+    return createCmsPageMetadata(PAGE_SEO_PRESETS.home);
 }
 
 export default function HomePage() {
     return (
         <>
-            <HomeSchema />
+            <CmsPageSchema pageKey="home" fallback={<HomeSchema />} />
             <div className="overflow-x-hidden">
                 <Hero />
                 <Trust />

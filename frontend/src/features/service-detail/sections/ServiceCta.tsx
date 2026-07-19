@@ -35,15 +35,32 @@ export default async function ServiceCta({
         locale,
         null,
     );
+    const calculatorLabel = translateText(
+        translations,
+        "service.detail.cta.calculator",
+        locale,
+        {
+            ka: "ფასის გამოთვლა",
+            en: "Calculate price",
+            ru: "Рассчитать стоимость",
+        },
+    );
 
     return (
         <CmsCtaSection
             actions={[
                 {
-                    label: consultationLabel,
-                    consultation: true,
+                    label: calculatorLabel,
+                    href: `/service-calculator?service=${encodeURIComponent(service.slug)}`,
                     className:
                         "glow-button px-unit-xl py-unit-md font-headline-md hover:shadow-[0_0_30px_rgba(37,99,235,0.4)]",
+                },
+                {
+                    label: consultationLabel,
+                    consultation: true,
+                    variant: "secondary",
+                    className:
+                        "rounded-xl border-outline-variant bg-white/5 px-unit-xl py-unit-md font-headline-md text-white hover:bg-white/10",
                 },
                 contact.phone
                     ? {

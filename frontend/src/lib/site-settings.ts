@@ -40,6 +40,17 @@ export type SiteBranding = {
     defaultImage: string;
 };
 
+export type SiteIntegrations = {
+    marketingEnabled: boolean;
+    googleTagManagerId: string;
+    googleAnalyticsId: string;
+    metaPixelId: string;
+    googleSiteVerification: string;
+    bingSiteVerification: string;
+    yandexSiteVerification: string;
+    indexNowKey: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -186,6 +197,17 @@ export const defaultSiteBranding: SiteBranding = {
     defaultImage: DEFAULT_SOCIAL_IMAGE,
 };
 
+export const defaultSiteIntegrations: SiteIntegrations = {
+    marketingEnabled: false,
+    googleTagManagerId: "",
+    googleAnalyticsId: "",
+    metaPixelId: "",
+    googleSiteVerification: "",
+    bingSiteVerification: "",
+    yandexSiteVerification: "",
+    indexNowKey: "",
+};
+
 export const getSiteSettings = cache(async () => {
     const [content, locale] = await Promise.all([
         getBackendContent(),
@@ -197,6 +219,9 @@ export const getSiteSettings = cache(async () => {
         ? settings.branding
         : {};
     const configuredSeo = isRecord(settings.seo) ? settings.seo : {};
+    const configuredIntegrations = isRecord(settings.integrations)
+        ? settings.integrations
+        : {};
     const translations = buildTranslationMap(settings.translations);
 
     const socialLinks = parseSocialLinks(
@@ -252,10 +277,35 @@ export const getSiteSettings = cache(async () => {
         ),
     } satisfies SiteBranding;
 
+    const integrations = {
+        marketingEnabled:
+            configuredIntegrations.marketing_enabled === true ||
+            configuredIntegrations.marketing_enabled === "true" ||
+            configuredIntegrations.marketing_enabled === 1,
+        googleTagManagerId: pickString(
+            configuredIntegrations.google_tag_manager_id,
+        ),
+        googleAnalyticsId: pickString(
+            configuredIntegrations.google_analytics_id,
+        ),
+        metaPixelId: pickString(configuredIntegrations.meta_pixel_id),
+        googleSiteVerification: pickString(
+            configuredIntegrations.google_site_verification,
+        ),
+        bingSiteVerification: pickString(
+            configuredIntegrations.bing_site_verification,
+        ),
+        yandexSiteVerification: pickString(
+            configuredIntegrations.yandex_site_verification,
+        ),
+        indexNowKey: pickString(configuredIntegrations.indexnow_key),
+    } satisfies SiteIntegrations;
+
     return {
         contact,
         socialLinks,
         branding,
+        integrations,
         locale: locale satisfies Locale,
         translations: translations satisfies TranslationMap,
     };

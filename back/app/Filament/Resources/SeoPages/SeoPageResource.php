@@ -20,6 +20,12 @@ class SeoPageResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'გვერდების SEO';
+
+    protected static ?string $modelLabel = 'გვერდის SEO';
+
+    protected static ?string $pluralModelLabel = 'გვერდების SEO';
+
     public static function form(Schema $schema): Schema
     {
         return SeoPageForm::configure($schema);

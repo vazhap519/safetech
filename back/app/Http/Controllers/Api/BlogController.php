@@ -5,19 +5,23 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Support\MultilingualContent;
+use App\Support\PublicContentCache;
+use App\Support\SafeHtml;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class BlogController extends Controller
 {
+    public function __construct(private readonly SafeHtml $safeHtml) {}
+
     public function index(Request $request): JsonResponse
     {
         $category = $request->string('category')->toString();
         $page = $request->integer('page', 1);
         $locale = $this->locale($request);
 
-        $cacheKey = "blog:index:{$locale}:{$category}:page:{$page}";
+        $cacheKey = PublicContentCache::key("blog:index:{$locale}:{$category}:page:{$page}");
 
         $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($category, $locale) {
             $query = Post::query()
@@ -47,7 +51,7 @@ class BlogController extends Controller
     public function show(Request $request, string $slug): JsonResponse
     {
         $locale = $this->locale($request);
-        $cacheKey = "blog:post:{$locale}:{$slug}";
+        $cacheKey = PublicContentCache::key("blog:post:{$locale}:{$slug}");
 
         $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($slug, $locale) {
             $post = Post::query()
@@ -83,8 +87,13 @@ class BlogController extends Controller
             'slug' => $post->slug,
             'excerpt' => $this->translated($post, 'excerpt', $post->excerpt, $locale),
             'image' => $this->getImage($post),
+            'created_at' => $post->created_at?->toAtomString(),
+            'updated_at' => $post->updated_at?->toAtomString(),
             'reading_time' => $post->reading_time,
             'published_year' => $post->published_year,
+            'meta' => [
+                'noindex' => (bool) $post->noindex,
+            ],
             'category' => [
                 'name' => $post->category
                     ? $this->translated($post->category, 'name', $post->category->name, $locale)
@@ -100,6 +109,7 @@ class BlogController extends Controller
         $excerpt = $this->translated($post, 'excerpt', $post->excerpt, $locale);
         $metaTitle = $this->translated($post, 'metaTitle', $post->meta_title ?: $post->title, $locale);
         $metaDescription = $this->translated($post, 'metaDescription', $post->meta_description, $locale);
+        $localizedKeywords = data_get($post->translations, "keywords.{$locale}");
 
         return [
             'title' => $title,
@@ -108,11 +118,20 @@ class BlogController extends Controller
             'image' => $this->getImage($post),
             'reading_time' => $post->reading_time,
             'published_year' => $post->published_year,
+            'published_at' => ($post->seo_published_at ?: $post->created_at)?->toAtomString(),
+            'updated_at' => $post->updated_at?->toAtomString(),
             'meta' => [
                 'title' => $metaTitle ?: $title,
                 'description' => $metaDescription ?: $excerpt,
                 'image' => $this->getImage($post),
+                'keywords' => is_array($localizedKeywords)
+                    ? array_values(array_filter($localizedKeywords, 'is_string'))
+                    : ($post->seo_keywords ?? []),
+                'noindex' => (bool) $post->noindex,
+                'schema' => $post->schema,
+                'author' => $post->seo_author,
             ],
+            'faq' => $post->faq ?? [],
             'category' => [
                 'name' => $post->category
                     ? $this->translated($post->category, 'name', $post->category->name, $locale)
@@ -130,7 +149,9 @@ class BlogController extends Controller
                 ->map(fn ($section) => [
                     'id' => $section->id,
                     'title' => $this->translated($section, 'title', $section->title, $locale),
-                    'content' => $this->translated($section, 'content', $section->content, $locale),
+                    'content' => $this->safeHtml->sanitize(
+                        $this->translated($section, 'content', $section->content, $locale),
+                    ),
                     'position' => $section->position,
                 ]),
             'related' => $this->getRelatedPosts($post, $locale),

@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\PrivacyPolicy;
 use App\Support\FrontendRevalidator;
 use App\Support\MultilingualContent;
+use App\Support\SafeHtml;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class PrivacyController extends Controller
 {
+    public function __construct(private readonly SafeHtml $safeHtml) {}
+
     public function index(Request $request)
     {
         $locale = $this->locale($request);
@@ -25,7 +28,9 @@ class PrivacyController extends Controller
             return [
                 'title' => $this->translated($privacy, 'title', $privacy->title, $locale),
                 'highlight' => $this->translated($privacy, 'highlight', $privacy->highlight, $locale),
-                'content' => $this->translated($privacy, 'content', $privacy->content, $locale),
+                'content' => $this->safeHtml->sanitize(
+                    $this->translated($privacy, 'content', $privacy->content, $locale),
+                ),
             ];
         });
 

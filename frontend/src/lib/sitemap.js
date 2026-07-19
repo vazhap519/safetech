@@ -198,6 +198,7 @@ ${items
     <loc>${escapeXml(item.loc)}</loc>
     <image:image>
       <image:loc>${escapeXml(item.image)}</image:loc>
+      ${item.title ? `<image:title>${escapeXml(item.title)}</image:title>` : ""}
     </image:image>
   </url>`
   )

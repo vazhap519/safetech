@@ -1,3 +1,4 @@
+import JsonLd from "@/components/seo/JsonLd";
 import { getLanguageTag } from "@/lib/locales";
 import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -86,6 +87,10 @@ export default async function ServiceStructuredData({
                 },
             })),
         });
+    }
+
+    if (service.seo?.schema) {
+        return <JsonLd data={service.seo.schema} />;
     }
 
     return (

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Project;
 use App\Models\Service;
 use App\Models\SiteSetting;
+use App\Support\Calculators\DefaultCalculatorProfiles;
 use Illuminate\Database\Seeder;
 
 class ContentSeeder extends Seeder
@@ -26,13 +27,16 @@ class ContentSeeder extends Seeder
                     $setting->value,
                     $value,
                 );
-
-                $setting->forceFill([
-                    'group' => 'general',
-                    'value' => $value,
-                    'is_public' => true,
-                ])->save();
+            } else {
+                $current = is_array($setting->value) ? $setting->value : [];
+                $value = array_replace_recursive($value, $current);
             }
+
+            $setting->forceFill([
+                'group' => 'general',
+                'value' => $value,
+                'is_public' => true,
+            ])->save();
         }
 
         $services = [
@@ -62,6 +66,16 @@ class ContentSeeder extends Seeder
                 'industries' => ['Offices', 'Retail', 'Warehouses'],
                 'process' => [],
                 'brands' => [],
+                'lead_form' => DefaultCalculatorProfiles::for('cctv'),
+                'translations' => $this->serviceTranslations(
+                    ['ვიდეოსამეთვალყურეობა', 'CCTV', 'Видеонаблюдение'],
+                    ['ვიდეოსამეთვალყურეობის მონტაჟი და მონიტორინგი', 'CCTV installation and monitoring', 'Монтаж и мониторинг видеонаблюдения'],
+                    [
+                        'ოფისების, სავაჭრო სივრცეების, საწყობებისა და საცხოვრებელი ობიექტების პროფესიონალური ვიდეოსამეთვალყურეო სისტემები.',
+                        'Professional camera systems for offices, retail, warehouses, and residential buildings.',
+                        'Профессиональные системы видеонаблюдения для офисов, магазинов, складов и жилых объектов.',
+                    ],
+                ),
                 'is_published' => true,
                 'sort_order' => 1,
             ],
@@ -91,16 +105,156 @@ class ContentSeeder extends Seeder
                 'industries' => ['Offices', 'Hotels', 'Warehouses'],
                 'process' => [],
                 'brands' => [],
+                'lead_form' => DefaultCalculatorProfiles::for('networking'),
+                'translations' => $this->serviceTranslations(
+                    ['ქსელური ინფრასტრუქტურა', 'Network Infrastructure', 'Сетевая инфраструктура'],
+                    ['ქსელური ინფრასტრუქტურა', 'Network Infrastructure', 'Сетевая инфраструктура'],
+                    [
+                        'სტრუქტურული კაბელირება, როუტერები, სვიჩები, Wi-Fi დაფარვა და დაცული ბიზნეს ქსელები.',
+                        'Structured cabling, routers, switches, Wi-Fi coverage, and secure business networks.',
+                        'Структурированная кабельная система, роутеры, коммутаторы, Wi-Fi и защищенные бизнес-сети.',
+                    ],
+                ),
                 'is_published' => true,
                 'sort_order' => 2,
+            ],
+            [
+                'slug' => 'access-control',
+                'name' => 'Access Control',
+                'eyebrow' => 'Security systems',
+                'icon' => 'fingerprint',
+                'title' => 'Access control and attendance systems',
+                'description' => 'Card, PIN, biometric, and face-recognition access control for secure workplaces.',
+                'short_description' => 'Card, PIN, biometric, and face-recognition access control for secure workplaces.',
+                'long_description' => 'We design centralized access control, attendance, and visitor-management systems.',
+                'seo_description' => 'Access control, biometric reader, attendance, and secure door system installation in Georgia.',
+                'seo' => [
+                    'title' => 'Access control and attendance systems',
+                    'description' => 'Access control, biometric reader, attendance, and secure door system installation in Georgia.',
+                ],
+                'keywords' => ['access control', 'biometric readers', 'attendance systems'],
+                'highlights' => ['Site assessment', 'Secure entry design', 'Central management'],
+                'overview' => [
+                    'title' => 'Controlled access for every critical area',
+                    'paragraphs' => ['We design centralized access control, attendance, and visitor-management systems.'],
+                    'stats' => [],
+                ],
+                'benefits' => [],
+                'solutions' => [],
+                'industries' => ['Offices', 'Hotels', 'Healthcare', 'Industrial'],
+                'process' => [],
+                'brands' => [],
+                'lead_form' => DefaultCalculatorProfiles::for('access-control'),
+                'translations' => $this->serviceTranslations(
+                    ['დაშვების კონტროლი', 'Access Control', 'Контроль доступа'],
+                    ['დაშვების კონტროლისა და აღრიცხვის სისტემები', 'Access control and attendance systems', 'Системы контроля доступа и учета'],
+                    [
+                        'ბარათის, PIN-ის, ბიომეტრიისა და სახის ამოცნობის სისტემები დაცული სამუშაო სივრცეებისთვის.',
+                        'Card, PIN, biometric, and face-recognition access control for secure workplaces.',
+                        'Карточные, PIN-, биометрические системы и распознавание лиц для защищенных объектов.',
+                    ],
+                ),
+                'is_published' => true,
+                'sort_order' => 3,
+            ],
+            [
+                'slug' => 'server-infrastructure',
+                'name' => 'Server Infrastructure',
+                'eyebrow' => 'IT infrastructure',
+                'icon' => 'server',
+                'title' => 'Server infrastructure and virtualization',
+                'description' => 'Server deployment, virtualization, storage, backup, and infrastructure monitoring.',
+                'short_description' => 'Server deployment, virtualization, storage, backup, and infrastructure monitoring.',
+                'long_description' => 'We build resilient server environments with documented recovery and monitoring processes.',
+                'seo_description' => 'Server infrastructure, virtualization, storage, backup, and monitoring services in Georgia.',
+                'seo' => [
+                    'title' => 'Server infrastructure and virtualization',
+                    'description' => 'Server infrastructure, virtualization, storage, backup, and monitoring services in Georgia.',
+                ],
+                'keywords' => ['servers', 'virtualization', 'backup', 'infrastructure monitoring'],
+                'highlights' => ['Capacity planning', 'Backup design', 'Infrastructure monitoring'],
+                'overview' => [
+                    'title' => 'Resilient infrastructure for critical workloads',
+                    'paragraphs' => ['We build resilient server environments with documented recovery and monitoring processes.'],
+                    'stats' => [],
+                ],
+                'benefits' => [],
+                'solutions' => [],
+                'industries' => ['Business', 'Healthcare', 'Hospitality', 'Industrial'],
+                'process' => [],
+                'brands' => [],
+                'lead_form' => DefaultCalculatorProfiles::for('server-infrastructure'),
+                'translations' => $this->serviceTranslations(
+                    ['სერვერული ინფრასტრუქტურა', 'Server Infrastructure', 'Серверная инфраструктура'],
+                    ['სერვერული ინფრასტრუქტურა და ვირტუალიზაცია', 'Server infrastructure and virtualization', 'Серверная инфраструктура и виртуализация'],
+                    [
+                        'სერვერების დანერგვა, ვირტუალიზაცია, მონაცემთა საცავი, backup და ინფრასტრუქტურის მონიტორინგი.',
+                        'Server deployment, virtualization, storage, backup, and infrastructure monitoring.',
+                        'Внедрение серверов, виртуализация, хранилища, резервное копирование и мониторинг.',
+                    ],
+                ),
+                'is_published' => true,
+                'sort_order' => 4,
+            ],
+            [
+                'slug' => 'it-support',
+                'name' => 'IT Support',
+                'eyebrow' => 'Managed services',
+                'icon' => 'headset',
+                'title' => 'Managed IT support for business',
+                'description' => 'Remote and on-site IT support, monitoring, asset management, and practical SLA plans.',
+                'short_description' => 'Remote and on-site IT support, monitoring, asset management, and practical SLA plans.',
+                'long_description' => 'We support users, workstations, servers, and business-critical systems under a clear service plan.',
+                'seo_description' => 'Managed IT support, on-site service, remote helpdesk, monitoring, and SLA plans in Georgia.',
+                'seo' => [
+                    'title' => 'Managed IT support for business',
+                    'description' => 'Managed IT support, on-site service, remote helpdesk, monitoring, and SLA plans in Georgia.',
+                ],
+                'keywords' => ['IT support', 'helpdesk', 'managed IT services', 'SLA'],
+                'highlights' => ['Remote helpdesk', 'On-site visits', 'Clear response times'],
+                'overview' => [
+                    'title' => 'Reliable day-to-day IT operations',
+                    'paragraphs' => ['We support users, workstations, servers, and business-critical systems under a clear service plan.'],
+                    'stats' => [],
+                ],
+                'benefits' => [],
+                'solutions' => [],
+                'industries' => ['Offices', 'Retail', 'Hospitality', 'Professional services'],
+                'process' => [],
+                'brands' => [],
+                'lead_form' => DefaultCalculatorProfiles::for('it-support'),
+                'translations' => $this->serviceTranslations(
+                    ['IT მხარდაჭერა', 'IT Support', 'IT-поддержка'],
+                    ['ბიზნესის მართვადი IT მხარდაჭერა', 'Managed IT support for business', 'Управляемая IT-поддержка бизнеса'],
+                    [
+                        'დისტანციური და ადგილზე IT მხარდაჭერა, მონიტორინგი, აქტივების მართვა და მკაფიო SLA გეგმები.',
+                        'Remote and on-site IT support, monitoring, asset management, and practical SLA plans.',
+                        'Удаленная и выездная IT-поддержка, мониторинг, учет активов и понятные SLA.',
+                    ],
+                ),
+                'is_published' => true,
+                'sort_order' => 5,
             ],
         ];
 
         foreach ($services as $service) {
-            Service::query()->firstOrCreate(
+            $record = Service::query()->firstOrCreate(
                 ['slug' => $service['slug']],
                 $service,
             );
+
+            $updates = [];
+            if (! is_array($record->translations) || $record->translations === []) {
+                $updates['translations'] = $service['translations'];
+            }
+
+            if (! is_array($record->lead_form) || ! is_array(data_get($record->lead_form, 'pricing'))) {
+                $updates['lead_form'] = $service['lead_form'];
+            }
+
+            if ($updates !== []) {
+                $record->forceFill($updates)->save();
+            }
         }
 
         Project::query()->firstOrCreate(
@@ -147,10 +301,19 @@ class ContentSeeder extends Seeder
             ],
             'socials' => [
                 'links' => [],
+                'share_title' => 'გააზიარე ეს გვერდი',
+                'share_buttons' => ['facebook', 'whatsapp', 'linkedin', 'link'],
             ],
             'seo' => [
                 'site_name' => 'SafeTech',
-                'default_image' => null,
+                'site_description' => '',
+                'city' => 'Tbilisi',
+                'country' => 'GE',
+                'postal_code' => '',
+                'lat' => null,
+                'lng' => null,
+                'open_time' => '09:00',
+                'close_time' => '18:00',
             ],
             'branding' => [
                 'site_name' => 'SafeTech',
@@ -160,8 +323,35 @@ class ContentSeeder extends Seeder
                 'favicon' => null,
                 'default_image' => null,
             ],
+            'integrations' => [
+                'marketing_enabled' => false,
+                'google_tag_manager_id' => '',
+                'google_analytics_id' => '',
+                'meta_pixel_id' => '',
+                'google_site_verification' => '',
+                'bing_site_verification' => '',
+                'yandex_site_verification' => '',
+                'indexnow_key' => '',
+            ],
             'translations' => [
                 'entries' => $this->defaultTranslationEntries(),
+            ],
+        ];
+    }
+
+    /** @param array<int, string> $names
+     *  @param array<int, string> $titles
+     *  @param array<int, string> $descriptions
+     *  @return array<string, mixed>
+     */
+    private function serviceTranslations(array $names, array $titles, array $descriptions): array
+    {
+        return [
+            'fields' => [
+                'name' => ['ka' => $names[0], 'en' => $names[1], 'ru' => $names[2]],
+                'title' => ['ka' => $titles[0], 'en' => $titles[1], 'ru' => $titles[2]],
+                'description' => ['ka' => $descriptions[0], 'en' => $descriptions[1], 'ru' => $descriptions[2]],
+                'seoDescription' => ['ka' => $descriptions[0], 'en' => $descriptions[1], 'ru' => $descriptions[2]],
             ],
         ];
     }
@@ -171,6 +361,7 @@ class ContentSeeder extends Seeder
         return [
             ['key' => 'nav.home', 'ka' => 'მთავარი', 'en' => 'Home', 'ru' => 'Главная'],
             ['key' => 'nav.services', 'ka' => 'სერვისები', 'en' => 'Services', 'ru' => 'Услуги'],
+            ['key' => 'nav.calculator', 'ka' => 'კალკულატორი', 'en' => 'Calculator', 'ru' => 'Калькулятор'],
             ['key' => 'nav.projects', 'ka' => 'პროექტები', 'en' => 'Projects', 'ru' => 'Проекты'],
             ['key' => 'nav.about', 'ka' => 'ჩვენ შესახებ', 'en' => 'About', 'ru' => 'О нас'],
             ['key' => 'nav.contact', 'ka' => 'კონტაქტი', 'en' => 'Contact', 'ru' => 'Контакты'],
@@ -194,14 +385,28 @@ class ContentSeeder extends Seeder
             ['key' => 'meta.home.title', 'ka' => 'IT ინფრასტრუქტურა და უსაფრთხოების სისტემები ბიზნესისთვის', 'en' => 'IT Infrastructure and Security Systems for Business', 'ru' => 'IT-инфраструктура и системы безопасности для бизнеса'],
             ['key' => 'meta.home.description', 'ka' => 'SafeTech უზრუნველყოფს ვიდეომეთვალყურეობას, დაშვების კონტროლს, ქსელურ და სერვერულ ინფრასტრუქტურას საქართველოში.', 'en' => 'SafeTech delivers CCTV, access control, networking, and server infrastructure solutions for businesses in Georgia.', 'ru' => 'SafeTech внедряет видеонаблюдение, контроль доступа, сетевую и серверную инфраструктуру для бизнеса в Грузии.'],
             ['key' => 'meta.services.title', 'ka' => 'CCTV, ქსელები და IT სერვისები | SafeTech', 'en' => 'CCTV, Networking, and IT Services | SafeTech', 'ru' => 'CCTV, сети и IT-услуги | SafeTech'],
+            ['key' => 'meta.services.description', 'ka' => 'ვიდეოსამეთვალყურეობა, დაშვების კონტროლი, ქსელები, სერვერები და IT მხარდაჭერა ბიზნესისთვის საქართველოში.', 'en' => 'CCTV, access control, networking, server infrastructure, and managed IT support for businesses in Georgia.', 'ru' => 'Видеонаблюдение, контроль доступа, сети, серверы и IT-поддержка для бизнеса в Грузии.'],
+            ['key' => 'meta.serviceCalculator.title', 'ka' => 'IT და უსაფრთხოების სერვისების კალკულატორი', 'en' => 'IT and Security Service Calculator', 'ru' => 'Калькулятор IT-услуг и систем безопасности'],
+            ['key' => 'meta.serviceCalculator.description', 'ka' => 'გამოთვალეთ ვიდეოსამეთვალყურეობის, ქსელის, დაშვების კონტროლის, სერვერული ინფრასტრუქტურისა და IT მხარდაჭერის საორიენტაციო ბიუჯეტი.', 'en' => 'Estimate the budget for CCTV, networking, access control, server infrastructure, and managed IT support.', 'ru' => 'Рассчитайте бюджет видеонаблюдения, сети, контроля доступа, серверной инфраструктуры и IT-поддержки.'],
             ['key' => 'meta.projects.title', 'ka' => 'განხორციელებული IT და უსაფრთხოების პროექტები | SafeTech', 'en' => 'Completed IT and Security Projects | SafeTech', 'ru' => 'Реализованные IT- и охранные проекты | SafeTech'],
+            ['key' => 'meta.projects.description', 'ka' => 'ნახეთ SafeTech-ის მიერ განხორციელებული ვიდეოსამეთვალყურეობის, ქსელური და სერვერული ინფრასტრუქტურის პროექტები.', 'en' => 'Explore SafeTech CCTV, networking, and server infrastructure projects delivered for businesses.', 'ru' => 'Проекты SafeTech по видеонаблюдению, сетевой и серверной инфраструктуре для бизнеса.'],
             ['key' => 'meta.about.title', 'ka' => 'ჩვენ შესახებ | SafeTech გუნდი და გამოცდილება', 'en' => 'About SafeTech | Team and Experience', 'ru' => 'О SafeTech | Команда и опыт'],
+            ['key' => 'meta.about.description', 'ka' => 'გაიცანით SafeTech-ის გუნდი, გამოცდილება და მიდგომა უსაფრთხოებისა და IT ინფრასტრუქტურის პროექტებისადმი.', 'en' => 'Meet the SafeTech team and learn how we deliver security and IT infrastructure projects.', 'ru' => 'Познакомьтесь с командой SafeTech и нашим подходом к проектам безопасности и IT-инфраструктуры.'],
             ['key' => 'meta.contact.title', 'ka' => 'კონტაქტი და კონსულტაცია | SafeTech', 'en' => 'Contact and Consultation | SafeTech', 'ru' => 'Контакты и консультация | SafeTech'],
+            ['key' => 'meta.contact.description', 'ka' => 'დაუკავშირდით SafeTech-ს IT ინფრასტრუქტურისა და უსაფრთხოების სისტემების კონსულტაციისა და შეთავაზებისთვის.', 'en' => 'Contact SafeTech for an IT infrastructure or security systems consultation and tailored proposal.', 'ru' => 'Свяжитесь с SafeTech для консультации и предложения по IT-инфраструктуре и системам безопасности.'],
 
             ['key' => 'service.cctv.card.title', 'ka' => 'ვიდეოსამეთვალყურეო სისტემები', 'en' => 'CCTV Systems', 'ru' => 'Системы видеонаблюдения'],
             ['key' => 'service.cctv.card.description', 'ka' => 'პროფესიონალური კამერები ოფისებისთვის, რიტეილისთვის, საწყობებისთვის და საცხოვრებელი სივრცეებისთვის.', 'en' => 'Professional camera systems for offices, retail, warehouses, and residential buildings.', 'ru' => 'Профессиональные камеры для офисов, ритейла, складов и жилых объектов.'],
             ['key' => 'service.networking.card.title', 'ka' => 'ქსელური ინფრასტრუქტურა', 'en' => 'Network Infrastructure', 'ru' => 'Сетевая инфраструктура'],
             ['key' => 'service.networking.card.description', 'ka' => 'სტრუქტურული კაბელირება, როუტერები, სვიჩები, Wi-Fi დაფარვა და დაცული ბიზნეს ქსელები.', 'en' => 'Structured cabling, routers, switches, Wi-Fi coverage, and secure business networks.', 'ru' => 'Структурированная кабельная система, роутеры, свичи, Wi-Fi покрытие и защищенные бизнес-сети.'],
+            ['key' => 'service.access-control.card.title', 'ka' => 'დაშვების კონტროლი', 'en' => 'Access Control', 'ru' => 'Контроль доступа'],
+            ['key' => 'service.access-control.card.description', 'ka' => 'ბარათის, PIN-ის, ბიომეტრიისა და სახის ამოცნობის სისტემები დაცული სამუშაო სივრცეებისთვის.', 'en' => 'Card, PIN, biometric, and face-recognition systems for secure workplaces.', 'ru' => 'Карточные, PIN- и биометрические системы для защищенных объектов.'],
+            ['key' => 'service.server-infrastructure.card.title', 'ka' => 'სერვერული ინფრასტრუქტურა', 'en' => 'Server Infrastructure', 'ru' => 'Серверная инфраструктура'],
+            ['key' => 'service.server-infrastructure.card.description', 'ka' => 'სერვერები, ვირტუალიზაცია, მონაცემთა საცავი, backup და მონიტორინგი.', 'en' => 'Servers, virtualization, storage, backup, and infrastructure monitoring.', 'ru' => 'Серверы, виртуализация, хранилища, резервное копирование и мониторинг.'],
+            ['key' => 'service.it-support.card.title', 'ka' => 'IT მხარდაჭერა', 'en' => 'IT Support', 'ru' => 'IT-поддержка'],
+            ['key' => 'service.it-support.card.description', 'ka' => 'დისტანციური და ადგილზე მხარდაჭერა, მონიტორინგი, აქტივების მართვა და SLA.', 'en' => 'Remote and on-site support, monitoring, asset management, and SLA plans.', 'ru' => 'Удаленная и выездная поддержка, мониторинг, учет активов и SLA.'],
+
+            ['key' => 'footer.company.calculator', 'ka' => 'კალკულატორი', 'en' => 'Calculator', 'ru' => 'Калькулятор'],
 
             ['key' => 'common.readMore', 'ka' => 'დეტალურად', 'en' => 'Read more', 'ru' => 'Подробнее'],
             ['key' => 'services.hero.eyebrow', 'ka' => 'უსაფრთხოების სერვისები', 'en' => 'Enterprise Security Solutions', 'ru' => 'Решения для безопасности'],
@@ -268,6 +473,7 @@ class ContentSeeder extends Seeder
             ['key' => 'service.detail.cta.titlePrefix', 'ka' => 'გჭირდებათ', 'en' => 'Need', 'ru' => 'Нужна услуга'],
             ['key' => 'service.detail.cta.description', 'ka' => 'დაგვიკავშირდით და მიიღეთ უფასო პირველადი კონსულტაცია და თქვენს ობიექტზე მორგებული შეთავაზება.', 'en' => 'Contact us and get a free initial consultation with an offer tailored to your site.', 'ru' => 'Свяжитесь с нами и получите бесплатную первичную консультацию и предложение под ваш объект.'],
             ['key' => 'service.detail.cta.consultation', 'ka' => 'უფასო კონსულტაცია', 'en' => 'Free consultation', 'ru' => 'Бесплатная консультация'],
+            ['key' => 'service.detail.cta.calculator', 'ka' => 'ფასის გამოთვლა', 'en' => 'Calculate price', 'ru' => 'Рассчитать стоимость'],
             ['key' => 'service.detail.cta.call', 'ka' => 'დაგვირეკეთ', 'en' => 'Call us', 'ru' => 'Позвоните нам'],
         ];
     }

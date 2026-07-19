@@ -2,12 +2,9 @@
 
 namespace App\Filament\Resources\ProjectCategories\Schemas;
 
+use App\Filament\Support\CategorySeoFields;
 use Filament\Forms\Components\ColorPicker;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
@@ -49,61 +46,7 @@ class ProjectCategoryForm
                     ])
                     ->columns(2),
 
-                Section::make('SEO')
-                    ->schema([
-                        TextInput::make('seo_title')
-                            ->label('Meta title')
-                            ->maxLength(70),
-
-                        Textarea::make('seo_description')
-                            ->label('Meta description')
-                            ->rows(3)
-                            ->maxLength(180)
-                            ->columnSpanFull(),
-
-                        Repeater::make('seo_keywords')
-                            ->label('Keywords')
-                            ->schema([
-                                TextInput::make('value')->required(),
-                            ])
-                            ->default([])
-                            ->columnSpanFull(),
-
-                        RichEditor::make('intro_text')
-                            ->label('Category intro text')
-                            ->columnSpanFull(),
-
-                        Repeater::make('faq')
-                            ->label('FAQ')
-                            ->schema([
-                                TextInput::make('question')->required(),
-                                Textarea::make('answer')->required(),
-                            ])
-                            ->collapsible()
-                            ->columnSpanFull(),
-
-                        Textarea::make('schema')
-                            ->label('Custom schema JSON')
-                            ->rows(8)
-                            ->dehydrateStateUsing(function ($state) {
-                                if (!$state) {
-                                    return null;
-                                }
-
-                                $decoded = json_decode($state, true);
-
-                                return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
-                            })
-                            ->formatStateUsing(fn ($state) => is_array($state)
-                                ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-                                : $state)
-                            ->columnSpanFull(),
-
-                        Toggle::make('noindex')
-                            ->label('Noindex')
-                            ->helperText('Use for thin or temporary category pages.'),
-                    ])
-                    ->columns(2),
+                ...CategorySeoFields::sections(),
             ]);
     }
 }

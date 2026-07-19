@@ -1,16 +1,25 @@
 import { getPrivacy } from "@/lib/datafetch";
+import { createCmsPageMetadata } from "@/lib/cms-metadata";
 import { getCurrentLocale } from "@/lib/locale-server";
+import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
+import CmsPageSchema from "@/components/seo/CmsPageSchema";
+import { notFound } from "next/navigation";
+
+export async function generateMetadata() {
+  return createCmsPageMetadata(PAGE_SEO_PRESETS.privacy);
+}
 
 export default async function PrivacyPage() {
   const locale = await getCurrentLocale();
   const privacy = await getPrivacy({ locale });
 
   if (!privacy?.title && !privacy?.highlight && !privacy?.content) {
-    return null;
+    notFound();
   }
 
   return (
-    <main className="bg-white text-gray-800">
+    <div className="bg-white text-gray-800">
+      <CmsPageSchema pageKey="privacy" />
       {privacy?.title || privacy?.highlight ? (
         <section className="bg-[#0B3C5D] py-20 text-white">
           <div className="mx-auto max-w-5xl px-4 text-center">
@@ -38,6 +47,6 @@ export default async function PrivacyPage() {
           </div>
         </section>
       ) : null}
-    </main>
+    </div>
   );
 }

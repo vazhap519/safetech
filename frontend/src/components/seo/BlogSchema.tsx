@@ -1,27 +1,27 @@
-import { absoluteSiteUrl } from "@/lib/seo";
+import JsonLd from "@/components/seo/JsonLd";
+import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 
-export default function BlogSchema() {
+export default async function BlogSchema() {
+    const settings = await getSiteSettings();
+    const name = translateText(settings.translations, "blog.title", settings.locale, {
+        ka: "SafeTech ბლოგი",
+        en: "SafeTech Blog",
+        ru: "Блог SafeTech",
+    });
     const schema = {
         "@context": "https://schema.org",
-
         "@type": "Blog",
-
-        name: "SafeTech Blog",
-
-        url: absoluteSiteUrl("/blog"),
-
+        name,
+        url: absoluteLocalizedUrl("/blog", settings.locale),
+        inLanguage: settings.locale,
         publisher: {
             "@type": "Organization",
-            name: "SafeTech",
+            "@id": `${absoluteSiteUrl("/")}#organization`,
+            name: settings.branding.siteName,
         },
     };
 
-    return (
-        <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-                __html: JSON.stringify(schema),
-            }}
-        />
-    );
+    return <JsonLd data={schema} />;
 }

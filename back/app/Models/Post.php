@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
@@ -12,7 +13,7 @@ use Spatie\Image\Enums\Fit;
 
 class Post extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
+    use FlushesPublicContentCache, HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'title',
@@ -25,6 +26,12 @@ class Post extends Model implements HasMedia
         'published_year',
         'meta_title',
         'meta_description',
+        'seo_keywords',
+        'noindex',
+        'faq',
+        'schema',
+        'seo_author',
+        'seo_published_at',
         'translations',
         'is_published',
     ];
@@ -34,6 +41,11 @@ class Post extends Model implements HasMedia
         'updated_at' => 'datetime',
         'translations' => 'array',
         'is_published' => 'boolean',
+        'seo_keywords' => 'array',
+        'noindex' => 'boolean',
+        'faq' => 'array',
+        'schema' => 'array',
+        'seo_published_at' => 'datetime',
     ];
 
     /*
@@ -44,7 +56,7 @@ class Post extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('cover')->singleFile();
+        $this->addMediaCollection('cover')->useDisk('public')->singleFile();
     }
 
     /*
@@ -125,13 +137,13 @@ class Post extends Model implements HasMedia
     |--------------------------------------------------------------------------
     */
 
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('webp')
             ->fit(Fit::Crop, 1200, 630)
             ->format('webp')
             ->quality(80)
             ->performOnCollections('cover')
-            ->queued();
+            ->nonQueued();
     }
 }

@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class ProjectCategory extends Model
 {
+    use FlushesPublicContentCache;
+
     protected $fillable = [
         'name',
         'slug',
@@ -21,6 +24,7 @@ class ProjectCategory extends Model
         'faq',
         'schema',
         'noindex',
+        'translations',
     ];
 
     protected $casts = [

@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Support\MultilingualContent;
+use App\Support\SiteSettings;
 use App\Support\SocialLinks;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -25,12 +28,14 @@ class SeoPage extends Model implements HasMedia
         'noindex',
         'schema_type',
         'schema',
+        'translations',
     ];
 
     protected $casts = [
         'keywords' => 'array',
         'noindex' => 'boolean',
         'schema' => 'array',
+        'translations' => 'array',
     ];
 
     protected $appends = [
@@ -96,15 +101,18 @@ class SeoPage extends Model implements HasMedia
     */
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('og_image')->singleFile();
-        $this->addMediaCollection('share_image')->singleFile();
+        $this->addMediaCollection('og_image')->useDisk('public')->singleFile();
+        $this->addMediaCollection('share_image')->useDisk('public')->singleFile();
     }
 
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('og')
-            ->width(1200)
-            ->height(630);
+            ->fit(Fit::Crop, 1200, 630)
+            ->format('webp')
+            ->quality(82)
+            ->performOnCollections('og_image', 'share_image')
+            ->nonQueued();
     }
 
     /*
@@ -165,6 +173,38 @@ class SeoPage extends Model implements HasMedia
             ],
 
             'share_image' => $this->share_image_url,
+            'schema' => $this->schema_data,
+            'schemaOverride' => $this->schema ?: null,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function localizedMeta(string $locale): array
+    {
+        $locale = in_array($locale, MultilingualContent::LOCALES, true) ? $locale : 'ka';
+        $title = MultilingualContent::valuesForField($this, 'title', $this->title)[$locale] ?: $this->title;
+        $description = MultilingualContent::valuesForField($this, 'description', $this->description)[$locale] ?: $this->description;
+        $ogTitle = MultilingualContent::valuesForField($this, 'og_title', $this->og_title)[$locale] ?: ($this->og_title ?: $title);
+        $ogDescription = MultilingualContent::valuesForField($this, 'og_description', $this->og_description)[$locale] ?: ($this->og_description ?: $description);
+        $localizedKeywords = data_get($this->translations, "keywords.{$locale}");
+
+        return [
+            'title' => $title,
+            'description' => $description,
+            'keywords' => is_array($localizedKeywords)
+                ? array_values(array_filter($localizedKeywords, 'is_string'))
+                : $this->keywords_list,
+            'canonical' => $this->canonical,
+            'noindex' => $this->noindex,
+            'robots' => $this->noindex ? 'noindex, nofollow' : 'index, follow',
+            'og' => [
+                'title' => $ogTitle,
+                'description' => $ogDescription,
+                'image' => $this->og_image_url,
+            ],
+            'share_image' => $this->share_image_url,
+            'schema' => $this->schema_data,
+            'schemaOverride' => $this->schema ?: null,
         ];
     }
 
@@ -215,7 +255,7 @@ class SeoPage extends Model implements HasMedia
             return is_array($schema) ? $schema : [];
         }
 
-        $settings = settings();
+        $settings = SiteSettings::businessProfile();
         $baseUrl = SocialLinks::frontendUrl('/');
         $sameAs = SocialLinks::sameAs($settings);
 

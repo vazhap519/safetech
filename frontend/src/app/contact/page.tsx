@@ -1,7 +1,7 @@
 import ContactSchema from "@/components/seo/ContactSchema";
-import { createMetadata } from "@/lib/seo";
-import { getSiteSettings } from "@/lib/site-settings";
-import { translateText } from "@/lib/translations";
+import CmsPageSchema from "@/components/seo/CmsPageSchema";
+import { createCmsPageMetadata } from "@/lib/cms-metadata";
+import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
 import FaqSection from "@/sections/Contact/FaqSection";
 import FinalSection from "@/sections/Contact/Final";
 import Form from "@/sections/Contact/Form";
@@ -11,33 +11,13 @@ import Intro from "@/sections/Contact/intro";
 import Support from "@/sections/Contact/Support";
 
 export async function generateMetadata() {
-    const { branding, locale, translations } = await getSiteSettings();
-
-    return createMetadata({
-        title: translateText(translations, "meta.contact.title", locale, null),
-        description: translateText(
-            translations,
-            "meta.contact.description",
-            locale,
-            null,
-        ),
-        path: "/contact",
-        locale,
-        keywords: [
-            "contact safetech",
-            "SafeTech",
-            "CCTV Georgia",
-            "IT infrastructure Georgia",
-        ],
-        image: branding.defaultImage,
-        siteName: branding.siteName,
-    });
+    return createCmsPageMetadata(PAGE_SEO_PRESETS.contact);
 }
 
 export default function Contact() {
     return (
         <>
-            <ContactSchema />
+            <CmsPageSchema pageKey="contact" fallback={<ContactSchema />} />
             <Hero />
             <Intro />
             <Form />

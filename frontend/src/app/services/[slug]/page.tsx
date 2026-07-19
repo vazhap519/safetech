@@ -38,13 +38,19 @@ export async function generateMetadata({
     }
 
     return createMetadata({
-        title: service.title || service.name,
-        description: service.seoDescription || service.description,
+        title: service.seo?.title || service.title || service.name,
+        description:
+            service.seo?.description ||
+            service.seoDescription ||
+            service.description,
         path: `/services/${service.slug}`,
         locale,
-        keywords: service.keywords,
-        image: service.heroImage || branding.defaultImage,
+        keywords: service.seo?.keywords?.length
+            ? service.seo.keywords
+            : service.keywords,
+        image: service.seo?.image || service.heroImage || branding.defaultImage,
         siteName,
+        noindex: Boolean(service.seo?.noindex),
     });
 }
 

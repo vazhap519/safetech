@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\Setting;
 use Illuminate\Support\Arr;
 
 class SocialLinks
@@ -102,7 +101,7 @@ class SocialLinks
             ->all();
     }
 
-    public static function socials(array $items = [], ?Setting $settings = null): array
+    public static function socials(array $items = [], ?object $settings = null): array
     {
         $socials = collect($items)
             ->map(fn ($item) => self::normalizeSocialItem($item))
@@ -132,7 +131,7 @@ class SocialLinks
         return $socials->values()->all();
     }
 
-    public static function sameAs(?Setting $settings = null): array
+    public static function sameAs(?object $settings = null): array
     {
         return array_values(array_filter([
             self::normalizeUrl($settings?->facebook),

@@ -56,6 +56,18 @@ class ServiceResource extends Resource
                 TextInput::make('ka')->label('ქართული')->required(),
                 TextInput::make('en')->label('English'),
                 TextInput::make('ru')->label('Русский'),
+                TextInput::make('one_time_price')
+                    ->label('ერთჯერადი ფასის დამატება')
+                    ->numeric()
+                    ->minValue(0)
+                    ->default(0)
+                    ->suffix('₾'),
+                TextInput::make('monthly_price')
+                    ->label('ყოველთვიური ფასის დამატება')
+                    ->numeric()
+                    ->minValue(0)
+                    ->default(0)
+                    ->suffix('₾'),
             ])
             ->columns(2)
             ->default([])
@@ -136,6 +148,7 @@ class ServiceResource extends Resource
                     ...self::translationInputs('eyebrow', 'ზედა კატეგორია'),
                     ...self::translationInputs('title', 'მთავარი სათაური'),
                     ...self::translationInputs('description', 'მოკლე აღწერა', true),
+                    ...self::translationInputs('seoTitle', 'SEO სათაური'),
                     ...self::translationInputs('seoDescription', 'SEO აღწერა', true),
                     ...self::translationInputs('card.title', 'ბარათის სათაური'),
                     ...self::translationInputs('card.description', 'ბარათის აღწერა', true),
@@ -179,9 +192,32 @@ class ServiceResource extends Resource
                     Textarea::make('sla')->label('SLA პირობები'),
                 ]),
 
-            Section::make('კალკულატორის დინამიური ველები')
-                ->description('სერვისის არჩევისას საკონტაქტო ფორმაზე გამოჩნდება ზუსტად ეს ველები.')
+            Section::make('მოთხოვნის ფორმა და კალკულატორი')
+                ->description('ეს არის სერვისის ფილტრების ერთადერთი წყარო: იგივე ველები გამოიყენება საკონტაქტო ფორმასა და ფასის კალკულატორში.')
                 ->schema([
+                    Toggle::make('lead_form.calculator_enabled')
+                        ->label('კალკულატორში გამოჩენა')
+                        ->default(true),
+                    Select::make('lead_form.pricing.currency')
+                        ->label('ვალუტა')
+                        ->options(['GEL' => 'GEL (₾)', 'USD' => 'USD ($)', 'EUR' => 'EUR (€)'])
+                        ->default('GEL')
+                        ->required(),
+                    TextInput::make('lead_form.pricing.base_price')
+                        ->label('საწყისი ერთჯერადი ფასი')
+                        ->numeric()
+                        ->minValue(0)
+                        ->default(0),
+                    TextInput::make('lead_form.pricing.monthly_base_price')
+                        ->label('საწყისი ყოველთვიური ფასი')
+                        ->numeric()
+                        ->minValue(0)
+                        ->default(0),
+                    TextInput::make('lead_form.pricing.minimum_price')
+                        ->label('მინიმალური ერთჯერადი ფასი')
+                        ->numeric()
+                        ->minValue(0)
+                        ->default(0),
                     TextInput::make('lead_form.project_size_label_ka')
                         ->label('პროექტის ზომის სათაური (KA)'),
                     TextInput::make('lead_form.project_size_label_en')
@@ -216,6 +252,7 @@ class ServiceResource extends Resource
                                     'number' => 'რიცხვი',
                                     'textarea' => 'დიდი ტექსტი',
                                     'select' => 'არჩევანი',
+                                    'checkbox' => 'ჩასართავი პარამეტრი',
                                 ])
                                 ->default('text')
                                 ->required(),
@@ -226,6 +263,29 @@ class ServiceResource extends Resource
                             TextInput::make('placeholder_ka')->label('Placeholder (KA)'),
                             TextInput::make('placeholder_en')->label('Placeholder (EN)'),
                             TextInput::make('placeholder_ru')->label('Placeholder (RU)'),
+                            TextInput::make('help_ka')->label('დახმარების ტექსტი (KA)'),
+                            TextInput::make('help_en')->label('Help text (EN)'),
+                            TextInput::make('help_ru')->label('Подсказка (RU)'),
+                            TextInput::make('unit_ka')->label('ერთეული (KA)'),
+                            TextInput::make('unit_en')->label('Unit (EN)'),
+                            TextInput::make('unit_ru')->label('Единица (RU)'),
+                            TextInput::make('min')->label('მინიმუმი')->numeric(),
+                            TextInput::make('max')->label('მაქსიმუმი')->numeric(),
+                            TextInput::make('step')->label('ბიჯი')->numeric(),
+                            TextInput::make('default')->label('საწყისი მნიშვნელობა'),
+                            TextInput::make('unit_price')
+                                ->label('ერთეულის ერთჯერადი ფასი')
+                                ->numeric()
+                                ->minValue(0)
+                                ->default(0),
+                            TextInput::make('monthly_unit_price')
+                                ->label('ერთეულის ყოველთვიური ფასი')
+                                ->numeric()
+                                ->minValue(0)
+                                ->default(0),
+                            TextInput::make('price_multiplier_field')
+                                ->label('ფასის რაოდენობის ველი')
+                                ->helperText('Select ვარიანტის ფასი გამრავლდება ამ key-ის რიცხვით მნიშვნელობაზე. მაგ: cable_meters.'),
                             Repeater::make('options')
                                 ->label('არჩევანის ვარიანტები')
                                 ->schema([
@@ -235,6 +295,16 @@ class ServiceResource extends Resource
                                     TextInput::make('ka')->label('ქართული')->required(),
                                     TextInput::make('en')->label('English'),
                                     TextInput::make('ru')->label('Русский'),
+                                    TextInput::make('one_time_price')
+                                        ->label('ერთჯერადი ფასი')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->default(0),
+                                    TextInput::make('monthly_price')
+                                        ->label('ყოველთვიური ფასი')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->default(0),
                                 ])
                                 ->columns(2)
                                 ->default([])
@@ -248,6 +318,44 @@ class ServiceResource extends Resource
                         ->default([])
                         ->collapsible()
                         ->reorderable(),
+                    Repeater::make('lead_form.packages')
+                        ->label('კალკულატორის პაკეტები')
+                        ->schema([
+                            TextInput::make('key')
+                                ->label('გასაღები')
+                                ->required()
+                                ->helperText('მაგ: standard, business, managed'),
+                            TextInput::make('title_ka')->label('სათაური (KA)')->required(),
+                            TextInput::make('title_en')->label('Title (EN)'),
+                            TextInput::make('title_ru')->label('Название (RU)'),
+                            Textarea::make('description_ka')->label('აღწერა (KA)')->rows(2),
+                            Textarea::make('description_en')->label('Description (EN)')->rows(2),
+                            Textarea::make('description_ru')->label('Описание (RU)')->rows(2),
+                            TextInput::make('one_time_price')
+                                ->label('ერთჯერადი ფასი')
+                                ->numeric()
+                                ->minValue(0)
+                                ->default(0),
+                            TextInput::make('monthly_price')
+                                ->label('ყოველთვიური ფასი')
+                                ->numeric()
+                                ->minValue(0)
+                                ->default(0),
+                            Toggle::make('recommended')->label('რეკომენდებული'),
+                        ])
+                        ->columns(3)
+                        ->default([])
+                        ->collapsible()
+                        ->reorderable(),
+                    Textarea::make('lead_form.calculator_disclaimer_ka')
+                        ->label('შენიშვნა (KA)')
+                        ->rows(2),
+                    Textarea::make('lead_form.calculator_disclaimer_en')
+                        ->label('Disclaimer (EN)')
+                        ->rows(2),
+                    Textarea::make('lead_form.calculator_disclaimer_ru')
+                        ->label('Примечание (RU)')
+                        ->rows(2),
                 ])
                 ->columns(3),
 

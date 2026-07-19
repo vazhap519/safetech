@@ -14,6 +14,7 @@ import type { ProjectDetail } from "@/lib/projectDetails";
 import type { FeaturedProject, Project } from "@/lib/projects";
 import { DEFAULT_SOCIAL_IMAGE } from "@/lib/seo";
 import type { TeamMember } from "@/lib/team";
+import type { CalculatorProfile } from "@/lib/service-calculator";
 import {
     buildTranslationMap,
     translateText,
@@ -49,6 +50,22 @@ export type BackendContent = {
     }>;
     faqs?: Array<{ question: string; answer: string; context?: string }>;
     settings?: Record<string, unknown>;
+};
+
+export type BackendSeoPage = {
+    title?: string;
+    description?: string;
+    keywords?: string[];
+    canonical?: string;
+    noindex?: boolean;
+    og?: {
+        title?: string;
+        description?: string;
+        image?: string;
+    };
+    share_image?: string;
+    schema?: Record<string, unknown> | Array<Record<string, unknown>>;
+    schemaOverride?: Record<string, unknown> | Array<Record<string, unknown>>;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -176,6 +193,19 @@ function localizeServiceDetail(
         title: t(`${prefix}.title`, service.title),
         description: t(`${prefix}.description`, service.description),
         seoDescription: t(`${prefix}.seoDescription`, service.seoDescription),
+        seo: service.seo
+            ? {
+                  ...service.seo,
+                  title: t(
+                      `${prefix}.seoTitle`,
+                      service.seo.title || service.title,
+                  ),
+                  description: t(
+                      `${prefix}.seoDescription`,
+                      service.seo.description || service.seoDescription,
+                  ),
+              }
+            : undefined,
         keywords: localizeStringArray(service.keywords, `${prefix}.keyword`, t),
         highlights: localizeStringArray(
             service.highlights,
@@ -252,6 +282,19 @@ function localizeProjectDetail(
             `${prefix}.seoDescription`,
             project.seoDescription,
         ),
+        seo: project.seo
+            ? {
+                  ...project.seo,
+                  title: t(
+                      `${prefix}.seoTitle`,
+                      project.seo.title || project.title,
+                  ),
+                  description: t(
+                      `${prefix}.seoDescription`,
+                      project.seo.description || project.seoDescription,
+                  ),
+              }
+            : undefined,
         imageAlt: t(`${prefix}.imageAlt`, project.imageAlt),
         meta: project.meta.map((item, index) => ({
             label: t(`${prefix}.meta.${index}.label`, item.label),
@@ -387,6 +430,35 @@ export async function getBackendContactServices(): Promise<
         ),
         leadForm: localizeLeadFormConfig(service.leadForm ?? null, locale),
     }));
+}
+
+export async function getBackendCalculatorProfiles(
+    locale?: Locale,
+    serviceSlug?: string,
+): Promise<CalculatorProfile[]> {
+    const resolvedLocale = locale ?? (await getCurrentLocale());
+
+    return (
+        (await fetchData<CalculatorProfile[]>(
+            buildApiPath("/service-calculator/profiles", {
+                locale: resolvedLocale,
+                service: serviceSlug,
+            }),
+        )) ?? []
+    );
+}
+
+export async function getBackendSeoPage(
+    key: string,
+    locale?: Locale,
+): Promise<BackendSeoPage | undefined> {
+    const resolvedLocale = locale ?? (await getCurrentLocale());
+
+    return fetchData<BackendSeoPage>(
+        buildApiPath(`/seo/${encodeURIComponent(key)}`, {
+            locale: resolvedLocale,
+        }),
+    );
 }
 
 export async function getBackendServiceSlugs() {
