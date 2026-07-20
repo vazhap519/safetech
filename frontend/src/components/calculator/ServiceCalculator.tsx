@@ -10,6 +10,7 @@ import {
     calculateEstimate,
     initialCalculatorValues,
     type CalculatorField,
+    type CalculatorOption,
     type CalculatorProfile,
     type CalculatorValues,
 } from "@/lib/service-calculator";
@@ -22,11 +23,18 @@ type ServiceCalculatorProps = {
 const EMPTY_VALUES: CalculatorValues = {};
 
 function money(value: number, currency: string, locale: string) {
-    return new Intl.NumberFormat(locale === "ka" ? "ka-GE" : locale, {
-        style: "currency",
-        currency,
-        maximumFractionDigits: 2,
-    }).format(value);
+    const normalized = Number.isFinite(value) ? Math.max(0, value) : 0;
+    const [whole, decimals] = normalized.toFixed(2).split(".");
+    const groupSeparator = locale === "en" ? "," : " ";
+    const decimalSeparator = locale === "en" ? "." : ",";
+    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, groupSeparator);
+    const amount = decimals === "00"
+        ? grouped
+        : `${grouped}${decimalSeparator}${decimals}`;
+    const symbols: Record<string, string> = { EUR: "€", GEL: "₾", USD: "$" };
+    const symbol = symbols[currency] ?? currency;
+
+    return `${amount} ${symbol}`.trim();
 }
 
 function FieldControl({
@@ -104,6 +112,38 @@ function FieldControl({
                 </div>
             )}
             {field.help ? <span className="text-xs">{field.help}</span> : null}
+        </label>
+    );
+}
+
+function CalculatorSelect({
+    label,
+    onChange,
+    options,
+    value,
+}: {
+    label: string;
+    onChange: (value: string) => void;
+    options: CalculatorOption[];
+    value: string;
+}) {
+    if (!options.length) return null;
+
+    return (
+        <label className="grid gap-2 text-sm text-on-surface-variant">
+            <span>{label}</span>
+            <select
+                className="min-h-12 rounded-lg border border-outline-variant/30 bg-surface-container-low px-4 text-on-surface outline-none focus:border-primary"
+                onChange={(event) => onChange(event.target.value)}
+                value={value}
+            >
+                <option value="">-</option>
+                {options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
         </label>
     );
 }
@@ -302,40 +342,28 @@ export default function ServiceCalculator({
                     </label>
 
                     <div className="grid gap-5 sm:grid-cols-2">
-                        {profile.projectSize.options.length ? (
-                            <label className="grid gap-2 text-sm text-on-surface-variant">
-                                <span>{profile.projectSize.label}</span>
-                                <select
-                                    className="min-h-12 rounded-lg border border-outline-variant/30 bg-surface-container-low px-4 text-on-surface outline-none focus:border-primary"
-                                    onChange={(event) =>
-                                        setProjectSizes((current) => ({ ...current, [profile.slug]: event.target.value }))
-                                    }
-                                    value={projectSize}
-                                >
-                                    <option value="">-</option>
-                                    {profile.projectSize.options.map((option) => (
-                                        <option key={option.value} value={option.value}>{option.label}</option>
-                                    ))}
-                                </select>
-                            </label>
-                        ) : null}
-                        {profile.propertyType.options.length ? (
-                            <label className="grid gap-2 text-sm text-on-surface-variant">
-                                <span>{profile.propertyType.label}</span>
-                                <select
-                                    className="min-h-12 rounded-lg border border-outline-variant/30 bg-surface-container-low px-4 text-on-surface outline-none focus:border-primary"
-                                    onChange={(event) =>
-                                        setPropertyTypes((current) => ({ ...current, [profile.slug]: event.target.value }))
-                                    }
-                                    value={propertyType}
-                                >
-                                    <option value="">-</option>
-                                    {profile.propertyType.options.map((option) => (
-                                        <option key={option.value} value={option.value}>{option.label}</option>
-                                    ))}
-                                </select>
-                            </label>
-                        ) : null}
+                        <CalculatorSelect
+                            label={profile.projectSize.label}
+                            onChange={(value) =>
+                                setProjectSizes((current) => ({
+                                    ...current,
+                                    [profile.slug]: value,
+                                }))
+                            }
+                            options={profile.projectSize.options}
+                            value={projectSize}
+                        />
+                        <CalculatorSelect
+                            label={profile.propertyType.label}
+                            onChange={(value) =>
+                                setPropertyTypes((current) => ({
+                                    ...current,
+                                    [profile.slug]: value,
+                                }))
+                            }
+                            options={profile.propertyType.options}
+                            value={propertyType}
+                        />
                     </div>
 
                     {profile.fields.length ? (

@@ -43,39 +43,9 @@ function buildUrl(path, params = {}) {
   return `${API}${path}${query ? `?${query}` : ""}`;
 }
 
-export const getHome = (options = {}) =>
-  fetcher(buildUrl("/home"), {
-    next: { tags: ["home"] },
-    ...options,
-  });
-
-export const getServices = ({ page = 1 } = {}, options = {}) =>
-  fetcher(buildUrl("/services", { page }), {
-    next: { tags: ["services"] },
-    ...options,
-  });
-
-export const getService = (slug, options = {}) =>
-  fetcher(buildUrl(`/services/${slug}`), {
-    next: { tags: [`service-${slug}`] },
-    ...options,
-  });
-
-export const getSettings = (options = {}) =>
-  fetcher(buildUrl("/settings"), {
-    next: { tags: ["settings"] },
-    ...options,
-  });
-
 export const getPrivacy = ({ locale, ...options } = {}) =>
   fetcher(buildUrl("/privacy", locale ? { locale } : {}), {
     next: { tags: ["privacy"] },
-    ...options,
-  });
-
-export const getAbout = (options = {}) =>
-  fetcher(buildUrl("/about"), {
-    next: { tags: ["about"] },
     ...options,
   });
 

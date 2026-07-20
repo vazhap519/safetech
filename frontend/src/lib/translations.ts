@@ -1,6 +1,6 @@
 import type { Locale } from "@/lib/locales";
 
-export type TranslationValues = Partial<Record<Locale, string>>;
+type TranslationValues = Partial<Record<Locale, string>>;
 export type TranslationMap = Record<string, TranslationValues>;
 
 export type TranslationFallback =
@@ -13,6 +13,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function translationValues(entry: Record<string, unknown>): TranslationValues {
+    return {
+        ka: typeof entry.ka === "string" ? entry.ka.trim() : "",
+        en: typeof entry.en === "string" ? entry.en.trim() : "",
+        ru: typeof entry.ru === "string" ? entry.ru.trim() : "",
+    };
+}
+
 export function buildTranslationMap(value: unknown): TranslationMap {
     if (isRecord(value) && Array.isArray(value.entries)) {
         return value.entries.reduce<TranslationMap>((accumulator, entry) => {
@@ -20,11 +28,7 @@ export function buildTranslationMap(value: unknown): TranslationMap {
                 return accumulator;
             }
 
-            accumulator[entry.key.trim()] = {
-                ka: typeof entry.ka === "string" ? entry.ka.trim() : "",
-                en: typeof entry.en === "string" ? entry.en.trim() : "",
-                ru: typeof entry.ru === "string" ? entry.ru.trim() : "",
-            };
+            accumulator[entry.key.trim()] = translationValues(entry);
 
             return accumulator;
         }, {});
@@ -35,11 +39,7 @@ export function buildTranslationMap(value: unknown): TranslationMap {
             (accumulator, [key, entry]) => {
                 if (!isRecord(entry)) return accumulator;
 
-                accumulator[key] = {
-                    ka: typeof entry.ka === "string" ? entry.ka.trim() : "",
-                    en: typeof entry.en === "string" ? entry.en.trim() : "",
-                    ru: typeof entry.ru === "string" ? entry.ru.trim() : "",
-                };
+                accumulator[key] = translationValues(entry);
 
                 return accumulator;
             },
@@ -93,4 +93,72 @@ export function createTranslator(
 ) {
     return (key: string, fallback: TranslationFallback) =>
         translateText(translations, key, locale, fallback);
+}
+
+type LocalizedItemDefinition = {
+    icon: string;
+    key: string;
+};
+
+export function translateKeyedItems(
+    translations: TranslationMap,
+    locale: Locale,
+    items: readonly LocalizedItemDefinition[],
+) {
+    return items
+        .map((item) => ({
+            ...item,
+            description: translateText(
+                translations,
+                `${item.key}.description`,
+                locale,
+                null,
+            ),
+            title: translateText(
+                translations,
+                `${item.key}.title`,
+                locale,
+                null,
+            ),
+        }))
+        .filter((item) => item.title || item.description);
+}
+
+function translateIndexedItems(
+    translations: TranslationMap,
+    locale: Locale,
+    prefix: string,
+    icons: readonly string[],
+) {
+    return translateKeyedItems(
+        translations,
+        locale,
+        icons.map((icon, index) => ({
+            icon,
+            key: `${prefix}.${index}`,
+        })),
+    );
+}
+
+export function translateIndexedSection(
+    translations: TranslationMap,
+    locale: Locale,
+    prefix: string,
+    icons: readonly string[],
+) {
+    return {
+        title: translateText(translations, `${prefix}.title`, locale, null),
+        description: translateText(
+            translations,
+            `${prefix}.description`,
+            locale,
+            null,
+        ),
+        items: translateIndexedItems(
+            translations,
+            locale,
+            `${prefix}.item`,
+            icons,
+        ),
+    };
 }

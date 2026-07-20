@@ -5,8 +5,11 @@ import Script from "next/script";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import LocalizedLink from "@/components/ui/LocalizedLink";
-
-type Consent = "unknown" | "accepted" | "rejected";
+import {
+    readAnalyticsConsent,
+    saveAnalyticsConsent,
+    subscribeToAnalyticsConsent,
+} from "@/lib/consent";
 
 declare global {
     interface Window {
@@ -14,29 +17,6 @@ declare global {
         fbq?: (...args: unknown[]) => void;
         _fbq?: (...args: unknown[]) => void;
     }
-}
-
-const CONSENT_KEY = "safetech_marketing_consent";
-const CONSENT_EVENT = "safetech:marketing-consent";
-
-function readConsent(): Consent {
-    const stored = window.localStorage.getItem(CONSENT_KEY);
-
-    return stored === "accepted" || stored === "rejected" ? stored : "unknown";
-}
-
-function subscribeToConsent(onStoreChange: () => void) {
-    const handleStorage = (event: StorageEvent) => {
-        if (event.key === CONSENT_KEY) onStoreChange();
-    };
-
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener(CONSENT_EVENT, onStoreChange);
-
-    return () => {
-        window.removeEventListener("storage", handleStorage);
-        window.removeEventListener(CONSENT_EVENT, onStoreChange);
-    };
 }
 
 function validId(value: string | undefined, pattern: RegExp) {
@@ -57,8 +37,8 @@ export default function MarketingPixels({
 }) {
     const { t } = useLocalization();
     const consent = useSyncExternalStore(
-        subscribeToConsent,
-        readConsent,
+        subscribeToAnalyticsConsent,
+        readAnalyticsConsent,
         () => "unknown",
     );
     const gtmId = validId(googleTagManagerId, /^GTM-[A-Z0-9]+$/i);
@@ -66,16 +46,11 @@ export default function MarketingPixels({
     const pixelId = validId(metaPixelId, /^\d{5,30}$/);
     const hasIntegration = Boolean(gtmId || gaId || pixelId);
 
-    if (!enabled || !hasIntegration) return null;
-
-    const saveConsent = (nextConsent: Exclude<Consent, "unknown">) => {
-        window.localStorage.setItem(CONSENT_KEY, nextConsent);
-        window.dispatchEvent(new Event(CONSENT_EVENT));
-    };
+    if (!enabled) return null;
 
     return (
         <>
-            {consent === "accepted" ? (
+            {consent === "accepted" && hasIntegration ? (
                 <>
                     {gtmId ? (
                         <Script id="google-tag-manager" strategy="afterInteractive">
@@ -127,14 +102,14 @@ export default function MarketingPixels({
                     <div className="mt-4 flex shrink-0 gap-3 sm:mt-0">
                         <button
                             className="min-h-11 rounded-lg border border-outline-variant/50 px-4 text-sm font-medium text-on-surface"
-                            onClick={() => saveConsent("rejected")}
+                            onClick={() => saveAnalyticsConsent("rejected")}
                             type="button"
                         >
                             {t("consent.reject", { ka: "უარყოფა", en: "Reject", ru: "Отклонить" })}
                         </button>
                         <button
                             className="min-h-11 rounded-lg bg-primary-container px-4 text-sm font-semibold text-on-primary-container"
-                            onClick={() => saveConsent("accepted")}
+                            onClick={() => saveAnalyticsConsent("accepted")}
                             type="button"
                         >
                             {t("consent.accept", { ka: "დათანხმება", en: "Accept", ru: "Принять" })}

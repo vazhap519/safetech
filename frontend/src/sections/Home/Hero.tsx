@@ -116,7 +116,6 @@ export default async function Hero() {
 
                 {branding.defaultImage ? (
                     <div className="order-2 relative mx-auto w-full max-w-[720px]">
-                        <div className="pointer-events-none absolute inset-0 rounded-full bg-primary/20 blur-[100px]" />
                         <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[28px]">
                             <Image
                                 alt={imageAlt || branding.siteName}

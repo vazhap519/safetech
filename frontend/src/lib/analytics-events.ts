@@ -1,6 +1,7 @@
 "use client";
 
 import { trackEvent } from "@/lib/analytics";
+import { hasAnalyticsConsent } from "@/lib/consent";
 
 type AnalyticsEventType = "service_view" | "whatsapp_click";
 
@@ -22,7 +23,7 @@ function generateVisitorId() {
     return `visitor-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function getVisitorId() {
+function getVisitorId() {
     if (typeof window === "undefined") {
         return null;
     }
@@ -48,12 +49,10 @@ export function getCurrentPagePath() {
         return null;
     }
 
-    const { pathname, search } = window.location;
-
-    return `${pathname}${search}`;
+    return window.location.pathname;
 }
 
-export function extractServiceSlugFromPath(pagePath?: string | null) {
+function extractServiceSlugFromPath(pagePath?: string | null) {
     if (!pagePath) {
         return null;
     }
@@ -81,12 +80,12 @@ function buildRequestBody(payload: AnalyticsPayload) {
     });
 }
 
-export function sendAnalyticsEvent(
+function sendAnalyticsEvent(
     payload: AnalyticsPayload,
     options?: { immediate?: boolean },
 ) {
-    if (typeof window === "undefined") {
-        return;
+    if (typeof window === "undefined" || !hasAnalyticsConsent()) {
+        return false;
     }
 
     const body = buildRequestBody(payload);
@@ -97,7 +96,7 @@ export function sendAnalyticsEvent(
 
         navigator.sendBeacon(url, blob);
 
-        return;
+        return true;
     }
 
     void fetch(url, {
@@ -109,10 +108,12 @@ export function sendAnalyticsEvent(
         body,
         keepalive: options?.immediate ?? false,
     }).catch(() => undefined);
+
+    return true;
 }
 
 export function trackServiceView(serviceSlug: string, pagePath?: string | null) {
-    sendAnalyticsEvent({
+    return sendAnalyticsEvent({
         eventType: "service_view",
         serviceSlug,
         pagePath,
@@ -122,7 +123,7 @@ export function trackServiceView(serviceSlug: string, pagePath?: string | null) 
 export function trackWhatsAppClick(pagePath?: string | null) {
     trackEvent("contact", { method: "whatsapp" });
 
-    sendAnalyticsEvent(
+    return sendAnalyticsEvent(
         {
             eventType: "whatsapp_click",
             pagePath,

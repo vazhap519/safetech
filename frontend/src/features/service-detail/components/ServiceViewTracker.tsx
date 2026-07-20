@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import { usePathname } from "next/navigation";
 
 import { trackServiceView } from "@/lib/analytics-events";
+import {
+    readAnalyticsConsent,
+    subscribeToAnalyticsConsent,
+} from "@/lib/consent";
 
 type ServiceViewTrackerProps = {
     serviceSlug: string;
@@ -13,9 +17,13 @@ export default function ServiceViewTracker({
     serviceSlug,
 }: ServiceViewTrackerProps) {
     const pathname = usePathname();
-    const searchParams = useSearchParams();
+    const consent = useSyncExternalStore(
+        subscribeToAnalyticsConsent,
+        readAnalyticsConsent,
+        () => "unknown",
+    );
     const lastTrackedKey = useRef<string | null>(null);
-    const pagePath = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+    const pagePath = pathname;
 
     useEffect(() => {
         const trackingKey = `${serviceSlug}:${pagePath}`;
@@ -24,9 +32,10 @@ export default function ServiceViewTracker({
             return;
         }
 
-        lastTrackedKey.current = trackingKey;
-        trackServiceView(serviceSlug, pagePath);
-    }, [pagePath, serviceSlug]);
+        if (trackServiceView(serviceSlug, pagePath)) {
+            lastTrackedKey.current = trackingKey;
+        }
+    }, [consent, pagePath, serviceSlug]);
 
     return null;
 }

@@ -16,8 +16,15 @@ class FilamentResourceSmokeTest extends TestCase
         $this->actingAs($admin);
 
         foreach ([
+            '/admin/categories/create',
+            '/admin/category-for-services/create',
+            '/admin/project-categories/create',
             '/admin/services/create',
             '/admin/projects/create',
+            '/admin/posts/create',
+            '/admin/partners/create',
+            '/admin/team-members/create',
+            '/admin/testimonials/create',
             '/admin/seo-pages/create',
             '/admin/site-settings/create',
         ] as $url) {

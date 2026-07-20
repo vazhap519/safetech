@@ -1,8 +1,10 @@
-import { sitemapIndex, xmlResponse } from "@/lib/sitemap";
+import { fetchImageSitemapItems, sitemapIndex, xmlResponse } from "@/lib/sitemap";
 
 export const revalidate = 300;
 
 export async function GET() {
+  const imageItems = await fetchImageSitemapItems();
+
   return xmlResponse(
     sitemapIndex([
       "/sitemap-main.xml",
@@ -12,7 +14,7 @@ export async function GET() {
       "/sitemap-blog-categories.xml",
       "/sitemap-projects.xml",
       "/sitemap-project-categories.xml",
-      "/sitemap-images.xml",
+      ...(imageItems.length ? ["/sitemap-images.xml"] : []),
     ])
   );
 }

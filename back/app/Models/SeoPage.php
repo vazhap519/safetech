@@ -68,7 +68,7 @@ class SeoPage extends Model implements HasMedia
         static::saving(function ($model) {
 
             if ($model->slug) {
-                $model->slug = '/' . ltrim($model->slug, '/');
+                $model->slug = '/'.ltrim($model->slug, '/');
                 $model->canonical = SocialLinks::frontendUrl($model->slug);
             }
 
@@ -123,6 +123,7 @@ class SeoPage extends Model implements HasMedia
     public function getOgImageUrlAttribute(): string
     {
         return $this->getFirstMediaUrl('og_image', 'og')
+            ?: SiteSettings::brandingMediaUrl('default_image')
             ?: SocialLinks::frontendUrl('/services/1.jpg');
     }
 
@@ -215,18 +216,17 @@ class SeoPage extends Model implements HasMedia
     */
     public static function getByKey(string $key): ?self
     {
-        return Cache::remember("seo_$key", 3600, fn () =>
-        self::where('key', $key)->first()
+        return Cache::remember("seo_$key", 3600, fn () => self::where('key', $key)->first()
         );
     }
 
-    public static function resolve(string $key = null, $model = null): array
+    public static function resolve(?string $key = null, $model = null): array
     {
         $seo = null;
 
         if ($model) {
             $seo = Cache::remember(
-                "seo_model_" . get_class($model) . "_{$model->getKey()}",
+                'seo_model_'.get_class($model)."_{$model->getKey()}",
                 3600,
                 fn () => self::where('seoable_type', get_class($model))
                     ->where('seoable_id', $model->getKey())
@@ -234,7 +234,7 @@ class SeoPage extends Model implements HasMedia
             );
         }
 
-        if (!$seo && $key) {
+        if (! $seo && $key) {
             $seo = self::getByKey($key);
         }
 
@@ -258,6 +258,7 @@ class SeoPage extends Model implements HasMedia
         $settings = SiteSettings::businessProfile();
         $baseUrl = SocialLinks::frontendUrl('/');
         $sameAs = SocialLinks::sameAs($settings);
+        $logo = SiteSettings::brandingMediaUrl('logo');
 
         switch ($this->schema_type) {
 
@@ -268,6 +269,7 @@ class SeoPage extends Model implements HasMedia
                         '@type' => 'Organization',
                         'name' => config('app.name'),
                         'url' => $baseUrl,
+                        'logo' => $logo,
                         'sameAs' => $sameAs,
                     ],
                     [
@@ -336,6 +338,39 @@ class SeoPage extends Model implements HasMedia
                         'url' => $baseUrl,
                     ],
                 ];
+
+            case 'AboutPage':
+            case 'CollectionPage':
+            case 'Blog':
+            case 'ContactPage':
+                return array_filter([
+                    '@context' => 'https://schema.org',
+                    '@type' => $this->schema_type,
+                    'name' => $this->title,
+                    'description' => $this->description,
+                    'url' => $this->canonical,
+                    'isPartOf' => [
+                        '@type' => 'WebSite',
+                        'name' => config('app.name'),
+                        'url' => $baseUrl,
+                    ],
+                ]);
+
+            case 'WebApplication':
+                return array_filter([
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebApplication',
+                    'name' => $this->title,
+                    'description' => $this->description,
+                    'url' => $this->canonical,
+                    'applicationCategory' => 'BusinessApplication',
+                    'operatingSystem' => 'Web',
+                    'provider' => [
+                        '@type' => 'Organization',
+                        'name' => config('app.name'),
+                        'url' => $baseUrl,
+                    ],
+                ]);
 
             default:
                 return [

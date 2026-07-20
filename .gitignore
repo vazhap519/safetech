@@ -1,0 +1,12 @@
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.backup
+*.dump
+*.sqlite
+*.sqlite3
+.env
+.env.*
+!.env.example
+!.env.production.example

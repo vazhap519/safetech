@@ -2,6 +2,7 @@ import JsonLd from "@/components/seo/JsonLd";
 import { getLanguageTag } from "@/lib/locales";
 import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
+import { buildBreadcrumbSchema } from "@/lib/structured-data";
 import { createTranslator } from "@/lib/translations";
 
 import type { ServiceDetail } from "../model/types";
@@ -42,37 +43,28 @@ export default async function ServiceStructuredData({
                 name: "Georgia",
             },
         },
-        {
-            "@type": "BreadcrumbList",
-            itemListElement: [
-                {
-                    "@type": "ListItem",
-                    position: 1,
-                    name: t("nav.home", {
+        buildBreadcrumbSchema([
+            {
+                name: t("nav.home", {
                         ka: "მთავარი",
                         en: "Home",
                         ru: "Главная",
                     }),
-                    item: absoluteLocalizedUrl("/", locale),
-                },
-                {
-                    "@type": "ListItem",
-                    position: 2,
-                    name: t("nav.services", {
+                url: absoluteLocalizedUrl("/", locale),
+            },
+            {
+                name: t("nav.services", {
                         ka: "სერვისები",
                         en: "Services",
                         ru: "Услуги",
                     }),
-                    item: absoluteLocalizedUrl("/services", locale),
-                },
-                {
-                    "@type": "ListItem",
-                    position: 3,
-                    name: service.title || service.name,
-                    item: url,
-                },
-            ],
-        },
+                url: absoluteLocalizedUrl("/services", locale),
+            },
+            {
+                name: service.title || service.name,
+                url,
+            },
+        ]),
     ];
 
     if (service.faqs.length) {
@@ -94,14 +86,11 @@ export default async function ServiceStructuredData({
     }
 
     return (
-        <script
-            dangerouslySetInnerHTML={{
-                __html: JSON.stringify({
-                    "@context": "https://schema.org",
-                    "@graph": graph,
-                }).replace(/</g, "\\u003c"),
+        <JsonLd
+            data={{
+                "@context": "https://schema.org",
+                "@graph": graph,
             }}
-            type="application/ld+json"
         />
     );
 }

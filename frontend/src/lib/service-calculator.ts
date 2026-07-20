@@ -5,7 +5,7 @@ export type CalculatorOption = {
     monthlyPrice: number;
 };
 
-export type CalculatorFieldType =
+type CalculatorFieldType =
     | "text"
     | "number"
     | "textarea"
@@ -30,7 +30,7 @@ export type CalculatorField = {
     options: CalculatorOption[];
 };
 
-export type CalculatorPackage = {
+type CalculatorPackage = {
     key: string;
     title: string;
     description: string;

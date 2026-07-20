@@ -1,5 +1,6 @@
 import { getLanguageTag } from "@/lib/locales";
-import { absoluteLocalizedUrl, absoluteSiteUrl, SITE_NAME } from "@/lib/seo";
+import { buildOrganizationEntity } from "@/lib/organization-schema";
+import { absoluteLocalizedUrl, SITE_NAME } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -15,41 +16,14 @@ export default async function ContactSchema() {
     const pageName =
         translateText(translations, "meta.contact.title", locale, null) ||
         siteName;
-    const contactPoint =
-        contact.phone || contact.email
-            ? [
-                  {
-                      "@type": "ContactPoint",
-                      contactType: "sales",
-                      ...(contact.phone ? { telephone: contact.phone } : {}),
-                      ...(contact.email ? { email: contact.email } : {}),
-                      availableLanguage: ["ka", "en", "ru"],
-                  },
-              ]
-            : undefined;
-
-    const mainEntity: Record<string, unknown> = {
-        "@type": "Organization",
-        name: siteName,
+    const mainEntity = buildOrganizationEntity({
+        branding,
+        contact,
+        contactType: "sales",
+        description,
+        siteName,
         url: absoluteLocalizedUrl("/", locale),
-        logo: absoluteSiteUrl(
-            branding.logo || branding.footerLogo || branding.defaultImage,
-        ),
-        ...(description ? { description } : {}),
-        ...(contact.phone ? { telephone: contact.phone } : {}),
-        ...(contact.email ? { email: contact.email } : {}),
-        ...(contact.address
-            ? {
-                  address: {
-                      "@type": "PostalAddress",
-                      streetAddress: contact.address,
-                      addressCountry: "GE",
-                      addressLocality: "Tbilisi",
-                  },
-              }
-            : {}),
-        ...(contactPoint ? { contactPoint } : {}),
-    };
+    });
 
     const schema = {
         "@context": "https://schema.org",

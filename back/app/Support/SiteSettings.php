@@ -29,6 +29,21 @@ final class SiteSettings
         return is_array($value) ? $value : [];
     }
 
+    public static function brandingMediaUrl(string $collection): ?string
+    {
+        if (! in_array($collection, ['logo', 'footer_logo', 'favicon', 'default_image'], true)) {
+            return null;
+        }
+
+        return Cache::remember(
+            PublicContentCache::key("branding-media:{$collection}"),
+            now()->addHour(),
+            fn (): ?string => SiteSetting::query()
+                ->where('key', 'branding')
+                ->first()?->brandingMediaUrl($collection),
+        );
+    }
+
     public static function businessProfile(): object
     {
         $contact = self::value('contact');

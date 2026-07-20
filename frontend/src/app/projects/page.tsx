@@ -16,15 +16,23 @@ export async function generateMetadata() {
 type ProjectsPageProps = {
     searchParams?: Promise<{
         category?: string;
-    }>;
+    }> | {
+        category?: string;
+    };
+    showPageSchema?: boolean;
 };
 
-export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
+export default async function ProjectsPage({
+    searchParams,
+    showPageSchema = true,
+}: ProjectsPageProps) {
     const category = (await searchParams)?.category;
 
     return (
         <>
-            <CmsPageSchema pageKey="projects" fallback={<ProjectsSchema />} />
+            {showPageSchema ? (
+                <CmsPageSchema pageKey="projects" fallback={<ProjectsSchema />} />
+            ) : null}
             <ProjectsHeroSection />
             <MetricsSection />
             <FeaturedProjectsSection />

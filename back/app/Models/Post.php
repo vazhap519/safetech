@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Spatie\Image\Enums\Fit;
 
 class Post extends Model implements HasMedia
 {
@@ -36,106 +38,65 @@ class Post extends Model implements HasMedia
         'is_published',
     ];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'translations' => 'array',
-        'is_published' => 'boolean',
-        'seo_keywords' => 'array',
-        'noindex' => 'boolean',
-        'faq' => 'array',
-        'schema' => 'array',
-        'seo_published_at' => 'datetime',
-    ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | MEDIA
-    |--------------------------------------------------------------------------
-    */
-
-    public function registerMediaCollections(): void
+    protected function casts(): array
     {
-        $this->addMediaCollection('cover')->useDisk('public')->singleFile();
+        return [
+            'translations' => 'array',
+            'is_published' => 'boolean',
+            'seo_keywords' => 'array',
+            'noindex' => 'boolean',
+            'faq' => 'array',
+            'schema' => 'array',
+            'seo_published_at' => 'datetime',
+        ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | ACCESSORS
-    |--------------------------------------------------------------------------
-    */
-
-    public function getImageAttribute(): ?string
+    protected static function booted(): void
     {
-        try {
-            $media = $this->getFirstMedia('cover');
+        static::creating(function (Post $post): void {
+            if ($post->slug) {
+                return;
+            }
 
-            if (!$media) return null;
+            $baseSlug = Str::slug($post->title) ?: Str::lower(Str::random(10));
+            $candidate = $baseSlug;
+            $suffix = 2;
 
-            return $media->hasGeneratedConversion('webp')
-                ? $media->getUrl('webp')
-                : $media->getUrl();
+            while (self::query()->where('slug', $candidate)->exists()) {
+                $candidate = "{$baseSlug}-{$suffix}";
+                $suffix++;
+            }
 
-        } catch (\Throwable $e) {
-            return null; // 🔥 never crash
-        }
+            $post->slug = $candidate;
+        });
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS
-    |--------------------------------------------------------------------------
-    */
-
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function author()
+    public function author(): BelongsTo
     {
         return $this->belongsTo(Author::class);
     }
 
-    public function sections()
+    public function sections(): HasMany
     {
-        return $this->hasMany(PostSection::class)
-            ->orderBy('position'); // ✅ FIXED
+        return $this->hasMany(PostSection::class)->orderBy('position');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SLUG GENERATION
-    |--------------------------------------------------------------------------
-    */
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($post) {
-            if (!$post->slug) {
-                $slug = Str::slug($post->title);
-
-                $count = self::where('slug', 'LIKE', "{$slug}%")->count();
-
-                $post->slug = $count
-                    ? "{$slug}-{$count}"
-                    : $slug;
-            }
-        });
-    }
-
-    public function getRouteKeyName()
+    public function getRouteKeyName(): string
     {
         return 'slug';
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | MEDIA CONVERSIONS
-    |--------------------------------------------------------------------------
-    */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('cover')
+            ->useDisk('public')
+            ->singleFile();
+    }
 
     public function registerMediaConversions(?Media $media = null): void
     {
@@ -145,5 +106,22 @@ class Post extends Model implements HasMedia
             ->quality(80)
             ->performOnCollections('cover')
             ->nonQueued();
+    }
+
+    public function getImageAttribute(): ?string
+    {
+        try {
+            $media = $this->getFirstMedia('cover');
+
+            if (! $media) {
+                return null;
+            }
+
+            return $media->hasGeneratedConversion('webp')
+                ? $media->getUrl('webp')
+                : $media->getUrl();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

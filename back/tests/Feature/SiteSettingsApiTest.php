@@ -13,7 +13,12 @@ class SiteSettingsApiTest extends TestCase
     public function test_legacy_settings_endpoint_reads_the_canonical_site_settings(): void
     {
         foreach ([
-            'contact' => ['phone' => '+995 555 00 00 00', 'email' => 'info@example.com', 'address' => 'Tbilisi'],
+            'contact' => [
+                'phone' => '+995 555 00 00 00',
+                'email' => 'info@example.com',
+                'address' => 'Tbilisi',
+                'lead_email' => 'private@example.com',
+            ],
             'branding' => ['site_name' => 'SafeTech', 'tagline' => 'Secure infrastructure'],
             'seo' => ['city' => 'Tbilisi', 'country' => 'GE', 'open_time' => '09:00', 'close_time' => '18:00'],
             'socials' => [
@@ -37,6 +42,7 @@ class SiteSettingsApiTest extends TestCase
             ->assertJsonPath('contact.phone', '+995 555 00 00 00')
             ->assertJsonPath('seo.local_business.city', 'Tbilisi')
             ->assertJsonPath('seo.same_as.0', 'https://facebook.com/safetech')
-            ->assertJsonPath('share.buttons.0.type', 'facebook');
+            ->assertJsonPath('share.buttons.0.type', 'facebook')
+            ->assertJsonMissingPath('contact.lead_email');
     }
 }

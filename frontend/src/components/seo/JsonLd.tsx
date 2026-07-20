@@ -1,8 +1,8 @@
 import { Fragment } from "react";
 
-export type JsonLdValue = Record<string, unknown> | Array<Record<string, unknown>>;
+import type { StructuredDataValue } from "@/lib/structured-data";
 
-export default function JsonLd({ data }: { data?: JsonLdValue | null }) {
+export default function JsonLd({ data }: { data?: StructuredDataValue | null }) {
     if (!data) return null;
 
     const items = Array.isArray(data) ? data : [data];

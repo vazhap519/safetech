@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ContactLeadResource\Pages;
+use App\Filament\Support\NavigationGroup;
 use App\Models\ContactLead;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -24,6 +25,10 @@ class ContactLeadResource extends Resource
     protected static ?string $navigationLabel = 'მოთხოვნები';
 
     protected static ?string $modelLabel = 'მოთხოვნა';
+
+    protected static ?string $pluralModelLabel = 'მოთხოვნები';
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Sales;
 
     /** @return array<string, string> */
     private static function statusOptions(): array

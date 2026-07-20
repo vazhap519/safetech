@@ -3,15 +3,23 @@
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Concerns\HasActiveOrder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Faq extends Model
 {
-    use FlushesPublicContentCache;
+    use FlushesPublicContentCache, HasActiveOrder;
+
     protected $guarded = ['id'];
-    protected function casts(): array { return ['translations' => 'array', 'is_active' => 'boolean']; }
-    public function service(): BelongsTo { return $this->belongsTo(Service::class); }
-    public function scopeActive(Builder $query): Builder { return $query->where('is_active', true)->orderBy('sort_order'); }
+
+    protected function casts(): array
+    {
+        return ['translations' => 'array', 'is_active' => 'boolean'];
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
+    }
 }

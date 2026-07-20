@@ -160,22 +160,12 @@ class BlogController extends Controller
 
     private function getImage(Post $post): ?string
     {
-        try {
-            $media = $post->getFirstMedia('cover');
-
-            return $media ? $media->getUrl('webp') : null;
-        } catch (\Throwable) {
-            return null;
-        }
+        return $post->image;
     }
 
     private function getAuthorAvatar(Post $post): ?string
     {
-        try {
-            return $post->author?->getFirstMediaUrl('avatar') ?: null;
-        } catch (\Throwable) {
-            return null;
-        }
+        return $post->author?->avatar;
     }
 
     private function getRelatedPosts(Post $post, string $locale)

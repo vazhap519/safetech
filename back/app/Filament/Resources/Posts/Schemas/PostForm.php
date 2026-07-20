@@ -2,37 +2,22 @@
 
 namespace App\Filament\Resources\Posts\Schemas;
 
+use App\Filament\Support\LocalizedContentFields;
+use App\Filament\Support\StructuredDataJsonField;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Forms\Components\{
-    TextInput,
-    Select,
-    Toggle,
-    Repeater,
-    RichEditor,
-    Textarea,
-    DateTimePicker
-};
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Illuminate\Support\Str;
 
 class PostForm
 {
-    /** @return array<int, TextInput|Textarea> */
-    private static function translationInputs(string $field, string $label, bool $textarea = false): array
-    {
-        return collect([
-            'ka' => 'ქართული',
-            'en' => 'English',
-            'ru' => 'Русский',
-        ])->map(
-            fn (string $localeLabel, string $locale) => ($textarea
-                ? Textarea::make("translations.fields.{$field}.{$locale}")->rows(3)
-                : TextInput::make("translations.fields.{$field}.{$locale}")
-            )->label("{$label} ({$localeLabel})"),
-        )->values()->all();
-    }
-
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -43,29 +28,31 @@ class PostForm
                 | MAIN INFO
                 |--------------------------------------------------------------------------
                 */
-                Section::make('Main Info')
+                Section::make('ძირითადი ინფორმაცია')
                     ->schema([
 
                         TextInput::make('title')
+                            ->label('სათაური')
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, callable $set) =>
-                            $set('slug', Str::slug($state))
+                            ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))
                             ),
 
                         TextInput::make('slug')
+                            ->label('URL კოდი')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
 
                         Textarea::make('excerpt')
-                            ->label('Short Description')
+                            ->label('მოკლე აღწერა')
                             ->rows(3)
                             ->columnSpanFull(),
 
                         // 🔥 CATEGORY (AUTO CREATE)
                         Select::make('category_id')
+                            ->label('კატეგორია')
                             ->relationship('category', 'name')
                             ->searchable()
                             ->preload()
@@ -73,72 +60,82 @@ class PostForm
                             ->createOptionForm([
 
                                 TextInput::make('name')
+                                    ->label('დასახელება (ქართული)')
                                     ->required()
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(fn ($state, callable $set) =>
-                                    $set('slug', Str::slug($state))
+                                    ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))
                                     ),
 
                                 TextInput::make('slug')
+                                    ->label('URL კოდი')
                                     ->required()
                                     ->unique(ignoreRecord: true),
 
                                 TextInput::make('translations.fields.name.en')
-                                    ->label('Name (EN)'),
+                                    ->label('დასახელება (EN)'),
 
                                 TextInput::make('translations.fields.name.ru')
-                                    ->label('Name (RU)'),
+                                    ->label('დასახელება (RU)'),
 
                             ]),
 
                         // 🔥 AUTHOR (AUTO CREATE)
                         Select::make('author_id')
+                            ->label('ავტორი')
                             ->relationship('author', 'name')
                             ->searchable()
                             ->preload()
                             ->createOptionForm([
 
                                 TextInput::make('name')
+                                    ->label('სახელი (ქართული)')
                                     ->required()
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(fn ($state, callable $set) =>
-                                    $set('slug', Str::slug($state))
+                                    ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))
                                     ),
 
                                 TextInput::make('slug')
+                                    ->label('URL კოდი')
                                     ->required()
                                     ->unique(ignoreRecord: true),
 
                                 TextInput::make('email')
+                                    ->label('ელფოსტა')
                                     ->email(),
 
                                 Textarea::make('bio')
+                                    ->label('ბიოგრაფია (ქართული)')
                                     ->rows(2)
                                     ->columnSpanFull(),
 
                                 TextInput::make('translations.fields.name.en')
-                                    ->label('Name (EN)'),
+                                    ->label('სახელი (EN)'),
 
                                 TextInput::make('translations.fields.name.ru')
-                                    ->label('Name (RU)'),
+                                    ->label('სახელი (RU)'),
 
                                 Textarea::make('translations.fields.bio.en')
-                                    ->label('Bio (EN)')
+                                    ->label('ბიოგრაფია (EN)')
                                     ->rows(2)
                                     ->columnSpanFull(),
 
                                 Textarea::make('translations.fields.bio.ru')
-                                    ->label('Bio (RU)')
+                                    ->label('ბიოგრაფია (RU)')
                                     ->rows(2)
                                     ->columnSpanFull(),
 
                                 SpatieMediaLibraryFileUpload::make('avatar')
+                                    ->label('ავატარი')
                                     ->collection('avatar')
-                                    ->image(),
+                                    ->conversion('webp')
+                                    ->image()
+                                    ->imageEditor()
+                                    ->maxSize(10240),
 
                             ]),
 
                         Toggle::make('is_published')
+                            ->label('გამოქვეყნებულია')
                             ->default(true),
 
                     ])
@@ -149,13 +146,16 @@ class PostForm
                 | MEDIA
                 |--------------------------------------------------------------------------
                 */
-                Section::make('Media')
+                Section::make('მედია')
                     ->schema([
 
                         SpatieMediaLibraryFileUpload::make('cover')
+                            ->label('მთავარი სურათი')
                             ->collection('cover')
+                            ->conversion('webp')
                             ->image()
                             ->imageEditor()
+                            ->maxSize(10240)
                             ->required(),
 
                     ]),
@@ -165,33 +165,36 @@ class PostForm
                 | CONTENT SECTIONS
                 |--------------------------------------------------------------------------
                 */
-                Section::make('Content Sections')
+                Section::make('სტატიის სექციები')
                     ->schema([
 
                         Repeater::make('sections')
+                            ->label('სექციები')
                             ->relationship()
                             ->schema([
 
                                 TextInput::make('title')
-                                    ->label('Section Title')
+                                    ->label('სექციის სათაური (ქართული)')
                                     ->maxLength(255),
 
                                 RichEditor::make('content')
+                                    ->label('სექციის ტექსტი (ქართული)')
                                     ->required()
                                     ->columnSpanFull(),
 
                                 TextInput::make('translations.fields.title.en')
-                                    ->label('Section title (EN)'),
+                                    ->label('სექციის სათაური (EN)'),
                                 TextInput::make('translations.fields.title.ru')
-                                    ->label('Section title (RU)'),
+                                    ->label('სექციის სათაური (RU)'),
                                 RichEditor::make('translations.fields.content.en')
-                                    ->label('Section content (EN)')
+                                    ->label('სექციის ტექსტი (EN)')
                                     ->columnSpanFull(),
                                 RichEditor::make('translations.fields.content.ru')
-                                    ->label('Section content (RU)')
+                                    ->label('სექციის ტექსტი (RU)')
                                     ->columnSpanFull(),
 
                                 TextInput::make('position')
+                                    ->label('რიგითობა')
                                     ->numeric()
                                     ->default(0),
 
@@ -213,9 +216,11 @@ class PostForm
                     ->schema([
 
                         TextInput::make('meta_title')
+                            ->label('SEO სათაური')
                             ->maxLength(255),
 
                         Textarea::make('meta_description')
+                            ->label('Meta აღწერა')
                             ->rows(3)
                             ->columnSpanFull(),
 
@@ -235,44 +240,33 @@ class PostForm
                             ->label('Schema გამოქვეყნების თარიღი'),
 
                         Repeater::make('faq')
-                            ->label('FAQ rich results')
+                            ->label('FAQ გაფართოებული შედეგებისთვის')
                             ->schema([
                                 TextInput::make('question')->label('კითხვა')->required(),
                                 Textarea::make('answer')->label('პასუხი')->required(),
                             ])
                             ->columnSpanFull(),
 
-                        Textarea::make('schema')
-                            ->label('Custom Schema JSON-LD')
-                            ->rows(10)
-                            ->dehydrateStateUsing(function ($state) {
-                                if (! $state) return null;
-
-                                $decoded = json_decode($state, true);
-
-                                return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
-                            })
-                            ->formatStateUsing(fn ($state) => is_array($state)
-                                ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-                                : $state)
-                            ->columnSpanFull(),
+                        StructuredDataJsonField::make(
+                            'ცარიელი დატოვეთ ავტომატური Article/FAQ schema-ს გამოსაყენებლად.',
+                        ),
 
                     ]),
 
-                Section::make('Content and SEO in 3 languages')
+                Section::make('კონტენტი და SEO 3 ენაზე')
                     ->schema([
-                        ...self::translationInputs('title', 'Title'),
-                        ...self::translationInputs('excerpt', 'Excerpt', true),
-                        ...self::translationInputs('metaTitle', 'Meta title'),
-                        ...self::translationInputs('metaDescription', 'Meta description', true),
+                        ...LocalizedContentFields::inputs('title', 'სათაური'),
+                        ...LocalizedContentFields::inputs('excerpt', 'მოკლე აღწერა', textarea: true),
+                        ...LocalizedContentFields::inputs('metaTitle', 'SEO სათაური'),
+                        ...LocalizedContentFields::inputs('metaDescription', 'Meta აღწერა', textarea: true),
                         Repeater::make('translations.keywords.ka')
-                            ->label('Keywords (ქართული)')
+                            ->label('კონტენტის თემები (ქართული)')
                             ->simple(TextInput::make('value')),
                         Repeater::make('translations.keywords.en')
-                            ->label('Keywords (English)')
+                            ->label('კონტენტის თემები (EN)')
                             ->simple(TextInput::make('value')),
                         Repeater::make('translations.keywords.ru')
-                            ->label('Keywords (Русский)')
+                            ->label('კონტენტის თემები (RU)')
                             ->simple(TextInput::make('value')),
                     ])
                     ->columns(3),

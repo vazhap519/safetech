@@ -7,18 +7,22 @@ use App\Filament\Resources\SeoPages\Pages\EditSeoPage;
 use App\Filament\Resources\SeoPages\Pages\ListSeoPages;
 use App\Filament\Resources\SeoPages\Schemas\SeoPageForm;
 use App\Filament\Resources\SeoPages\Tables\SeoPagesTable;
+use App\Filament\Support\NavigationGroup;
 use App\Models\SeoPage;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class SeoPageResource extends Resource
 {
     protected static ?string $model = SeoPage::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::System;
 
     protected static ?string $navigationLabel = 'გვერდების SEO';
 

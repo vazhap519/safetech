@@ -10,7 +10,7 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 export function useLeadForm(source: string) {
     const [status, setStatus] = useState<FormStatus>("idle");
     const [message, setMessage] = useState("");
-    const { t } = useLocalization();
+    const { locale, t } = useLocalization();
 
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -75,6 +75,7 @@ export function useLeadForm(source: string) {
                     email,
                     phone,
                     details,
+                    locale,
                     source,
                 }),
             });

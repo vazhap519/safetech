@@ -92,7 +92,7 @@ export default function Image({
                     rounded-[28px]
                     glass-card
                     shadow-2xl
-                    object-cover
+                    !object-contain
                     `,
 
                 /*

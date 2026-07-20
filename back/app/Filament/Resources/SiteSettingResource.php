@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SiteSettingResource\Pages;
+use App\Filament\Support\NavigationGroup;
 use App\Models\SiteSetting;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -10,8 +11,8 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -26,6 +27,12 @@ class SiteSettingResource extends Resource
     protected static ?string $model = SiteSetting::class;
 
     protected static ?string $navigationLabel = 'პარამეტრები';
+
+    protected static ?string $modelLabel = 'პარამეტრი';
+
+    protected static ?string $pluralModelLabel = 'პარამეტრები';
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::System;
 
     public static function form(Schema $schema): Schema
     {
@@ -81,7 +88,7 @@ class SiteSettingResource extends Resource
             Section::make('სოციალური ქსელები')
                 ->schema([
                     Repeater::make('value.links')
-                        ->label('Footer სოციალური ბმულები')
+                        ->label('ქვედა ზოლის სოციალური ბმულები')
                         ->schema([
                             Select::make('network')
                                 ->label('ქსელი')
@@ -103,7 +110,7 @@ class SiteSettingResource extends Resource
                             TextInput::make('href')
                                 ->label('ბმული ან მნიშვნელობა')
                                 ->required()
-                                ->helperText('Email-სთვის ელფოსტა, WhatsApp-სთვის ნომერი, სხვა შემთხვევებში სრული URL ან დომენი.'),
+                                ->helperText('ელფოსტისთვის მიუთითეთ მისამართი, WhatsApp-სთვის ნომერი, სხვა შემთხვევებში სრული URL ან დომენი.'),
                         ])
                         ->columns(3)
                         ->collapsible()
@@ -135,25 +142,33 @@ class SiteSettingResource extends Resource
                         ->label('სლოგანი')
                         ->helperText('გამოჩნდება footer-ში ტექსტურად.'),
                     SpatieMediaLibraryFileUpload::make('branding_logo')
-                        ->label('Header ლოგო')
+                        ->label('ზედა მენიუს ლოგო')
                         ->collection('logo')
+                        ->conversion('webp')
                         ->image()
-                        ->imageEditor(),
+                        ->imageEditor()
+                        ->maxSize(10240),
                     SpatieMediaLibraryFileUpload::make('branding_footer_logo')
-                        ->label('Footer ლოგო')
+                        ->label('ქვედა კოლონტიტულის ლოგო')
                         ->collection('footer_logo')
+                        ->conversion('webp')
                         ->image()
-                        ->imageEditor(),
+                        ->imageEditor()
+                        ->maxSize(10240),
                     SpatieMediaLibraryFileUpload::make('branding_favicon')
-                        ->label('Favicon / App Icon')
+                        ->label('საიტის ხატულა')
                         ->collection('favicon')
+                        ->conversion('webp')
                         ->image()
-                        ->imageEditor(),
+                        ->imageEditor()
+                        ->maxSize(2048),
                     SpatieMediaLibraryFileUpload::make('branding_default_image')
                         ->label('საერთო fallback სურათი')
                         ->collection('default_image')
+                        ->conversion('webp')
                         ->image()
                         ->imageEditor()
+                        ->maxSize(10240)
                         ->helperText('გამოიყენება ლოგოს გარდა იმ საერთო ვიზუალებში და preview-ებში, სადაც კონკრეტული სურათი არ არის შევსებული.'),
                 ])
                 ->columns(2)
@@ -166,37 +181,40 @@ class SiteSettingResource extends Resource
                     TextInput::make('value.city')->label('ქალაქი'),
                     TextInput::make('value.country')->label('ქვეყნის კოდი')->default('GE')->maxLength(2),
                     TextInput::make('value.postal_code')->label('საფოსტო ინდექსი'),
-                    TextInput::make('value.lat')->label('Latitude')->numeric(),
-                    TextInput::make('value.lng')->label('Longitude')->numeric(),
+                    TextInput::make('value.lat')->label('განედი (latitude)')->numeric(),
+                    TextInput::make('value.lng')->label('გრძედი (longitude)')->numeric(),
                     TextInput::make('value.open_time')->label('გახსნის დრო')->type('time'),
                     TextInput::make('value.close_time')->label('დახურვის დრო')->type('time'),
                 ])
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'seo'),
 
-            Section::make('Analytics, Pixel და ვერიფიკაცია')
+            Section::make('ანალიტიკა, Pixel და ვერიფიკაცია')
                 ->description('ID-ები საჯაროდ იტვირთება მხოლოდ მაშინ, როდესაც შესაბამისი ინტეგრაცია ჩართულია. GTM-ის გამოყენებისას GA4 tag თავად GTM-ში დაამატეთ, რათა page view ორჯერ არ ჩაითვალოს.')
                 ->schema([
                     Toggle::make('value.marketing_enabled')
-                        ->label('Analytics და სარეკლამო კოდების ჩართვა')
+                        ->label('ანალიტიკისა და სარეკლამო კოდების ჩართვა')
                         ->default(false),
                     TextInput::make('value.google_tag_manager_id')
                         ->label('Google Tag Manager ID')
+                        ->regex('/^GTM-[A-Z0-9]+$/i')
                         ->placeholder('GTM-XXXXXXX'),
                     TextInput::make('value.google_analytics_id')
                         ->label('Google Analytics 4 ID')
+                        ->regex('/^G-[A-Z0-9]+$/i')
                         ->placeholder('G-XXXXXXXXXX'),
                     TextInput::make('value.meta_pixel_id')
                         ->label('Meta / Facebook Pixel ID')
+                        ->regex('/^[0-9]{5,32}$/')
                         ->placeholder('123456789012345'),
                     TextInput::make('value.google_site_verification')
-                        ->label('Google Search Console verification'),
+                        ->label('Google Search Console ვერიფიკაციის კოდი'),
                     TextInput::make('value.bing_site_verification')
-                        ->label('Bing Webmaster Tools verification'),
+                        ->label('Bing Webmaster Tools ვერიფიკაციის კოდი'),
                     TextInput::make('value.yandex_site_verification')
-                        ->label('Yandex Webmaster verification'),
+                        ->label('Yandex Webmaster ვერიფიკაციის კოდი'),
                     TextInput::make('value.indexnow_key')
-                        ->label('IndexNow key')
+                        ->label('IndexNow გასაღები')
                         ->helperText('გამოიყენება Bing/Yandex-ისთვის URL-ების სწრაფად გასაგზავნად.'),
                 ])
                 ->columns(2)
@@ -205,16 +223,16 @@ class SiteSettingResource extends Resource
             Section::make('ინტერფეისის თარგმანები')
                 ->schema([
                     Repeater::make('value.entries')
-                        ->label('Translation keys')
+                        ->label('თარგმანის ჩანაწერები')
                         ->schema([
                             TextInput::make('key')
-                                ->label('Key')
+                                ->label('გასაღები')
                                 ->required()
                                 ->helperText('მაგ: nav.home, meta.home.title, meta.home.description, services.hero.eyebrow, project.slug.card.title'),
                             TextInput::make('ka')
                                 ->label('ქართული'),
                             TextInput::make('en')
-                                ->label('English'),
+                                ->label('ინგლისური'),
                             TextInput::make('ru')
                                 ->label('Русский'),
                         ])
@@ -226,7 +244,7 @@ class SiteSettingResource extends Resource
                 ->visible(fn (Get $get): bool => $get('key') === 'translations'),
 
             Toggle::make('is_public')
-                ->label('Public API-ში გამოჩენა')
+                ->label('საჯარო API-ში გამოჩენა')
                 ->default(true),
         ]);
     }

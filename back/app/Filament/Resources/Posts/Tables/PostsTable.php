@@ -2,18 +2,14 @@
 
 namespace App\Filament\Resources\Posts\Tables;
 
-use Filament\Tables\Table;
-use Filament\Tables\Columns\{
-    TextColumn,
-    ImageColumn,
-    IconColumn
-};
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\{
-    BulkActionGroup,
-    DeleteBulkAction,
-    EditAction
-};
+use Filament\Tables\Table;
 
 class PostsTable
 {
@@ -28,9 +24,8 @@ class PostsTable
                 |--------------------------------------------------------------------------
                 */
                 ImageColumn::make('cover')
-                    ->label('Image')
-                    ->getStateUsing(fn ($record) =>
-                    $record->getFirstMediaUrl('cover', 'webp')
+                    ->label('სურათი')
+                    ->getStateUsing(fn ($record) => $record->getFirstMediaUrl('cover', 'webp')
                     )
                     ->size(60),
 
@@ -40,6 +35,7 @@ class PostsTable
                 |--------------------------------------------------------------------------
                 */
                 TextColumn::make('title')
+                    ->label('სათაური')
                     ->searchable()
                     ->sortable()
                     ->limit(40)
@@ -51,7 +47,7 @@ class PostsTable
                 |--------------------------------------------------------------------------
                 */
                 TextColumn::make('category.name')
-                    ->label('Category')
+                    ->label('კატეგორია')
                     ->sortable(),
 
                 /*
@@ -60,7 +56,7 @@ class PostsTable
                 |--------------------------------------------------------------------------
                 */
                 TextColumn::make('author.name')
-                    ->label('Author')
+                    ->label('ავტორი')
                     ->toggleable(),
 
                 /*
@@ -69,7 +65,7 @@ class PostsTable
                 |--------------------------------------------------------------------------
                 */
                 IconColumn::make('is_published')
-                    ->label('Published')
+                    ->label('გამოქვეყნებულია')
                     ->boolean(),
 
                 /*
@@ -78,6 +74,7 @@ class PostsTable
                 |--------------------------------------------------------------------------
                 */
                 TextColumn::make('created_at')
+                    ->label('შექმნის თარიღი')
                     ->dateTime('d M Y')
                     ->sortable(),
 
@@ -91,6 +88,7 @@ class PostsTable
                 |--------------------------------------------------------------------------
                 */
                 SelectFilter::make('category')
+                    ->label('კატეგორია')
                     ->relationship('category', 'name'),
 
                 /*
@@ -99,9 +97,10 @@ class PostsTable
                 |--------------------------------------------------------------------------
                 */
                 SelectFilter::make('is_published')
+                    ->label('სტატუსი')
                     ->options([
-                        1 => 'Published',
-                        0 => 'Draft',
+                        1 => 'გამოქვეყნებული',
+                        0 => 'შავი ვერსია',
                     ]),
 
             ])

@@ -64,16 +64,11 @@ class AnalyticsEventController extends Controller
                 return null;
             }
 
-            $query = parse_url($trimmed, PHP_URL_QUERY);
-
-            return Str::limit(
-                $query ? "{$parsedPath}?{$query}" : $parsedPath,
-                255,
-                '',
-            );
+            return Str::limit($parsedPath, 255, '');
         }
 
-        $normalized = str_starts_with($trimmed, '/') ? $trimmed : "/{$trimmed}";
+        $pathOnly = explode('?', explode('#', $trimmed, 2)[0], 2)[0];
+        $normalized = str_starts_with($pathOnly, '/') ? $pathOnly : "/{$pathOnly}";
 
         return Str::limit($normalized, 255, '');
     }
@@ -94,12 +89,17 @@ class AnalyticsEventController extends Controller
     private function hashVisitor(Request $request, ?string $visitorId): string
     {
         if (is_string($visitorId) && trim($visitorId) !== '') {
-            return hash('sha256', config('app.key') . '|analytics|visitor|' . trim($visitorId));
+            return hash_hmac(
+                'sha256',
+                'analytics|visitor|'.trim($visitorId),
+                (string) config('app.key'),
+            );
         }
 
-        return hash(
+        return hash_hmac(
             'sha256',
-            config('app.key') . '|analytics|fallback|' . ($request->ip() ?? 'unknown') . '|' . ($request->userAgent() ?? 'unknown'),
+            'analytics|fallback|'.($request->ip() ?? 'unknown').'|'.($request->userAgent() ?? 'unknown'),
+            (string) config('app.key'),
         );
     }
 
@@ -111,6 +111,6 @@ class AnalyticsEventController extends Controller
             return null;
         }
 
-        return hash('sha256', config('app.key') . '|analytics|ip|' . $ip);
+        return hash_hmac('sha256', 'analytics|ip|'.$ip, (string) config('app.key'));
     }
 }

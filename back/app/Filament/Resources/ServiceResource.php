@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ServiceResource\Pages;
+use App\Filament\Support\LocalizedContentFields;
+use App\Filament\Support\NavigationGroup;
 use App\Models\Service;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -33,6 +35,8 @@ class ServiceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'სერვისები';
 
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
+
     /** @return array<int, mixed> */
     private static function cardSchema(bool $featured = false): array
     {
@@ -54,8 +58,8 @@ class ServiceResource extends Resource
                     ->required()
                     ->helperText('მაგ: small, office, hotel'),
                 TextInput::make('ka')->label('ქართული')->required(),
-                TextInput::make('en')->label('English'),
-                TextInput::make('ru')->label('Русский'),
+                TextInput::make('en')->label('ინგლისური'),
+                TextInput::make('ru')->label('რუსული'),
                 TextInput::make('one_time_price')
                     ->label('ერთჯერადი ფასის დამატება')
                     ->numeric()
@@ -75,40 +79,6 @@ class ServiceResource extends Resource
             ->reorderable();
     }
 
-    /** @return array<int, TextInput|Textarea> */
-    private static function translationInputs(string $field, string $label, bool $textarea = false): array
-    {
-        return collect([
-            'ka' => 'ქართული',
-            'en' => 'English',
-            'ru' => 'Русский',
-        ])->map(
-            fn (string $localeLabel, string $locale) => ($textarea
-                ? Textarea::make("translations.fields.{$field}.{$locale}")->rows(3)
-                : TextInput::make("translations.fields.{$field}.{$locale}")
-            )->label("{$label} ({$localeLabel})"),
-        )->values()->all();
-    }
-
-    private static function customTranslationEntries(): Repeater
-    {
-        return Repeater::make('translations.entries')
-            ->label('დამატებითი თარგმნის key-ები')
-            ->schema([
-                TextInput::make('key')
-                    ->label('Key')
-                    ->required()
-                    ->helperText('მაგ: benefit.0.title, process.0.description, keyword.0, highlight.0'),
-                TextInput::make('ka')->label('ქართული'),
-                TextInput::make('en')->label('English'),
-                TextInput::make('ru')->label('Русский'),
-            ])
-            ->columns(2)
-            ->default([])
-            ->collapsible()
-            ->reorderable();
-    }
-
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
@@ -116,12 +86,18 @@ class ServiceResource extends Resource
                 ->schema([
                     TextInput::make('name')->label('სახელი')->required()->maxLength(255),
                     TextInput::make('slug')
-                        ->label('Slug')
+                        ->label('URL კოდი')
                         ->required()
                         ->unique(ignoreRecord: true)
                         ->helperText('მაგ: networking'),
+                    Select::make('category_for_service_id')
+                        ->label('კატეგორია')
+                        ->relationship('category', 'name')
+                        ->searchable()
+                        ->preload()
+                        ->required(),
                     TextInput::make('eyebrow')->label('ზედა კატეგორია'),
-                    TextInput::make('icon')->label('Material icon')->default('settings')->required(),
+                    TextInput::make('icon')->label('Material აიკონი')->default('settings')->required(),
                     TextInput::make('title')->label('მთავარი სათაური')->required(),
                     Textarea::make('description')->label('მოკლე აღწერა')->required()->rows(3),
                     Textarea::make('seo_description')
@@ -132,7 +108,10 @@ class ServiceResource extends Resource
                     SpatieMediaLibraryFileUpload::make('services')
                         ->label('მთავარი ფოტო')
                         ->collection('services')
+                        ->conversion('webp')
                         ->image()
+                        ->imageEditor()
+                        ->maxSize(10240)
                         ->imagePreviewHeight('150'),
                     TagsInput::make('keywords')->label('SEO საკვანძო სიტყვები'),
                     TagsInput::make('highlights')->label('მთავარი უპირატესობები'),
@@ -144,15 +123,15 @@ class ServiceResource extends Resource
             Section::make('კონტენტი და SEO 3 ენაზე')
                 ->description('ზედა ძირითადი ველები რჩება ქართულ fallback-ად. აქედან KA/EN/RU ტექსტები ფრონტზე ავტომატურად წავა service.{slug} key-ებით.')
                 ->schema([
-                    ...self::translationInputs('name', 'სერვისის სახელი'),
-                    ...self::translationInputs('eyebrow', 'ზედა კატეგორია'),
-                    ...self::translationInputs('title', 'მთავარი სათაური'),
-                    ...self::translationInputs('description', 'მოკლე აღწერა', true),
-                    ...self::translationInputs('seoTitle', 'SEO სათაური'),
-                    ...self::translationInputs('seoDescription', 'SEO აღწერა', true),
-                    ...self::translationInputs('card.title', 'ბარათის სათაური'),
-                    ...self::translationInputs('card.description', 'ბარათის აღწერა', true),
-                    self::customTranslationEntries(),
+                    ...LocalizedContentFields::inputs('name', 'სერვისის სახელი'),
+                    ...LocalizedContentFields::inputs('eyebrow', 'ზედა კატეგორია'),
+                    ...LocalizedContentFields::inputs('title', 'მთავარი სათაური'),
+                    ...LocalizedContentFields::inputs('description', 'მოკლე აღწერა', textarea: true),
+                    ...LocalizedContentFields::inputs('seoTitle', 'SEO სათაური'),
+                    ...LocalizedContentFields::inputs('seoDescription', 'SEO აღწერა', textarea: true),
+                    ...LocalizedContentFields::inputs('card.title', 'ბარათის სათაური'),
+                    ...LocalizedContentFields::inputs('card.description', 'ბარათის აღწერა', textarea: true),
+                    LocalizedContentFields::customEntries('მაგ: benefit.0.title, process.0.description, keyword.0, highlight.0'),
                 ])
                 ->columns(3),
 
@@ -177,7 +156,7 @@ class ServiceResource extends Resource
                         ->columns(2)
                         ->collapsible(),
                     Textarea::make('overview')
-                        ->label('Overview JSON')
+                        ->label('მიმოხილვის JSON')
                         ->rule('json')
                         ->formatStateUsing(
                             fn ($state) => is_array($state)
@@ -221,7 +200,7 @@ class ServiceResource extends Resource
                     TextInput::make('lead_form.project_size_label_ka')
                         ->label('პროექტის ზომის სათაური (KA)'),
                     TextInput::make('lead_form.project_size_label_en')
-                        ->label('Project size label (EN)'),
+                        ->label('პროექტის ზომის სათაური (EN)'),
                     TextInput::make('lead_form.project_size_label_ru')
                         ->label('Название размера проекта (RU)'),
                     self::localizedOptionRepeater(
@@ -231,7 +210,7 @@ class ServiceResource extends Resource
                     TextInput::make('lead_form.property_type_label_ka')
                         ->label('ობიექტის ტიპის სათაური (KA)'),
                     TextInput::make('lead_form.property_type_label_en')
-                        ->label('Property type label (EN)'),
+                        ->label('ობიექტის ტიპის სათაური (EN)'),
                     TextInput::make('lead_form.property_type_label_ru')
                         ->label('Название типа объекта (RU)'),
                     self::localizedOptionRepeater(
@@ -258,16 +237,16 @@ class ServiceResource extends Resource
                                 ->required(),
                             Toggle::make('required')->label('სავალდებულო'),
                             TextInput::make('ka')->label('სათაური (KA)')->required(),
-                            TextInput::make('en')->label('Label (EN)'),
-                            TextInput::make('ru')->label('Название (RU)'),
-                            TextInput::make('placeholder_ka')->label('Placeholder (KA)'),
-                            TextInput::make('placeholder_en')->label('Placeholder (EN)'),
-                            TextInput::make('placeholder_ru')->label('Placeholder (RU)'),
+                            TextInput::make('en')->label('სათაური (EN)'),
+                            TextInput::make('ru')->label('სათაური (RU)'),
+                            TextInput::make('placeholder_ka')->label('მინიშნება (KA)'),
+                            TextInput::make('placeholder_en')->label('მინიშნება (EN)'),
+                            TextInput::make('placeholder_ru')->label('მინიშნება (RU)'),
                             TextInput::make('help_ka')->label('დახმარების ტექსტი (KA)'),
-                            TextInput::make('help_en')->label('Help text (EN)'),
+                            TextInput::make('help_en')->label('დახმარების ტექსტი (EN)'),
                             TextInput::make('help_ru')->label('Подсказка (RU)'),
                             TextInput::make('unit_ka')->label('ერთეული (KA)'),
-                            TextInput::make('unit_en')->label('Unit (EN)'),
+                            TextInput::make('unit_en')->label('ერთეული (EN)'),
                             TextInput::make('unit_ru')->label('Единица (RU)'),
                             TextInput::make('min')->label('მინიმუმი')->numeric(),
                             TextInput::make('max')->label('მაქსიმუმი')->numeric(),
@@ -285,7 +264,7 @@ class ServiceResource extends Resource
                                 ->default(0),
                             TextInput::make('price_multiplier_field')
                                 ->label('ფასის რაოდენობის ველი')
-                                ->helperText('Select ვარიანტის ფასი გამრავლდება ამ key-ის რიცხვით მნიშვნელობაზე. მაგ: cable_meters.'),
+                                ->helperText('არჩევანის ფასი გამრავლდება მითითებული გასაღების რიცხვით მნიშვნელობაზე. მაგ: cable_meters.'),
                             Repeater::make('options')
                                 ->label('არჩევანის ვარიანტები')
                                 ->schema([
@@ -293,8 +272,8 @@ class ServiceResource extends Resource
                                         ->label('კოდი / მნიშვნელობა')
                                         ->required(),
                                     TextInput::make('ka')->label('ქართული')->required(),
-                                    TextInput::make('en')->label('English'),
-                                    TextInput::make('ru')->label('Русский'),
+                                    TextInput::make('en')->label('ინგლისური'),
+                                    TextInput::make('ru')->label('რუსული'),
                                     TextInput::make('one_time_price')
                                         ->label('ერთჯერადი ფასი')
                                         ->numeric()
@@ -326,10 +305,10 @@ class ServiceResource extends Resource
                                 ->required()
                                 ->helperText('მაგ: standard, business, managed'),
                             TextInput::make('title_ka')->label('სათაური (KA)')->required(),
-                            TextInput::make('title_en')->label('Title (EN)'),
+                            TextInput::make('title_en')->label('სათაური (EN)'),
                             TextInput::make('title_ru')->label('Название (RU)'),
                             Textarea::make('description_ka')->label('აღწერა (KA)')->rows(2),
-                            Textarea::make('description_en')->label('Description (EN)')->rows(2),
+                            Textarea::make('description_en')->label('აღწერა (EN)')->rows(2),
                             Textarea::make('description_ru')->label('Описание (RU)')->rows(2),
                             TextInput::make('one_time_price')
                                 ->label('ერთჯერადი ფასი')
@@ -351,7 +330,7 @@ class ServiceResource extends Resource
                         ->label('შენიშვნა (KA)')
                         ->rows(2),
                     Textarea::make('lead_form.calculator_disclaimer_en')
-                        ->label('Disclaimer (EN)')
+                        ->label('შენიშვნა (EN)')
                         ->rows(2),
                     Textarea::make('lead_form.calculator_disclaimer_ru')
                         ->label('Примечание (RU)')
@@ -376,17 +355,18 @@ class ServiceResource extends Resource
             )
             ->columns([
                 TextColumn::make('name')->label('სახელი')->searchable()->sortable(),
-                TextColumn::make('slug')->searchable(),
+                TextColumn::make('slug')->label('URL კოდი')->searchable(),
+                TextColumn::make('category.name')->label('კატეგორია')->sortable(),
                 TextColumn::make('unique_viewers_count')
-                    ->label('Unique views')
+                    ->label('უნიკალური ნახვები')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('total_views_count')
-                    ->label('Total views')
+                    ->label('სრული ნახვები')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('whatsapp_clicks_count')
-                    ->label('WhatsApp clicks')
+                    ->label('WhatsApp-ზე გადასვლები')
                     ->numeric()
                     ->sortable(),
                 IconColumn::make('is_published')->label('გამოქვეყნებული')->boolean(),

@@ -8,7 +8,7 @@ import {
 
 const DEFAULT_API_BASE = "http://127.0.0.1:8000/api";
 
-export const sitemapHeaders = {
+const sitemapHeaders = {
   "Content-Type": "application/xml; charset=utf-8",
   "Cache-Control": "public, max-age=300, s-maxage=300",
 };
@@ -26,11 +26,11 @@ function normalizeApiBase(value) {
   }
 }
 
-export function normalizeBaseUrl() {
+function normalizeBaseUrl() {
   return getBaseUrl().replace(/\/$/, "");
 }
 
-export function getSitemapApiBase() {
+function getSitemapApiBase() {
   return (
     normalizeApiBase(process.env.BACKEND_API_URL) ||
     normalizeApiBase(process.env.NEXT_PUBLIC_API_URL) ||
@@ -55,7 +55,7 @@ export function getLastPage(json) {
   return Number(json?.data?.meta?.last_page || json?.meta?.last_page || 1);
 }
 
-export function escapeXml(value = "") {
+function escapeXml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -64,7 +64,7 @@ export function escapeXml(value = "") {
     .replace(/'/g, "&apos;");
 }
 
-export function absoluteUrl(pathOrUrl) {
+function absoluteUrl(pathOrUrl) {
   if (!pathOrUrl) return "";
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
 
@@ -94,7 +94,7 @@ export function localizedUrlEntries(path, metadata = {}) {
   }));
 }
 
-export function backendAssetUrl(pathOrUrl) {
+function backendAssetUrl(pathOrUrl) {
   if (!pathOrUrl) return "";
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
 
@@ -113,12 +113,36 @@ export function backendAssetUrl(pathOrUrl) {
 
 export async function safeFetchJson(url) {
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
     if (!res.ok) return null;
     return await res.json();
   } catch {
     return null;
   }
+}
+
+function sitemapCollection(response) {
+  if (Array.isArray(response)) return response;
+  return Array.isArray(response?.data) ? response.data : [];
+}
+
+export async function categorySitemapResponse({ endpoint, pathPrefix, priority }) {
+  const response = await safeFetchJson(buildSitemapApiUrl(endpoint));
+  const urls = sitemapCollection(response)
+    .filter((category) => category?.slug && !category?.noindex)
+    .flatMap((category) => localizedUrlEntries(
+      `${pathPrefix}/${encodeURIComponent(category.slug)}`,
+      {
+        ...(category.updated_at ? { lastmod: category.updated_at } : {}),
+        changefreq: "weekly",
+        priority,
+      },
+    ));
+
+  return xmlResponse(urlset(urls));
 }
 
 export async function fetchAllPaginated(path, params = {}) {
@@ -146,6 +170,32 @@ export async function fetchAllPaginated(path, params = {}) {
   } while (page <= lastPage);
 
   return items;
+}
+
+export async function fetchImageSitemapItems() {
+  const [services, projects, posts] = await Promise.all([
+    fetchAllPaginated("/services"),
+    fetchAllPaginated("/projects"),
+    fetchAllPaginated("/blog"),
+  ]);
+
+  return [
+    ...services.filter((service) => !service?.seo?.noindex).map((service) => ({
+      loc: `${normalizeBaseUrl()}/services/${service.slug}`,
+      image: backendAssetUrl(service.image),
+      title: service.title || service.name,
+    })),
+    ...projects.filter((project) => !project?.seo?.noindex).map((project) => ({
+      loc: `${normalizeBaseUrl()}/projects/${project.slug}`,
+      image: backendAssetUrl(project.image),
+      title: project.title || project.name,
+    })),
+    ...posts.filter((post) => !post?.meta?.noindex).map((post) => ({
+      loc: `${normalizeBaseUrl()}/blog/${post.slug}`,
+      image: backendAssetUrl(post.image),
+      title: post.title,
+    })),
+  ].filter((item) => item.loc && item.image);
 }
 
 export function sitemapIndex(paths) {

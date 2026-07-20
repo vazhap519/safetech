@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+
 class Author extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
+    use FlushesPublicContentCache, HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'name',
@@ -23,82 +25,76 @@ class Author extends Model implements HasMedia
         'translations',
     ];
 
-    protected $casts = [
-        'socials' => 'array',
-        'translations' => 'array',
-        'created_at' => 'datetime',
-    ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | MEDIA
-    |--------------------------------------------------------------------------
-    */
-
-    public function registerMediaCollections(): void
+    protected function casts(): array
     {
-        $this->addMediaCollection('avatar')
-            ->singleFile();
+        return [
+            'socials' => 'array',
+            'translations' => 'array',
+        ];
     }
 
-    public function getAvatarAttribute()
+    protected static function booted(): void
     {
-        return $this->getFirstMediaUrl('avatar') ?: null;
+        static::creating(function (Author $author): void {
+            if ($author->slug) {
+                return;
+            }
+
+            $baseSlug = Str::slug($author->name) ?: Str::lower(Str::random(10));
+            $candidate = $baseSlug;
+            $suffix = 2;
+
+            while (self::query()->where('slug', $candidate)->exists()) {
+                $candidate = "{$baseSlug}-{$suffix}";
+                $suffix++;
+            }
+
+            $author->slug = $candidate;
+        });
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS
-    |--------------------------------------------------------------------------
-    */
-
-    public function posts()
+    public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | HELPERS
-    |--------------------------------------------------------------------------
-    */
-
-    public function getSocial($key)
+    public function getSocial(string $key): mixed
     {
         return data_get($this->socials, $key);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SLUG
-    |--------------------------------------------------------------------------
-    */
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($author) {
-            if (!$author->slug) {
-                $slug = Str::slug($author->name);
-                $count = self::where('slug', 'LIKE', "{$slug}%")->count();
-                $author->slug = $count ? "{$slug}-{$count}" : $slug;
-            }
-        });
-    }
-
-    public function getRouteKeyName()
+    public function getRouteKeyName(): string
     {
         return 'slug';
     }
 
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('avatar')
+            ->useDisk('public')
+            ->singleFile();
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('webp')
             ->fit(Fit::Crop, 300, 300)
             ->format('webp')
             ->quality(80)
             ->performOnCollections('avatar')
-            ->queued();
+            ->nonQueued();
+    }
+
+    public function getAvatarAttribute(): ?string
+    {
+        $media = $this->getFirstMedia('avatar');
+
+        if (! $media) {
+            return null;
+        }
+
+        return $media->hasGeneratedConversion('webp')
+            ? $media->getUrl('webp')
+            : $media->getUrl();
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\EstimateResource\Pages;
+use App\Filament\Support\NavigationGroup;
 use App\Models\Estimate;
 use App\Support\Estimators\EstimateCalculator;
 use Filament\Actions\Action;
@@ -33,9 +34,9 @@ class EstimateResource extends Resource
 
     protected static ?string $pluralModelLabel = 'შეფასებები';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'გაყიდვები';
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Sales;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedCalculator;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCalculator;
 
     public static function form(Schema $schema): Schema
     {
@@ -70,7 +71,7 @@ class EstimateResource extends Resource
                 ->columns(2),
 
             Section::make('CCTV პარამეტრები')
-                ->description('Storage calculator ავტომატურად ითვლის HDD/NVR/PoE საჭიროებებს.')
+                ->description('საცავის კალკულატორი ავტომატურად ითვლის HDD/NVR/PoE საჭიროებებს.')
                 ->visible(fn (Get $get): bool => self::isCctv($get))
                 ->schema([
                     Select::make('camera_type')
@@ -158,7 +159,7 @@ class EstimateResource extends Resource
                         ->live(onBlur: true)
                         ->visible(fn (Get $get): bool => self::isCctv($get)),
                     TextInput::make('poe_switch_unit_cost')
-                        ->label('PoE switch ფასი / 8 port')
+                        ->label('PoE სვიჩის ფასი / 8 პორტი')
                         ->prefix('₾')
                         ->numeric()
                         ->default(0)
@@ -212,7 +213,7 @@ class EstimateResource extends Resource
                 ->columns(3),
 
             Section::make('დამატებითი კომპონენტები')
-                ->description('Network / IT პროექტებისთვის აქ შეგიძლიათ ხელით დაამატოთ როუტერები, სვიჩები, racks, UPS და სხვა ხაზები.')
+                ->description('ქსელისა და IT პროექტებისთვის აქ შეგიძლიათ ხელით დაამატოთ როუტერები, სვიჩები, კარადები, UPS და სხვა ხაზები.')
                 ->schema([
                     Repeater::make('manual_items')
                         ->label('დამატებითი ხაზები')
@@ -261,12 +262,12 @@ class EstimateResource extends Resource
                         ->content(fn (Get $get): array => self::pricingPreview($get))
                         ->listWithLineBreaks(),
                     Placeholder::make('storage_preview')
-                        ->label('Storage Calculator')
+                        ->label('საცავის გამოთვლა')
                         ->content(fn (Get $get): array => self::storagePreview($get))
                         ->listWithLineBreaks()
                         ->visible(fn (Get $get): bool => self::isCctv($get)),
                     Placeholder::make('pdf_preview')
-                        ->label('PDF ხაზების preview')
+                        ->label('PDF ხაზების წინასწარი ნახვა')
                         ->content(fn (Get $get): array => self::pdfLinePreview($get))
                         ->listWithLineBreaks()
                         ->columnSpanFull(),
@@ -409,10 +410,10 @@ class EstimateResource extends Resource
         $requirements = self::previewCalculation($get)['calculation']['requirements'] ?? [];
 
         return [
-            'NVR / DVR: '.($requirements['recorder'] ?? 'Not applicable'),
-            'HDD: '.($requirements['storage'] ?? 'Not applicable'),
-            'PoE Switch: '.($requirements['poe_switch'] ?? 'Not applicable'),
-            'RJ45 / BNC: '.($requirements['connectors'] ?? 'Not applicable'),
+            'NVR / DVR: '.($requirements['recorder'] ?? 'არ არის საჭირო'),
+            'HDD: '.($requirements['storage'] ?? 'არ არის საჭირო'),
+            'PoE სვიჩი: '.($requirements['poe_switch'] ?? 'არ არის საჭირო'),
+            'RJ45 / BNC: '.($requirements['connectors'] ?? 'არ არის საჭირო'),
         ];
     }
 
@@ -440,9 +441,9 @@ class EstimateResource extends Resource
         $derived = $calculation['calculation']['derived'] ?? [];
 
         return [
-            'Bitrate / camera: '.number_format((float) ($derived['bitrate_per_camera_mbps'] ?? 0), 2).' Mbps',
-            'Required HDD: '.number_format((float) ($calculation['required_storage_tb'] ?? 0), 1).' TB',
-            'Recording profile: '.($get('recording_hours_per_day') ?? 24).'h/day x '.($get('recording_days') ?? 30).' days',
+            'ბიტრეიტი თითო კამერაზე: '.number_format((float) ($derived['bitrate_per_camera_mbps'] ?? 0), 2).' Mbps',
+            'საჭირო HDD: '.number_format((float) ($calculation['required_storage_tb'] ?? 0), 1).' TB',
+            'ჩაწერის პროფილი: '.($get('recording_hours_per_day') ?? 24).' სთ/დღე x '.($get('recording_days') ?? 30).' დღე',
         ];
     }
 

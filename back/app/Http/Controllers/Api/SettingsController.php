@@ -3,16 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Support\SocialLinks;
 use App\Support\SiteSettings;
+use App\Support\SocialLinks;
+use Illuminate\Http\JsonResponse;
 
 class SettingsController extends Controller
 {
-    public function index()
+    public function index(): JsonResponse
     {
         $settings = SiteSettings::businessProfile();
         $branding = SiteSettings::value('branding');
         $contact = SiteSettings::value('contact');
+        unset($contact['lead_email']);
         $socials = SiteSettings::value('socials');
         $shareButtons = SocialLinks::shareButtons($settings->share_buttons ?? []);
 

@@ -2,45 +2,37 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\FlushesPublicContentCache;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PostSection extends Model
 {
-    use HasFactory;
+    use FlushesPublicContentCache, HasFactory;
 
     protected $fillable = [
         'post_id',
         'title',
         'content',
         'translations',
-        'position', // ✅ FIXED (order → position)
+        'position',
     ];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'translations' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'translations' => 'array',
+        ];
+    }
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS
-    |--------------------------------------------------------------------------
-    */
-
-    public function post()
+    public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SCOPES (BONUS - CLEAN ORDERING)
-    |--------------------------------------------------------------------------
-    */
-
-    public function scopeOrdered($query)
+    public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('position');
     }

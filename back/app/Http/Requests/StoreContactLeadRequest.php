@@ -50,13 +50,14 @@ final class StoreContactLeadRequest extends FormRequest
             'service_slug' => ['nullable', 'string', 'max:120', 'exists:services,slug'],
             'project_size' => ['nullable', 'string', 'max:80'],
             'property_type' => ['nullable', 'string', 'max:100'],
-            'details' => ['nullable', 'array'],
+            'details' => ['nullable', 'array', 'max:50'],
             'details.*.key' => ['required_with:details', 'string', 'max:100'],
             'details.*.label' => ['required_with:details', 'string', 'max:160'],
             'details.*.type' => ['nullable', 'string', 'max:40'],
             'details.*.value' => ['nullable', 'string', 'max:500'],
             'message' => ['nullable', 'string', 'max:3000'],
             'source' => ['required', 'string', 'max:80'],
+            'locale' => ['nullable', 'string', 'in:ka,en,ru'],
             'privacy' => ['accepted'],
             'website' => ['nullable', 'max:0'],
         ];
@@ -85,7 +86,6 @@ final class StoreContactLeadRequest extends FormRequest
         );
     }
 
-    /** @param mixed $details */
     private function normalizeDetails(mixed $details): array
     {
         if (! is_array($details)) {
@@ -109,15 +109,40 @@ final class StoreContactLeadRequest extends FormRequest
 
     public function messages(): array
     {
-        return [
-            'email.email' => 'ელფოსტის ფორმატი არასწორია.',
-            'email.required_without' => 'მიუთითეთ ელფოსტა ან ტელეფონის ნომერი.',
-            'phone.required_without' => 'მიუთითეთ ტელეფონის ნომერი ან ელფოსტა.',
-            'phone.regex' => 'ტელეფონის ნომრის ფორმატი არასწორია.',
-            'privacy.accepted' => 'მონაცემების დამუშავებაზე თანხმობა აუცილებელია.',
-            'service_slug.exists' => 'არჩეული სერვისი ვერ მოიძებნა.',
-            'details.array' => 'დამატებითი ველების ფორმატი არასწორია.',
-            'website.max' => 'მოთხოვნა უარყოფილია.',
-        ];
+        return match ($this->input('locale')) {
+            'en' => [
+                'email.email' => 'Enter a valid email address.',
+                'email.required_without' => 'Enter an email address or phone number.',
+                'phone.required_without' => 'Enter a phone number or email address.',
+                'phone.regex' => 'Enter a valid phone number.',
+                'privacy.accepted' => 'Consent to data processing is required.',
+                'service_slug.exists' => 'The selected service could not be found.',
+                'details.array' => 'The additional field format is invalid.',
+                'details.max' => 'Too many additional fields were submitted.',
+                'website.max' => 'The request was rejected.',
+            ],
+            'ru' => [
+                'email.email' => 'Введите корректный адрес электронной почты.',
+                'email.required_without' => 'Укажите электронную почту или номер телефона.',
+                'phone.required_without' => 'Укажите номер телефона или электронную почту.',
+                'phone.regex' => 'Введите корректный номер телефона.',
+                'privacy.accepted' => 'Необходимо согласие на обработку данных.',
+                'service_slug.exists' => 'Выбранная услуга не найдена.',
+                'details.array' => 'Неверный формат дополнительных полей.',
+                'details.max' => 'Отправлено слишком много дополнительных полей.',
+                'website.max' => 'Запрос отклонен.',
+            ],
+            default => [
+                'email.email' => 'ელფოსტის ფორმატი არასწორია.',
+                'email.required_without' => 'მიუთითეთ ელფოსტა ან ტელეფონის ნომერი.',
+                'phone.required_without' => 'მიუთითეთ ტელეფონის ნომერი ან ელფოსტა.',
+                'phone.regex' => 'ტელეფონის ნომრის ფორმატი არასწორია.',
+                'privacy.accepted' => 'მონაცემების დამუშავებაზე თანხმობა აუცილებელია.',
+                'service_slug.exists' => 'არჩეული სერვისი ვერ მოიძებნა.',
+                'details.array' => 'დამატებითი ველების ფორმატი არასწორია.',
+                'details.max' => 'დამატებითი ველების დასაშვები რაოდენობა გადაჭარბებულია.',
+                'website.max' => 'მოთხოვნა უარყოფილია.',
+            ],
+        };
     }
 }

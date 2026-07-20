@@ -3,6 +3,7 @@ import JsonLd from "@/components/seo/JsonLd";
 import { getLanguageTag } from "@/lib/locales";
 import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
+import { buildBreadcrumbSchema } from "@/lib/structured-data";
 import { createTranslator } from "@/lib/translations";
 import { getYouTubeEmbedUrl, getYouTubeWatchUrl } from "@/lib/youtube";
 
@@ -54,37 +55,28 @@ export default async function ProjectDetailSchema({
                 },
                 inLanguage: getLanguageTag(locale),
             },
-            {
-                "@type": "BreadcrumbList",
-                itemListElement: [
-                    {
-                        "@type": "ListItem",
-                        position: 1,
-                        name: t("nav.home", {
+            buildBreadcrumbSchema([
+                {
+                    name: t("nav.home", {
                             ka: "მთავარი",
                             en: "Home",
                             ru: "Главная",
                         }),
-                        item: absoluteLocalizedUrl("/", locale),
-                    },
-                    {
-                        "@type": "ListItem",
-                        position: 2,
-                        name: t("nav.projects", {
+                    url: absoluteLocalizedUrl("/", locale),
+                },
+                {
+                    name: t("nav.projects", {
                             ka: "პროექტები",
                             en: "Projects",
                             ru: "Проекты",
                         }),
-                        item: absoluteLocalizedUrl("/projects", locale),
-                    },
-                    {
-                        "@type": "ListItem",
-                        position: 3,
-                        name: project.title || project.name,
-                        item: url,
-                    },
-                ],
-            },
+                    url: absoluteLocalizedUrl("/projects", locale),
+                },
+                {
+                    name: project.title || project.name,
+                    url,
+                },
+            ]),
         ],
     };
 
@@ -92,12 +84,5 @@ export default async function ProjectDetailSchema({
         return <JsonLd data={project.seo.schema} />;
     }
 
-    return (
-        <script
-            dangerouslySetInnerHTML={{
-                __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
-            }}
-            type="application/ld+json"
-        />
-    );
+    return <JsonLd data={schema} />;
 }

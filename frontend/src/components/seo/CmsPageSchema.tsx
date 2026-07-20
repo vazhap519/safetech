@@ -14,5 +14,7 @@ export default async function CmsPageSchema({
     const { locale } = await getSiteSettings();
     const seo = await getBackendSeoPage(pageKey, locale);
 
-    return seo?.schemaOverride ? <JsonLd data={seo.schemaOverride} /> : fallback;
+    const schema = seo?.schemaOverride || seo?.schema;
+
+    return schema ? <JsonLd data={schema} /> : fallback;
 }

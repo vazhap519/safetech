@@ -35,12 +35,6 @@ export type ProjectDetail = {
         image: string;
         imageAlt: string;
     }>;
-    seo?: {
-        title?: string;
-        description?: string;
-        keywords?: string[];
-        image?: string;
-        noindex?: boolean;
-        schema?: Record<string, unknown> | Array<Record<string, unknown>>;
-    };
+    seo?: SeoConfiguration;
 };
+import type { SeoConfiguration } from "@/lib/structured-data";

@@ -12,9 +12,14 @@ final class ContactLeadController extends Controller
     public function __invoke(StoreContactLeadRequest $request, CreateLead $action): JsonResponse
     {
         $lead = $action->execute($request->toData());
+        $message = match ($request->input('locale')) {
+            'en' => 'Thank you. Your request was sent successfully.',
+            'ru' => 'Спасибо. Ваша заявка успешно отправлена.',
+            default => 'მადლობა! თქვენი მოთხოვნა წარმატებით გაიგზავნა.',
+        };
 
         return response()->json([
-            'message' => 'მადლობა! თქვენი მოთხოვნა წარმატებით გაიგზავნა.',
+            'message' => $message,
             'data' => ['id' => $lead->getKey(), 'status' => $lead->status],
         ], 201);
     }

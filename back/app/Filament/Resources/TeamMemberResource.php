@@ -3,12 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TeamMemberResource\Pages;
+use App\Filament\Support\LocalizedContentFields;
+use App\Filament\Support\NavigationGroup;
 use App\Models\TeamMember;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -28,20 +30,9 @@ class TeamMemberResource extends Resource
 
     protected static ?string $modelLabel = 'თანამშრომელი';
 
-    /** @return array<int, TextInput|Textarea> */
-    private static function translationInputs(string $field, string $label, bool $textarea = false): array
-    {
-        return collect([
-            'ka' => 'ქართული',
-            'en' => 'English',
-            'ru' => 'Русский',
-        ])->map(
-            fn (string $localeLabel, string $locale) => ($textarea
-                ? Textarea::make("translations.fields.{$field}.{$locale}")->rows(3)
-                : TextInput::make("translations.fields.{$field}.{$locale}")
-            )->label("{$label} ({$localeLabel})"),
-        )->values()->all();
-    }
+    protected static ?string $pluralModelLabel = 'გუნდის წევრები';
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Content;
 
     public static function form(Schema $schema): Schema
     {
@@ -51,11 +42,13 @@ class TeamMemberResource extends Resource
                     TextInput::make('first_name')->label('სახელი')->required(),
                     TextInput::make('last_name')->label('გვარი')->required(),
                     TextInput::make('position')->label('თანამდებობა')->required(),
-                    FileUpload::make('image')
+                    SpatieMediaLibraryFileUpload::make('image')
                         ->label('ფოტო')
+                        ->collection('image')
+                        ->conversion('webp')
                         ->image()
-                        ->disk('public')
-                        ->directory('team'),
+                        ->imageEditor()
+                        ->maxSize(10240),
                     Textarea::make('bio')->label('ბიოგრაფია'),
                     KeyValue::make('socials')
                         ->label('სოციალური ბმულები')
@@ -69,10 +62,10 @@ class TeamMemberResource extends Resource
             Section::make('გუნდის კონტენტი 3 ენაზე')
                 ->description('ფრონტი გამოიყენებს team.{id}.firstName/lastName/position/bio key-ებს.')
                 ->schema([
-                    ...self::translationInputs('firstName', 'სახელი'),
-                    ...self::translationInputs('lastName', 'გვარი'),
-                    ...self::translationInputs('position', 'თანამდებობა'),
-                    ...self::translationInputs('bio', 'ბიოგრაფია', true),
+                    ...LocalizedContentFields::inputs('firstName', 'სახელი'),
+                    ...LocalizedContentFields::inputs('lastName', 'გვარი'),
+                    ...LocalizedContentFields::inputs('position', 'თანამდებობა'),
+                    ...LocalizedContentFields::inputs('bio', 'ბიოგრაფია', textarea: true),
                 ])
                 ->columns(3),
         ]);
@@ -82,7 +75,10 @@ class TeamMemberResource extends Resource
     {
         return $table
             ->columns([
-                ImageColumn::make('image')->disk('public')->circular(),
+                ImageColumn::make('image')
+                    ->label('ფოტო')
+                    ->getStateUsing(fn (TeamMember $record): ?string => $record->image)
+                    ->circular(),
                 TextColumn::make('first_name')->label('სახელი')->searchable(),
                 TextColumn::make('last_name')->label('გვარი')->searchable(),
                 TextColumn::make('position')->label('თანამდებობა'),

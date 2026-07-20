@@ -92,4 +92,33 @@ class ContactLeadApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['email', 'privacy']);
     }
+
+    public function test_it_localizes_responses_and_limits_dynamic_details(): void
+    {
+        Event::fake([LeadCreated::class]);
+
+        $this->postJson('/api/contact-leads', [
+            'email' => 'english@example.com',
+            'locale' => 'en',
+            'source' => 'home-cta',
+            'privacy' => true,
+        ])->assertCreated()
+            ->assertJsonPath('message', 'Thank you. Your request was sent successfully.');
+
+        $details = collect(range(1, 51))->map(fn (int $index): array => [
+            'key' => "field_{$index}",
+            'label' => "Поле {$index}",
+            'type' => 'text',
+            'value' => 'значение',
+        ])->all();
+
+        $this->postJson('/api/contact-leads', [
+            'email' => 'russian@example.com',
+            'locale' => 'ru',
+            'details' => $details,
+            'source' => 'contact-page',
+            'privacy' => true,
+        ])->assertUnprocessable()
+            ->assertJsonPath('errors.details.0', 'Отправлено слишком много дополнительных полей.');
+    }
 }

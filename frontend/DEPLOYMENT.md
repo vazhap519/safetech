@@ -1,174 +1,213 @@
-# SafeTech Deployment Checklist
+# SafeTech production deployment
 
-## Your Server Layout
+The repository contains two applications and is deployed into three directories:
 
-- Frontend: `/var/www/safetech-next`
-- Backend API: `/var/www/safetech-api`
+- Git source: `/var/www/safetech-source`
+- Laravel API: `/var/www/safetech-api`
+- Next.js frontend: `/var/www/safetech-next`
 
-Do not deploy the frontend and backend into one shared root. Your current split layout is correct and should stay that way.
+The API virtual host must use `/var/www/safetech-api/public` as its document root. Never expose the Laravel project root.
 
-## Critical Fixes
+## 1. Server requirements
 
-1. If `https://api.safetech.ge` shows the default Laravel page, the API vhost is still pointed at the wrong directory.
-2. The API domain must point to `/var/www/safetech-api/public`, never to `/var/www/safetech-api`.
-3. The public site should run through Nginx with `listen 443 ssl http2;`, otherwise Lighthouse will keep reporting `http/1.1`.
-4. Use the sample configs in [deploy/nginx/safetech.example.conf](/F:/safetech/frontend/deploy/nginx/safetech.example.conf) and [deploy/systemd](/F:/safetech/frontend/deploy/systemd).
+- Ubuntu/Debian server with Nginx
+- PHP 8.2 or newer with FPM, PostgreSQL, GD, DOM/XML, cURL, Mbstring and Zip extensions
+- Composer 2
+- PostgreSQL
+- Node.js 20.9 or newer and npm
+- Git, rsync and Certbot
 
-## Frontend
+The supplied systemd and Nginx examples assume PHP 8.3 and system Node/npm paths. Adjust their executable or socket paths when your server differs.
 
-1. Upload the contents of local `frontend/` into `/var/www/safetech-next`.
-2. Copy [`.env.production.example`](/F:/safetech/frontend/.env.production.example) to `/var/www/safetech-next/.env.production`.
-3. Set:
+## 2. DNS and source clone
+
+Point the required DNS records to the server before requesting TLS certificates:
+
+- `safetech.ge`
+- `www.safetech.ge`
+- `api.safetech.ge`
+- Optional typo redirect: `saftech.ge` and `www.saftech.ge`
+
+On the server, clone the repository and create both deployment targets:
+
+```bash
+sudo -i
+git clone https://github.com/vazhap519/safetech.git /var/www/safetech-source
+install -d -m 0755 /var/www/safetech-api /var/www/safetech-next
+
+rsync -a /var/www/safetech-source/back/ /var/www/safetech-api/
+rsync -a /var/www/safetech-source/frontend/ /var/www/safetech-next/
+
+cp /var/www/safetech-api/.env.production.example /var/www/safetech-api/.env
+cp /var/www/safetech-next/.env.production.example /var/www/safetech-next/.env.production
+```
+
+The repository is public. For a future private repository, use an SSH deploy key and the SSH clone URL instead.
+
+## 3. PostgreSQL
+
+Create the role and database once. Replace the example password with a long, unique password:
+
+```bash
+sudo -u postgres psql
+```
+
+```sql
+CREATE USER safetech WITH ENCRYPTED PASSWORD 'replace_with_a_strong_password';
+CREATE DATABASE safetech OWNER safetech ENCODING 'UTF8';
+\q
+```
+
+Edit `/var/www/safetech-api/.env` before running any migration:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://api.safetech.ge
+APP_TIMEZONE=Asia/Tbilisi
+
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=safetech
+DB_USERNAME=safetech
+DB_PASSWORD=replace_with_the_same_password
+DB_SSLMODE=prefer
+
+FRONTEND_URL=https://safetech.ge
+FRONTEND_URLS=https://safetech.ge,https://www.safetech.ge
+TRUSTED_PROXIES=127.0.0.1,::1
+FILESYSTEM_DISK=public
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+SESSION_DRIVER=database
+SESSION_ENCRYPT=true
+SESSION_SECURE_COOKIE=true
+
+ADMIN_NAME="SafeTech Admin"
+ADMIN_EMAIL=your-admin@example.com
+ADMIN_PASSWORD=replace_with_a_unique_12_plus_character_password
+```
+
+Also configure SMTP, `LEADS_NOTIFICATION_EMAIL`, CRM credentials when used, and the same strong `REVALIDATE_SECRET` in both applications. `APP_KEY` is generated in the initial-install step.
+
+`SQLSTATE ... fe_sendauth: no password supplied` means `DB_PASSWORD` is still blank or Laravel is using cached configuration. Correct `.env`, then run `php artisan config:clear` before retrying.
+
+## 4. Frontend environment
+
+Edit `/var/www/safetech-next/.env.production`:
 
 ```env
 BACKEND_API_URL=https://api.safetech.ge/api
 NEXT_PUBLIC_API_URL=https://api.safetech.ge/api
 NEXT_PUBLIC_SITE_URL=https://safetech.ge
+REVALIDATE_SECRET=use_the_same_secret_as_laravel
 GEO_BLOCK_ENABLED=false
 GEO_ALLOWED_COUNTRIES=GE
 GEO_BLOCK_UNKNOWN_COUNTRY=false
 NODE_ENV=production
 ```
 
-4. Only switch `BACKEND_API_URL` to a private/internal URL if you have explicitly exposed Laravel on an internal hostname or local reverse proxy.
-5. Install and build:
+Analytics, Pixel and webmaster verification IDs can be managed in Filament. Environment IDs remain optional fallbacks.
 
-```bash
-cd /var/www/safetech-next
-npm ci
-npm run build
-```
+Keep geographic blocking disabled for an SEO-facing public site. Google, Bing and Yandex crawlers may originate outside Georgia. If blocking is a strict business requirement, enable it only after the country header comes from a trusted CDN and the origin is protected from direct traffic.
 
-6. Install the frontend service:
+## 5. Initial application install
 
-```bash
-sudo cp /var/www/safetech-next/deploy/systemd/safetech-frontend.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now safetech-frontend
-sudo systemctl restart safetech-frontend
-```
-
-## Backend
-
-1. Upload the contents of local `back/` into `/var/www/safetech-api`.
-2. Copy [`.env.production.example`](/F:/safetech/back/.env.production.example) to `/var/www/safetech-api/.env`.
-3. Set:
-
-```env
-APP_URL=https://api.safetech.ge
-APP_ENV=production
-APP_DEBUG=false
-FILESYSTEM_DISK=public
-LEADS_NOTIFICATION_EMAIL=safetechgeorgia@gmail.com
-FRONTEND_URL=https://safetech.ge
-FRONTEND_URLS=https://safetech.ge,https://www.safetech.ge
-REVALIDATE_SECRET=same_secret_as_frontend
-GEO_BLOCK_ENABLED=false
-GEO_ALLOWED_COUNTRIES=GE
-GEO_BLOCK_UNKNOWN_COUNTRY=false
-```
-
-4. Configure PostgreSQL credentials in `.env`:
-
-```env
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=your_database
-DB_USERNAME=your_user
-DB_PASSWORD=your_password
-```
-
-5. Configure SMTP so contact forms really send mail.
-6. Run:
+Run the seed only during the first installation. Re-running it on every deployment can replace CMS content with seed defaults.
 
 ```bash
 cd /var/www/safetech-api
-composer install --no-dev --optimize-autoloader
+composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 php artisan key:generate
+php artisan config:clear
 php artisan migrate --force
 php artisan db:seed --force
-php artisan storage:link
+php artisan storage:link --force
 php artisan optimize
+
+install -d -o www-data -g www-data \
+  storage/app/public storage/framework/cache storage/framework/sessions \
+  storage/framework/views storage/logs bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
+
+cd /var/www/safetech-next
+npm ci
+npm run check
+npm prune --omit=dev
+chown -R www-data:www-data .next
 ```
 
-7. If queue-based jobs are enabled, install the queue worker:
+## 6. systemd services
+
+Install the supplied service units:
 
 ```bash
-sudo cp /var/www/safetech-next/deploy/systemd/safetech-queue.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now safetech-queue
-sudo systemctl restart safetech-queue
+cp /var/www/safetech-next/deploy/systemd/safetech-frontend.service /etc/systemd/system/
+cp /var/www/safetech-next/deploy/systemd/safetech-queue.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now safetech-frontend safetech-queue
+systemctl status safetech-frontend safetech-queue --no-pager
 ```
 
-## Nginx
+See [safetech-frontend.service](deploy/systemd/safetech-frontend.service) and [safetech-queue.service](deploy/systemd/safetech-queue.service). If Node was installed through NVM, replace `/usr/bin/npm` in the frontend unit with the absolute path returned by `command -v npm`.
 
-1. Copy [deploy/nginx/safetech.example.conf](/F:/safetech/frontend/deploy/nginx/safetech.example.conf) to your Nginx config directory, for example `/etc/nginx/sites-available/safetech.conf`.
-2. Canonical public domain is `https://safetech.ge`.
-3. The sample config also redirects these aliases to the canonical domain:
-   - `http://safetech.ge`
-   - `https://saftech.ge`
-   - `http://saftech.ge`
-   - `https://www.safetech.ge`
-   - `http://www.safetech.ge`
-   - `https://www.saftech.ge`
-   - `http://www.saftech.ge`
-4. For those redirects to work correctly, point DNS `A`/`AAAA` records for every alias you actually want to support.
-5. Confirm these two paths are exactly correct:
-   - Frontend static alias: `/var/www/safetech-next/.next/static/`
-   - API root: `/var/www/safetech-api/public`
-6. Create certificates:
+## 7. TLS and Nginx
+
+The full sample config references certificate files, so issue certificates before enabling it on a fresh server. With ports 80 and 443 free:
 
 ```bash
-sudo certbot --nginx -d safetech.ge -d www.safetech.ge -d saftech.ge -d www.saftech.ge
-sudo certbot --nginx -d api.safetech.ge
+systemctl stop nginx
+certbot certonly --standalone \
+  -d safetech.ge -d www.safetech.ge -d saftech.ge -d www.saftech.ge
+certbot certonly --standalone -d api.safetech.ge
+systemctl start nginx
 ```
 
-7. If Certbot creates a different lineage path than `/etc/letsencrypt/live/safetech.ge/`, update the certificate paths inside the Nginx file before reloading.
-8. Update the PHP-FPM socket path if your server differs.
-9. Configure a trusted country header before enabling strict unknown-country blocking. Keep `GEO_BLOCK_UNKNOWN_COUNTRY=false` until the header is verified, otherwise visitors from Georgia may be blocked when the country header is missing. Recommended options:
+If optional aliases do not have DNS records, omit them from both the certificate command and the Nginx `server_name` list.
 
-```nginx
-# Cloudflare example. Use only when the origin is protected from direct public access.
-proxy_set_header X-Country-Code $http_cf_ipcountry;
-fastcgi_param HTTP_X_COUNTRY_CODE $http_cf_ipcountry;
-
-# Nginx GeoIP2 alternative:
-# proxy_set_header X-Country-Code $geoip2_data_country_code;
-# fastcgi_param HTTP_X_COUNTRY_CODE $geoip2_data_country_code;
-```
-
-10. Enable and reload:
+Install [safetech.example.conf](deploy/nginx/safetech.example.conf):
 
 ```bash
-sudo mkdir -p /var/www/_letsencrypt
-sudo cp /var/www/safetech-next/deploy/nginx/safetech.example.conf /etc/nginx/sites-available/safetech.conf
-sudo ln -sfn /etc/nginx/sites-available/safetech.conf /etc/nginx/sites-enabled/safetech.conf
-sudo nginx -t
-sudo systemctl reload nginx
+mkdir -p /var/www/_letsencrypt
+cp /var/www/safetech-next/deploy/nginx/safetech.example.conf \
+  /etc/nginx/sites-available/safetech.conf
+ln -sfn /etc/nginx/sites-available/safetech.conf \
+  /etc/nginx/sites-enabled/safetech.conf
+nginx -t
+systemctl reload nginx
 ```
 
-## Post-Deploy Checks
+Confirm that the PHP-FPM socket in the config exists. Configure Cloudflare real-IP handling and restrict direct origin access before uncommenting any country-header forwarding lines.
 
-1. Open `https://safetech.ge/`, `https://safetech.ge/en`, `https://safetech.ge/services`, `https://safetech.ge/projects`, and `https://safetech.ge/contact`.
-2. Open `https://www.safetech.ge/`, `https://saftech.ge/`, and `https://www.saftech.ge/` and confirm every one of them redirects to `https://safetech.ge/...`.
-3. Open `https://api.safetech.ge/api/services`.
-4. Confirm `https://api.safetech.ge` no longer shows the default Laravel welcome page.
-5. Submit every form and confirm the request is saved and delivered to `safetechgeorgia@gmail.com`.
-6. Confirm the service switcher in contact forms changes fields dynamically after you add services from admin.
-7. Confirm the language switcher changes the URL to `/en` and `/ru`.
-8. Confirm `https://safetech.ge/sitemap.xml` contains alternate language entries.
-9. Confirm `https://safetech.ge/robots.txt` loads.
-10. In browser DevTools, confirm the public site negotiates `h2` or `h3`.
-11. Keep country blocking disabled on an SEO-facing public site. Googlebot and other search crawlers can originate outside Georgia; strict country blocking prevents reliable crawling and indexing.
+## 8. Future Git deployments
 
-12. If country blocking is an explicit business requirement, confirm it separately:
+Do not edit files inside `/var/www/safetech-source`. Commit and push changes to GitHub, then run:
+
+```bash
+sudo bash /var/www/safetech-source/deploy.sh
+```
+
+The script refuses a dirty source tree, fast-forwards `main`, preserves both production environment files and Laravel storage, installs dependencies, runs migrations, builds/tests the frontend, restarts services and checks the live API, calculator and sitemap. It intentionally does not run seeders after the initial installation.
+
+Before schema-changing deployments, back up PostgreSQL and uploaded media:
+
+```bash
+sudo -u postgres pg_dump -Fc safetech > /root/safetech-$(date +%F-%H%M).dump
+tar -C /var/www/safetech-api -czf /root/safetech-media-$(date +%F-%H%M).tar.gz storage/app/public
+```
+
+## 9. Post-deploy checks
 
 ```bash
 curl -I https://safetech.ge/
-curl -I -H "X-Country-Code: GE" https://safetech.ge/
-curl -I -H "X-Country-Code: US" https://safetech.ge/
-curl -I -H "X-Country-Code: US" https://api.safetech.ge/api/services
+curl -I https://safetech.ge/en/services
+curl -I https://safetech.ge/ru/projects
+curl -I https://safetech.ge/service-calculator
+curl -I https://safetech.ge/robots.txt
+curl -I https://safetech.ge/sitemap.xml
+curl -I https://api.safetech.ge/api/health
+curl -I https://api.safetech.ge/api/services
 ```
 
-The no-header and Georgia requests should return `200` or a normal redirect, while non-Georgia requests with a trusted country header should return `403`.
+Then verify login at `https://api.safetech.ge/admin`, submit each public form, confirm queued email delivery, open all sitemap children, and validate a service, project, blog post and category in Google Rich Results Test and Search Console URL Inspection.

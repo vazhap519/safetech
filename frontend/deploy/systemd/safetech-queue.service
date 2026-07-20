@@ -7,9 +7,11 @@ Type=simple
 User=www-data
 Group=www-data
 WorkingDirectory=/var/www/safetech-api
-ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=1 --timeout=60
+ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=3 --backoff=10 --timeout=120 --max-time=3600
 Restart=always
 RestartSec=5
+TimeoutStopSec=130
+KillSignal=SIGTERM
 
 [Install]
 WantedBy=multi-user.target

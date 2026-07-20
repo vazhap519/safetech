@@ -3,12 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectResource\Pages;
+use App\Filament\Support\LocalizedContentFields;
+use App\Filament\Support\NavigationGroup;
 use App\Models\Project;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -32,39 +33,7 @@ class ProjectResource extends Resource
 
     protected static ?string $pluralModelLabel = 'პროექტები';
 
-    /** @return array<int, TextInput|Textarea> */
-    private static function translationInputs(string $field, string $label, bool $textarea = false): array
-    {
-        return collect([
-            'ka' => 'ქართული',
-            'en' => 'English',
-            'ru' => 'Русский',
-        ])->map(
-            fn (string $localeLabel, string $locale) => ($textarea
-                ? Textarea::make("translations.fields.{$field}.{$locale}")->rows(3)
-                : TextInput::make("translations.fields.{$field}.{$locale}")
-            )->label("{$label} ({$localeLabel})"),
-        )->values()->all();
-    }
-
-    private static function customTranslationEntries(): Repeater
-    {
-        return Repeater::make('translations.entries')
-            ->label('დამატებითი თარგმნის key-ები')
-            ->schema([
-                TextInput::make('key')
-                    ->label('Key')
-                    ->required()
-                    ->helperText('მაგ: meta.0.label, spec.0.value, challenge.0.title, result.0.description'),
-                TextInput::make('ka')->label('ქართული'),
-                TextInput::make('en')->label('English'),
-                TextInput::make('ru')->label('Русский'),
-            ])
-            ->columns(2)
-            ->default([])
-            ->collapsible()
-            ->reorderable();
-    }
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Projects;
 
     public static function form(Schema $schema): Schema
     {
@@ -85,7 +54,7 @@ class ProjectResource extends Resource
                 ->label('სახელი')
                 ->required(),
             TextInput::make('slug')
-                ->label('Slug')
+                ->label('URL კოდი')
                 ->required()
                 ->unique(ignoreRecord: true)
                 ->helperText('გამოიყენება URL-ში და უნდა იყოს უნიკალური.'),
@@ -102,46 +71,44 @@ class ProjectResource extends Resource
             SpatieMediaLibraryFileUpload::make('cover')
                 ->label('მთავარი ფოტო')
                 ->collection('cover')
+                ->conversion('webp')
                 ->image()
                 ->imageEditor()
+                ->maxSize(10240)
                 ->imagePreviewHeight('150'),
             TextInput::make('image_alt')
                 ->label('ფოტოს ALT ტექსტი')
                 ->requiredWith('cover'),
-            Select::make('category')
+            Select::make('category_id')
                 ->label('კატეგორია')
-                ->options([
-                    'offices' => 'ოფისები',
-                    'hotels' => 'სასტუმროები',
-                    'warehouses' => 'საწყობები',
-                    'factories' => 'საწარმოები',
-                ])
-                ->default('offices')
+                ->relationship('category', 'name')
+                ->searchable()
+                ->preload()
                 ->required(),
             TextInput::make('video_url')
-                ->label('YouTube video URL')
+                ->label('YouTube ვიდეოს URL')
                 ->url()
                 ->maxLength(2048)
                 ->placeholder('https://www.youtube.com/watch?v=...')
-                ->helperText('Paste a YouTube link here. The frontend will show it as a video on projects and project details.'),
+                ->helperText('ჩასვით YouTube-ის ბმული; ვიდეო გამოჩნდება პროექტის გვერდზე.'),
             TextInput::make('technology')
                 ->label('ტექნოლოგია'),
             Section::make('კონტენტი და SEO 3 ენაზე')
                 ->description('ძირითადი ველები რჩება ქართულ fallback-ად. აქ შეიყვანეთ KA/EN/RU ტექსტები, რომლებიც ფრონტზე ავტომატურად წავა project.{slug} key-ებით.')
                 ->schema([
-                    ...self::translationInputs('name', 'პროექტის სახელი'),
-                    ...self::translationInputs('title', 'სათაური'),
-                    ...self::translationInputs('description', 'აღწერა', true),
-                    ...self::translationInputs('seoTitle', 'SEO სათაური'),
-                    ...self::translationInputs('seoDescription', 'SEO აღწერა', true),
-                    ...self::translationInputs('imageAlt', 'ფოტოს ALT'),
-                    ...self::translationInputs('technology', 'ტექნოლოგია'),
-                    ...self::translationInputs('card.title', 'ბარათის სათაური'),
-                    ...self::translationInputs('card.description', 'ბარათის აღწერა', true),
-                    ...self::translationInputs('featured.title', 'Featured სათაური'),
-                    ...self::translationInputs('featured.category', 'Featured კატეგორია'),
-                    ...self::translationInputs('featured.imageAlt', 'Featured ALT'),
-                    self::customTranslationEntries(),
+                    ...LocalizedContentFields::inputs('name', 'პროექტის სახელი'),
+                    ...LocalizedContentFields::inputs('title', 'სათაური'),
+                    ...LocalizedContentFields::inputs('description', 'აღწერა', textarea: true),
+                    ...LocalizedContentFields::inputs('seoTitle', 'SEO სათაური'),
+                    ...LocalizedContentFields::inputs('seoDescription', 'SEO აღწერა', textarea: true),
+                    ...LocalizedContentFields::inputs('imageAlt', 'ფოტოს ALT'),
+                    ...LocalizedContentFields::inputs('technology', 'ტექნოლოგია'),
+                    ...LocalizedContentFields::inputs('card.title', 'ბარათის სათაური'),
+                    ...LocalizedContentFields::inputs('card.description', 'ბარათის აღწერა', textarea: true),
+                    ...LocalizedContentFields::inputs('featured.title', 'გამორჩეულის სათაური'),
+                    ...LocalizedContentFields::inputs('featured.category', 'გამორჩეულის კატეგორია'),
+                    ...LocalizedContentFields::inputs('featured.imageAlt', 'გამორჩეულის ALT'),
+                    LocalizedContentFields::customEntries('მაგ: meta.0.label, spec.0.value, challenge.0.title, result.0.description'),
                 ])
                 ->columns(3)
                 ->columnSpanFull(),
@@ -188,12 +155,14 @@ class ProjectResource extends Resource
                 ])
                 ->columns(2),
             SpatieMediaLibraryFileUpload::make('media_gallery')
-                ->label('Media gallery')
+                ->label('მედია გალერეა')
                 ->collection('gallery')
+                ->conversion('webp')
                 ->multiple()
                 ->reorderable()
                 ->image()
-                ->imageEditor(),
+                ->imageEditor()
+                ->maxSize(10240),
             Repeater::make('results')
                 ->label('შედეგები')
                 ->schema([
@@ -240,11 +209,6 @@ class ProjectResource extends Resource
                         ->label('ბარათის სათაური')
                         ->helperText('შეგიძლიათ დატოვოთ იმავე სახელით ან შეცვალოთ მოკლე სათაურად.'),
                     TextInput::make('category')->label('კატეგორია'),
-                    FileUpload::make('image')
-                        ->label('სურათი')
-                        ->image()
-                        ->disk('public')
-                        ->directory('projects'),
                     TextInput::make('imageAlt')->label('ALT ტექსტი'),
                 ])
                 ->columns(2),
@@ -267,14 +231,15 @@ class ProjectResource extends Resource
                     ->label('სახელი')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('slug')->searchable(),
+                TextColumn::make('slug')->label('URL კოდი')->searchable(),
+                TextColumn::make('category.name')->label('კატეგორია')->sortable(),
                 IconColumn::make('is_featured')
-                    ->label('Featured')
+                    ->label('გამორჩეული')
                     ->boolean(),
                 IconColumn::make('is_published')
-                    ->label('Live')
+                    ->label('გამოქვეყნებული')
                     ->boolean(),
-                TextColumn::make('published_at')->dateTime()->sortable(),
+                TextColumn::make('published_at')->label('გამოქვეყნების თარიღი')->dateTime()->sortable(),
             ])
             ->defaultSort('sort_order')
             ->recordActions([EditAction::make()])

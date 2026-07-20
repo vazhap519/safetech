@@ -108,10 +108,6 @@ export function maybeBackendAsset(path?: string | null) {
     return resolved || null;
 }
 
-function uniqueSlugs(slugs: Array<string | undefined>) {
-    return [...new Set(slugs.filter((slug): slug is string => Boolean(slug)))];
-}
-
 const getTranslationContext = cache(async () => {
     const [content, locale] = await Promise.all([
         getBackendContent(),
@@ -461,12 +457,6 @@ export async function getBackendSeoPage(
     );
 }
 
-export async function getBackendServiceSlugs() {
-    const remote = await fetchData<Array<{ slug: string }>>("/services");
-
-    return uniqueSlugs(remote?.map(({ slug }) => slug) ?? []);
-}
-
 export async function getBackendService(
     slug: string,
 ): Promise<ServiceDetail | undefined> {
@@ -631,12 +621,6 @@ export async function getBackendProject(
         locale,
         translations,
     );
-}
-
-export async function getBackendProjectSlugs() {
-    const remote = await fetchData<Array<{ slug: string }>>("/projects");
-
-    return uniqueSlugs(remote?.map(({ slug }) => slug) ?? []);
 }
 
 export async function getBackendTeam(): Promise<TeamMember[]> {

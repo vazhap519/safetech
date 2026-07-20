@@ -15,7 +15,7 @@ import {
     type TranslationMap,
 } from "@/lib/translations";
 
-export type SiteContact = {
+type SiteContact = {
     phone: string;
     email: string;
     address: string;
@@ -31,7 +31,7 @@ export type SiteSocialLink = {
     href: string;
 };
 
-export type SiteBranding = {
+type SiteBranding = {
     siteName: string;
     tagline: string;
     logo: string | null;
@@ -40,7 +40,7 @@ export type SiteBranding = {
     defaultImage: string;
 };
 
-export type SiteIntegrations = {
+type SiteIntegrations = {
     marketingEnabled: boolean;
     googleTagManagerId: string;
     googleAnalyticsId: string;
@@ -176,7 +176,7 @@ function pickString(
     return trim ? value.trim() : value;
 }
 
-export const defaultSiteContact: SiteContact = {
+const defaultSiteContact: SiteContact = {
     phone: "",
     email: "",
     address: "",
@@ -186,26 +186,15 @@ export const defaultSiteContact: SiteContact = {
     leadEmail: "safetechgeorgia@gmail.com",
 };
 
-export const defaultSiteSocialLinks: SiteSocialLink[] = [];
+const defaultSiteSocialLinks: SiteSocialLink[] = [];
 
-export const defaultSiteBranding: SiteBranding = {
+const defaultSiteBranding: SiteBranding = {
     siteName: "",
     tagline: "",
     logo: null,
     footerLogo: null,
     favicon: "/icon-192.png",
     defaultImage: DEFAULT_SOCIAL_IMAGE,
-};
-
-export const defaultSiteIntegrations: SiteIntegrations = {
-    marketingEnabled: false,
-    googleTagManagerId: "",
-    googleAnalyticsId: "",
-    metaPixelId: "",
-    googleSiteVerification: "",
-    bingSiteVerification: "",
-    yandexSiteVerification: "",
-    indexNowKey: "",
 };
 
 export const getSiteSettings = cache(async () => {

@@ -27,7 +27,7 @@ class AnalyticsEventApiTest extends TestCase
             ->postJson('/api/analytics/events', [
                 'event_type' => AnalyticsEvent::TYPE_SERVICE_VIEW,
                 'service_slug' => 'networking',
-                'page_path' => '/services/networking',
+                'page_path' => '/services/networking?email=private@example.com',
                 'visitor_id' => 'browser-123',
                 'locale' => 'ka',
             ]);

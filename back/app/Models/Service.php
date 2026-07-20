@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
+use App\Support\PublicMediaUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -133,26 +133,11 @@ class Service extends Model implements HasMedia
                 : $media->getUrl();
         }
 
-        return $this->publicStorageUrl($this->getRawOriginal('hero_image'));
+        return PublicMediaUrl::resolve($this->getRawOriginal('hero_image'));
     }
 
     public function getHeroImageUrlAttribute(): ?string
     {
         return $this->image;
-    }
-
-    private function publicStorageUrl(?string $path): ?string
-    {
-        $path = trim((string) $path);
-
-        if ($path === '') {
-            return null;
-        }
-
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
-            return $path;
-        }
-
-        return Storage::disk('public')->url($path);
     }
 }

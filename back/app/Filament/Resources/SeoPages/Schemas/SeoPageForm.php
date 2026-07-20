@@ -2,38 +2,33 @@
 
 namespace App\Filament\Resources\SeoPages\Schemas;
 
-use App\Support\SiteSettings;
-use App\Support\SocialLinks;
+use App\Filament\Support\LocalizedContentFields;
+use App\Filament\Support\StructuredDataJsonField;
+use App\Support\Seo\SeoAudit;
 use Filament\Actions\Action;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\View;
-
-use Illuminate\Support\Str;
+use Filament\Schemas\Schema;
+use Illuminate\Support\HtmlString;
 
 class SeoPageForm
 {
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
-
-            Section::make('SEO (Google Optimization)')
+            Section::make('ტექნიკური SEO')
+                ->description('კანონიკური მისამართი, ინდექსაციის წესები, სოციალური preview და სტრუქტურირებული მონაცემები იმართება ერთი ადგილიდან.')
                 ->schema([
-
-                    /*
-                    |--------------------------------------------------
-                    | PAGE
-                    |--------------------------------------------------
-                    */
                     Select::make('key')
                         ->label('გვერდი')
                         ->options([
@@ -47,385 +42,164 @@ class SeoPageForm
                             'privacy' => 'კონფიდენციალურობა',
                         ])
                         ->required()
-                        ->reactive()
+                        ->unique(ignoreRecord: true)
+                        ->live()
                         ->searchable()
-                        ->afterStateUpdated(fn ($state, $set) => $set(
-                            'slug',
-                            $state === 'home' ? '/' : '/'.trim((string) $state, '/'),
-                        )),
-
-                    /*
-                    |--------------------------------------------------
-                    | SLUG
-                    |--------------------------------------------------
-                    */
+                        ->afterStateUpdated(function ($state, Set $set): void {
+                            $key = (string) $state;
+                            $set('slug', $key === 'home' ? '/' : '/'.trim($key, '/'));
+                            $set('schema_type', SeoAudit::recommendedSchemaType($key));
+                        }),
                     TextInput::make('slug')
-                        ->label('URL')
+                        ->label('Canonical URL-ის გზა')
                         ->disabled()
-                        ->dehydrated(),
-
-                    /*
-                    |--------------------------------------------------
-                    | TITLE
-                    |--------------------------------------------------
-                    */
+                        ->dehydrated()
+                        ->required(),
                     TextInput::make('title')
-                        ->label('SEO სათაური (ქართული fallback)')
+                        ->label('SEO სათაური (ქართული სათადარიგო ტექსტი)')
                         ->required()
-                        ->live(),
-
-                    /*
-                    |--------------------------------------------------
-                    | DESCRIPTION
-                    |--------------------------------------------------
-                    */
+                        ->maxLength(180)
+                        ->live(onBlur: true),
                     Textarea::make('description')
-                        ->label('Meta აღწერა (ქართული fallback)')
+                        ->label('Meta აღწერა (ქართული სათადარიგო ტექსტი)')
+                        ->required()
                         ->rows(3)
-                        ->live(),
-
-                    /*
-                    |--------------------------------------------------
-                    | KEYWORDS
-                    |--------------------------------------------------
-                    */
-                    Repeater::make('keywords')
-                        ->label('საკვანძო სიტყვები (ქართული fallback)')
-                        ->schema([
-                            TextInput::make('value')->required(),
-                        ])
-                        ->formatStateUsing(fn ($state) =>
-                        collect($state ?? [])
-                            ->map(fn ($i) => is_array($i) ? $i : ['value' => $i])
-                            ->toArray()
-                        )
-                        ->dehydrateStateUsing(fn ($state) =>
-                        collect($state ?? [])
-                            ->map(fn ($i) => is_array($i) ? $i : ['value' => $i])
-                            ->toArray()
-                        )
-                        ->minItems(3)
-                        ->maxItems(10),
-
-                    /*
-                    |--------------------------------------------------
-                    | AUTO SEO
-                    |--------------------------------------------------
-                    */
-                    Action::make('generate')
-                        ->label('SEO ტექსტის შექმნა')
-                        ->color('success')
-                        ->action(function ($set, $get) {
-
-                            $page = $get('key');
-                            if (!$page) return;
-
-                            $base = Str::title(str_replace('-', ' ', $page));
-
-                            $set('title', mb_substr("{$base} თბილისში | კომპიუტერული სერვისები", 0, 60));
-
-                            $set('description', mb_substr(
-                                "{$base} თბილისში ✔ კომპიუტერული სერვისები ✔ ქსელები ✔ უსაფრთხოების სისტემები ✔ პროფესიონალური მომსახურება.",
-                                0,
-                                155
-                            ));
-
-                            $set('keywords', collect([
-                                $base,
-                                "{$base} თბილისი",
-                                "IT სერვისი",
-                                "ქსელები",
-                                "უსაფრთხოების სისტემები",
-                            ])->map(fn ($k) => ['value' => $k])->toArray());
-                        }),
-
-                    /*
-                    |--------------------------------------------------
-                    | SCORE
-                    |--------------------------------------------------
-                    */
-                    Placeholder::make('seo_score')
-                        ->content(function ($get) {
-
-                            $score = 0;
-
-                            if (mb_strlen($get('title') ?? '') >= 40) $score += 30;
-                            if (mb_strlen($get('description') ?? '') >= 120) $score += 30;
-                            if (count($get('keywords') ?? []) >= 3) $score += 20;
-                            if ($get('slug')) $score += 20;
-
-                            return "Score: {$score}/100";
-                        }),
-
-                    /*
-                    |--------------------------------------------------
-                    | SCHEMA TYPE
-                    |--------------------------------------------------
-                    */
+                        ->maxLength(500)
+                        ->live(onBlur: true),
+                    TagsInput::make('keywords')
+                        ->label('კონტენტის საკვანძო თემები')
+                        ->helperText('Google meta keywords-ს რეიტინგისთვის არ იყენებს; ეს სია მხოლოდ სარედაქციო დაგეგმვისთვისაა.')
+                        ->formatStateUsing(fn ($state): array => collect($state ?? [])
+                            ->map(fn ($keyword) => is_array($keyword) ? ($keyword['value'] ?? null) : $keyword)
+                            ->filter()
+                            ->values()
+                            ->all())
+                        ->dehydrateStateUsing(fn ($state): array => collect($state ?? [])
+                            ->map(fn ($keyword): array => ['value' => trim((string) $keyword)])
+                            ->filter(fn (array $keyword): bool => $keyword['value'] !== '')
+                            ->values()
+                            ->all()),
                     Select::make('schema_type')
-                        ->label('Schema ტიპი')
+                        ->label('Schema.org ტიპი')
                         ->options([
                             'WebPage' => 'WebPage',
                             'WebSite' => 'WebSite',
+                            'AboutPage' => 'AboutPage',
+                            'CollectionPage' => 'CollectionPage',
+                            'WebApplication' => 'WebApplication',
+                            'Blog' => 'Blog',
+                            'ContactPage' => 'ContactPage',
                             'Article' => 'Article',
                             'LocalBusiness' => 'LocalBusiness',
                             'Service' => 'Service',
                         ])
+                        ->required()
                         ->default('WebPage')
-                        ->reactive()
-
-                        ->afterStateUpdated(function ($state, $set, $get) {
-
-                            // ❗ overwrite არ მოხდეს
-                            if ($get('schema')) return;
-
-                            $set('schema', self::generateSchema($state));
-                        })
-
-                        ->afterStateHydrated(function ($state, $set, $get) {
-
-                            if ($get('schema')) return;
-
-                            $set('schema', self::generateSchema($state));
-                        }),
-
-                    /*
-                    |--------------------------------------------------
-                    | SCHEMA JSON (VISIBLE FIX)
-                    |--------------------------------------------------
-                    */
-                    Textarea::make('schema')
-                        ->label('Schema JSON')
-                        ->rows(10)
-                        ->helperText('Auto-generated. You can edit.')
-                        ->dehydrateStateUsing(function ($state) {
-                            if (!$state) {
-                                return null;
-                            }
-
-                            $decoded = json_decode($state, true);
-
-                            return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
-                        })
-                        ->formatStateUsing(fn ($state) => is_array($state)
-                            ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-                            : $state)
-                        ->rules([
-                            fn () => function ($attr, $value, $fail) {
-                                if (!$value) return;
-                                json_decode($value);
-                                if (json_last_error() !== JSON_ERROR_NONE) {
-                                    $fail('Invalid JSON');
-                                }
-                            }
-                        ]),
-
+                        ->live(),
+                    StructuredDataJsonField::make(
+                        'ცარიელი დატოვეთ ავტომატური, მონაცემებზე მიბმული schema-სთვის. შეავსეთ მხოლოდ სპეციალური ჩანაცვლებისას.',
+                    ),
                     Toggle::make('noindex')
                         ->label('საძიებო სისტემებში არ გამოჩნდეს')
+                        ->helperText('ჩართეთ მხოლოდ staging, დროებითი ან განზრახ დახურული გვერდისთვის.')
                         ->default(false),
-
                     SpatieMediaLibraryFileUpload::make('og_image')
-                        ->label('Google / Open Graph სურათი (1200x630)')
+                        ->label('Google / Open Graph სურათი')
+                        ->helperText('რეკომენდებული ფორმატი 1200x630; ატვირთვისას იქმნება WebP ვერსია.')
                         ->collection('og_image')
+                        ->conversion('og')
                         ->image()
-                        ->imageEditor(),
-
+                        ->imageEditor()
+                        ->maxSize(10240),
                     SpatieMediaLibraryFileUpload::make('share_image')
-                        ->label('Social share სურათი (1200x630)')
+                        ->label('სოციალურ ქსელში გასაზიარებელი სურათი')
+                        ->helperText('თუ ცარიელია, გამოიყენება Open Graph სურათი.')
                         ->collection('share_image')
+                        ->conversion('og')
                         ->image()
-                        ->imageEditor(),
+                        ->imageEditor()
+                        ->maxSize(10240),
+                    Action::make('normalizeSeo')
+                        ->label('ტექნიკური ხარვეზების გასწორება')
+                        ->icon('heroicon-o-wrench-screwdriver')
+                        ->color('success')
+                        ->action(function (Get $get, Set $set): void {
+                            $fixed = SeoAudit::normalize(self::auditState($get));
 
-                    /*
-                    |--------------------------------------------------
-                    | PREVIEW
-                    |--------------------------------------------------
-                    */
-                    View::make('filament.seo-preview')->reactive(),
+                            foreach (['slug', 'title', 'description', 'keywords', 'schema_type', 'schema'] as $field) {
+                                $set($field, $fixed[$field] ?? null);
+                            }
 
-                ]),
+                            foreach (SeoAudit::LOCALES as $locale) {
+                                foreach (['title', 'description', 'og_title', 'og_description'] as $field) {
+                                    $set(
+                                        "translations.fields.{$field}.{$locale}",
+                                        data_get($fixed, "translations.fields.{$field}.{$locale}"),
+                                    );
+                                }
+                            }
 
+                            Notification::make()
+                                ->title('ტექნიკური SEO გასწორდა')
+                                ->body('ტექსტი არ ითარგმნა და არ გადაიწერა; დარჩენილი სარედაქციო საკითხები ქულაში ჩანს.')
+                                ->success()
+                                ->send();
+                        }),
+                    Placeholder::make('seo_audit')
+                        ->label('გაფართოებული SEO შემოწმება')
+                        ->content(fn (Get $get): HtmlString => self::auditHtml(SeoAudit::analyze(self::auditState($get))))
+                        ->columnSpanFull(),
+                    View::make('filament.seo-preview')
+                        ->reactive()
+                        ->columnSpanFull(),
+                ])
+                ->columns(2),
             Section::make('SEO ტექსტები 3 ენაზე')
-                ->description('თითოეულ ენას აქვს დამოუკიდებელი title, description, Open Graph ტექსტი და keywords. ცარიელი ველი ქართულ fallback-ს გამოიყენებს.')
+                ->description('თითოეულ ენას აქვს დამოუკიდებელი სათაური, აღწერა და Open Graph preview. ქართული ცარიელი ველი სათადარიგო ტექსტს გამოიყენებს.')
                 ->schema([
-                    ...self::translationInputs('title', 'SEO სათაური'),
-                    ...self::translationInputs('description', 'Meta აღწერა', true),
-                    ...self::translationInputs('og_title', 'Open Graph სათაური'),
-                    ...self::translationInputs('og_description', 'Open Graph აღწერა', true),
-                    TagsInput::make('translations.keywords.ka')->label('Keywords (ქართული)'),
-                    TagsInput::make('translations.keywords.en')->label('Keywords (English)'),
-                    TagsInput::make('translations.keywords.ru')->label('Keywords (Русский)'),
+                    ...LocalizedContentFields::inputs('title', 'SEO სათაური', maxLength: 180, live: true),
+                    ...LocalizedContentFields::inputs('description', 'Meta აღწერა', textarea: true, maxLength: 500, live: true),
+                    ...LocalizedContentFields::inputs('og_title', 'Open Graph სათაური', maxLength: 180, live: true),
+                    ...LocalizedContentFields::inputs('og_description', 'Open Graph აღწერა', textarea: true, maxLength: 500, live: true),
+                    TagsInput::make('translations.keywords.ka')->label('კონტენტის თემები (ქართული)'),
+                    TagsInput::make('translations.keywords.en')->label('კონტენტის თემები (ინგლისური)'),
+                    TagsInput::make('translations.keywords.ru')->label('Темы контента (Русский)'),
                 ])
                 ->columns(3),
         ]);
     }
 
-    /** @return array<int, TextInput|Textarea> */
-    private static function translationInputs(string $field, string $label, bool $textarea = false): array
+    /** @return array<string, mixed> */
+    private static function auditState(Get $get): array
     {
-        return collect([
-            'ka' => 'ქართული',
-            'en' => 'English',
-            'ru' => 'Русский',
-        ])->map(
-            fn (string $localeLabel, string $locale) => ($textarea
-                ? Textarea::make("translations.fields.{$field}.{$locale}")->rows(3)
-                : TextInput::make("translations.fields.{$field}.{$locale}")
-            )->label("{$label} ({$localeLabel})"),
-        )->values()->all();
+        return [
+            'key' => $get('key'),
+            'slug' => $get('slug'),
+            'title' => $get('title'),
+            'description' => $get('description'),
+            'keywords' => $get('keywords') ?? [],
+            'schema_type' => $get('schema_type'),
+            'schema' => $get('schema'),
+            'noindex' => $get('noindex'),
+            'translations' => $get('translations') ?? [],
+        ];
     }
 
-    /*
-    |--------------------------------------------------
-    | SCHEMA GENERATOR
-    |--------------------------------------------------
-    */
-    protected static function generateSchema($type): ?string
+    /** @param array{score: int, issues: array<int, string>, notes: array<int, string>} $audit */
+    private static function auditHtml(array $audit): HtmlString
     {
-        $baseUrl = SocialLinks::frontendUrl('/');
-        $name = config('app.name');
+        $issues = $audit['issues']
+            ? '<ul style="margin-top:.5rem;list-style:disc;padding-left:1.25rem">'.collect($audit['issues'])
+                ->map(fn (string $issue): string => '<li>'.e($issue).'</li>')
+                ->implode('').'</ul>'
+            : '<p style="margin-top:.5rem">ძირითადი ტექნიკური და სარედაქციო შემოწმებები გავლილია.</p>';
 
-        // ✅ სწორ ადგილას
-        $settings = SiteSettings::businessProfile();
+        $notes = '<ul style="margin-top:.5rem;color:#6b7280;list-style:disc;padding-left:1.25rem">'.collect($audit['notes'])
+            ->map(fn (string $note): string => '<li>'.e($note).'</li>')
+            ->implode('').'</ul>';
 
-        return match ($type) {
-
-            /*
-            |--------------------------------------------------
-            | 🏠 WEBSITE
-            |--------------------------------------------------
-            */
-            'WebSite' => json_encode([
-                [
-                    "@context" => "https://schema.org",
-                    "@type" => "Organization",
-                    "name" => $name,
-                    "url" => $baseUrl,
-                    "logo" => $baseUrl . "/logo.png",
-                    "sameAs" => array_filter([
-                        $settings?->facebook,
-                        $settings?->linkedin,
-                        $settings?->instagram,
-                    ])
-                ],
-                [
-                    "@type" => "WebSite",
-                    "name" => $name,
-                    "url" => $baseUrl,
-                    "potentialAction" => [
-                        "@type" => "SearchAction",
-                        "target" => $baseUrl . "/search?q={search_term_string}",
-                        "query-input" => "required name=search_term_string"
-                    ]
-                ]
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-
-            /*
-            |--------------------------------------------------
-            | 📰 ARTICLE
-            |--------------------------------------------------
-            */
-            'Article' => json_encode([
-                "@context" => "https://schema.org",
-                "@type" => "Article",
-                "headline" => "Title",
-                "description" => "Description",
-                "author" => [
-                    "@type" => "Organization",
-                    "name" => $name
-                ],
-                "publisher" => [
-                    "@type" => "Organization",
-                    "name" => $name,
-                    "logo" => [
-                        "@type" => "ImageObject",
-                        "url" => $baseUrl . "/logo.png"
-                    ]
-                ],
-                "mainEntityOfPage" => $baseUrl,
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-
-            /*
-            |--------------------------------------------------
-            | 🏢 LOCAL BUSINESS (🔥 FULL FIX)
-            |--------------------------------------------------
-            */
-            'LocalBusiness' => json_encode([
-                "@context" => "https://schema.org",
-                "@type" => "LocalBusiness",
-
-                "name" => $name,
-                "url" => $baseUrl,
-
-                // ✅ dynamic
-                "telephone" => $settings?->phone,
-                "email" => $settings?->email,
-
-                "address" => [
-                    "@type" => "PostalAddress",
-                    "streetAddress" => $settings?->address,
-                    "addressLocality" => $settings?->city,
-                    "addressCountry" => $settings?->country ?? 'GE',
-                ],
-
-                "geo" => [
-                    "@type" => "GeoCoordinates",
-                    "latitude" => $settings?->lat,
-                    "longitude" => $settings?->lng,
-                ],
-
-                "openingHoursSpecification" => [
-                    [
-                        "@type" => "OpeningHoursSpecification",
-                        "dayOfWeek" => [
-                            "Monday","Tuesday","Wednesday","Thursday","Friday"
-                        ],
-                        "opens" => $settings?->open_time ?? "09:00",
-                        "closes" => $settings?->close_time ?? "18:00"
-                    ]
-                ],
-
-                "sameAs" => array_filter([
-                    $settings?->facebook,
-                    $settings?->instagram,
-                    $settings?->linkedin,
-                ]),
-
-                "areaServed" => $settings?->country ?? 'Georgia'
-
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-
-            /*
-            |--------------------------------------------------
-            | ⚙️ SERVICE
-            |--------------------------------------------------
-            */
-            'Service' => json_encode([
-                "@context" => "https://schema.org",
-                "@type" => "Service",
-                "name" => "Service Name",
-                "provider" => [
-                    "@type" => "Organization",
-                    "name" => $name,
-                    "url" => $baseUrl
-                ],
-                "areaServed" => $settings?->country ?? "Georgia",
-                "description" => "Service description"
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-
-            /*
-            |--------------------------------------------------
-            | 📄 DEFAULT
-            |--------------------------------------------------
-            */
-            'WebPage' => json_encode([
-                "@context" => "https://schema.org",
-                "@type" => "WebPage",
-                "name" => $name,
-                "url" => $baseUrl
-            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-
-            default => null,
-        };
+        return new HtmlString(
+            '<div><strong>შიდა SEO QA: '.e((string) $audit['score']).'/100</strong>'.$issues.$notes.'</div>',
+        );
     }
 }

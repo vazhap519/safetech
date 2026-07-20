@@ -4,40 +4,41 @@ namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Category extends Model
 {
-    use FlushesPublicContentCache, HasFactory;
+    use FlushesPublicContentCache;
 
     protected $guarded = ['id'];
 
-    protected $casts = [
-        'translations' => 'array',
-        'seo_keywords' => 'array',
-        'faq' => 'array',
-        'schema' => 'array',
-        'noindex' => 'boolean',
-    ];
-
-    protected static function boot()
+    protected function casts(): array
     {
-        parent::boot();
+        return [
+            'translations' => 'array',
+            'seo_keywords' => 'array',
+            'faq' => 'array',
+            'schema' => 'array',
+            'noindex' => 'boolean',
+        ];
+    }
 
-        static::creating(function ($category) {
-            if (!$category->slug) {
+    protected static function booted(): void
+    {
+        static::creating(function (Category $category): void {
+            if (! $category->slug) {
                 $category->slug = Str::slug($category->name);
             }
         });
     }
 
-    public function posts()
+    public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
     }
 
-    public function getRouteKeyName()
+    public function getRouteKeyName(): string
     {
         return 'slug';
     }

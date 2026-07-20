@@ -144,7 +144,7 @@ export function Textarea({
     );
 }
 
-export type SelectOption =
+type SelectOption =
     | string
     | {
           label: string;

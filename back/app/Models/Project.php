@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
+use App\Support\PublicMediaUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -76,7 +76,7 @@ class Project extends Model implements HasMedia
     {
         return $this->mediaUrl('cover', 'webp')
             ?? $this->mediaUrl('cover')
-            ?? $this->publicStorageUrl($this->getRawOriginal('image'));
+            ?? PublicMediaUrl::resolve($this->getRawOriginal('image'));
     }
 
     public function getThumbUrlAttribute(): ?string
@@ -103,7 +103,7 @@ class Project extends Model implements HasMedia
             ->map(function ($item): ?array {
                 if (is_string($item)) {
                     return [
-                        'src' => $this->publicStorageUrl($item) ?? $item,
+                        'src' => PublicMediaUrl::resolve($item) ?? $item,
                         'alt' => $this->image_alt ?: $this->title ?: $this->name ?: '',
                     ];
                 }
@@ -119,7 +119,7 @@ class Project extends Model implements HasMedia
                 }
 
                 return [
-                    'src' => $this->publicStorageUrl($src) ?? $src,
+                    'src' => PublicMediaUrl::resolve($src) ?? $src,
                     'alt' => $item['alt'] ?? $this->image_alt ?? $this->title ?? $this->name ?? '',
                 ];
             })
@@ -157,20 +157,5 @@ class Project extends Model implements HasMedia
         }
 
         return $media->getUrl();
-    }
-
-    private function publicStorageUrl(?string $path): ?string
-    {
-        $path = trim((string) $path);
-
-        if ($path === '') {
-            return null;
-        }
-
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, '/')) {
-            return $path;
-        }
-
-        return Storage::disk('public')->url($path);
     }
 }

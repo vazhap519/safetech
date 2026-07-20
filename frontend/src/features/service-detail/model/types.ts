@@ -1,14 +1,14 @@
-export type ServiceBenefit = {
+type ServiceBenefit = {
     icon: string;
     title: string;
     description: string;
 };
 
-export type ServiceSolution = ServiceBenefit & {
+type ServiceSolution = ServiceBenefit & {
     featured?: boolean;
 };
 
-export type ServiceStep = {
+type ServiceStep = {
     title: string;
     description: string;
 };
@@ -18,7 +18,7 @@ export type ServiceFaq = {
     answer: string;
 };
 
-export type RelatedService = {
+type RelatedService = {
     slug: string;
     icon: string;
     title: string;
@@ -46,12 +46,6 @@ export type ServiceDetail = {
     process: ServiceStep[];
     faqs: ServiceFaq[];
     related: RelatedService[];
-    seo?: {
-        title?: string;
-        description?: string;
-        keywords?: string[];
-        image?: string;
-        noindex?: boolean;
-        schema?: Record<string, unknown> | Array<Record<string, unknown>>;
-    };
+    seo?: SeoConfiguration;
 };
+import type { SeoConfiguration } from "@/lib/structured-data";

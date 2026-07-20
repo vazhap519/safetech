@@ -1,6 +1,12 @@
-import { createMetadata } from "@/lib/seo";
+import { absoluteLocalizedUrl, createMetadata } from "@/lib/seo";
 
-export function asList(response) {
+function plainText(value) {
+  return typeof value === "string"
+    ? value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+    : "";
+}
+
+function asList(response) {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.data)) return response.data;
   return [];
@@ -31,11 +37,23 @@ export function categoryMetadata({ category, path, locale }) {
   });
 }
 
-export function categorySchemas({ category }) {
+export function categorySchemas({ category, path, locale }) {
   const schemas = [];
 
   if (category?.schema) {
     schemas.push(...(Array.isArray(category.schema) ? category.schema : [category.schema]));
+  } else if (category?.name && path) {
+    const description = plainText(
+      category.seo_description || category.intro_text,
+    );
+
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: category.name,
+      ...(description ? { description } : {}),
+      url: absoluteLocalizedUrl(path, locale),
+    });
   }
 
   const faq = Array.isArray(category?.faq) ? category.faq : [];

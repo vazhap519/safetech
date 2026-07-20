@@ -1,13 +1,13 @@
 import type { Locale } from "@/lib/locales";
 
-export type LeadFormFieldType =
+type LeadFormFieldType =
     | "text"
     | "number"
     | "textarea"
     | "select"
     | "checkbox";
 
-export type RawLeadFormOption = {
+type RawLeadFormOption = {
     value: string;
     ka?: string;
     en?: string;
@@ -16,7 +16,7 @@ export type RawLeadFormOption = {
     monthly_price?: number;
 };
 
-export type RawLeadFormExtraField = {
+type RawLeadFormExtraField = {
     key: string;
     type?: LeadFormFieldType;
     required?: boolean;
@@ -54,7 +54,7 @@ export type RawLeadFormConfig = {
     extra_fields?: RawLeadFormExtraField[];
 };
 
-export type LeadFormOption = {
+type LeadFormOption = {
     value: string;
     label: string;
 };

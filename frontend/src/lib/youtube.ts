@@ -1,6 +1,6 @@
 const YOUTUBE_ID_PATTERN = /^[a-zA-Z0-9_-]{11}$/;
 
-export function getYouTubeVideoId(url?: string | null) {
+function getYouTubeVideoId(url?: string | null) {
     const value = url?.trim();
 
     if (!value) return null;

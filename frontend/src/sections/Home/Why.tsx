@@ -1,7 +1,7 @@
 import WhyComponent from "@/components/Home/Whycomponent";
 import Typography from "@/components/ui/Typography";
 import { getSiteSettings } from "@/lib/site-settings";
-import { translateText } from "@/lib/translations";
+import { translateKeyedItems, translateText } from "@/lib/translations";
 
 const whyItems = [
     { icon: "verified", key: "home.why.items.0" },
@@ -22,18 +22,7 @@ export default async function Why() {
         locale,
         null,
     );
-    const items = whyItems
-        .map((item) => ({
-            ...item,
-            description: translateText(
-                translations,
-                `${item.key}.description`,
-                locale,
-                null,
-            ),
-            title: translateText(translations, `${item.key}.title`, locale, null),
-        }))
-        .filter((item) => item.title || item.description);
+    const items = translateKeyedItems(translations, locale, whyItems);
 
     if (!eyebrow && !title && !description && !items.length) return null;
 

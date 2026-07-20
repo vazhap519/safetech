@@ -1,5 +1,6 @@
 import JsonLd from "@/components/seo/JsonLd";
 import { categorySchemas } from "@/lib/categorySeo";
+import type { Locale } from "@/lib/locales";
 
 type Category = {
     name?: string;
@@ -8,10 +9,18 @@ type Category = {
     schema?: Record<string, unknown> | Array<Record<string, unknown>>;
 };
 
-export default function CategorySeoContent({ category }: { category: Category }) {
+export default async function CategorySeoContent({
+    category,
+    locale,
+    path,
+}: {
+    category: Category;
+    locale: Locale;
+    path: string;
+}) {
     return (
         <>
-            <JsonLd data={categorySchemas({ category })} />
+            <JsonLd data={categorySchemas({ category, path, locale })} />
             {category.intro_text ? (
                 <section className="border-t border-outline-variant/20 bg-surface py-12">
                     <div className="mx-auto max-w-3xl px-4">

@@ -27,6 +27,7 @@ export async function forwardBackendRequest(
             },
             body: body || undefined,
             cache: "no-store",
+            signal: AbortSignal.timeout(10000),
         });
 
         return new Response(await response.text(), {
@@ -39,10 +40,7 @@ export async function forwardBackendRequest(
         });
     } catch {
         return Response.json(
-            {
-                message:
-                    "Backend service is temporarily unreachable. Check BACKEND_API_URL and API DNS/proxy configuration.",
-            },
+            { error: "backend_unavailable" },
             { status: 502 },
         );
     }

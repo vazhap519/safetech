@@ -86,7 +86,7 @@ function localeFromRequest(request: NextRequest): Locale {
         return normalizeLocale(firstSegment);
     }
 
-    return normalizeLocale(request.cookies.get(LOCALE_COOKIE_NAME)?.value);
+    return DEFAULT_LOCALE;
 }
 
 function persistLocale(response: NextResponse, locale: Locale) {

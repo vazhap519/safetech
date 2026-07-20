@@ -20,6 +20,7 @@ import {
     SITE_NAME,
     SITE_URL,
 } from "@/lib/seo";
+import { buildOrganizationEntity } from "@/lib/organization-schema";
 import { getSiteSettings } from "@/lib/site-settings";
 import { createTranslator } from "@/lib/translations";
 
@@ -165,46 +166,17 @@ export default async function RootLayout({
         }
     })();
 
-    const contactPoint =
-        contact.phone || contact.email
-            ? [
-                  {
-                      "@type": "ContactPoint",
-                      contactType: "customer support",
-                      ...(contact.phone ? { telephone: contact.phone } : {}),
-                      ...(contact.email ? { email: contact.email } : {}),
-                      areaServed: "GE",
-                      availableLanguage: ["ka", "en", "ru"],
-                  },
-              ]
-            : undefined;
-
     const organizationSchema: Record<string, unknown> = {
         "@context": "https://schema.org",
-        "@type": "Organization",
         "@id": `${absoluteSiteUrl("/")}#organization`,
-        name: siteName,
-        url: absoluteSiteUrl("/"),
-        image: absoluteSiteUrl(
-            branding.logo || branding.footerLogo || branding.defaultImage,
-        ),
-        areaServed: "Georgia",
-        ...(contact.phone ? { telephone: contact.phone } : {}),
-        ...(contact.email ? { email: contact.email } : {}),
-        ...(contact.address
-            ? {
-                  address: {
-                      "@type": "PostalAddress",
-                      streetAddress: contact.address,
-                      addressCountry: "GE",
-                      addressLocality: "Tbilisi",
-                  },
-              }
-            : {}),
-        ...(contactPoint ? { contactPoint } : {}),
-        ...(socialLinks.length
-            ? { sameAs: socialLinks.map((item) => item.href) }
-            : {}),
+        ...buildOrganizationEntity({
+            branding,
+            contact,
+            contactType: "customer support",
+            siteName,
+            socialUrls: socialLinks.map((item) => item.href),
+            url: absoluteSiteUrl("/"),
+        }),
     };
 
     return (
@@ -276,7 +248,7 @@ export default async function RootLayout({
                                 {children}
                             </main>
 
-                            <Footer />
+                            <Footer marketingEnabled={marketingEnabled} />
                         </div>
                         <FloatingWhatsAppSlot
                             phone={contact.whatsapp}

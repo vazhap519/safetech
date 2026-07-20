@@ -22,10 +22,3 @@ export type Project = {
     technology: string;
     videoUrl?: string | null;
 };
-
-export type ProjectStandard = {
-    title: string;
-    description: string;
-    icon: string;
-    accent: "primary" | "secondary";
-};

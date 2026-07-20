@@ -6,7 +6,8 @@ use App\Filament\Resources\Categories\Pages\CreateCategory;
 use App\Filament\Resources\Categories\Pages\EditCategory;
 use App\Filament\Resources\Categories\Pages\ListCategories;
 use App\Filament\Resources\Categories\Schemas\CategoryForm;
-use App\Filament\Resources\Categories\Tables\CategoriesTable;
+use App\Filament\Support\CategoryTable;
+use App\Filament\Support\NavigationGroup;
 use App\Models\Category;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -18,11 +19,16 @@ use UnitEnum;
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
-    protected static string | UnitEnum | null $navigationGroup = 'Blog';
+
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Blog;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationLabel = 'Blog Categories';
+    protected static ?string $navigationLabel = 'ბლოგის კატეგორიები';
+
+    protected static ?string $modelLabel = 'ბლოგის კატეგორია';
+
+    protected static ?string $pluralModelLabel = 'ბლოგის კატეგორიები';
 
     public static function form(Schema $schema): Schema
     {
@@ -31,7 +37,7 @@ class CategoryResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return CategoriesTable::configure($table);
+        return CategoryTable::configure($table);
     }
 
     public static function getPages(): array

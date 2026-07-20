@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\FaqResource\Pages;
+use App\Filament\Support\LocalizedContentFields;
+use App\Filament\Support\NavigationGroup;
 use App\Models\Faq;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -24,19 +26,11 @@ class FaqResource extends Resource
 
     protected static ?string $navigationLabel = 'FAQ';
 
-    /** @return array<int, Textarea> */
-    private static function translationTextareas(string $field, string $label): array
-    {
-        return collect([
-            'ka' => 'ქართული',
-            'en' => 'English',
-            'ru' => 'Русский',
-        ])->map(
-            fn (string $localeLabel, string $locale) => Textarea::make("translations.fields.{$field}.{$locale}")
-                ->label("{$label} ({$localeLabel})")
-                ->rows(3),
-        )->values()->all();
-    }
+    protected static ?string $modelLabel = 'ხშირი კითხვა';
+
+    protected static ?string $pluralModelLabel = 'ხშირი კითხვები';
+
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Content;
 
     public static function form(Schema $schema): Schema
     {
@@ -72,8 +66,8 @@ class FaqResource extends Resource
             Section::make('კითხვა/პასუხი 3 ენაზე')
                 ->description('ძირითადი ველები რჩება ქართულ fallback-ად. service FAQ-სთვის ფრონტი ავტომატურად გამოიყენებს service.{slug}.faq.{index}.question/answer key-ებს.')
                 ->schema([
-                    ...self::translationTextareas('question', 'კითხვა'),
-                    ...self::translationTextareas('answer', 'პასუხი'),
+                    ...LocalizedContentFields::inputs('question', 'კითხვა', textarea: true),
+                    ...LocalizedContentFields::inputs('answer', 'პასუხი', textarea: true),
                 ])
                 ->columns(3),
         ]);

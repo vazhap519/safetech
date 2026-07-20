@@ -63,6 +63,7 @@ class SeoPageSeeder extends Seeder
                     ['CCTV installation', 'access control', 'network setup', 'IT support'],
                     ['монтаж CCTV', 'контроль доступа', 'монтаж сети', 'IT-поддержка'],
                 ],
+                schemaType: 'CollectionPage',
             ),
             $this->page(
                 key: 'service-calculator',
@@ -78,6 +79,7 @@ class SeoPageSeeder extends Seeder
                     ['service calculator', 'CCTV price', 'network estimate', 'IT support price'],
                     ['калькулятор услуг', 'цена CCTV', 'расчет сети', 'стоимость IT-поддержки'],
                 ],
+                schemaType: 'WebApplication',
             ),
             $this->page(
                 key: 'projects',
@@ -93,6 +95,7 @@ class SeoPageSeeder extends Seeder
                     ['IT projects', 'CCTV projects', 'network infrastructure'],
                     ['IT-проекты', 'проекты CCTV', 'сетевая инфраструктура'],
                 ],
+                schemaType: 'CollectionPage',
             ),
             $this->page(
                 key: 'about',
@@ -108,6 +111,7 @@ class SeoPageSeeder extends Seeder
                     ['SafeTech team', 'IT company Georgia', 'systems integrator'],
                     ['команда SafeTech', 'IT-компания Грузия', 'системный интегратор'],
                 ],
+                schemaType: 'AboutPage',
             ),
             $this->page(
                 key: 'contact',
@@ -139,6 +143,7 @@ class SeoPageSeeder extends Seeder
                     ['IT blog', 'security advice', 'network infrastructure'],
                     ['IT-блог', 'советы по безопасности', 'сетевая инфраструктура'],
                 ],
+                schemaType: 'Blog',
             ),
             $this->page(
                 key: 'privacy',
@@ -159,9 +164,9 @@ class SeoPageSeeder extends Seeder
     }
 
     /** @param array<int, string> $titles
-     *  @param array<int, string> $descriptions
-     *  @param array<int, array<int, string>> $keywords
-     *  @return array<string, mixed>
+     * @param  array<int, string>  $descriptions
+     * @param  array<int, array<int, string>>  $keywords
+     * @return array<string, mixed>
      */
     private function page(
         string $key,

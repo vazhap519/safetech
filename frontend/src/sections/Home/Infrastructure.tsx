@@ -2,7 +2,7 @@ import Infrastructurecomponent from "@/components/Home/Infrastructurecomponent";
 import Image from "@/components/ui/Image";
 import Typography from "@/components/ui/Typography";
 import { getSiteSettings } from "@/lib/site-settings";
-import { translateText } from "@/lib/translations";
+import { translateKeyedItems, translateText } from "@/lib/translations";
 
 const infrastructureItems = [
     { icon: "schema", key: "home.infrastructure.items.0" },
@@ -36,18 +36,11 @@ export default async function Infrastructure() {
         locale,
         null,
     );
-    const items = infrastructureItems
-        .map((item) => ({
-            ...item,
-            description: translateText(
-                translations,
-                `${item.key}.description`,
-                locale,
-                null,
-            ),
-            title: translateText(translations, `${item.key}.title`, locale, null),
-        }))
-        .filter((item) => item.title || item.description);
+    const items = translateKeyedItems(
+        translations,
+        locale,
+        infrastructureItems,
+    );
 
     if (!eyebrow && !title && !description && !items.length) return null;
 

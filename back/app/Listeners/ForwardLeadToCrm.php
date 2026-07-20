@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Http;
 
 final class ForwardLeadToCrm implements ShouldQueue
 {
+    public int $tries = 3;
+
+    /** @var array<int, int> */
+    public array $backoff = [10, 60, 180];
+
     public function handle(LeadCreated $event): void
     {
         $url = config('leads.crm_webhook_url');

@@ -5,9 +5,9 @@ namespace App\Filament\Resources\SeoPages\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class SeoPagesTable
 {
@@ -29,7 +29,7 @@ class SeoPagesTable
 
                 IconColumn::make('noindex')
                     ->boolean()
-                    ->label('NoIndex'),
+                    ->label('ინდექსაცია გამორთულია'),
 
                 TextColumn::make('updated_at')
                     ->label('განახლდა')
@@ -40,11 +40,11 @@ class SeoPagesTable
                 //
             ])
             ->recordActions([
-              EditAction::make(),
+                EditAction::make(),
             ])
             ->toolbarActions([
-               BulkActionGroup::make([
-                   DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

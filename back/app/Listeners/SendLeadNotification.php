@@ -5,10 +5,16 @@ namespace App\Listeners;
 use App\Events\LeadCreated;
 use App\Models\SiteSetting;
 use App\Notifications\NewContactLeadNotification;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;
 
-final class SendLeadNotification
+final class SendLeadNotification implements ShouldQueue
 {
+    public int $tries = 3;
+
+    /** @var array<int, int> */
+    public array $backoff = [10, 60, 180];
+
     public function handle(LeadCreated $event): void
     {
         $contactSettings = SiteSetting::query()
