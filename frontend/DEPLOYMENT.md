@@ -178,6 +178,9 @@ Install [safetech.example.conf](deploy/nginx/safetech.example.conf):
 
 ```bash
 mkdir -p /var/www/_letsencrypt
+install -d -o www-data -g www-data -m 0750 /var/cache/nginx/safetech
+cp -a /etc/nginx/sites-available/safetech.conf \
+  /etc/nginx/sites-available/safetech.conf.backup-$(date +%F-%H%M) 2>/dev/null || true
 cp /var/www/safetech-next/deploy/nginx/safetech.example.conf \
   /etc/nginx/sites-available/safetech.conf
 ln -sfn /etc/nginx/sites-available/safetech.conf \
@@ -186,7 +189,17 @@ nginx -t
 systemctl reload nginx
 ```
 
-Confirm that the PHP-FPM socket in the config exists. Configure Cloudflare real-IP handling and restrict direct origin access before uncommenting any country-header forwarding lines.
+Confirm that the certificate paths and PHP-FPM socket in the config exist before reloading. The config enables HTTP/2 with the current Nginx syntax and keeps a short public HTML microcache; frontend `/api/` routes and React Server Component requests are never cached. Configure Cloudflare real-IP handling and restrict direct origin access before uncommenting any country-header forwarding lines.
+
+Verify protocol negotiation and the warmed HTML cache:
+
+```bash
+openssl s_client -connect safetech.ge:443 -servername safetech.ge -alpn h2 \
+  </dev/null 2>/dev/null | grep 'ALPN protocol: h2'
+curl -sS -o /dev/null -H 'Accept: text/html' https://safetech.ge/ru/contact
+curl -sS -D - -o /dev/null -H 'Accept: text/html' https://safetech.ge/ru/contact \
+  | grep -Ei 'HTTP/|cache-control|x-safetech-cache|content-encoding'
+```
 
 ## 8. Future Git deployments
 

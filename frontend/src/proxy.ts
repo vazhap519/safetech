@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
     DEFAULT_LOCALE,
-    LOCALE_COOKIE_NAME,
     isSupportedLocale,
     normalizeLocale,
     stripLocalePrefix,
@@ -19,6 +18,7 @@ const COUNTRY_HEADERS = [
     "x-geo-country",
     "x-forwarded-country",
 ];
+const PUBLIC_PAGE_CACHE_CONTROL = "public, max-age=0, must-revalidate";
 
 function parseBoolean(value: string | undefined, fallback = false) {
     if (value === undefined) return fallback;
@@ -89,13 +89,10 @@ function localeFromRequest(request: NextRequest): Locale {
     return DEFAULT_LOCALE;
 }
 
-function persistLocale(response: NextResponse, locale: Locale) {
-    response.cookies.set(LOCALE_COOKIE_NAME, locale, {
-        httpOnly: false,
-        maxAge: 60 * 60 * 24 * 365,
-        path: "/",
-        sameSite: "lax",
-    });
+function cacheablePageResponse(response: NextResponse) {
+    response.headers.set("Cache-Control", PUBLIC_PAGE_CACHE_CONTROL);
+
+    return response;
 }
 
 export function proxy(request: NextRequest) {
@@ -110,24 +107,19 @@ export function proxy(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = stripLocalePrefix(url.pathname);
 
-        const response = NextResponse.redirect(url, 308);
-        persistLocale(response, DEFAULT_LOCALE);
-
-        return response;
+        return cacheablePageResponse(NextResponse.redirect(url, 308));
     }
 
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-safetech-locale", locale);
 
-    const response = NextResponse.next({
-        request: {
-            headers: requestHeaders,
-        },
-    });
-
-    persistLocale(response, locale);
-
-    return response;
+    return cacheablePageResponse(
+        NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        }),
+    );
 }
 
 export const config = {

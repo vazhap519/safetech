@@ -66,6 +66,9 @@ mkdir -p \
     "${API_DIR}/bootstrap/cache" \
     "${NEXT_DIR}"
 
+install -d -o "${WEB_USER}" -g "${WEB_GROUP}" -m 0750 \
+    /var/cache/nginx/safetech
+
 rsync -a --delete-after \
     --exclude='.env' \
     --exclude='vendor/' \
@@ -114,5 +117,22 @@ curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 2
     "https://safetech.ge/service-calculator" >/dev/null
 curl --fail --silent --show-error --retry 5 --retry-delay 2 \
     "https://safetech.ge/sitemap.xml" >/dev/null
+
+warm_paths=(
+    "/"
+    "/contact"
+    "/services"
+    "/projects"
+    "/en"
+    "/en/contact"
+    "/ru"
+    "/ru/contact"
+)
+
+for path in "${warm_paths[@]}"; do
+    curl --fail --silent --show-error --retry 3 --retry-delay 1 \
+        -H "Accept: text/html" \
+        "https://safetech.ge${path}" >/dev/null
+done
 
 echo "SafeTech deployment completed: $(git -C "${SOURCE_DIR}" rev-parse --short HEAD)"
