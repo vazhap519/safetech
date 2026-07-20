@@ -7,13 +7,16 @@ API_DIR="${SAFETECH_API_DIR:-/var/www/safetech-api}"
 NEXT_DIR="${SAFETECH_NEXT_DIR:-/var/www/safetech-next}"
 WEB_USER="${SAFETECH_WEB_USER:-www-data}"
 WEB_GROUP="${SAFETECH_WEB_GROUP:-www-data}"
+SYSTEMD_DIR="${SAFETECH_SYSTEMD_DIR:-/etc/systemd/system}"
+FRONTEND_SERVICE="safetech-frontend.service"
+QUEUE_SERVICE="safetech-queue.service"
 
 if [[ "${EUID}" -ne 0 ]]; then
     echo "Run this deployment script with sudo/root privileges." >&2
     exit 1
 fi
 
-required_commands=(git rsync php composer node npm systemctl curl)
+required_commands=(git rsync php composer node npm systemctl curl install)
 
 for command_name in "${required_commands[@]}"; do
     if ! command -v "${command_name}" >/dev/null 2>&1; then
@@ -26,6 +29,8 @@ for required_file in \
     "${SOURCE_DIR}/.git/HEAD" \
     "${SOURCE_DIR}/back/artisan" \
     "${SOURCE_DIR}/frontend/package.json" \
+    "${SOURCE_DIR}/frontend/deploy/systemd/${FRONTEND_SERVICE}" \
+    "${SOURCE_DIR}/frontend/deploy/systemd/${QUEUE_SERVICE}" \
     "${API_DIR}/.env" \
     "${NEXT_DIR}/.env.production"; do
     if [[ ! -f "${required_file}" ]]; then
@@ -42,6 +47,15 @@ fi
 git -C "${SOURCE_DIR}" fetch --prune origin
 git -C "${SOURCE_DIR}" checkout main
 git -C "${SOURCE_DIR}" pull --ff-only origin main
+
+install -o root -g root -m 0644 \
+    "${SOURCE_DIR}/frontend/deploy/systemd/${FRONTEND_SERVICE}" \
+    "${SYSTEMD_DIR}/${FRONTEND_SERVICE}"
+install -o root -g root -m 0644 \
+    "${SOURCE_DIR}/frontend/deploy/systemd/${QUEUE_SERVICE}" \
+    "${SYSTEMD_DIR}/${QUEUE_SERVICE}"
+systemctl daemon-reload
+systemctl enable "${FRONTEND_SERVICE}" "${QUEUE_SERVICE}" >/dev/null
 
 mkdir -p \
     "${API_DIR}/storage/app/public" \
@@ -88,10 +102,8 @@ chown -R "${WEB_USER}:${WEB_GROUP}" \
     "${API_DIR}/bootstrap/cache" \
     "${NEXT_DIR}/.next"
 
-systemctl restart safetech-frontend
-if systemctl list-unit-files safetech-queue.service >/dev/null 2>&1; then
-    systemctl restart safetech-queue
-fi
+systemctl restart "${FRONTEND_SERVICE}"
+systemctl restart "${QUEUE_SERVICE}"
 
 curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 2 \
     "https://api.safetech.ge/api/health" >/dev/null
