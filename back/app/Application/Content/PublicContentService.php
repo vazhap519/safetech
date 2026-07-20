@@ -30,10 +30,10 @@ final class PublicContentService
                     'firstName' => $member->first_name, 'lastName' => $member->last_name,
                     'position' => $member->position, 'image' => $member->image, 'bio' => $member->bio,
                     'socials' => $member->socials ?? [],
-                ]),
-                'partners' => Partner::query()->active()->get()->map->only(['name', 'logo', 'url', 'category']),
-                'testimonials' => Testimonial::query()->active()->get()->map->only(['id', 'quote', 'author', 'role', 'company', 'image']),
-                'faqs' => Faq::query()->active()->whereNull('service_id')->get()->map->only(['id', 'question', 'answer', 'context']),
+                ])->values()->all(),
+                'partners' => Partner::query()->active()->get()->map->only(['name', 'logo', 'url', 'category'])->values()->all(),
+                'testimonials' => Testimonial::query()->active()->get()->map->only(['id', 'quote', 'author', 'role', 'company', 'image'])->values()->all(),
+                'faqs' => Faq::query()->active()->whereNull('service_id')->get()->map->only(['id', 'question', 'answer', 'context'])->values()->all(),
                 'settings' => $settings,
             ];
         });

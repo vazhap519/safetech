@@ -72,6 +72,36 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function normalizeContentList<T extends object>(value: unknown): T[] {
+    const entries = Array.isArray(value)
+        ? value
+        : isRecord(value)
+          ? Object.entries(value)
+                .filter(([key]) => key !== "__PHP_Incomplete_Class_Name")
+                .map(([, item]) => item)
+          : [];
+
+    return entries.filter((item): item is T => isRecord(item));
+}
+
+function normalizeBackendContent(value: unknown): BackendContent {
+    if (!isRecord(value)) return {};
+
+    return {
+        team: normalizeContentList<TeamMember>(value.team),
+        partners: normalizeContentList<
+            NonNullable<BackendContent["partners"]>[number]
+        >(value.partners),
+        testimonials: normalizeContentList<
+            NonNullable<BackendContent["testimonials"]>[number]
+        >(value.testimonials),
+        faqs: normalizeContentList<
+            NonNullable<BackendContent["faqs"]>[number]
+        >(value.faqs),
+        settings: isRecord(value.settings) ? value.settings : {},
+    };
+}
+
 async function fetchData<T>(path: string): Promise<T | undefined> {
     try {
         const response = await fetch(`${serverApiBase}${path}`, {
@@ -646,5 +676,5 @@ export async function getBackendTeam(): Promise<TeamMember[]> {
 
 export const getBackendContent = cache(
     async (): Promise<BackendContent> =>
-        (await fetchData<BackendContent>("/content")) ?? {},
+        normalizeBackendContent(await fetchData<unknown>("/content")),
 );

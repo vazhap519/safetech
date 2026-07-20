@@ -89,6 +89,7 @@ php "${API_DIR}/artisan" config:clear
 php "${API_DIR}/artisan" route:clear
 php "${API_DIR}/artisan" view:clear
 php "${API_DIR}/artisan" migrate --force
+php "${API_DIR}/artisan" cache:clear
 php "${API_DIR}/artisan" storage:link --force
 php "${API_DIR}/artisan" optimize
 php "${API_DIR}/artisan" queue:restart
