@@ -167,12 +167,11 @@ The full sample config references certificate files, so issue certificates befor
 ```bash
 systemctl stop nginx
 certbot certonly --standalone \
-  -d safetech.ge -d www.safetech.ge -d saftech.ge -d www.saftech.ge
-certbot certonly --standalone -d api.safetech.ge
+  -d safetech.ge -d www.safetech.ge -d api.safetech.ge
 systemctl start nginx
 ```
 
-If optional aliases do not have DNS records, omit them from both the certificate command and the Nginx `server_name` list.
+Add optional typo aliases to both the certificate and Nginx `server_name` list only after their DNS records are active.
 
 Install [safetech.example.conf](deploy/nginx/safetech.example.conf):
 
