@@ -9,43 +9,7 @@ import { useLocalization } from "@/components/providers/LocalizationProvider";
 import Image from "@/components/ui/Image";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 import { localizePath } from "@/lib/locales";
-
-const navigation = [
-    {
-        href: "/",
-        key: "nav.home",
-        fallback: { ka: "მთავარი", en: "Home", ru: "Главная" },
-    },
-    {
-        href: "/services",
-        key: "nav.services",
-        fallback: { ka: "სერვისები", en: "Services", ru: "Услуги" },
-    },
-    {
-        href: "/service-calculator",
-        key: "nav.calculator",
-        fallback: {
-            ka: "კალკულატორი",
-            en: "Calculator",
-            ru: "Калькулятор",
-        },
-    },
-    {
-        href: "/projects",
-        key: "nav.projects",
-        fallback: { ka: "პროექტები", en: "Projects", ru: "Проекты" },
-    },
-    {
-        href: "/about",
-        key: "nav.about",
-        fallback: { ka: "ჩვენ შესახებ", en: "About", ru: "О нас" },
-    },
-    {
-        href: "/contact",
-        key: "nav.contact",
-        fallback: { ka: "კონტაქტი", en: "Contact", ru: "Контакты" },
-    },
-] as const;
+import { primaryNavigation } from "@/lib/navigation";
 
 type NavbarClientProps = {
     logo: string | null;
@@ -56,7 +20,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
     const { locale, t } = useLocalization();
     const pathname = usePathname() || "/";
     const mobileMenuRef = useRef<HTMLDetailsElement>(null);
-    const homeLabel = t("nav.home", navigation[0].fallback);
+    const homeLabel = t("nav.home", primaryNavigation[0].fallback);
     const consultationLabel = t("nav.consultation", {
         ka: "კონსულტაცია",
         en: "Consultation",
@@ -72,7 +36,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
         en: "Open menu",
         ru: "Открыть меню",
     });
-    const navigationItems = navigation
+    const navigationItems = primaryNavigation
         .map((item) => ({
             ...item,
             label: t(item.key, item.fallback),
@@ -112,6 +76,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                         className="flex min-h-11 items-center gap-3 text-primary"
                         href="/"
                         onClick={closeMobileMenu}
+                        prefetch={!isCurrentPage("/")}
                     >
                         {logo ? (
                             <Image
@@ -133,21 +98,26 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                     <span aria-hidden="true" />
                 )}
 
-                <ul className="hidden items-center gap-unit-lg lg:flex">
-                    {navigationItems.map((item) => (
-                        <li key={item.href}>
-                            <LocalizedLink
-                                aria-current={isCurrentPage(item.href) ? "page" : undefined}
-                                className="inline-flex min-h-11 items-center font-label-md text-label-md text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary"
-                                href={item.href}
-                            >
-                                {item.label}
-                            </LocalizedLink>
-                        </li>
-                    ))}
+                <ul className="hidden items-center gap-unit-lg xl:flex">
+                    {navigationItems.map((item) => {
+                        const isCurrent = isCurrentPage(item.href);
+
+                        return (
+                            <li key={item.href}>
+                                <LocalizedLink
+                                    aria-current={isCurrent ? "page" : undefined}
+                                    className="inline-flex min-h-11 items-center font-label-md text-label-md text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary"
+                                    href={item.href}
+                                    prefetch={!isCurrent}
+                                >
+                                    {item.label}
+                                </LocalizedLink>
+                            </li>
+                        );
+                    })}
                 </ul>
 
-                <div className="hidden items-center gap-3 lg:flex">
+                <div className="hidden items-center gap-3 xl:flex">
                     <LocaleSwitcher variant="header" />
                     {consultationLabel ? (
                         <ConsultationTrigger className="min-h-11 rounded-xl bg-primary-container px-6 py-3 font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition-all hover:brightness-110">
@@ -156,7 +126,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                     ) : null}
                 </div>
 
-                <details className="group relative lg:hidden" ref={mobileMenuRef}>
+                <details className="group relative xl:hidden" ref={mobileMenuRef}>
                     <summary
                         aria-label={mobileMenuLabel || undefined}
                         className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-outline-variant/30 bg-surface-container/50 text-on-surface backdrop-blur-xl marker:hidden hover:bg-surface-container-high"
@@ -197,6 +167,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                                         className="flex min-h-11 items-center text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary"
                                         href={item.href}
                                         onClick={closeMobileMenu}
+                                        prefetch={false}
                                     >
                                         {item.label}
                                     </LocalizedLink>

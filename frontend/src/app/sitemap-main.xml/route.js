@@ -9,9 +9,18 @@ import {
 export const revalidate = 300;
 
 export async function GET() {
-  const response = await safeFetchJson(buildSitemapApiUrl("/seo"));
+  const [response, privacyResponse] = await Promise.all([
+    safeFetchJson(buildSitemapApiUrl("/seo")),
+    safeFetchJson(buildSitemapApiUrl("/privacy", { locale: "ka" })),
+  ]);
   const seoPages = Array.isArray(response?.data) ? response.data : [];
   const seoByKey = new Map(seoPages.map((page) => [page.key, page]));
+  const privacyContent = privacyResponse?.data ?? privacyResponse;
+  const hasPublishedPrivacyPolicy = [
+    privacyContent?.title,
+    privacyContent?.highlight,
+    privacyContent?.content,
+  ].some((value) => typeof value === "string" && value.trim().length > 0);
   const pages = [
     { key: "home", path: "/", changefreq: "daily", priority: "1.0" },
     { key: "about", path: "/about", changefreq: "monthly", priority: "0.6" },
@@ -26,6 +35,7 @@ export async function GET() {
   return xmlResponse(
     urlset(
       pages
+        .filter((page) => page.key !== "privacy" || hasPublishedPrivacyPolicy)
         .filter((page) => seoByKey.get(page.key)?.noindex !== true)
         .flatMap((page) => {
           const seoPage = seoByKey.get(page.key);

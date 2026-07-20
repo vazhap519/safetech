@@ -173,7 +173,7 @@ systemctl start nginx
 
 Add optional typo aliases to both the certificate and Nginx `server_name` list only after their DNS records are active.
 
-Install [safetech.example.conf](deploy/nginx/safetech.example.conf):
+The deployment script installs [safetech.example.conf](deploy/nginx/safetech.example.conf) automatically. For the first installation or manual recovery, use:
 
 ```bash
 mkdir -p /var/www/_letsencrypt
@@ -188,7 +188,7 @@ nginx -t
 systemctl reload nginx
 ```
 
-Confirm that the certificate paths and PHP-FPM socket in the config exist before reloading. The config enables HTTP/2 with the current Nginx syntax and keeps a short public HTML microcache; frontend `/api/` routes and React Server Component requests are never cached. Configure Cloudflare real-IP handling and restrict direct origin access before uncommenting any country-header forwarding lines.
+Confirm that the certificate paths and PHP-FPM socket in the config exist before reloading. The config enables HTTP/2 with the current Nginx syntax and keeps a five-minute public HTML microcache; frontend `/api/` routes and React Server Component requests are never cached. Configure Cloudflare real-IP handling and restrict direct origin access before uncommenting any country-header forwarding lines.
 
 Verify protocol negotiation and the warmed HTML cache:
 
@@ -208,7 +208,7 @@ Do not edit files inside `/var/www/safetech-source`. Commit and push changes to 
 sudo bash /var/www/safetech-source/deploy.sh
 ```
 
-The script refuses a dirty source tree, fast-forwards `main`, preserves both production environment files and Laravel storage, installs dependencies, runs migrations, builds/tests the frontend, restarts services and checks the live API, calculator and sitemap. It intentionally does not run seeders after the initial installation.
+The script refuses a dirty source tree, fast-forwards `main`, preserves both production environment files and Laravel storage, installs dependencies, runs migrations, builds/tests the frontend, installs and validates the Nginx site, restarts services, warms localized pages, verifies metadata, HTTP/2, HTML caching, `llms.txt`, the live API, calculator and sitemap. It intentionally does not run seeders after the initial installation.
 
 Before schema-changing deployments, back up PostgreSQL and uploaded media:
 
@@ -225,6 +225,7 @@ curl -I https://safetech.ge/en/services
 curl -I https://safetech.ge/ru/projects
 curl -I https://safetech.ge/service-calculator
 curl -I https://safetech.ge/robots.txt
+curl -I https://safetech.ge/llms.txt
 curl -I https://safetech.ge/sitemap.xml
 curl -I https://api.safetech.ge/api/health
 curl -I https://api.safetech.ge/api/services

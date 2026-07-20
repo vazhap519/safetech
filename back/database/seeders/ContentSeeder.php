@@ -546,6 +546,7 @@ class ContentSeeder extends Seeder
             ['key' => 'nav.services', 'ka' => 'სერვისები', 'en' => 'Services', 'ru' => 'Услуги'],
             ['key' => 'nav.calculator', 'ka' => 'კალკულატორი', 'en' => 'Calculator', 'ru' => 'Калькулятор'],
             ['key' => 'nav.projects', 'ka' => 'პროექტები', 'en' => 'Projects', 'ru' => 'Проекты'],
+            ['key' => 'nav.blog', 'ka' => 'ბლოგი', 'en' => 'Blog', 'ru' => 'Блог'],
             ['key' => 'nav.about', 'ka' => 'ჩვენ შესახებ', 'en' => 'About', 'ru' => 'О нас'],
             ['key' => 'nav.contact', 'ka' => 'კონტაქტი', 'en' => 'Contact', 'ru' => 'Контакты'],
             ['key' => 'nav.consultation', 'ka' => 'კონსულტაცია', 'en' => 'Consultation', 'ru' => 'Консультация'],
@@ -588,8 +589,6 @@ class ContentSeeder extends Seeder
             ['key' => 'service.server-infrastructure.card.description', 'ka' => 'სერვერები, ვირტუალიზაცია, მონაცემთა საცავი, backup და მონიტორინგი.', 'en' => 'Servers, virtualization, storage, backup, and infrastructure monitoring.', 'ru' => 'Серверы, виртуализация, хранилища, резервное копирование и мониторинг.'],
             ['key' => 'service.it-support.card.title', 'ka' => 'IT მხარდაჭერა', 'en' => 'IT Support', 'ru' => 'IT-поддержка'],
             ['key' => 'service.it-support.card.description', 'ka' => 'დისტანციური და ადგილზე მხარდაჭერა, მონიტორინგი, აქტივების მართვა და SLA.', 'en' => 'Remote and on-site support, monitoring, asset management, and SLA plans.', 'ru' => 'Удаленная и выездная поддержка, мониторинг, учет активов и SLA.'],
-
-            ['key' => 'footer.company.calculator', 'ka' => 'კალკულატორი', 'en' => 'Calculator', 'ru' => 'Калькулятор'],
 
             ['key' => 'common.readMore', 'ka' => 'დეტალურად', 'en' => 'Read more', 'ru' => 'Подробнее'],
             ['key' => 'services.hero.eyebrow', 'ka' => 'უსაფრთხოების სერვისები', 'en' => 'Enterprise Security Solutions', 'ru' => 'Решения для безопасности'],

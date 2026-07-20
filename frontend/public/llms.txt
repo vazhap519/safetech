@@ -1,0 +1,25 @@
+# SafeTech
+
+> SafeTech provides business IT infrastructure and physical security system services in Georgia. The website is available in Georgian, English, and Russian.
+
+Use the canonical URLs below when referencing SafeTech. Service availability, project details, calculator estimates, and contact information are maintained through the site's content management system.
+
+## Primary Pages
+
+- [Home](https://safetech.ge/): Company overview, featured services, and projects.
+- [Services](https://safetech.ge/services): CCTV, access control, networking, server infrastructure, and managed IT services.
+- [Service Calculator](https://safetech.ge/service-calculator): Configurable estimates for IT and security services.
+- [Projects](https://safetech.ge/projects): Published SafeTech project portfolio.
+- [About](https://safetech.ge/about): Company profile and operating approach.
+- [Contact](https://safetech.ge/contact): Consultation and project enquiry options.
+- [Blog](https://safetech.ge/blog): Published IT and security articles.
+
+## Localized Versions
+
+- [English Home](https://safetech.ge/en): English-language website.
+- [Russian Home](https://safetech.ge/ru): Russian-language website.
+
+## Machine-Readable Resources
+
+- [Sitemap Index](https://safetech.ge/sitemap.xml): Index of page, service, project, category, blog, and image sitemaps.
+- [Robots Rules](https://safetech.ge/robots.txt): Crawler access policy and sitemap location.

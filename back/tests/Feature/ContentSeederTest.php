@@ -66,6 +66,12 @@ class ContentSeederTest extends TestCase
 
         $this->assertIsArray($translationEntries);
         $this->assertGreaterThan(300, count($translationEntries));
+        $translationsByKey = collect($translationEntries)->keyBy('key');
+        $blogNavigation = $translationsByKey->get('nav.blog');
+
+        $this->assertSame('ბლოგი', $blogNavigation['ka'] ?? null);
+        $this->assertSame('Blog', $blogNavigation['en'] ?? null);
+        $this->assertSame('Блог', $blogNavigation['ru'] ?? null);
 
         foreach ($translationEntries as $entry) {
             $this->assertNotEmpty($entry['key'] ?? null);

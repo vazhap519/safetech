@@ -1,5 +1,6 @@
 import SocialIcon from "@/components/ui/SocialIcon";
 import Image from "@/components/ui/Image";
+import TranslatedText from "@/components/i18n/TranslatedText";
 import { getSiteSettings } from "@/lib/site-settings";
 
 export default async function FooterDescription() {
@@ -30,7 +31,10 @@ export default async function FooterDescription() {
                 ) : null}
                 {branding.tagline ? (
                     <p className="font-body-md text-body-md text-on-surface-variant">
-                        {branding.tagline}
+                        <TranslatedText
+                            fallback={branding.tagline}
+                            translationKey="footer.tagline"
+                        />
                     </p>
                 ) : null}
             </div>

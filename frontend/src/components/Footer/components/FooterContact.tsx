@@ -1,11 +1,10 @@
+import TranslatedText from "@/components/i18n/TranslatedText";
 import Typography from "@/components/ui/Typography";
 import { toEmailHref, toPhoneHref } from "@/lib/contact-links";
 import { getSiteSettings } from "@/lib/site-settings";
-import { translateText } from "@/lib/translations";
 
 export default async function FooterContact() {
-    const { contact, locale, translations } = await getSiteSettings();
-    const title = translateText(translations, "footer.contact.title", locale, null);
+    const { contact } = await getSiteSettings();
     const items = [
         contact.phone
             ? {
@@ -36,7 +35,12 @@ export default async function FooterContact() {
         contact.address
             ? {
                   key: "address",
-                  content: contact.address,
+                  content: (
+                      <TranslatedText
+                          fallback={contact.address}
+                          translationKey="footer.contact.address"
+                      />
+                  ),
               }
             : null,
     ].filter((item): item is NonNullable<typeof item> => Boolean(item));
@@ -44,12 +48,13 @@ export default async function FooterContact() {
     if (!items.length) return null;
 
     return (
-        <div className="space-y-4">
-            {title ? (
-                <Typography as="h2" variant="footer-title">
-                    {title}
-                </Typography>
-            ) : null}
+        <div aria-labelledby="footer-contact-title" className="space-y-4">
+            <Typography as="h2" id="footer-contact-title" variant="footer-title">
+                <TranslatedText
+                    fallback={{ ka: "კონტაქტი", en: "Contact", ru: "Контакты" }}
+                    translationKey="footer.contact.title"
+                />
+            </Typography>
             <address className="not-italic">
                 <ul className="space-y-2 font-body-md text-body-md text-on-surface-variant">
                     {items.map((item) => (

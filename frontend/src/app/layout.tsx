@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Noto_Sans_Georgian } from "next/font/google";
 
 import "./globals.css";
 
@@ -23,6 +24,14 @@ import {
 import { buildOrganizationEntity } from "@/lib/organization-schema";
 import { getSiteSettings } from "@/lib/site-settings";
 import { createTranslator } from "@/lib/translations";
+
+const georgianFont = Noto_Sans_Georgian({
+    display: "swap",
+    preload: false,
+    subsets: ["georgian"],
+    variable: "--font-georgian",
+    weight: "variable",
+});
 
 function withDynamicSiteTitle(title: string, siteName: string) {
     const cleanTitle = title.trim();
@@ -182,7 +191,7 @@ export default async function RootLayout({
     return (
         <html
             lang={getLanguageTag(locale)}
-            className="dark scroll-smooth"
+            className={`${georgianFont.variable} dark scroll-smooth`}
             suppressHydrationWarning
         >
             <head>
