@@ -51,7 +51,7 @@ export default async function Projects() {
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-gutter xl:grid-cols-3">
                 {projects.slice(0, 3).map((project) => (
-                    <FeaturedProjectCard key={project.title} project={project} />
+                    <FeaturedProjectCard key={project.slug} project={project} />
                 ))}
             </div>
 

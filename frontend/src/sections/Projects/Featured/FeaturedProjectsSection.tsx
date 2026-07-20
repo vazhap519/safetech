@@ -44,7 +44,7 @@ export default async function FeaturedProjectsSection() {
                 </div>
                 <div className="grid grid-cols-1 gap-gutter md:grid-cols-2 xl:grid-cols-3">
                     {featuredProjects.map((project) => (
-                        <FeaturedProjectCard key={project.title} project={project} />
+                        <FeaturedProjectCard key={project.slug} project={project} />
                     ))}
                 </div>
             </div>

@@ -105,7 +105,7 @@ function normalizeBackendContent(value: unknown): BackendContent {
 async function fetchData<T>(path: string): Promise<T | undefined> {
     try {
         const response = await fetch(`${serverApiBase}${path}`, {
-            next: { revalidate: 300 },
+            next: { revalidate: 300, tags: ["cms"] },
             signal: AbortSignal.timeout(3000),
         });
 
@@ -558,6 +558,7 @@ export async function getBackendFeaturedProjects(): Promise<FeaturedProject[]> {
     if (!remote?.length) return [];
 
     return remote.map((item) => ({
+        slug: item.slug,
         title: t(
             `project.${item.slug}.featured.title`,
             item.name || item.title || item.slug,

@@ -57,6 +57,7 @@ return [
 
     'frontend_url' => env('FRONTEND_URL'),
     'revalidate_secret' => env('REVALIDATE_SECRET'),
+    'seed_demo_content' => (bool) env('SEED_DEMO_CONTENT', false),
 
     /*
     |--------------------------------------------------------------------------

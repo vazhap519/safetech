@@ -1,15 +1,14 @@
 "use client";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
+import ProjectDetailsLink from "@/components/Projects/ProjectDetailsLink";
 import Icon from "@/components/ui/Icon";
-import LocalizedLink from "@/components/ui/LocalizedLink";
 import type { Project } from "@/lib/projects";
 import { getYouTubeWatchUrl } from "@/lib/youtube";
 
 export default function ProjectCard({ project }: { project: Project }) {
     const color = project.accent === "secondary" ? "secondary" : "primary";
     const { t } = useLocalization();
-    const detailsLabel = t("common.details", null);
     const completedLabel = t("projects.completed", null);
     const videoLabel = t("projects.video.open", null);
     const videoUrl = getYouTubeWatchUrl(project.videoUrl);
@@ -61,13 +60,11 @@ export default function ProjectCard({ project }: { project: Project }) {
                     {project.description}
                 </p>
             ) : null}
-            {project.slug && detailsLabel ? (
-                <LocalizedLink
+            {project.slug ? (
+                <ProjectDetailsLink
                     className="inline-flex items-center gap-2 font-bold text-secondary"
-                    href={`/projects/${project.slug}`}
-                >
-                    {detailsLabel} <span aria-hidden="true">-&gt;</span>
-                </LocalizedLink>
+                    slug={project.slug}
+                />
             ) : completedLabel ? (
                 <span className="inline-flex items-center gap-2 font-bold text-secondary/70">
                     {completedLabel}

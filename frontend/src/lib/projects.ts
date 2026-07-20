@@ -4,6 +4,7 @@ export type ProjectMetric = {
 };
 
 export type FeaturedProject = {
+    slug: string;
     title: string;
     category: string;
     image: string;

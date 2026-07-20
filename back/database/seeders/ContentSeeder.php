@@ -44,6 +44,10 @@ class ContentSeeder extends Seeder
 
         $this->seedPrivacyPolicy();
 
+        if (! config('app.seed_demo_content')) {
+            return;
+        }
+
         $serviceCategories = collect($this->serviceCategories())
             ->mapWithKeys(function (array $category): array {
                 $record = CategoryForService::query()->firstOrCreate(

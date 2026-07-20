@@ -1,3 +1,4 @@
+import ProjectDetailsLink from "@/components/Projects/ProjectDetailsLink";
 import Icon from "@/components/ui/Icon";
 import Image from "@/components/ui/Image";
 
@@ -68,6 +69,10 @@ export default function FeaturedProjectCard({
                     ))}
                     </dl>
                 ) : null}
+                <ProjectDetailsLink
+                    className="mt-5 inline-flex items-center gap-2 font-bold text-secondary transition-colors hover:text-primary"
+                    slug={project.slug}
+                />
             </div>
         </article>
     );

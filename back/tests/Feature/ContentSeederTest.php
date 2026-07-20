@@ -17,8 +17,10 @@ class ContentSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_production_seed_data_contains_calculators_translations_and_static_seo(): void
+    public function test_demo_seed_data_contains_calculators_translations_and_static_seo(): void
     {
+        $this->seed(DatabaseSeeder::class);
+
         $existingCategory = CategoryForService::query()
             ->where('slug', 'security-systems')
             ->firstOrFail();

@@ -65,6 +65,7 @@ APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://api.safetech.ge
 APP_TIMEZONE=Asia/Tbilisi
+SEED_DEMO_CONTENT=false
 
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
@@ -114,7 +115,7 @@ Keep geographic blocking disabled for an SEO-facing public site. Google, Bing an
 
 ## 5. Initial application install
 
-Run the seed only during the first installation. Re-running it on every deployment can replace CMS content with seed defaults.
+Run the seed during the first installation to create the admin account and system defaults. Production keeps `SEED_DEMO_CONTENT=false`, so bundled example services and projects are not inserted. Existing admin-managed values are preserved.
 
 ```bash
 cd /var/www/safetech-api
@@ -136,6 +137,13 @@ npm ci
 npm run check
 npm prune --omit=dev
 chown -R www-data:www-data .next
+```
+
+If an older installation already contains the bundled examples, preview and remove only those exact demo slugs with:
+
+```bash
+cd /var/www/safetech-api
+php artisan cms:remove-demo-content
 ```
 
 ## 6. systemd services

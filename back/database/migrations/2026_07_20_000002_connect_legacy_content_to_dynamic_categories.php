@@ -44,6 +44,10 @@ return new class extends Migration
         ];
 
         foreach ($definitions as $slug => $definition) {
+            if (! DB::table('services')->whereIn('slug', $definition['services'])->exists()) {
+                continue;
+            }
+
             $categoryId = $this->categoryId(
                 'category_for_services',
                 $slug,
