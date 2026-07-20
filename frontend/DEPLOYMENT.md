@@ -177,6 +177,7 @@ The deployment script installs [safetech.example.conf](deploy/nginx/safetech.exa
 
 ```bash
 mkdir -p /var/www/_letsencrypt
+install -d -o root -g root -m 0755 /var/www/safetech-static
 install -d -o www-data -g www-data -m 0750 /var/cache/nginx/safetech
 cp -a /etc/nginx/sites-available/safetech.conf \
   /etc/nginx/sites-available/safetech.conf.backup-$(date +%F-%H%M) 2>/dev/null || true
@@ -188,7 +189,7 @@ nginx -t
 systemctl reload nginx
 ```
 
-Confirm that the certificate paths and PHP-FPM socket in the config exist before reloading. The config enables HTTP/2 with the current Nginx syntax and keeps a five-minute public HTML microcache; frontend `/api/` routes and React Server Component requests are never cached. Configure Cloudflare real-IP handling and restrict direct origin access before uncommenting any country-header forwarding lines.
+Confirm that the certificate paths and PHP-FPM socket in the config exist before reloading. The config enables HTTP/2 with the current Nginx syntax and keeps a one-minute public HTML microcache; frontend `/api/` routes and React Server Component requests are never cached. Versioned Next.js assets are retained in `/var/www/safetech-static` for 30 days so open tabs keep working across releases. Configure Cloudflare real-IP handling and restrict direct origin access before uncommenting any country-header forwarding lines.
 
 Verify protocol negotiation and the warmed HTML cache:
 

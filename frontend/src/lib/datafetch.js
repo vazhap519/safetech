@@ -1,10 +1,18 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+import "server-only";
+
+import { buildServerApiUrl } from "@/lib/backend-api";
 
 async function fetcher(url, options = {}) {
   try {
+    const configuredNext = options.next || {};
+    const tags = Array.from(new Set(["cms", ...(configuredNext.tags || [])]));
     const res = await fetch(url, {
       ...options,
-      next: options.next || { revalidate: 60 },
+      next: {
+        revalidate: 60,
+        ...configuredNext,
+        tags,
+      },
     });
     const text = await res.text();
     const data = text ? JSON.parse(text) : null;
@@ -40,7 +48,9 @@ async function fetcher(url, options = {}) {
 
 function buildUrl(path, params = {}) {
   const query = new URLSearchParams(params).toString();
-  return `${API}${path}${query ? `?${query}` : ""}`;
+  const url = buildServerApiUrl(path);
+
+  return `${url}${query ? `?${query}` : ""}`;
 }
 
 export const getPrivacy = ({ locale, ...options } = {}) =>

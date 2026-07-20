@@ -21,7 +21,11 @@ export default function ProjectDetailsLink({
     });
 
     return (
-        <LocalizedLink className={className} href={`/projects/${slug}`}>
+        <LocalizedLink
+            className={className}
+            href={`/projects/${slug}`}
+            prefetch={false}
+        >
             {label}
             <Icon aria-hidden="true" name="arrow_forward" />
         </LocalizedLink>

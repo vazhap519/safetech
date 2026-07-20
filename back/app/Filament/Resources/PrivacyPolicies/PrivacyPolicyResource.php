@@ -40,6 +40,11 @@ class PrivacyPolicyResource extends Resource
         return PrivacyPoliciesTable::configure($table);
     }
 
+    public static function canCreate(): bool
+    {
+        return ! PrivacyPolicy::query()->exists();
+    }
+
     public static function getRelations(): array
     {
         return [

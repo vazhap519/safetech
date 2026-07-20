@@ -35,7 +35,10 @@ class BlogController extends Controller
             $posts = $query->latest()->paginate(9);
 
             return [
-                'data' => $posts->getCollection()->map(fn ($post) => $this->transformPostCard($post, $locale)),
+                'data' => $posts->getCollection()
+                    ->map(fn ($post) => $this->transformPostCard($post, $locale))
+                    ->values()
+                    ->all(),
                 'meta' => [
                     'current_page' => $posts->currentPage(),
                     'last_page' => $posts->lastPage(),
@@ -153,7 +156,8 @@ class BlogController extends Controller
                         $this->translated($section, 'content', $section->content, $locale),
                     ),
                     'position' => $section->position,
-                ]),
+                ])
+                ->all(),
             'related' => $this->getRelatedPosts($post, $locale),
         ];
     }
@@ -168,7 +172,7 @@ class BlogController extends Controller
         return $post->author?->avatar;
     }
 
-    private function getRelatedPosts(Post $post, string $locale)
+    private function getRelatedPosts(Post $post, string $locale): array
     {
         return Post::query()
             ->where('category_id', $post->category_id)
@@ -182,7 +186,8 @@ class BlogController extends Controller
                 'title' => $this->translated($item, 'title', $item->title, $locale),
                 'slug' => $item->slug,
                 'image' => $this->getImage($item),
-            ]);
+            ])
+            ->all();
     }
 
     private function locale(Request $request): string

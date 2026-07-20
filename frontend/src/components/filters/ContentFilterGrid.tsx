@@ -83,6 +83,7 @@ export default function ContentFilterGrid({
                                 } rounded-full px-5 py-2.5 font-label-md text-label-md transition-colors sm:px-8`}
                                 href={categoryHref(kind, category.slug)}
                                 key={category.slug}
+                                prefetch={false}
                                 role="button"
                             >
                                 {category.name}

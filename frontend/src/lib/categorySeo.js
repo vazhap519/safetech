@@ -1,5 +1,23 @@
 import { absoluteLocalizedUrl, createMetadata } from "@/lib/seo";
 
+const descriptionFallbacks = {
+  services: {
+    ka: (name) => `${name}: SafeTech-ის სერვისები, შესაძლებლობები და ბიზნესზე მორგებული გადაწყვეტილებები.`,
+    en: (name) => `${name}: SafeTech services, capabilities, and solutions tailored to business requirements.`,
+    ru: (name) => `${name}: услуги, возможности и решения SafeTech для задач бизнеса.`,
+  },
+  projects: {
+    ka: (name) => `${name}: SafeTech-ის განხორციელებული IT ინფრასტრუქტურისა და უსაფრთხოების პროექტები.`,
+    en: (name) => `${name}: IT infrastructure and security projects delivered by SafeTech.`,
+    ru: (name) => `${name}: реализованные SafeTech проекты IT-инфраструктуры и безопасности.`,
+  },
+  blog: {
+    ka: (name) => `${name}: SafeTech-ის პრაქტიკული სტატიები IT ინფრასტრუქტურისა და უსაფრთხოების შესახებ.`,
+    en: (name) => `${name}: practical SafeTech articles about IT infrastructure and security.`,
+    ru: (name) => `${name}: практические статьи SafeTech об IT-инфраструктуре и безопасности.`,
+  },
+};
+
 function plainText(value) {
   return typeof value === "string"
     ? value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
@@ -26,10 +44,19 @@ export function keywordValues(category) {
     .filter(Boolean);
 }
 
-export function categoryMetadata({ category, path, locale }) {
+function fallbackDescription(kind, name, locale) {
+  const group = descriptionFallbacks[kind] || descriptionFallbacks.services;
+  const formatter = group[locale] || group.ka;
+
+  return name ? formatter(name) : "";
+}
+
+export function categoryMetadata({ category, path, locale, kind }) {
   return createMetadata({
     title: category?.seo_title || category?.name || "",
-    description: category?.seo_description || category?.intro_text || "",
+    description:
+      plainText(category?.seo_description || category?.intro_text) ||
+      fallbackDescription(kind, category?.name, locale),
     keywords: keywordValues(category),
     path,
     locale,

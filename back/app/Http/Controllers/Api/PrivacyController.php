@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PrivacyPolicy;
-use App\Support\FrontendRevalidator;
 use App\Support\MultilingualContent;
 use App\Support\SafeHtml;
 use Illuminate\Http\Request;
@@ -38,28 +37,6 @@ class PrivacyController extends Controller
             'title' => '',
             'highlight' => '',
             'content' => '',
-        ]);
-    }
-
-    public function update(Request $request)
-    {
-        $privacy = PrivacyPolicy::query()->first();
-
-        if (! $privacy) {
-            $privacy = PrivacyPolicy::query()->create($request->all());
-        } else {
-            $privacy->update($request->all());
-        }
-
-        Cache::forget('privacy_page:ka');
-        Cache::forget('privacy_page:en');
-        Cache::forget('privacy_page:ru');
-
-        FrontendRevalidator::revalidate('privacy');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Privacy updated',
         ]);
     }
 

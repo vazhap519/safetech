@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\FlushesPublicContentCache;
 use App\Support\MultilingualContent;
 use App\Support\SiteSettings;
 use App\Support\SocialLinks;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -14,7 +14,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class SeoPage extends Model implements HasMedia
 {
-    use InteractsWithMedia;
+    use FlushesPublicContentCache, InteractsWithMedia;
 
     protected $fillable = [
         'key',
@@ -60,7 +60,7 @@ class SeoPage extends Model implements HasMedia
 
     /*
     |--------------------------------------------------------------------------
-    | AUTO FIX + CACHE
+    | AUTO FIX
     |--------------------------------------------------------------------------
     */
     protected static function booted()
@@ -79,19 +79,6 @@ class SeoPage extends Model implements HasMedia
             }
         });
 
-        static::saved(fn ($model) => self::clearCache($model));
-        static::deleted(fn ($model) => self::clearCache($model));
-    }
-
-    protected static function clearCache($model): void
-    {
-        if ($model->key) {
-            Cache::forget("seo_{$model->key}");
-        }
-
-        if ($model->seoable_id && $model->seoable_type) {
-            Cache::forget("seo_model_{$model->seoable_type}_{$model->seoable_id}");
-        }
     }
 
     /*
@@ -211,13 +198,12 @@ class SeoPage extends Model implements HasMedia
 
     /*
     |--------------------------------------------------------------------------
-    | CACHE HELPERS
+    | QUERY HELPERS
     |--------------------------------------------------------------------------
     */
     public static function getByKey(string $key): ?self
     {
-        return Cache::remember("seo_$key", 3600, fn () => self::where('key', $key)->first()
-        );
+        return self::query()->where('key', $key)->first();
     }
 
     public static function resolve(?string $key = null, $model = null): array
@@ -225,13 +211,10 @@ class SeoPage extends Model implements HasMedia
         $seo = null;
 
         if ($model) {
-            $seo = Cache::remember(
-                'seo_model_'.get_class($model)."_{$model->getKey()}",
-                3600,
-                fn () => self::where('seoable_type', get_class($model))
-                    ->where('seoable_id', $model->getKey())
-                    ->first()
-            );
+            $seo = self::query()
+                ->where('seoable_type', get_class($model))
+                ->where('seoable_id', $model->getKey())
+                ->first();
         }
 
         if (! $seo && $key) {

@@ -12,6 +12,20 @@ class BlogApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_empty_blog_uses_a_stable_array_contract(): void
+    {
+        $this->getJson('/api/blog')
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.last_page', 1)
+            ->assertJsonPath('meta.total', 0);
+
+        $this->getJson('/api/blog')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+    }
+
     public function test_it_returns_localized_cards_and_sanitized_post_content(): void
     {
         $category = Category::query()->create([

@@ -44,7 +44,7 @@ class ContentSeeder extends Seeder
 
         $this->seedPrivacyPolicy();
 
-        if (! config('app.seed_demo_content')) {
+        if (app()->environment('production') || ! config('app.seed_demo_content')) {
             return;
         }
 
@@ -66,9 +66,9 @@ class ContentSeeder extends Seeder
                 $currentTranslations = is_array($record->translations)
                     ? $record->translations
                     : [];
-                $mergedTranslations = array_replace_recursive(
-                    $category['translations'],
+                $mergedTranslations = $this->mergeMissingArrayValues(
                     $currentTranslations,
+                    $category['translations'],
                 );
 
                 if ($mergedTranslations !== $currentTranslations) {
@@ -296,8 +296,14 @@ class ContentSeeder extends Seeder
             );
 
             $updates = [];
-            if (! is_array($record->translations) || $record->translations === []) {
-                $updates['translations'] = $service['translations'];
+            $currentTranslations = is_array($record->translations) ? $record->translations : [];
+            $mergedTranslations = $this->mergeMissingArrayValues(
+                $currentTranslations,
+                $service['translations'],
+            );
+
+            if ($mergedTranslations !== $currentTranslations) {
+                $updates['translations'] = $mergedTranslations;
             }
 
             if (! is_array($record->lead_form) || ! is_array(data_get($record->lead_form, 'pricing'))) {
@@ -313,24 +319,49 @@ class ContentSeeder extends Seeder
             }
         }
 
-        $projectCategory = ProjectCategory::query()->firstOrCreate(
-            ['slug' => 'offices'],
+        $projectCategoryTranslations = $this->categoryTranslations(
+            ['ოფისები', 'Offices', 'Офисы'],
+            ['ოფისების IT ინფრასტრუქტურის პროექტები', 'Office IT Infrastructure Projects', 'Проекты IT-инфраструктуры для офисов'],
             [
-                'name' => 'ოფისები',
-                'sort_order' => 1,
-                'seo_title' => 'ოფისების IT ინფრასტრუქტურის პროექტები',
-                'seo_description' => 'SafeTech-ის დასრულებული ქსელის, უსაფრთხოებისა და IT ინფრასტრუქტურის პროექტები ოფისებისთვის.',
-                'translations' => $this->categoryTranslations(
-                    ['ოფისები', 'Offices', 'Офисы'],
-                    ['ოფისების IT ინფრასტრუქტურის პროექტები', 'Office IT Infrastructure Projects', 'Проекты IT-инфраструктуры для офисов'],
-                    [
-                        'SafeTech-ის დასრულებული ქსელის, უსაფრთხოებისა და IT ინფრასტრუქტურის პროექტები ოფისებისთვის.',
-                        'Completed SafeTech networking, security, and IT infrastructure projects for offices.',
-                        'Завершенные проекты SafeTech по сетям, безопасности и IT-инфраструктуре для офисов.',
-                    ],
-                ),
+                'SafeTech-ის დასრულებული ქსელის, უსაფრთხოებისა და IT ინფრასტრუქტურის პროექტები ოფისებისთვის.',
+                'Completed SafeTech networking, security, and IT infrastructure projects for offices.',
+                'Завершенные проекты SafeTech по сетям, безопасности и IT-инфраструктуре для офисов.',
             ],
         );
+        $projectCategoryDefaults = [
+            'name' => 'ოფისები',
+            'sort_order' => 1,
+            'seo_title' => 'ოფისების IT ინფრასტრუქტურის პროექტები',
+            'seo_description' => 'SafeTech-ის დასრულებული ქსელის, უსაფრთხოებისა და IT ინფრასტრუქტურის პროექტები ოფისებისთვის.',
+            'translations' => $projectCategoryTranslations,
+        ];
+        $projectCategory = ProjectCategory::query()->firstOrCreate(
+            ['slug' => 'offices'],
+            $projectCategoryDefaults,
+        );
+        $projectCategoryUpdates = [];
+
+        foreach (['seo_title', 'seo_description'] as $field) {
+            if (blank($projectCategory->getAttribute($field))) {
+                $projectCategoryUpdates[$field] = $projectCategoryDefaults[$field];
+            }
+        }
+
+        $currentProjectCategoryTranslations = is_array($projectCategory->translations)
+            ? $projectCategory->translations
+            : [];
+        $mergedProjectCategoryTranslations = $this->mergeMissingArrayValues(
+            $currentProjectCategoryTranslations,
+            $projectCategoryTranslations,
+        );
+
+        if ($mergedProjectCategoryTranslations !== $currentProjectCategoryTranslations) {
+            $projectCategoryUpdates['translations'] = $mergedProjectCategoryTranslations;
+        }
+
+        if ($projectCategoryUpdates !== []) {
+            $projectCategory->forceFill($projectCategoryUpdates)->save();
+        }
 
         $projectTranslations = [
             'fields' => [
@@ -388,8 +419,14 @@ class ContentSeeder extends Seeder
             $projectUpdates['category_id'] = $projectCategory->getKey();
         }
 
-        if (! is_array($project->translations) || $project->translations === []) {
-            $projectUpdates['translations'] = $projectTranslations;
+        $currentProjectTranslations = is_array($project->translations) ? $project->translations : [];
+        $mergedProjectTranslations = $this->mergeMissingArrayValues(
+            $currentProjectTranslations,
+            $projectTranslations,
+        );
+
+        if ($mergedProjectTranslations !== $currentProjectTranslations) {
+            $projectUpdates['translations'] = $mergedProjectTranslations;
         }
 
         if ($projectUpdates !== []) {
@@ -913,10 +950,6 @@ class ContentSeeder extends Seeder
 
     private function seedPrivacyPolicy(): void
     {
-        if (PrivacyPolicy::query()->exists()) {
-            return;
-        }
-
         $content = [
             'ka' => <<<'HTML'
 <h2>რა ინფორმაციას ვაგროვებთ</h2>
@@ -956,7 +989,7 @@ HTML,
 HTML,
         ];
 
-        PrivacyPolicy::query()->create([
+        $defaults = [
             'title' => 'კონფიდენციალურობის პოლიტიკა',
             'highlight' => 'როგორ ვაგროვებთ, ვიყენებთ და ვიცავთ თქვენს ინფორმაციას.',
             'content' => $content['ka'],
@@ -975,7 +1008,38 @@ HTML,
                     'content' => $content,
                 ],
             ],
-        ]);
+        ];
+        $privacy = PrivacyPolicy::query()->first();
+
+        if (! $privacy) {
+            PrivacyPolicy::query()->create($defaults);
+
+            return;
+        }
+
+        $updates = [];
+
+        foreach (['title', 'highlight', 'content'] as $field) {
+            if (blank($privacy->getAttribute($field))) {
+                $updates[$field] = $defaults[$field];
+            }
+        }
+
+        $currentTranslations = is_array($privacy->translations)
+            ? $privacy->translations
+            : [];
+        $mergedTranslations = $this->mergeMissingArrayValues(
+            $currentTranslations,
+            $defaults['translations'],
+        );
+
+        if ($mergedTranslations !== $currentTranslations) {
+            $updates['translations'] = $mergedTranslations;
+        }
+
+        if ($updates !== []) {
+            $privacy->forceFill($updates)->save();
+        }
     }
 
     private function mergeMissingTranslationEntries(mixed $currentValue, array $defaults): array
@@ -991,19 +1055,59 @@ HTML,
             $currentEntries = [];
         }
 
-        $existingKeys = array_filter(array_column($currentEntries, 'key'));
+        $entryIndexes = [];
+
+        foreach ($currentEntries as $index => $entry) {
+            if (! is_array($entry) || blank($entry['key'] ?? null)) {
+                continue;
+            }
+
+            $entryIndexes[(string) $entry['key']] = $index;
+        }
 
         foreach ($defaultEntries as $entry) {
             if (! is_array($entry) || empty($entry['key'])) {
                 continue;
             }
 
-            if (! in_array($entry['key'], $existingKeys, true)) {
+            $key = (string) $entry['key'];
+
+            if (! array_key_exists($key, $entryIndexes)) {
                 $currentEntries[] = $entry;
-                $existingKeys[] = $entry['key'];
+                $entryIndexes[$key] = array_key_last($currentEntries);
+
+                continue;
+            }
+
+            $index = $entryIndexes[$key];
+
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                if (blank($currentEntries[$index][$locale] ?? null) && filled($entry[$locale] ?? null)) {
+                    $currentEntries[$index][$locale] = $entry[$locale];
+                }
             }
         }
 
         return array_merge($currentValue, ['entries' => $currentEntries]);
+    }
+
+    private function mergeMissingArrayValues(array $current, array $defaults): array
+    {
+        foreach ($defaults as $key => $default) {
+            if (is_array($default)) {
+                $current[$key] = $this->mergeMissingArrayValues(
+                    is_array($current[$key] ?? null) ? $current[$key] : [],
+                    $default,
+                );
+
+                continue;
+            }
+
+            if (blank($current[$key] ?? null) && filled($default)) {
+                $current[$key] = $default;
+            }
+        }
+
+        return $current;
     }
 }

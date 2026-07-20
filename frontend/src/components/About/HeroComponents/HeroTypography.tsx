@@ -4,12 +4,20 @@ import { translateText } from "@/lib/translations";
 
 export default async function HeroTypography() {
     const { locale, translations } = await getSiteSettings();
-    const title = translateText(translations, "about.hero.title", locale, null);
+    const title = translateText(translations, "about.hero.title", locale, {
+        ka: "SafeTech-ის შესახებ",
+        en: "About SafeTech",
+        ru: "О SafeTech",
+    });
     const description = translateText(
         translations,
         "about.hero.description",
         locale,
-        null,
+        {
+            ka: "ვქმნით და ვმართავთ ბიზნესისთვის საჭირო IT ინფრასტრუქტურასა და უსაფრთხოების სისტემებს.",
+            en: "We design and manage the IT infrastructure and security systems businesses need.",
+            ru: "Мы проектируем и обслуживаем IT-инфраструктуру и системы безопасности для бизнеса.",
+        },
     );
 
     if (!title && !description) return null;

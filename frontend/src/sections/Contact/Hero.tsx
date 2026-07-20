@@ -5,18 +5,30 @@ import { translateText } from "@/lib/translations";
 
 export default async function Hero() {
     const { locale, translations } = await getSiteSettings();
-    const title = translateText(translations, "contact.hero.title", locale, null);
+    const title = translateText(translations, "contact.hero.title", locale, {
+        ka: "დაგვიკავშირდით",
+        en: "Contact SafeTech",
+        ru: "Свяжитесь с SafeTech",
+    });
     const description = translateText(
         translations,
         "contact.hero.description",
         locale,
-        null,
+        {
+            ka: "მოგვიყევით თქვენი ობიექტის, სისტემის ან IT მხარდაჭერის საჭიროების შესახებ.",
+            en: "Tell us about your site, system, or IT support needs.",
+            ru: "Расскажите о вашем объекте, системе или потребностях в IT-поддержке.",
+        },
     );
     const buttonLabel = translateText(
         translations,
         "contact.hero.button",
         locale,
-        null,
+        {
+            ka: "მოთხოვნის გაგზავნა",
+            en: "Send an enquiry",
+            ru: "Отправить запрос",
+        },
     );
 
     if (!title && !description && !buttonLabel) return null;

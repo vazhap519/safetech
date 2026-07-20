@@ -41,6 +41,7 @@ export default function ServiceCardComponent({ service }: Props) {
                 <LocalizedLink
                     className="group inline-flex items-center gap-2 font-label-md text-label-md text-primary"
                     href={`/services/${service.slug}`}
+                    prefetch={false}
                 >
                     {readMoreLabel}
                     <Icon

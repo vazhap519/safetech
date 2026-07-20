@@ -34,6 +34,7 @@ export default function Servicecomponent({ service }: { service: ServiceCard }) 
                 <LocalizedLink
                     className="mt-auto inline-flex items-center gap-2 font-label-md text-primary hover:text-secondary"
                     href={`/services/${service.slug}`}
+                    prefetch={false}
                 >
                     {readMoreLabel} <span aria-hidden="true">-&gt;</span>
                 </LocalizedLink>

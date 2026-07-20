@@ -13,6 +13,16 @@ class ContactLeadApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_production_frontend_origin_is_allowed_by_cors(): void
+    {
+        $this->withHeaders([
+            'Origin' => 'https://safetech.ge',
+            'Access-Control-Request-Method' => 'POST',
+        ])->options('/api/contact-leads')
+            ->assertSuccessful()
+            ->assertHeader('Access-Control-Allow-Origin', 'https://safetech.ge');
+    }
+
     public function test_it_stores_a_valid_contact_lead(): void
     {
         Event::fake([LeadCreated::class]);

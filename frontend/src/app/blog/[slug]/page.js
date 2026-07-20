@@ -21,7 +21,7 @@ export async function generateMetadata({ params }) {
     getSiteSettings(),
   ]);
   const response = await getBlogPost(slug, { locale });
-  const post = response?.data;
+  const post = response?.error ? null : response?.data;
 
   if (!post) {
     return {
@@ -53,7 +53,7 @@ export default async function BlogDetailPage({ params }) {
     getSiteSettings(),
   ]);
   const res = await getBlogPost(slug, { locale });
-  const post = res?.data;
+  const post = res?.error ? null : res?.data;
 
   if (!post) return notFound();
 

@@ -8,13 +8,21 @@ export default async function HeroButtons() {
         translations,
         "about.hero.cta.primary",
         locale,
-        null,
+        {
+            ka: "კონსულტაციის მოთხოვნა",
+            en: "Request consultation",
+            ru: "Запросить консультацию",
+        },
     );
     const secondaryLabel = translateText(
         translations,
         "about.hero.cta.secondary",
         locale,
-        null,
+        {
+            ka: "ჩვენი სერვისები",
+            en: "Our services",
+            ru: "Наши услуги",
+        },
     );
 
     if (!primaryLabel && !secondaryLabel) return null;

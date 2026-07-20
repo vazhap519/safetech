@@ -76,7 +76,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                         className="flex min-h-11 items-center gap-3 text-primary"
                         href="/"
                         onClick={closeMobileMenu}
-                        prefetch={!isCurrentPage("/")}
+                        prefetch={false}
                     >
                         {logo ? (
                             <Image
@@ -108,7 +108,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                                     aria-current={isCurrent ? "page" : undefined}
                                     className="inline-flex min-h-11 items-center font-label-md text-label-md text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary"
                                     href={item.href}
-                                    prefetch={!isCurrent}
+                                    prefetch={false}
                                 >
                                     {item.label}
                                 </LocalizedLink>

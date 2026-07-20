@@ -65,6 +65,6 @@ export function createCategoryMetadataGenerator(kind: CategoryKind) {
             });
         }
 
-        return categoryMetadata({ category, path, locale });
+        return categoryMetadata({ category, path, locale, kind });
     };
 }

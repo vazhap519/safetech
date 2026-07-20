@@ -1,38 +1,40 @@
 import Image from "@/components/ui/Image";
 import { getSiteSettings } from "@/lib/site-settings";
-import { hasTranslatedText, translateText } from "@/lib/translations";
-
-const heroKeys = [
-    "projects.hero.eyebrow",
-    "projects.hero.title",
-    "projects.hero.description",
-];
+import { translateText } from "@/lib/translations";
 
 export default async function ProjectsHeroSection() {
     const { branding, locale, translations } = await getSiteSettings();
-
-    if (!hasTranslatedText(translations, heroKeys, locale)) {
-        return null;
-    }
 
     const eyebrow = translateText(
         translations,
         "projects.hero.eyebrow",
         locale,
-        null,
+        { ka: "განხორციელებული სამუშაოები", en: "Delivered work", ru: "Реализованные работы" },
     );
-    const title = translateText(translations, "projects.hero.title", locale, null);
+    const title = translateText(translations, "projects.hero.title", locale, {
+        ka: "IT და უსაფრთხოების პროექტები",
+        en: "IT and security projects",
+        ru: "Проекты IT и безопасности",
+    });
     const description = translateText(
         translations,
         "projects.hero.description",
         locale,
-        null,
+        {
+            ka: "ნახეთ როგორ ვგეგმავთ და ვნერგავთ ქსელურ, სერვერულ და უსაფრთხოების ინფრასტრუქტურას.",
+            en: "See how we design and deploy network, server, and security infrastructure.",
+            ru: "Посмотрите, как мы проектируем и внедряем сетевую, серверную инфраструктуру и системы безопасности.",
+        },
     );
     const imageAlt = translateText(
         translations,
         "projects.hero.imageAlt",
         locale,
-        null,
+        {
+            ka: "SafeTech-ის განხორციელებული ინფრასტრუქტურის პროექტი",
+            en: "Infrastructure project delivered by SafeTech",
+            ru: "Инфраструктурный проект, реализованный SafeTech",
+        },
     );
 
     return (

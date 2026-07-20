@@ -9,13 +9,95 @@ use App\Models\ProjectCategory;
 use App\Models\SeoPage;
 use App\Models\Service;
 use App\Models\SiteSetting;
+use Database\Seeders\ContentSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class ContentSeederTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_production_default_sync_does_not_create_demo_content(): void
+    {
+        $this->app->detectEnvironment(fn (): string => 'production');
+        config()->set('app.seed_demo_content', true);
+
+        try {
+            (new ContentSeeder)->run();
+
+            $this->assertSame(0, Service::query()->count());
+            $this->assertSame(0, Project::query()->count());
+            $this->assertGreaterThan(300, count(
+                SiteSetting::query()->where('key', 'translations')->value('value')['entries'] ?? [],
+            ));
+        } finally {
+            $this->app->detectEnvironment(fn (): string => 'testing');
+        }
+    }
+
+    public function test_default_sync_repairs_missing_privacy_translations_without_overwriting_admin_copy(): void
+    {
+        PrivacyPolicy::query()->create([
+            'title' => 'Administrator privacy title',
+            'highlight' => 'Administrator privacy highlight',
+            'content' => '<p>Administrator privacy content</p>',
+            'translations' => [
+                'fields' => [
+                    'title' => [
+                        'ka' => 'Administrator KA title',
+                        'en' => '',
+                    ],
+                    'content' => [
+                        'ka' => '<p>Administrator KA content</p>',
+                        'ru' => '',
+                    ],
+                ],
+            ],
+        ]);
+        $this->app->detectEnvironment(fn (): string => 'production');
+
+        try {
+            (new ContentSeeder)->run();
+        } finally {
+            $this->app->detectEnvironment(fn (): string => 'testing');
+        }
+
+        $privacy = PrivacyPolicy::query()->firstOrFail();
+
+        $this->assertSame('Administrator privacy title', $privacy->title);
+        $this->assertSame(
+            'Administrator KA title',
+            data_get($privacy->translations, 'fields.title.ka'),
+        );
+        $this->assertSame(
+            '<p>Administrator KA content</p>',
+            data_get($privacy->translations, 'fields.content.ka'),
+        );
+        $this->assertSame('Privacy Policy', data_get($privacy->translations, 'fields.title.en'));
+        $this->assertNotEmpty(data_get($privacy->translations, 'fields.title.ru'));
+        $this->assertNotEmpty(data_get($privacy->translations, 'fields.content.en'));
+        $this->assertNotEmpty(data_get($privacy->translations, 'fields.content.ru'));
+        $this->assertSame(1, PrivacyPolicy::query()->count());
+    }
+
+    public function test_privacy_policy_changes_clear_every_localized_api_cache(): void
+    {
+        foreach (['ka', 'en', 'ru'] as $locale) {
+            Cache::put("privacy_page:{$locale}", ['title' => 'Stale'], 300);
+        }
+
+        PrivacyPolicy::query()->create([
+            'title' => 'Privacy',
+            'highlight' => 'Privacy highlight',
+            'content' => '<p>Privacy content</p>',
+        ]);
+
+        foreach (['ka', 'en', 'ru'] as $locale) {
+            $this->assertFalse(Cache::has("privacy_page:{$locale}"));
+        }
+    }
 
     public function test_demo_seed_data_contains_calculators_translations_and_static_seo(): void
     {
@@ -30,6 +112,15 @@ class ContentSeederTest extends TestCase
             'seo_title' => 'ადმინიდან შეცვლილი სათაური',
             'translations' => $existingTranslations,
         ])->save();
+
+        $translationSetting = SiteSetting::query()->where('key', 'translations')->firstOrFail();
+        $translationValue = $translationSetting->value;
+        $aboutHeroIndex = collect($translationValue['entries'])->search(
+            fn (array $entry): bool => ($entry['key'] ?? null) === 'about.hero.title',
+        );
+        $translationValue['entries'][$aboutHeroIndex]['en'] = '';
+        $translationValue['entries'][$aboutHeroIndex]['ru'] = 'Администраторский заголовок';
+        $translationSetting->forceFill(['value' => $translationValue])->save();
 
         $this->seed(DatabaseSeeder::class);
 
@@ -68,10 +159,13 @@ class ContentSeederTest extends TestCase
         $this->assertGreaterThan(300, count($translationEntries));
         $translationsByKey = collect($translationEntries)->keyBy('key');
         $blogNavigation = $translationsByKey->get('nav.blog');
+        $aboutHero = $translationsByKey->get('about.hero.title');
 
         $this->assertSame('ბლოგი', $blogNavigation['ka'] ?? null);
         $this->assertSame('Blog', $blogNavigation['en'] ?? null);
         $this->assertSame('Блог', $blogNavigation['ru'] ?? null);
+        $this->assertSame('About SafeTech', $aboutHero['en'] ?? null);
+        $this->assertSame('Администраторский заголовок', $aboutHero['ru'] ?? null);
 
         foreach ($translationEntries as $entry) {
             $this->assertNotEmpty($entry['key'] ?? null);

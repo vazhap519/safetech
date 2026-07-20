@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Application\Content\PublicContentService;
+use App\Models\Service;
 use Database\Seeders\ContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -28,6 +29,12 @@ class PublicContentApiTest extends TestCase
         $this->getJson('/api/services/networking')
             ->assertOk()
             ->assertJsonPath('data.slug', 'networking');
+
+        $this->getJson('/api/services/cctv?locale=ru')
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Видеонаблюдение')
+            ->assertJsonPath('data.title', 'Монтаж и мониторинг видеонаблюдения')
+            ->assertJsonPath('data.category.name', 'Системы безопасности');
     }
 
     public function test_it_returns_projects_and_shared_content(): void
@@ -42,6 +49,44 @@ class PublicContentApiTest extends TestCase
         }
 
         $this->getJson('/api/projects')->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson('/api/projects/office-network-upgrade?locale=ru')
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Модернизация офисной сети')
+            ->assertJsonPath('data.title', 'Полная модернизация офисной сети')
+            ->assertJsonPath('data.categoryName', 'Офисы');
         $this->getJson('/api/content')->assertOk()->assertJsonStructure(['data' => ['team', 'partners', 'testimonials', 'faqs', 'settings']]);
+    }
+
+    public function test_filament_custom_entries_are_available_to_the_frontend_in_all_locales(): void
+    {
+        $this->seed(ContentSeeder::class);
+
+        $service = Service::query()->where('slug', 'cctv')->firstOrFail();
+        $translations = $service->translations;
+        $translations['entries'] = [
+            [
+                'key' => 'benefit.0.title',
+                'ka' => 'ქართული სარგებელი',
+                'en' => 'English benefit',
+                'ru' => 'Русское преимущество',
+            ],
+        ];
+        $service->forceFill(['translations' => $translations])->save();
+
+        $entries = collect(
+            $this->getJson('/api/content')
+                ->assertOk()
+                ->json('data.settings.translations.entries'),
+        )->keyBy('key');
+
+        $this->assertSame(
+            [
+                'key' => 'service.cctv.benefit.0.title',
+                'ka' => 'ქართული სარგებელი',
+                'en' => 'English benefit',
+                'ru' => 'Русское преимущество',
+            ],
+            $entries->get('service.cctv.benefit.0.title'),
+        );
     }
 }

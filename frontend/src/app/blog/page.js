@@ -26,7 +26,11 @@ export default async function BlogPage({ heading, searchParams, showPageSchema =
     getCurrentLocale(),
     getSiteSettings(),
   ]);
-  const title = translateText(translations, "blog.title", locale, null);
+  const title = translateText(translations, "blog.title", locale, {
+    ka: "პრაქტიკული გზამკვლევები და სიახლეები",
+    en: "Practical guides and updates",
+    ru: "Практические материалы и новости",
+  });
   const allLabel = translateText(translations, "blog.filter.all", locale, null);
   const emptyLabel = translateText(translations, "blog.empty", locale, null);
   const previousLabel = translateText(translations, "pagination.previous", locale, {
