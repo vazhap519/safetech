@@ -2,36 +2,25 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import type { MouseEvent } from "react";
 
+import { useLocalization } from "@/components/providers/LocalizationProvider";
 import {
-    DEFAULT_LOCALE,
-    isSupportedLocale,
     localeLabels,
     localizePath,
-    normalizeLocale,
     supportedLocales,
-    type Locale,
 } from "@/lib/locales";
 
 type LocaleSwitcherProps = {
-    currentLocale: Locale;
     variant?: "header" | "footer";
 };
 
 export default function LocaleSwitcher({
-    currentLocale,
     variant = "footer",
 }: LocaleSwitcherProps) {
+    const { locale: activeLocale, selectLocale } = useLocalization();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const pathLocale = (() => {
-        const firstSegment = (pathname || "/").split("/").filter(Boolean)[0];
-
-        return isSupportedLocale(firstSegment)
-            ? normalizeLocale(firstSegment)
-            : DEFAULT_LOCALE;
-    })();
-    const activeLocale = pathLocale || currentLocale;
 
     const wrapperClassName =
         variant === "header"
@@ -65,6 +54,21 @@ export default function LocaleSwitcher({
                         ? { minHeight: 44, minWidth: 44 }
                         : undefined;
 
+                function handleLocaleClick(
+                    event: MouseEvent<HTMLAnchorElement>,
+                ) {
+                    const isPlainLeftClick =
+                        event.button === 0 &&
+                        !event.altKey &&
+                        !event.ctrlKey &&
+                        !event.metaKey &&
+                        !event.shiftKey;
+
+                    if (isPlainLeftClick && !event.defaultPrevented) {
+                        selectLocale(locale);
+                    }
+                }
+
                 return isActive ? (
                     <span
                         aria-current="page"
@@ -79,6 +83,7 @@ export default function LocaleSwitcher({
                         className={className}
                         href={nextPath}
                         key={locale}
+                        onClick={handleLocaleClick}
                         prefetch
                         replace
                         scroll={false}

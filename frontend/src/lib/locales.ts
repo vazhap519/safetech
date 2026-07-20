@@ -33,6 +33,14 @@ export function isNonDefaultLocale(value?: string | null): value is Locale {
     return locale !== DEFAULT_LOCALE && supportedLocales.includes(locale);
 }
 
+export function getLocaleFromPath(pathname?: string | null): Locale {
+    const firstSegment = (pathname || "/").split("/").filter(Boolean)[0];
+
+    return isSupportedLocale(firstSegment)
+        ? normalizeLocale(firstSegment)
+        : DEFAULT_LOCALE;
+}
+
 function splitPathParts(path: string) {
     const [pathnameWithQuery = "/", hash = ""] = path.split("#", 2);
     const [pathname = "/", search = ""] = pathnameWithQuery.split("?", 2);
