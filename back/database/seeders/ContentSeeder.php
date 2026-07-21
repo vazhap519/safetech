@@ -15,6 +15,17 @@ class ContentSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->seedSystemContent();
+
+        if (app()->environment('production') || ! config('app.seed_demo_content')) {
+            return;
+        }
+
+        $this->seedDemoContent();
+    }
+
+    protected function seedSystemContent(): void
+    {
         foreach ($this->defaultSiteSettings() as $key => $value) {
             $setting = SiteSetting::query()->firstOrCreate(
                 ['key' => $key],
@@ -43,11 +54,10 @@ class ContentSeeder extends Seeder
         }
 
         $this->seedPrivacyPolicy();
+    }
 
-        if (app()->environment('production') || ! config('app.seed_demo_content')) {
-            return;
-        }
-
+    protected function seedDemoContent(): void
+    {
         $serviceCategories = collect($this->serviceCategories())
             ->mapWithKeys(function (array $category): array {
                 $record = CategoryForService::query()->firstOrCreate(

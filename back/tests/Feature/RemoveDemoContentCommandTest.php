@@ -9,6 +9,8 @@ use App\Models\ProjectCategory;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use Database\Seeders\ContentSeeder;
+use Database\Seeders\DemoContentSeeder;
+use Database\Seeders\SystemContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -65,5 +67,48 @@ class RemoveDemoContentCommandTest extends TestCase
         $this->assertSame(0, ProjectCategory::query()->count());
         $this->assertTrue(SiteSetting::query()->where('key', 'translations')->exists());
         $this->assertSame(1, PrivacyPolicy::query()->count());
+    }
+
+    public function test_system_and_demo_seeders_have_isolated_responsibilities(): void
+    {
+        config()->set('app.seed_demo_content', true);
+
+        $this->seed(SystemContentSeeder::class);
+
+        $this->assertTrue(SiteSetting::query()->where('key', 'translations')->exists());
+        $this->assertSame(1, PrivacyPolicy::query()->count());
+        $this->assertSame(0, Service::query()->count());
+        $this->assertSame(0, Project::query()->count());
+
+        $this->seed(DemoContentSeeder::class);
+
+        $this->assertGreaterThan(0, Service::query()->count());
+        $this->assertGreaterThan(0, Project::query()->count());
+    }
+
+    public function test_demo_cleanup_preserves_edited_records_with_bundled_slugs(): void
+    {
+        config()->set('app.seed_demo_content', true);
+        $this->seed(ContentSeeder::class);
+
+        Service::query()->where('slug', 'cctv')->firstOrFail()->update([
+            'title' => 'Custom CCTV service',
+        ]);
+        Project::query()->where('slug', 'office-network-upgrade')->firstOrFail()->update([
+            'description' => 'A real customer project managed from the CMS.',
+        ]);
+
+        $this->artisan('cms:remove-demo-content', ['--force' => true])
+            ->assertSuccessful();
+
+        $this->assertDatabaseHas('services', [
+            'slug' => 'cctv',
+            'title' => 'Custom CCTV service',
+        ]);
+        $this->assertDatabaseHas('projects', [
+            'slug' => 'office-network-upgrade',
+            'description' => 'A real customer project managed from the CMS.',
+        ]);
+        $this->assertDatabaseMissing('services', ['slug' => 'networking']);
     }
 }

@@ -15,7 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(ContentSeeder::class);
+        $this->call(SystemContentSeeder::class);
+
+        if (! app()->environment('production') && config('app.seed_demo_content')) {
+            $this->call(DemoContentSeeder::class);
+        }
+
         $this->call(SeoPageSeeder::class);
 
         if (env('ADMIN_EMAIL') && env('ADMIN_PASSWORD')) {

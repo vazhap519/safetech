@@ -13,13 +13,28 @@ use Illuminate\Support\Facades\DB;
 
 class RemoveDemoContent extends Command
 {
-    /** @var array<int, string> */
-    private const SERVICE_SLUGS = [
-        'cctv',
-        'networking',
-        'access-control',
-        'server-infrastructure',
-        'it-support',
+    /** @var array<string, array{title: string, description: string}> */
+    private const SERVICE_FINGERPRINTS = [
+        'cctv' => [
+            'title' => 'CCTV installation and monitoring',
+            'description' => 'Professional camera systems for offices, retail, warehouses, and residential buildings.',
+        ],
+        'networking' => [
+            'title' => 'Network Infrastructure',
+            'description' => 'Structured cabling, routers, switches, Wi-Fi coverage, and secure business networks.',
+        ],
+        'access-control' => [
+            'title' => 'Access control and attendance systems',
+            'description' => 'Card, PIN, biometric, and face-recognition access control for secure workplaces.',
+        ],
+        'server-infrastructure' => [
+            'title' => 'Server infrastructure and virtualization',
+            'description' => 'Server deployment, virtualization, storage, backup, and infrastructure monitoring.',
+        ],
+        'it-support' => [
+            'title' => 'Managed IT support for business',
+            'description' => 'Remote and on-site IT support, monitoring, asset management, and practical SLA plans.',
+        ],
     ];
 
     /** @var array<int, string> */
@@ -30,8 +45,13 @@ class RemoveDemoContent extends Command
         'it-support',
     ];
 
-    /** @var array<int, string> */
-    private const PROJECT_SLUGS = ['office-network-upgrade'];
+    /** @var array<string, array{title: string, description: string}> */
+    private const PROJECT_FINGERPRINTS = [
+        'office-network-upgrade' => [
+            'title' => 'Office Network Upgrade',
+            'description' => 'A complete network refresh with structured cabling, managed switching, and Wi-Fi coverage.',
+        ],
+    ];
 
     /** @var array<int, string> */
     private const PROJECT_CATEGORY_SLUGS = ['offices'];
@@ -39,18 +59,38 @@ class RemoveDemoContent extends Command
     protected $signature = 'cms:remove-demo-content
                             {--force : Remove matching demo records without confirmation}';
 
-    protected $description = 'Remove bundled demo services and projects while preserving records with other slugs';
+    protected $description = 'Remove untouched bundled demo services and projects while preserving edited CMS records';
 
     public function handle(): int
     {
-        $services = Service::query()
-            ->whereIn('slug', self::SERVICE_SLUGS)
-            ->orderBy('slug')
-            ->get();
-        $projects = Project::query()
-            ->whereIn('slug', self::PROJECT_SLUGS)
-            ->orderBy('slug')
-            ->get();
+        $services = collect(self::SERVICE_FINGERPRINTS)
+            ->map(function (array $fingerprint, string $slug): ?Service {
+                return Service::query()
+                    ->where('slug', $slug)
+                    ->where('title', $fingerprint['title'])
+                    ->where('description', $fingerprint['description'])
+                    ->whereNull('hero_image')
+                    ->whereColumn('created_at', 'updated_at')
+                    ->whereDoesntHave('media')
+                    ->first();
+            })
+            ->filter()
+            ->sortBy('slug')
+            ->values();
+        $projects = collect(self::PROJECT_FINGERPRINTS)
+            ->map(function (array $fingerprint, string $slug): ?Project {
+                return Project::query()
+                    ->where('slug', $slug)
+                    ->where('title', $fingerprint['title'])
+                    ->where('description', $fingerprint['description'])
+                    ->whereNull('image')
+                    ->whereColumn('created_at', 'updated_at')
+                    ->whereDoesntHave('media')
+                    ->first();
+            })
+            ->filter()
+            ->sortBy('slug')
+            ->values();
         $serviceCategories = CategoryForService::query()
             ->whereIn('slug', self::SERVICE_CATEGORY_SLUGS)
             ->whereDoesntHave('services')
@@ -96,7 +136,7 @@ class RemoveDemoContent extends Command
             ->all();
 
         $this->table(['Type', 'Slug', 'Title'], $rows);
-        $this->warn('Only exact bundled demo slugs and their unused categories will be removed. Records with other slugs are preserved.');
+        $this->warn('Only untouched bundled records without uploaded media and their unused categories will be removed. Edited CMS records are preserved.');
 
         if (! $this->option('force') && ! $this->confirm('Remove these demo records?', false)) {
             $this->info('No records were changed.');

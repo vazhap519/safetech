@@ -43,7 +43,7 @@ class UserResource extends Resource
             TextInput::make('password')
                 ->label('პაროლი')
                 ->password()
-                ->revealable()
+                ->revealable(false)
                 ->autocomplete('new-password')
                 ->required(fn (string $operation): bool => $operation === 'create')
                 ->dehydrated(fn (?string $state): bool => filled($state))

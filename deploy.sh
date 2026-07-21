@@ -194,8 +194,14 @@ for required_file in \
     fi
 done
 
+# Embedded PHP is intentionally single-quoted to prevent shell expansion.
+# shellcheck disable=SC2016
 php -r '
 $missing = [];
+
+if (PHP_VERSION_ID < 80300) {
+    $missing[] = "PHP 8.3 or newer";
+}
 
 if (! extension_loaded("pdo_pgsql")) {
     $missing[] = "pdo_pgsql";
@@ -289,8 +295,10 @@ composer --working-dir="${API_DIR}" audit --locked --no-dev --no-interaction
 php "${API_DIR}/artisan" config:clear
 php "${API_DIR}/artisan" route:clear
 php "${API_DIR}/artisan" view:clear
+php "${API_DIR}/artisan" cms:production-check
 php "${API_DIR}/artisan" migrate --force
-php "${API_DIR}/artisan" db:seed --class=ContentSeeder --force
+php "${API_DIR}/artisan" db:seed --class=SystemContentSeeder --force
+php "${API_DIR}/artisan" cms:remove-demo-content --force
 php "${API_DIR}/artisan" cache:clear
 php "${API_DIR}/artisan" storage:link --force
 php "${API_DIR}/artisan" optimize
@@ -433,6 +441,7 @@ case "${static_asset_path}" in
         ;;
 esac
 
+# shellcheck disable=SC2016
 if ! sitemap_urls="$(php -r '
     libxml_use_internal_errors(true);
     $document = new DOMDocument();
@@ -459,6 +468,7 @@ while IFS= read -r sitemap_url; do
     child_sitemap="$(curl --fail --silent --show-error --retry 3 --retry-delay 1 \
         "${sitemap_url}")"
 
+    # shellcheck disable=SC2016
     if ! child_page_urls="$(php -r '
         libxml_use_internal_errors(true);
         $document = new DOMDocument();
@@ -555,6 +565,7 @@ fi
 manifest_json="$(curl --fail --silent --show-error --retry 3 --retry-delay 1 \
     "https://safetech.ge/manifest.webmanifest")"
 
+# shellcheck disable=SC2016
 if ! php -r '
     $manifest = json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR);
     exit(isset($manifest["name"], $manifest["start_url"]) ? 0 : 1);

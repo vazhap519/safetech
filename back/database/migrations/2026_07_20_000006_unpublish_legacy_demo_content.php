@@ -63,7 +63,6 @@ return new class extends Migration
 
             $query->update([
                 'is_published' => false,
-                'updated_at' => now(),
             ]);
         }
     }
@@ -89,7 +88,6 @@ return new class extends Migration
 
         $updates = [
             'is_published' => false,
-            'updated_at' => now(),
         ];
 
         if (Schema::hasColumn('projects', 'is_featured')) {
