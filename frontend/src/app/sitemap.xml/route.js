@@ -1,6 +1,6 @@
 import { fetchImageSitemapItems, sitemapIndex, xmlResponse } from "@/lib/sitemap";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const imageItems = await fetchImageSitemapItems();

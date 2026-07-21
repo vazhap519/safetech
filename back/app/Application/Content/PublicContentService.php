@@ -67,7 +67,7 @@ final class PublicContentService
         $map = MultilingualContent::mapFrom($configuredTranslations);
 
         Service::query()
-            ->published()
+            ->publiclyVisible()
             ->with('faqs')
             ->get()
             ->each(function (Service $service) use (&$map): void {
@@ -93,7 +93,7 @@ final class PublicContentService
             });
 
         Project::query()
-            ->published()
+            ->publiclyVisible()
             ->get()
             ->each(function (Project $project) use (&$map): void {
                 $prefix = "project.{$project->slug}";

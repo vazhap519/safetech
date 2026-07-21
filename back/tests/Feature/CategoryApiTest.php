@@ -23,6 +23,7 @@ class CategoryApiTest extends TestCase
             'category_id' => $category->id,
             'title' => 'Published post',
             'slug' => 'published-post',
+            'excerpt' => 'Published article content.',
             'is_published' => true,
         ]);
 
@@ -58,7 +59,9 @@ class CategoryApiTest extends TestCase
         Project::query()->create([
             'category_id' => $projectCategory->id,
             'slug' => 'office-project',
+            'name' => 'Office project',
             'title' => 'Office project',
+            'description' => 'A complete office infrastructure project.',
             'is_published' => true,
         ]);
 

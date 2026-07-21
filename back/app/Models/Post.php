@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -84,6 +85,23 @@ class Post extends Model implements HasMedia
     public function sections(): HasMany
     {
         return $this->hasMany(PostSection::class)->orderBy('position');
+    }
+
+    public function scopePubliclyVisible(Builder $query): Builder
+    {
+        return $query
+            ->where('is_published', true)
+            ->whereNotNull('slug')
+            ->whereRaw("TRIM(COALESCE(slug, '')) <> ''")
+            ->whereRaw("TRIM(COALESCE(title, '')) <> ''")
+            ->where(function (Builder $content): void {
+                $content
+                    ->whereRaw("TRIM(COALESCE(excerpt, '')) <> ''")
+                    ->orWhereRaw("TRIM(COALESCE(body, '')) <> ''")
+                    ->orWhereHas('sections', fn (Builder $section): Builder => $section
+                        ->whereNotNull('content')
+                        ->whereRaw("TRIM(COALESCE(content, '')) <> ''"));
+            });
     }
 
     public function getRouteKeyName(): string

@@ -1,6 +1,8 @@
 import {
   buildSitemapApiUrl,
-  getLastPage,
+  fetchPaginatedPages,
+  isIndexableBlogPost,
+  isIndexableCategory,
   localizedUrlEntries,
   safeFetchJson,
   urlset,
@@ -11,25 +13,35 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const categoriesRes = await safeFetchJson(buildSitemapApiUrl("/categories"));
+
+  if (!categoriesRes) {
+    throw new Error("Unable to load blog categories for the sitemap");
+  }
+
   const categories = Array.isArray(categoriesRes)
     ? categoriesRes
     : categoriesRes?.data || [];
   const urls = [];
 
-  for (const category of categories.filter((item) => item?.slug && !item?.noindex)) {
-    urls.push(...localizedUrlEntries(`/blog/category/${category.slug}`, {
+  for (const category of categories.filter(isIndexableCategory)) {
+    const categoryBlog = await fetchPaginatedPages("/blog", {
+      category: category.slug,
+    });
+    const indexablePages = categoryBlog.pages.filter((page) =>
+      page.items.some(isIndexableBlogPost)
+    );
+
+    if (!indexablePages.length) continue;
+
+    const encodedSlug = encodeURIComponent(category.slug);
+    urls.push(...localizedUrlEntries(`/blog/category/${encodedSlug}`, {
       ...(category.updated_at ? { lastmod: category.updated_at } : {}),
       changefreq: "weekly",
       priority: "0.6",
     }));
 
-    const categoryRes = await safeFetchJson(
-      buildSitemapApiUrl("/blog", { category: category.slug, page: 1 })
-    );
-    const lastPage = getLastPage(categoryRes);
-
-    for (let page = 2; page <= lastPage; page += 1) {
-      urls.push(...localizedUrlEntries(`/blog/category/${category.slug}/page/${page}`, {
+    for (const page of indexablePages.filter((item) => item.page >= 2)) {
+      urls.push(...localizedUrlEntries(`/blog/category/${encodedSlug}/page/${page.page}`, {
         changefreq: "weekly",
         priority: "0.4",
       }));

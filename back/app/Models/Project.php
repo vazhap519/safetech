@@ -40,6 +40,26 @@ class Project extends Model implements HasMedia
         return $query->where('is_published', true)->orderBy('sort_order');
     }
 
+    public function scopePubliclyVisible(Builder $query): Builder
+    {
+        return $query
+            ->where('is_published', true)
+            ->whereNotNull('slug')
+            ->whereRaw("TRIM(COALESCE(slug, '')) <> ''")
+            ->where(function (Builder $headline): void {
+                $headline
+                    ->whereRaw("TRIM(COALESCE(name, '')) <> ''")
+                    ->orWhereRaw("TRIM(COALESCE(title, '')) <> ''");
+            })
+            ->where(function (Builder $content): void {
+                $content
+                    ->whereRaw("TRIM(COALESCE(description, '')) <> ''")
+                    ->orWhereRaw("TRIM(COALESCE(excerpt, '')) <> ''")
+                    ->orWhereRaw("TRIM(COALESCE(content, '')) <> ''");
+            })
+            ->orderBy('sort_order');
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';

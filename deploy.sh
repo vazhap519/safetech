@@ -452,12 +452,14 @@ if ! sitemap_urls="$(php -r '
     exit 1
 fi
 
+sitemap_page_urls=""
+
 while IFS= read -r sitemap_url; do
     [[ -z "${sitemap_url}" ]] && continue
     child_sitemap="$(curl --fail --silent --show-error --retry 3 --retry-delay 1 \
         "${sitemap_url}")"
 
-    if ! php -r '
+    if ! child_page_urls="$(php -r '
         libxml_use_internal_errors(true);
         $document = new DOMDocument();
         $xml = stream_get_contents(STDIN);
@@ -465,11 +467,62 @@ while IFS= read -r sitemap_url; do
         if (! $document->loadXML($xml) || $document->documentElement?->localName !== "urlset") {
             exit(1);
         }
-    ' <<< "${child_sitemap}"; then
+
+        $xpath = new DOMXPath($document);
+
+        foreach ($xpath->query("/*[local-name()=\"urlset\"]/*[local-name()=\"url\"]/*[local-name()=\"loc\"]") as $location) {
+            $url = trim($location->textContent);
+            $parts = parse_url($url);
+
+            if (
+                ! is_array($parts)
+                || ($parts["scheme"] ?? null) !== "https"
+                || ($parts["host"] ?? null) !== "safetech.ge"
+                || isset($parts["user"])
+                || isset($parts["pass"])
+                || isset($parts["port"])
+                || isset($parts["fragment"])
+            ) {
+                exit(1);
+            }
+
+            echo $url, PHP_EOL;
+        }
+    ' <<< "${child_sitemap}")"; then
         echo "Invalid child sitemap: ${sitemap_url}" >&2
         exit 1
     fi
+
+    if [[ -n "${child_page_urls}" ]]; then
+        sitemap_page_urls+=$'\n'"${child_page_urls}"
+    fi
 done <<< "${sitemap_urls}"
+
+sitemap_page_urls="$(printf '%s\n' "${sitemap_page_urls}" \
+    | sed '/^[[:space:]]*$/d' \
+    | sort -u)"
+
+if [[ -z "${sitemap_page_urls}" ]]; then
+    echo "Sitemap does not contain any indexable page URLs." >&2
+    exit 1
+fi
+
+while IFS= read -r page_url; do
+    [[ -z "${page_url}" ]] && continue
+
+    if ! page_status="$(curl --silent --show-error --compressed \
+        --retry 3 --retry-delay 1 --max-time 30 \
+        -o /dev/null -w '%{http_code}' \
+        "${page_url}")"; then
+        echo "Unable to load sitemap page: ${page_url}" >&2
+        exit 1
+    fi
+
+    if [[ "${page_status}" != "200" ]]; then
+        echo "Sitemap page returned HTTP ${page_status}: ${page_url}" >&2
+        exit 1
+    fi
+done <<< "${sitemap_page_urls}"
 
 robots_content="$(curl --fail --silent --show-error --retry 3 --retry-delay 1 \
     "https://safetech.ge/robots.txt")"

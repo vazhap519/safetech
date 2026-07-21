@@ -11,7 +11,7 @@ final class EloquentServiceRepository implements ServiceRepository
     public function allPublished(?string $category = null): Collection
     {
         return Service::query()
-            ->published()
+            ->publiclyVisible()
             ->with(['category', 'media', 'faqs' => fn ($query) => $query->active()])
             ->when(
                 $category && $category !== 'all',
@@ -26,7 +26,7 @@ final class EloquentServiceRepository implements ServiceRepository
     public function findPublishedBySlug(string $slug): ?Service
     {
         return Service::query()
-            ->published()
+            ->publiclyVisible()
             ->with(['category', 'media', 'faqs' => fn ($query) => $query->active()])
             ->where('slug', $slug)
             ->first();

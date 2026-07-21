@@ -51,10 +51,6 @@ export function buildSitemapApiUrl(path, params = {}) {
   return url.toString();
 }
 
-export function getLastPage(json) {
-  return Number(json?.data?.meta?.last_page || json?.meta?.last_page || 1);
-}
-
 function escapeXml(value = "") {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -129,10 +125,122 @@ function sitemapCollection(response) {
   return Array.isArray(response?.data) ? response.data : [];
 }
 
-export async function categorySitemapResponse({ endpoint, pathPrefix, priority }) {
-  const response = await safeFetchJson(buildSitemapApiUrl(endpoint));
+function meaningfulText(value) {
+  if (typeof value === "string") {
+    return value
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&(?:nbsp|#160);/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(meaningfulText).filter(Boolean).join(" ");
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).map(meaningfulText).filter(Boolean).join(" ");
+  }
+
+  return "";
+}
+
+export function hasMeaningfulContent(...values) {
+  return values.some((value) => meaningfulText(value).length > 0);
+}
+
+export function hasValidSitemapSlug(value) {
+  return typeof value === "string"
+    && value.trim() === value
+    && value.length > 0
+    && !/[/?#\s]/.test(value);
+}
+
+export function isIndexableService(service) {
+  return Boolean(
+    hasValidSitemapSlug(service?.slug)
+    && !service?.seo?.noindex
+    && hasMeaningfulContent(service?.title, service?.name)
+    && hasMeaningfulContent(
+      service?.description,
+      service?.shortDescription,
+      service?.longDescription,
+      service?.overview,
+      service?.benefits,
+      service?.solutions,
+      service?.features,
+      service?.process,
+      service?.warranty,
+      service?.sla,
+    )
+  );
+}
+
+export function isIndexableProject(project) {
+  return Boolean(
+    hasValidSitemapSlug(project?.slug)
+    && !project?.seo?.noindex
+    && hasMeaningfulContent(project?.title, project?.name)
+    && hasMeaningfulContent(
+      project?.description,
+      project?.overview,
+      project?.scope,
+      project?.challenges,
+      project?.solutions,
+      project?.process,
+      project?.results,
+    )
+  );
+}
+
+export function isIndexableBlogPost(post) {
+  return Boolean(
+    hasValidSitemapSlug(post?.slug)
+    && !post?.meta?.noindex
+    && hasMeaningfulContent(post?.title)
+    && (
+      post?.has_content === true
+      || hasMeaningfulContent(post?.excerpt, post?.body, post?.sections)
+    )
+  );
+}
+
+export function isIndexableCategory(category) {
+  return Boolean(
+    hasValidSitemapSlug(category?.slug)
+    && !category?.noindex
+    && hasMeaningfulContent(category?.name)
+  );
+}
+
+export async function categorySitemapResponse({
+  endpoint,
+  pathPrefix,
+  priority,
+  contentEndpoint,
+  contentFilter,
+  categorySlug,
+}) {
+  const [response, content] = await Promise.all([
+    safeFetchJson(buildSitemapApiUrl(endpoint)),
+    contentEndpoint ? fetchAllPaginated(contentEndpoint) : Promise.resolve([]),
+  ]);
+
+  if (!response) {
+    throw new Error(`Unable to load sitemap categories from ${endpoint}`);
+  }
+
+  const eligibleCategorySlugs = contentEndpoint
+    ? new Set(
+      content
+        .filter((item) => contentFilter?.(item) ?? true)
+        .map((item) => categorySlug?.(item))
+        .filter(hasValidSitemapSlug),
+    )
+    : null;
   const urls = sitemapCollection(response)
-    .filter((category) => category?.slug && !category?.noindex)
+    .filter((category) => isIndexableCategory(category))
+    .filter((category) => !eligibleCategorySlugs || eligibleCategorySlugs.has(category.slug))
     .flatMap((category) => localizedUrlEntries(
       `${pathPrefix}/${encodeURIComponent(category.slug)}`,
       {
@@ -145,10 +253,11 @@ export async function categorySitemapResponse({ endpoint, pathPrefix, priority }
   return xmlResponse(urlset(urls));
 }
 
-export async function fetchAllPaginated(path, params = {}) {
+export async function fetchPaginatedPages(path, params = {}) {
   let page = 1;
   let lastPage = 1;
   const items = [];
+  const pages = [];
 
   do {
     const query = {
@@ -158,18 +267,30 @@ export async function fetchAllPaginated(path, params = {}) {
 
     const json = await safeFetchJson(buildSitemapApiUrl(path, query));
 
+    if (!json) {
+      throw new Error(`Unable to load sitemap content from ${path}, page ${page}`);
+    }
+
     const pageItems = json?.data?.services || json?.data || [];
     const meta = json?.data?.meta || json?.meta || {};
 
     if (Array.isArray(pageItems)) {
       items.push(...pageItems);
+      pages.push({ page, items: pageItems });
     }
 
-    lastPage = Number(meta.last_page || 1);
+    const reportedLastPage = Number(meta.last_page || 1);
+    lastPage = Number.isFinite(reportedLastPage)
+      ? Math.max(1, Math.min(reportedLastPage, 1000))
+      : 1;
     page += 1;
   } while (page <= lastPage);
 
-  return items;
+  return { items, pages, lastPage };
+}
+
+export async function fetchAllPaginated(path, params = {}) {
+  return (await fetchPaginatedPages(path, params)).items;
 }
 
 export async function fetchImageSitemapItems() {
@@ -180,18 +301,18 @@ export async function fetchImageSitemapItems() {
   ]);
 
   return [
-    ...services.filter((service) => !service?.seo?.noindex).map((service) => ({
-      loc: `${normalizeBaseUrl()}/services/${service.slug}`,
+    ...services.filter(isIndexableService).map((service) => ({
+      loc: `${normalizeBaseUrl()}/services/${encodeURIComponent(service.slug)}`,
       image: backendAssetUrl(service.image),
       title: service.title || service.name,
     })),
-    ...projects.filter((project) => !project?.seo?.noindex).map((project) => ({
-      loc: `${normalizeBaseUrl()}/projects/${project.slug}`,
+    ...projects.filter(isIndexableProject).map((project) => ({
+      loc: `${normalizeBaseUrl()}/projects/${encodeURIComponent(project.slug)}`,
       image: backendAssetUrl(project.image),
       title: project.title || project.name,
     })),
-    ...posts.filter((post) => !post?.meta?.noindex).map((post) => ({
-      loc: `${normalizeBaseUrl()}/blog/${post.slug}`,
+    ...posts.filter(isIndexableBlogPost).map((post) => ({
+      loc: `${normalizeBaseUrl()}/blog/${encodeURIComponent(post.slug)}`,
       image: backendAssetUrl(post.image),
       title: post.title,
     })),
@@ -216,12 +337,14 @@ ${paths
 }
 
 export function urlset(urls) {
-  const hasAlternates = urls.some((item) => item?.alternates);
+  const uniqueUrls = Array.from(
+    new Map(urls.filter((item) => item?.loc).map((item) => [item.loc, item])).values(),
+  );
+  const hasAlternates = uniqueUrls.some((item) => item?.alternates);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${hasAlternates ? '\n  xmlns:xhtml="http://www.w3.org/1999/xhtml"' : ""}>
-${urls
-  .filter((item) => item?.loc)
+${uniqueUrls
   .map(
     (item) => `  <url>
     <loc>${escapeXml(item.loc)}</loc>
@@ -238,11 +361,18 @@ ${urls
 }
 
 export function imageUrlset(items) {
+  const uniqueItems = Array.from(
+    new Map(
+      items
+        .filter((item) => item?.loc && item?.image)
+        .map((item) => [`${item.loc}\n${item.image}`, item]),
+    ).values(),
+  );
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-${items
-  .filter((item) => item?.loc && item?.image)
+${uniqueItems
   .map(
     (item) => `  <url>
     <loc>${escapeXml(item.loc)}</loc>

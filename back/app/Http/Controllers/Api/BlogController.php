@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Support\MultilingualContent;
 use App\Support\PublicContentCache;
+use App\Support\PublicContentEligibility;
 use App\Support\SafeHtml;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,35 +19,44 @@ class BlogController extends Controller
     public function index(Request $request): JsonResponse
     {
         $category = $request->string('category')->toString();
-        $page = $request->integer('page', 1);
+        $page = max(1, $request->integer('page', 1));
         $locale = $this->locale($request);
 
-        $cacheKey = PublicContentCache::key("blog:index:{$locale}:{$category}:page:{$page}");
+        $cacheKey = PublicContentCache::key("blog:index:{$locale}:{$category}:all");
 
-        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($category, $locale) {
+        $posts = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($category, $locale) {
             $query = Post::query()
-                ->with(['category:id,name,slug,translations', 'media'])
-                ->where('is_published', true);
+                ->with([
+                    'category:id,name,slug,translations',
+                    'media',
+                    'sections:id,post_id,content,translations',
+                ])
+                ->publiclyVisible();
 
             if ($category && $category !== 'all') {
                 $query->whereHas('category', fn ($q) => $q->where('slug', $category));
             }
 
-            $posts = $query->latest()->paginate(9);
-
-            return [
-                'data' => $posts->getCollection()
-                    ->map(fn ($post) => $this->transformPostCard($post, $locale))
-                    ->values()
-                    ->all(),
-                'meta' => [
-                    'current_page' => $posts->currentPage(),
-                    'last_page' => $posts->lastPage(),
-                    'per_page' => $posts->perPage(),
-                    'total' => $posts->total(),
-                ],
-            ];
+            return $query
+                ->latest()
+                ->get()
+                ->filter(fn (Post $post): bool => PublicContentEligibility::post($post, $locale))
+                ->map(fn (Post $post): array => $this->transformPostCard($post, $locale))
+                ->values()
+                ->all();
         });
+
+        $pageSize = 9;
+        $total = count($posts);
+        $data = [
+            'data' => array_slice($posts, ($page - 1) * $pageSize, $pageSize),
+            'meta' => [
+                'current_page' => $page,
+                'last_page' => max(1, (int) ceil($total / $pageSize)),
+                'per_page' => $pageSize,
+                'total' => $total,
+            ],
+        ];
 
         return response()->json($data);
     }
@@ -65,8 +75,10 @@ class BlogController extends Controller
                     'media',
                 ])
                 ->where('slug', $slug)
-                ->where('is_published', true)
+                ->publiclyVisible()
                 ->firstOrFail();
+
+            abort_unless(PublicContentEligibility::post($post, $locale), 404);
 
             return [
                 'data' => $this->transformPostDetail($post, $locale),
@@ -97,6 +109,7 @@ class BlogController extends Controller
             'meta' => [
                 'noindex' => (bool) $post->noindex,
             ],
+            'has_content' => true,
             'category' => [
                 'name' => $post->category
                     ? $this->translated($post->category, 'name', $post->category->name, $locale)
@@ -113,6 +126,35 @@ class BlogController extends Controller
         $metaTitle = $this->translated($post, 'metaTitle', $post->meta_title ?: $post->title, $locale);
         $metaDescription = $this->translated($post, 'metaDescription', $post->meta_description, $locale);
         $localizedKeywords = data_get($post->translations, "keywords.{$locale}");
+        $sections = $post->sections
+            ->sortBy('position')
+            ->values()
+            ->map(fn ($section) => [
+                'id' => $section->id,
+                'title' => $this->translated($section, 'title', $section->title, $locale),
+                'content' => $this->safeHtml->sanitize(
+                    $this->translated($section, 'content', $section->content, $locale),
+                ),
+                'position' => $section->position,
+            ])
+            ->filter(fn (array $section): bool => PublicContentEligibility::hasMeaningfulText($section['content']))
+            ->values()
+            ->all();
+
+        if (! $sections) {
+            $body = $this->safeHtml->sanitize(
+                $this->translated($post, 'body', $post->body, $locale),
+            );
+
+            if (PublicContentEligibility::hasMeaningfulText($body)) {
+                $sections[] = [
+                    'id' => null,
+                    'title' => '',
+                    'content' => $body,
+                    'position' => 0,
+                ];
+            }
+        }
 
         return [
             'title' => $title,
@@ -146,18 +188,7 @@ class BlogController extends Controller
                 'avatar' => $this->getAuthorAvatar($post),
                 'socials' => $post->author->socials,
             ] : null,
-            'sections' => $post->sections
-                ->sortBy('position')
-                ->values()
-                ->map(fn ($section) => [
-                    'id' => $section->id,
-                    'title' => $this->translated($section, 'title', $section->title, $locale),
-                    'content' => $this->safeHtml->sanitize(
-                        $this->translated($section, 'content', $section->content, $locale),
-                    ),
-                    'position' => $section->position,
-                ])
-                ->all(),
+            'sections' => $sections,
             'related' => $this->getRelatedPosts($post, $locale),
         ];
     }
@@ -177,11 +208,13 @@ class BlogController extends Controller
         return Post::query()
             ->where('category_id', $post->category_id)
             ->where('id', '!=', $post->id)
-            ->where('is_published', true)
+            ->publiclyVisible()
             ->latest()
-            ->limit(3)
-            ->with('media')
+            ->limit(12)
+            ->with(['media', 'sections:id,post_id,content,translations'])
             ->get()
+            ->filter(fn (Post $item): bool => PublicContentEligibility::post($item, $locale))
+            ->take(3)
             ->map(fn (Post $item) => [
                 'title' => $this->translated($item, 'title', $item->title, $locale),
                 'slug' => $item->slug,

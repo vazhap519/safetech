@@ -11,7 +11,7 @@ final class EloquentProjectRepository implements ProjectRepository
     public function allPublished(?bool $featured = null, ?string $category = null): Collection
     {
         return Project::query()
-            ->published()
+            ->publiclyVisible()
             ->with(['category', 'media'])
             ->when($featured !== null, fn ($query) => $query->where('is_featured', $featured))
             ->when(
@@ -27,7 +27,7 @@ final class EloquentProjectRepository implements ProjectRepository
     public function findPublishedBySlug(string $slug): ?Project
     {
         return Project::query()
-            ->published()
+            ->publiclyVisible()
             ->with(['category', 'media'])
             ->where('slug', $slug)
             ->first();

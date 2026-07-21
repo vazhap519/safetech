@@ -209,7 +209,7 @@ Do not edit files inside `/var/www/safetech-source`. Commit and push changes to 
 sudo bash /var/www/safetech-source/deploy.sh
 ```
 
-The script refuses a dirty source tree, fast-forwards `main`, preserves both production environment files and Laravel storage, installs dependencies, runs migrations, builds/tests the frontend, installs and validates the Nginx site, restarts services, warms localized pages, verifies metadata, HTTP/2, HTML caching, `llms.txt`, the live API, calculator and sitemap. It intentionally does not run seeders after the initial installation.
+The script refuses a dirty source tree, fast-forwards `main`, preserves both production environment files and Laravel storage, installs dependencies, runs migrations, syncs production-safe system defaults without demo catalog content, builds/tests the frontend, installs and validates the Nginx site, restarts services, warms localized pages, verifies metadata, HTTP/2, HTML caching, `llms.txt`, the live API and calculator, then loads every URL emitted by the sitemap and fails the release if any URL is malformed or does not return HTTP 200.
 
 Before schema-changing deployments, back up PostgreSQL and uploaded media:
 

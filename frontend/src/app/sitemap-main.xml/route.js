@@ -6,13 +6,18 @@ import {
   xmlResponse,
 } from "@/lib/sitemap";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const [response, privacyResponse] = await Promise.all([
     safeFetchJson(buildSitemapApiUrl("/seo")),
     safeFetchJson(buildSitemapApiUrl("/privacy", { locale: "ka" })),
   ]);
+
+  if (!response || !privacyResponse) {
+    throw new Error("Unable to load required CMS data for the main sitemap");
+  }
+
   const seoPages = Array.isArray(response?.data) ? response.data : [];
   const seoByKey = new Map(seoPages.map((page) => [page.key, page]));
   const privacyContent = privacyResponse?.data ?? privacyResponse;
