@@ -8,11 +8,7 @@ export default function GallerySection({
     project: ProjectDetail;
 }) {
     const embedUrl = getYouTubeEmbedUrl(project.videoUrl);
-    const gallery = project.gallery.length
-        ? project.gallery
-        : project.image
-          ? [{ src: project.image, alt: project.imageAlt || project.title }]
-          : [];
+    const gallery = project.gallery;
     const [primary, ...secondary] = gallery;
     const sideGallery = embedUrl ? gallery : secondary;
 

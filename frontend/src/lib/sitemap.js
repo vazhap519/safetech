@@ -108,16 +108,25 @@ function backendAssetUrl(pathOrUrl) {
 }
 
 export async function safeFetchJson(url) {
-  try {
-    const res = await fetch(url, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const res = await fetch(url, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (res.ok) return await res.json();
+      if (res.status < 500 && res.status !== 429) return null;
+    } catch {
+      // Retry transient network failures once before failing the sitemap request.
+    }
+
+    if (attempt === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
   }
+
+  return null;
 }
 
 function sitemapCollection(response) {

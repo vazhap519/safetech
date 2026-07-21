@@ -50,7 +50,7 @@ class ProjectCategory extends Model
     protected static function booted()
     {
         static::creating(function ($category) {
-            if (!$category->slug) {
+            if (! $category->slug) {
                 $category->slug = Str::slug($category->name);
             }
         });

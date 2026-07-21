@@ -44,7 +44,15 @@ class SeoController extends Controller
     {
         $pages = SeoPage::query()
             ->select(['key', 'slug', 'title', 'noindex', 'updated_at'])
-            ->get();
+            ->get()
+            ->map(fn (SeoPage $page): array => [
+                'key' => $page->key,
+                'slug' => $page->slug,
+                'title' => $page->title,
+                'noindex' => (bool) $page->noindex,
+                'updated_at' => $page->updated_at?->toAtomString(),
+            ])
+            ->values();
 
         return response()->json([
             'success' => true,

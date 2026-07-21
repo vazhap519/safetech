@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('contact_page_hero_title')->nullable();
             $table->string('contact_page_hero_text')->nullable();
 
-
             $table->string('contact_page_cta_title')->nullable();
             $table->string('contact_page_info_title')->nullable();
             $table->string('contact_page_whatsapp')->nullable();

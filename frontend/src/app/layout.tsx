@@ -8,6 +8,7 @@ import Footer from "@/components/Footer/Footer";
 import Navbar from "@/components/Navbar/Navbar";
 import ConsultationProvider from "@/components/consultation/ConsultationProvider";
 import LocalizationProvider from "@/components/providers/LocalizationProvider";
+import RouteScrollManager from "@/components/providers/RouteScrollManager";
 import MarketingPixels from "@/components/analytics/MarketingPixels";
 import {
     getLanguageTag,
@@ -230,6 +231,7 @@ export default async function RootLayout({
                     locale={locale}
                     translations={translations}
                 >
+                    <RouteScrollManager />
                     <MarketingPixels
                         enabled={marketingEnabled}
                         googleAnalyticsId={googleAnalyticsId}

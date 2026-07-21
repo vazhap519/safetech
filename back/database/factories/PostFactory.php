@@ -16,7 +16,7 @@ class PostFactory extends Factory
             'title' => $title,
             'slug' => Str::slug($this->faker->unique()->sentence(6)),
             'excerpt' => $this->faker->paragraph(2),
-            'body' => '<p>' . implode('</p><p>', $this->faker->paragraphs(3)) . '</p>',
+            'body' => '<p>'.implode('</p><p>', $this->faker->paragraphs(3)).'</p>',
 
             // ❗ აღარ ვწერთ აქ category_id-ს (Seeder მართავს)
 
@@ -25,11 +25,11 @@ class PostFactory extends Factory
             'is_published' => true,
 
             'seo' => [
-                'title' => $title . ' თბილისში',
+                'title' => $title.' თბილისში',
                 'description' => $description,
                 'keywords' => [
                     ['value' => $title],
-                    ['value' => $title . ' თბილისი'],
+                    ['value' => $title.' თბილისი'],
                     ['value' => 'IT სერვისები'],
                 ],
                 'content' => [

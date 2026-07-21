@@ -34,7 +34,7 @@ class ContactLeadApiTest extends TestCase
             'email' => 'giorgi@example.com',
             'message' => 'მაინტერესებს ქსელის მოწყობა.',
             'source' => 'contact-page',
-            'privacy' => true,
+            'privacy' => '1',
         ]);
 
         $response->assertCreated()->assertJsonPath('data.status', 'new');

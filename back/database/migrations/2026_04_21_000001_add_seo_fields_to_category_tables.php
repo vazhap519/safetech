@@ -15,42 +15,42 @@ return new class extends Migration
     public function up(): void
     {
         foreach ($this->tables as $tableName) {
-            if (!Schema::hasTable($tableName)) {
+            if (! Schema::hasTable($tableName)) {
                 continue;
             }
 
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
-                if (!Schema::hasColumn($tableName, 'seo_title')) {
+                if (! Schema::hasColumn($tableName, 'seo_title')) {
                     $table->string('seo_title')->nullable()->after('slug');
                 }
 
-                if (!Schema::hasColumn($tableName, 'seo_description')) {
+                if (! Schema::hasColumn($tableName, 'seo_description')) {
                     $table->text('seo_description')->nullable()->after('seo_title');
                 }
 
-                if (!Schema::hasColumn($tableName, 'seo_keywords')) {
+                if (! Schema::hasColumn($tableName, 'seo_keywords')) {
                     $table->json('seo_keywords')->nullable()->after('seo_description');
                 }
 
-                if (!Schema::hasColumn($tableName, 'intro_text')) {
+                if (! Schema::hasColumn($tableName, 'intro_text')) {
                     $table->longText('intro_text')->nullable()->after('seo_keywords');
                 }
 
-                if (!Schema::hasColumn($tableName, 'faq')) {
+                if (! Schema::hasColumn($tableName, 'faq')) {
                     $table->json('faq')->nullable()->after('intro_text');
                 }
 
-                if (!Schema::hasColumn($tableName, 'schema')) {
+                if (! Schema::hasColumn($tableName, 'schema')) {
                     $table->json('schema')->nullable()->after('faq');
                 }
 
-                if (!Schema::hasColumn($tableName, 'noindex')) {
+                if (! Schema::hasColumn($tableName, 'noindex')) {
                     $table->boolean('noindex')->default(false)->after('schema');
                 }
             });
         }
 
-        if (Schema::hasTable('project_categories') && !Schema::hasColumn('project_categories', 'color')) {
+        if (Schema::hasTable('project_categories') && ! Schema::hasColumn('project_categories', 'color')) {
             Schema::table('project_categories', function (Blueprint $table) {
                 $table->string('color')->nullable()->after('slug');
             });
@@ -60,7 +60,7 @@ return new class extends Migration
     public function down(): void
     {
         foreach ($this->tables as $tableName) {
-            if (!Schema::hasTable($tableName)) {
+            if (! Schema::hasTable($tableName)) {
                 continue;
             }
 

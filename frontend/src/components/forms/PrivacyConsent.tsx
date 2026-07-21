@@ -19,7 +19,7 @@ export default function PrivacyConsent({ label }: PrivacyConsentProps) {
                 name="privacy"
                 required
                 type="checkbox"
-                value="accepted"
+                value="1"
             />
             <span>{consentLabel}</span>
         </label>

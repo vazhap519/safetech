@@ -72,7 +72,9 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
             <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-5 md:px-margin-desktop">
                 {hasBrand ? (
                     <LocalizedLink
-                        aria-label={homeLabel || siteName}
+                        aria-label={[siteName, homeLabel]
+                            .filter(Boolean)
+                            .join(" - ")}
                         className="flex min-h-11 items-center gap-3 text-primary"
                         href="/"
                         onClick={closeMobileMenu}

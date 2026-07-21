@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -18,7 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call(SeoPageSeeder::class);
 
         if (env('ADMIN_EMAIL') && env('ADMIN_PASSWORD')) {
-            \App\Models\User::query()->updateOrCreate(
+            User::query()->updateOrCreate(
                 ['email' => env('ADMIN_EMAIL')],
                 ['name' => env('ADMIN_NAME', 'SafeTech Admin'), 'password' => env('ADMIN_PASSWORD'), 'is_admin' => true],
             );

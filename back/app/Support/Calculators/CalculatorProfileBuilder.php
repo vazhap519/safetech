@@ -67,8 +67,8 @@ final class CalculatorProfileBuilder
         return $this->string($values[$locale] ?? $values['ka'] ?? $fallback);
     }
 
-    /** @param mixed $options
-     *  @return array<int, array<string, mixed>>
+    /**
+     * @return array<int, array<string, mixed>>
      */
     private function options(mixed $options, string $locale): array
     {
@@ -88,8 +88,8 @@ final class CalculatorProfileBuilder
             ->all();
     }
 
-    /** @param mixed $fields
-     *  @return array<int, array<string, mixed>>
+    /**
+     * @return array<int, array<string, mixed>>
      */
     private function fields(mixed $fields, string $locale): array
     {
@@ -128,8 +128,8 @@ final class CalculatorProfileBuilder
             ->all();
     }
 
-    /** @param mixed $packages
-     *  @return array<int, array<string, mixed>>
+    /**
+     * @return array<int, array<string, mixed>>
      */
     private function packages(mixed $packages, string $locale): array
     {

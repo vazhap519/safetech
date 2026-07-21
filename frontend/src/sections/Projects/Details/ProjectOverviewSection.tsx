@@ -26,7 +26,7 @@ export default async function ProjectOverviewSection({
     const specs = project.specs.filter((item) => item.label || item.value);
     const isSvgImage = project.image.endsWith(".svg");
 
-    if (!project.image && !scope.length && !specs.length) return null;
+    if (!scope.length && !specs.length) return null;
 
     return (
         <section

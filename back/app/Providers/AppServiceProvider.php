@@ -2,15 +2,15 @@
 
 namespace App\Providers;
 
-use App\Events\LeadCreated;
-use App\Domain\Leads\Contracts\LeadRepository;
 use App\Domain\Content\Contracts\ProjectRepository;
 use App\Domain\Content\Contracts\ServiceRepository;
-use App\Listeners\ForwardLeadToCrm;
-use App\Listeners\SendLeadNotification;
+use App\Domain\Leads\Contracts\LeadRepository;
+use App\Events\LeadCreated;
+use App\Infrastructure\Persistence\EloquentLeadRepository;
 use App\Infrastructure\Persistence\EloquentProjectRepository;
 use App\Infrastructure\Persistence\EloquentServiceRepository;
-use App\Infrastructure\Persistence\EloquentLeadRepository;
+use App\Listeners\ForwardLeadToCrm;
+use App\Listeners\SendLeadNotification;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -40,8 +40,8 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('analytics-events', function (Request $request): Limit {
             return Limit::perMinute(120)->by(
-                ($request->string('visitor_id')->value() ?: $request->ip()) .
-                '|' .
+                ($request->string('visitor_id')->value() ?: $request->ip()).
+                '|'.
                 ($request->input('event_type') ?: 'unknown'),
             );
         });

@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class CategoryForService extends Model
@@ -34,13 +35,13 @@ class CategoryForService extends Model
     protected static function booted()
     {
         static::creating(function ($category) {
-            if (!$category->slug) {
+            if (! $category->slug) {
                 $category->slug = Str::slug($category->name);
             }
         });
 
         static::updating(function ($category) {
-            if ($category->isDirty('name') && !$category->isDirty('slug')) {
+            if ($category->isDirty('name') && ! $category->isDirty('slug')) {
                 $category->slug = Str::slug($category->name);
             }
         });
@@ -55,6 +56,4 @@ class CategoryForService extends Model
     {
         return $this->hasMany(Service::class, 'category_for_service_id');
     }
-
-
 }

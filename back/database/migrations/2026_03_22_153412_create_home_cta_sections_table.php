@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('home_cta_sections', function (Blueprint $table) {
             $table->id();
             $table->string('cta_title');
-$table->string('cta_title_hilight');
-$table->string('cta_description');
-$table->string('cta_phone_btn_number');
-$table->string('cta_phone_btn_text');
-$table->string('cta_message_button_text');
+            $table->string('cta_title_hilight');
+            $table->string('cta_description');
+            $table->string('cta_phone_btn_number');
+            $table->string('cta_phone_btn_text');
+            $table->string('cta_message_button_text');
             $table->timestamps();
         });
     }

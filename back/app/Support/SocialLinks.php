@@ -9,9 +9,9 @@ class SocialLinks
     public static function frontendUrl(string $path = ''): string
     {
         $baseUrl = rtrim((string) (config('app.frontend_url') ?: config('app.url')), '/');
-        $path = '/' . ltrim($path, '/');
+        $path = '/'.ltrim($path, '/');
 
-        return $baseUrl . ($path === '/' ? '' : $path);
+        return $baseUrl.($path === '/' ? '' : $path);
     }
 
     public static function shareDefinitions(): array
@@ -82,7 +82,7 @@ class SocialLinks
                 $type = strtolower((string) $type);
                 $definition = $definitions[$type] ?? null;
 
-                if (!$definition) {
+                if (! $definition) {
                     return null;
                 }
 
@@ -115,7 +115,7 @@ class SocialLinks
         ] as $field => $icon) {
             $url = self::normalizeUrl($settings ? data_get($settings, $field) : null);
 
-            if (!$url || $socials->contains(fn ($item) => $item['url'] === $url)) {
+            if (! $url || $socials->contains(fn ($item) => $item['url'] === $url)) {
                 continue;
             }
 
@@ -149,25 +149,25 @@ class SocialLinks
         }
 
         if (str_starts_with($url, '//')) {
-            return 'https:' . $url;
+            return 'https:'.$url;
         }
 
         if (preg_match('#^(https?:|mailto:|tel:|viber:)#i', $url)) {
             return $url;
         }
 
-        return 'https://' . ltrim($url, '/');
+        return 'https://'.ltrim($url, '/');
     }
 
     private static function normalizeSocialItem(mixed $item): ?array
     {
-        if (!is_array($item)) {
+        if (! is_array($item)) {
             return null;
         }
 
         $url = self::normalizeUrl(Arr::get($item, 'url'));
 
-        if (!$url) {
+        if (! $url) {
             return null;
         }
 

@@ -17,8 +17,7 @@ class PrivacyPoliciesTable
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()
-                    ->label('სათაური')
-                ,
+                    ->label('სათაური'),
 
                 TextColumn::make('updated_at')
                     ->label('განახლდა')

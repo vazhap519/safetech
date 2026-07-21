@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('home_hero_sections', function (Blueprint $table) {
             $table->id();
             $table->string('home_hero_title');
-$table->text('home_hero_description');
-$table->json('home_hero_list');
- $table->string('home_hero_call_button_text');
- $table->string('home_hero_call_button_number');
- $table->string('home_hero_service_button_text');
+            $table->text('home_hero_description');
+            $table->json('home_hero_list');
+            $table->string('home_hero_call_button_text');
+            $table->string('home_hero_call_button_number');
+            $table->string('home_hero_service_button_text');
             $table->timestamps();
         });
     }

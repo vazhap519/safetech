@@ -52,4 +52,31 @@ class SeoPageApiTest extends TestCase
                 'message' => 'SEO page not found.',
             ]);
     }
+
+    public function test_index_returns_only_lightweight_sitemap_fields(): void
+    {
+        SeoPage::query()->create([
+            'key' => 'services',
+            'slug' => '/services',
+            'title' => 'Services',
+            'description' => 'Managed services metadata.',
+            'noindex' => false,
+        ]);
+
+        $this->getJson('/api/seo')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonStructure([
+                'data' => [[
+                    'key',
+                    'slug',
+                    'title',
+                    'noindex',
+                    'updated_at',
+                ]],
+            ])
+            ->assertJsonMissingPath('data.0.meta')
+            ->assertJsonMissingPath('data.0.og_image_url')
+            ->assertJsonMissingPath('data.0.share_image_url');
+    }
 }

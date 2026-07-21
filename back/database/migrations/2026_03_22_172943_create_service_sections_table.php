@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('service_sections', function (Blueprint $table) {
             $table->id();
-             $table->string('service_section_title');
- $table->string('service_section_description');
-
+            $table->string('service_section_title');
+            $table->string('service_section_description');
 
             $table->timestamps();
         });

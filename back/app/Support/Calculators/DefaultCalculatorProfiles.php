@@ -315,13 +315,13 @@ final class DefaultCalculatorProfiles
     }
 
     /** @param array<int, string> $projectLabels
-     *  @param array<int, array<string, mixed>> $projectOptions
-     *  @param array<int, string> $propertyLabels
-     *  @param array<int, array<string, mixed>> $propertyOptions
-     *  @param array<string, mixed> $pricing
-     *  @param array<int, array<string, mixed>> $fields
-     *  @param array<int, array<string, mixed>> $packages
-     *  @return array<string, mixed>
+     * @param  array<int, array<string, mixed>>  $projectOptions
+     * @param  array<int, string>  $propertyLabels
+     * @param  array<int, array<string, mixed>>  $propertyOptions
+     * @param  array<string, mixed>  $pricing
+     * @param  array<int, array<string, mixed>>  $fields
+     * @param  array<int, array<string, mixed>>  $packages
+     * @return array<string, mixed>
      */
     private static function profile(
         array $projectLabels,
@@ -384,8 +384,8 @@ final class DefaultCalculatorProfiles
     }
 
     /** @param array<int, string> $labels
-     *  @param array<string, mixed> $config
-     *  @return array<string, mixed>
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
      */
     private static function field(string $key, string $type, array $labels, array $config = []): array
     {
@@ -407,8 +407,8 @@ final class DefaultCalculatorProfiles
     }
 
     /** @param array<int, string> $titles
-     *  @param array<int, string> $descriptions
-     *  @return array<string, mixed>
+     * @param  array<int, string>  $descriptions
+     * @return array<string, mixed>
      */
     private static function package(
         string $key,

@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('home_why_us', function (Blueprint $table) {
             $table->id();
             $table->string('why_us_title');
-$table->text('why_us_description');
-$table->json('why_us_items');
+            $table->text('why_us_description');
+            $table->json('why_us_items');
             $table->timestamps();
         });
     }

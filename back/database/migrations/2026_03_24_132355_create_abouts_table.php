@@ -13,26 +13,26 @@ return new class extends Migration
     {
         Schema::create('abouts', function (Blueprint $table) {
             $table->id();
-            //Hero Section
+            // Hero Section
             $table->string('hero_title');
-        $table->string('hero_description');
-        $table->json('hero_trust_list');
-        $table->string('hero_badge');
+            $table->string('hero_description');
+            $table->json('hero_trust_list');
+            $table->string('hero_badge');
 
-        //Story
-        $table->string('story_title');
-        $table->string('story_title_description');
-        $table->string('story_content');
-        $table->json('story_stats');
-        //Why Us
-        $table->string('why_us_title');
-        $table->string('why_us_title_description');
-        $table->json('why_us_content');
-        //Cta
-        $table->string('cta_title');
-        $table->string('cta_title_description');
-        $table->json('cta_trust');
-        $table->string('cta_phone');
+            // Story
+            $table->string('story_title');
+            $table->string('story_title_description');
+            $table->string('story_content');
+            $table->json('story_stats');
+            // Why Us
+            $table->string('why_us_title');
+            $table->string('why_us_title_description');
+            $table->json('why_us_content');
+            // Cta
+            $table->string('cta_title');
+            $table->string('cta_title_description');
+            $table->json('cta_trust');
+            $table->string('cta_phone');
             $table->timestamps();
         });
     }

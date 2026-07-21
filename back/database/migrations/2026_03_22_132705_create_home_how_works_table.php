@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('home_how_works', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-$table->text('description');
-$table->json('how_cards');
+            $table->text('description');
+            $table->json('how_cards');
             $table->timestamps();
         });
     }
