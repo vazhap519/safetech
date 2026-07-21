@@ -2,6 +2,7 @@
 
 import { trackEvent } from "@/lib/analytics";
 import { hasAnalyticsConsent } from "@/lib/consent";
+import { normalizeLocale, stripLocalePrefix } from "@/lib/locales";
 
 type AnalyticsEventType = "service_view" | "whatsapp_click";
 
@@ -57,7 +58,7 @@ function extractServiceSlugFromPath(pagePath?: string | null) {
         return null;
     }
 
-    const match = pagePath.match(/^\/services\/([^/?#]+)/);
+    const match = stripLocalePrefix(pagePath).match(/^\/services\/([^/?#]+)/);
 
     return match?.[1] ?? null;
 }
@@ -73,7 +74,7 @@ function buildRequestBody(payload: AnalyticsPayload) {
         locale:
             payload.locale ||
             (typeof document !== "undefined"
-                ? document.documentElement.lang || undefined
+                ? normalizeLocale(document.documentElement.lang)
                 : undefined),
         visitor_id: getVisitorId(),
         meta: payload.meta,

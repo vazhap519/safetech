@@ -1,7 +1,11 @@
 import ServicesSchema from "@/components/seo/ServicesSchema";
+import { redirect } from "next/navigation";
 import CmsPageSchema from "@/components/seo/CmsPageSchema";
 import { createCmsPageMetadata } from "@/lib/cms-metadata";
 import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
+import { getCurrentLocale } from "@/lib/locale-server";
+import { firstSearchParam } from "@/lib/pagination";
+import { localizeHref } from "@/lib/seo";
 import WhySection from "@/sections/About/Why";
 import CtaSection from "@/sections/Services/Cta/CtaSection";
 import FaqSeqAction from "@/sections/Services/Faq/FaqSeqction";
@@ -28,7 +32,16 @@ export default async function Services({
     searchParams,
     showPageSchema = true,
 }: ServicesPageProps) {
-    const category = (await searchParams)?.category;
+    const category = firstSearchParam((await searchParams)?.category);
+
+    if (showPageSchema && category) {
+        const locale = await getCurrentLocale();
+        const path = category === "all"
+            ? "/services"
+            : `/services/category/${encodeURIComponent(category)}`;
+
+        redirect(localizeHref(path, locale));
+    }
 
     return (
         <div>
@@ -37,7 +50,7 @@ export default async function Services({
             ) : null}
             <HeroSection />
             <PartnerSection />
-            <ServiceSection category={category} />
+            <ServiceSection category={category || undefined} />
             <FeaturedSection />
             <WhySection />
             <WorkSection />

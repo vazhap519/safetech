@@ -1,7 +1,11 @@
 import ProjectsSchema from "@/components/seo/ProjectsSchema";
+import { redirect } from "next/navigation";
 import CmsPageSchema from "@/components/seo/CmsPageSchema";
 import { createCmsPageMetadata } from "@/lib/cms-metadata";
 import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
+import { getCurrentLocale } from "@/lib/locale-server";
+import { firstSearchParam } from "@/lib/pagination";
+import { localizeHref } from "@/lib/seo";
 import ProjectsCtaSection from "@/sections/Projects/Cta/ProjectsCtaSection";
 import FeaturedProjectsSection from "@/sections/Projects/Featured/FeaturedProjectsSection";
 import ProjectsGallerySection from "@/sections/Projects/Gallery/ProjectsGallerySection";
@@ -26,7 +30,16 @@ export default async function ProjectsPage({
     searchParams,
     showPageSchema = true,
 }: ProjectsPageProps) {
-    const category = (await searchParams)?.category;
+    const category = firstSearchParam((await searchParams)?.category);
+
+    if (showPageSchema && category) {
+        const locale = await getCurrentLocale();
+        const path = category === "all"
+            ? "/projects"
+            : `/projects/category/${encodeURIComponent(category)}`;
+
+        redirect(localizeHref(path, locale));
+    }
 
     return (
         <>
@@ -36,7 +49,7 @@ export default async function ProjectsPage({
             <ProjectsHeroSection />
             <MetricsSection />
             <FeaturedProjectsSection />
-            <ProjectsGallerySection category={category} />
+            <ProjectsGallerySection category={category || undefined} />
             <StandardsSection />
             <ProjectsCtaSection />
         </>

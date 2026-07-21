@@ -107,7 +107,13 @@ export function createMetadata({
     const url = absoluteLocalizedUrl(path, locale);
     const resolvedSiteName = cleanText(siteName) || SITE_NAME;
     const resolvedTitle = cleanText(title) || resolvedSiteName;
-    const resolvedDescription = cleanText(description) || resolvedSiteName;
+    const suppliedDescription = cleanText(description);
+    const genericDescription = defaultDescription(locale, resolvedSiteName);
+    const resolvedDescription = suppliedDescription.length >= 20
+        ? suppliedDescription
+        : suppliedDescription
+          ? `${suppliedDescription.replace(/[.!?]+$/, "")}. ${genericDescription}`
+          : genericDescription;
     const fullTitle = withSiteTitle(resolvedTitle, resolvedSiteName);
     const socialImage = absoluteSiteUrl(image);
     const languageAlternates = buildLanguageAlternates(path);
@@ -161,6 +167,17 @@ export function createMetadata({
             },
         },
     };
+}
+
+function defaultDescription(locale: Locale, siteName: string): string {
+    switch (locale) {
+        case "en":
+            return `${siteName} provides professional IT infrastructure and security system solutions for businesses.`;
+        case "ru":
+            return `${siteName} предлагает профессиональные решения для IT-инфраструктуры и систем безопасности бизнеса.`;
+        default:
+            return `${siteName} ბიზნესს სთავაზობს IT ინფრასტრუქტურისა და უსაფრთხოების სისტემების პროფესიონალურ გადაწყვეტილებებს.`;
+    }
 }
 
 function cleanText(value: unknown): string {

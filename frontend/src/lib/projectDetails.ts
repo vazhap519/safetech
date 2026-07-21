@@ -29,6 +29,7 @@ export type ProjectDetail = {
     }>;
     testimonial: { quote: string; author: string; role: string };
     related: Array<{
+        translationIndex?: number;
         slug: string;
         title: string;
         category: string;

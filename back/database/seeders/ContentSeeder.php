@@ -743,6 +743,7 @@ class ContentSeeder extends Seeder
             $entry('forms.phone', 'ტელეფონი', 'Phone', 'Телефон'),
             $entry('forms.phoneNumber', 'ტელეფონის ნომერი', 'Phone number', 'Номер телефона'),
             $entry('forms.privacy', 'ვეთანხმები კონფიდენციალურობის პოლიტიკას', 'I agree to the Privacy Policy', 'Я согласен с Политикой конфиденциальности'),
+            $entry('forms.privacyPolicyLink', 'პოლიტიკის ნახვა', 'View policy', 'Открыть политику'),
             $entry('forms.send', 'გაგზავნა', 'Send', 'Отправить'),
             $entry('forms.service', 'სერვისი', 'Service', 'Услуга'),
             $entry('forms.submitRequest', 'მოთხოვნის გაგზავნა', 'Submit request', 'Отправить запрос'),

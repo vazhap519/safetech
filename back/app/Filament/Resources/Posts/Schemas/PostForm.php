@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Posts\Schemas;
 
 use App\Filament\Support\LocalizedContentFields;
+use App\Filament\Support\StableSlug;
 use App\Filament\Support\StructuredDataJsonField;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
@@ -36,8 +37,7 @@ class PostForm
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))
-                            ),
+                            ->afterStateUpdated(StableSlug::syncOnCreate()),
 
                         TextInput::make('slug')
                             ->label('URL კოდი')

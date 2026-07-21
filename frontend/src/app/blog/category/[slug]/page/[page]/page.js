@@ -4,22 +4,25 @@ import { notFound } from "next/navigation";
 import { getCategoryPageData } from "@/lib/category-data";
 import { keywordValues } from "@/lib/categorySeo";
 import { getBlog } from "@/lib/datafetch";
+import {
+  invalidPaginationCopy,
+  paginatedDescription,
+  paginatedTitle,
+  parsePageNumber,
+} from "@/lib/pagination";
 import { createMetadata } from "@/lib/seo";
-
-function pageNumber(value) {
-  return /^\d+$/.test(String(value)) ? Number(value) : null;
-}
 
 export async function generateMetadata({ params }) {
   const { slug, page } = await params;
-  const currentPage = pageNumber(page);
+  const currentPage = parsePageNumber(page);
   const { category, locale, path: categoryPath } = await getCategoryPageData("blog", slug);
   const path = `${categoryPath}/page/${currentPage || page}`;
 
   if (!category || !currentPage || currentPage < 2) {
+    const copy = invalidPaginationCopy(locale);
+
     return createMetadata({
-      title: "Category page not found",
-      description: "The requested category page does not exist.",
+      ...copy,
       path,
       locale,
       noindex: true,
@@ -29,9 +32,11 @@ export async function generateMetadata({ params }) {
   const response = await getBlog({ page: currentPage, category: slug, locale });
   const lastPage = Number(response?.meta?.last_page || 0);
 
+  const subject = category.seo_title || category.name;
+
   return createMetadata({
-    title: `${category.seo_title || category.name} - ${currentPage}`,
-    description: category.seo_description || category.intro_text || category.name,
+    title: paginatedTitle(subject, currentPage, locale),
+    description: paginatedDescription(subject, currentPage, locale),
     keywords: keywordValues(category),
     path,
     locale,
@@ -41,7 +46,7 @@ export async function generateMetadata({ params }) {
 
 export default async function BlogCategoryPaginatedPage({ params }) {
   const { slug, page } = await params;
-  const currentPage = pageNumber(page);
+  const currentPage = parsePageNumber(page);
   const { category, locale } = await getCategoryPageData("blog", slug);
 
   if (!category || !currentPage || currentPage < 2) notFound();

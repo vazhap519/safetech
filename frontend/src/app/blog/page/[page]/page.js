@@ -3,17 +3,19 @@ import { notFound } from "next/navigation";
 
 import { getBlog } from "@/lib/datafetch";
 import { getCurrentLocale } from "@/lib/locale-server";
+import {
+  invalidPaginationCopy,
+  paginatedDescription,
+  paginatedTitle,
+  parsePageNumber,
+} from "@/lib/pagination";
 import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
-function pageNumber(value) {
-  return /^\d+$/.test(String(value)) ? Number(value) : null;
-}
-
 export async function generateMetadata({ params }) {
   const { page } = await params;
-  const currentPage = pageNumber(page);
+  const currentPage = parsePageNumber(page);
   const [locale, settings] = await Promise.all([
     getCurrentLocale(),
     getSiteSettings(),
@@ -21,9 +23,10 @@ export async function generateMetadata({ params }) {
   const path = `/blog/page/${currentPage || page}`;
 
   if (!currentPage || currentPage < 2) {
+    const copy = invalidPaginationCopy(locale);
+
     return createMetadata({
-      title: "Invalid blog page",
-      description: "The requested blog page does not exist.",
+      ...copy,
       path,
       locale,
       noindex: true,
@@ -39,8 +42,8 @@ export async function generateMetadata({ params }) {
   });
 
   return createMetadata({
-    title: `${blogTitle} - ${currentPage}`,
-    description: `${blogTitle}, ${currentPage}`,
+    title: paginatedTitle(blogTitle, currentPage, locale),
+    description: paginatedDescription(blogTitle, currentPage, locale),
     path,
     locale,
     siteName: settings.branding.siteName,
@@ -51,7 +54,7 @@ export async function generateMetadata({ params }) {
 export default async function BlogPaginatedPage({ params, searchParams }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
-  const currentPage = pageNumber(resolvedParams.page);
+  const currentPage = parsePageNumber(resolvedParams.page);
 
   if (!currentPage || currentPage < 2) notFound();
 
@@ -67,6 +70,7 @@ export default async function BlogPaginatedPage({ params, searchParams }) {
         ...resolvedSearchParams,
         page: currentPage,
       }}
+      showPageSchema={false}
     />
   );
 }

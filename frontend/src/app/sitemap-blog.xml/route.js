@@ -9,12 +9,13 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const now = new Date().toISOString();
   const blog = await fetchPaginatedPages("/blog");
   const urls = blog.items
     .filter(isIndexableBlogPost)
     .flatMap((post) => localizedUrlEntries(`/blog/${encodeURIComponent(post.slug)}`, {
-      lastmod: post.updated_at || post.created_at || now,
+      ...(post.updated_at || post.created_at
+        ? { lastmod: post.updated_at || post.created_at }
+        : {}),
       changefreq: "weekly",
       priority: "0.7",
     }));

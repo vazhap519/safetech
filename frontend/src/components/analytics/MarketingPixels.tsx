@@ -1,7 +1,8 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import LocalizedLink from "@/components/ui/LocalizedLink";
@@ -17,6 +18,51 @@ declare global {
         fbq?: (...args: unknown[]) => void;
         _fbq?: (...args: unknown[]) => void;
     }
+}
+
+function MarketingRouteTracker({
+    googleTagManagerId,
+    googleAnalyticsId,
+    metaPixelId,
+}: {
+    googleTagManagerId: string;
+    googleAnalyticsId: string;
+    metaPixelId: string;
+}) {
+    const pathname = usePathname() || "/";
+    const previousPath = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (previousPath.current === null) {
+            previousPath.current = pathname;
+            return;
+        }
+
+        if (previousPath.current === pathname) return;
+        previousPath.current = pathname;
+
+        if (googleTagManagerId) {
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+                event: "virtual_page_view",
+                page_location: window.location.href,
+                page_path: pathname,
+                page_title: document.title,
+            });
+        } else if (googleAnalyticsId && window.gtag) {
+            window.gtag("event", "page_view", {
+                page_location: window.location.href,
+                page_path: pathname,
+                page_title: document.title,
+            });
+        }
+
+        if (metaPixelId && window.fbq) {
+            window.fbq("track", "PageView");
+        }
+    }, [googleAnalyticsId, googleTagManagerId, metaPixelId, pathname]);
+
+    return null;
 }
 
 function validId(value: string | undefined, pattern: RegExp) {
@@ -73,6 +119,12 @@ export default function MarketingPixels({
                             {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');fbq('track','PageView');`}
                         </Script>
                     ) : null}
+
+                    <MarketingRouteTracker
+                        googleAnalyticsId={gaId}
+                        googleTagManagerId={gtmId}
+                        metaPixelId={pixelId}
+                    />
                 </>
             ) : null}
 

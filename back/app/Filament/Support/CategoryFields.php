@@ -5,7 +5,6 @@ namespace App\Filament\Support;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
-use Illuminate\Support\Str;
 
 final class CategoryFields
 {
@@ -18,9 +17,7 @@ final class CategoryFields
                     ->required()
                     ->maxLength(255)
                     ->live(onBlur: true)
-                    ->afterStateUpdated(
-                        fn ($state, callable $set) => $set('slug', Str::slug((string) $state)),
-                    ),
+                    ->afterStateUpdated(StableSlug::syncOnCreate()),
                 TextInput::make('slug')
                     ->label('URL კოდი')
                     ->required()

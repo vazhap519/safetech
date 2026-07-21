@@ -1,6 +1,7 @@
 import SocialIcon from "@/components/ui/SocialIcon";
 import Image from "@/components/ui/Image";
 import TranslatedText from "@/components/i18n/TranslatedText";
+import LocalizedLink from "@/components/ui/LocalizedLink";
 import { getSiteSettings } from "@/lib/site-settings";
 
 export default async function FooterDescription() {
@@ -15,19 +16,28 @@ export default async function FooterDescription() {
     return (
         <div className="space-y-4">
             <div className="space-y-3">
-                {logo ? (
-                    <Image
-                        alt={siteName}
-                        className="h-12 w-auto object-contain"
-                        height={48}
-                        src={logo}
-                        unoptimized
-                        width={180}
-                    />
-                ) : siteName ? (
-                    <span className="font-headline-md text-headline-md font-bold text-primary">
-                        {siteName}
-                    </span>
+                {logo || siteName ? (
+                    <LocalizedLink
+                        aria-label={siteName || "SafeTech"}
+                        className="inline-flex min-h-11 items-center"
+                        href="/"
+                        prefetch={false}
+                    >
+                        {logo ? (
+                            <Image
+                                alt={siteName}
+                                className="h-12 w-auto object-contain"
+                                height={48}
+                                src={logo}
+                                unoptimized
+                                width={180}
+                            />
+                        ) : (
+                            <span className="font-headline-md text-headline-md font-bold text-primary">
+                                {siteName}
+                            </span>
+                        )}
+                    </LocalizedLink>
                 ) : null}
                 {branding.tagline ? (
                     <p className="font-body-md text-body-md text-on-surface-variant">

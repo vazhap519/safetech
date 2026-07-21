@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Application\Content\PublicContentService;
+use App\Models\Project;
+use App\Models\ProjectCategory;
 use App\Models\Service;
 use Database\Seeders\ContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,5 +90,53 @@ class PublicContentApiTest extends TestCase
             ],
             $entries->get('service.cctv.benefit.0.title'),
         );
+    }
+
+    public function test_project_details_only_link_to_currently_published_related_projects(): void
+    {
+        $category = ProjectCategory::query()->create([
+            'name' => 'Offices',
+            'slug' => 'offices',
+        ]);
+        $hidden = Project::query()->create([
+            'category_id' => $category->id,
+            'slug' => 'hidden-project',
+            'name' => 'Hidden project',
+            'title' => 'Hidden project',
+            'description' => 'This project is not public.',
+            'is_published' => false,
+        ]);
+        $related = Project::query()->create([
+            'category_id' => $category->id,
+            'slug' => 'published-related-project',
+            'name' => 'Published related project',
+            'title' => 'Published related project',
+            'description' => 'A public related project.',
+            'image_alt' => 'Related project image',
+            'is_published' => true,
+        ]);
+        $project = Project::query()->create([
+            'category_id' => $category->id,
+            'slug' => 'main-project',
+            'name' => 'Main project',
+            'title' => 'Main project',
+            'description' => 'The main public project.',
+            'related' => [
+                ['slug' => $hidden->slug],
+                ['slug' => $related->slug],
+            ],
+            'is_published' => true,
+        ]);
+
+        $this->getJson('/api/projects')
+            ->assertOk()
+            ->assertJsonPath('data.0.related', []);
+
+        $this->getJson("/api/projects/{$project->slug}")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.related')
+            ->assertJsonPath('data.related.0.slug', $related->slug)
+            ->assertJsonPath('data.related.0.title', $related->title)
+            ->assertJsonPath('data.related.0.translationIndex', 1);
     }
 }

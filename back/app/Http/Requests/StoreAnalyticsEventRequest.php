@@ -13,6 +13,19 @@ class StoreAnalyticsEventRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $locale = $this->input('locale');
+
+        if (! is_string($locale)) {
+            return;
+        }
+
+        $language = strtolower((string) preg_split('/[-_]/', trim($locale), 2)[0]);
+
+        $this->merge(['locale' => $language]);
+    }
+
     public function rules(): array
     {
         return [

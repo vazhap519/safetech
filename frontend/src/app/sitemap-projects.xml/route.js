@@ -9,12 +9,13 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const now = new Date().toISOString();
   const projects = await fetchAllPaginated("/projects");
   const urls = projects
     .filter(isIndexableProject)
     .flatMap((project) => localizedUrlEntries(`/projects/${encodeURIComponent(project.slug)}`, {
-      lastmod: project.updated_at || project.publishedAt || now,
+      ...(project.updated_at || project.publishedAt
+        ? { lastmod: project.updated_at || project.publishedAt }
+        : {}),
       changefreq: "weekly",
       priority: "0.7",
     }));

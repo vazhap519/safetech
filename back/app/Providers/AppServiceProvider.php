@@ -62,12 +62,17 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
-        RateLimiter::for('analytics-events', function (Request $request): Limit {
-            return Limit::perMinute(120)->by(
-                ($request->string('visitor_id')->value() ?: $request->ip()).
-                '|'.
-                ($request->input('event_type') ?: 'unknown'),
-            );
+        RateLimiter::for('analytics-events', function (Request $request): array {
+            $ip = $request->ip() ?: 'unknown';
+            $visitor = mb_substr($request->string('visitor_id')->value(), 0, 100) ?: $ip;
+            $eventType = mb_substr((string) $request->input('event_type', 'unknown'), 0, 50);
+
+            return [
+                Limit::perMinute(120)->by("analytics-ip|{$ip}"),
+                Limit::perMinute(30)->by(
+                    'analytics-visitor|'.hash('sha256', $visitor)."|{$eventType}",
+                ),
+            ];
         });
 
         Event::listen(LeadCreated::class, SendLeadNotification::class);

@@ -330,7 +330,6 @@ export async function fetchImageSitemapItems() {
 
 export function sitemapIndex(paths) {
   const baseUrl = normalizeBaseUrl();
-  const now = new Date().toISOString();
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -338,7 +337,6 @@ ${paths
   .map(
     (path) => `  <sitemap>
     <loc>${escapeXml(`${baseUrl}${path}`)}</loc>
-    <lastmod>${now}</lastmod>
   </sitemap>`
   )
   .join("\n")}

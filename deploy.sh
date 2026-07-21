@@ -585,6 +585,18 @@ for missing_path in \
         echo "Invalid missing-content response (${missing_status}): ${missing_path}" >&2
         exit 1
     fi
+
+    missing_html="$(curl --silent --show-error --compressed \
+        -H 'Accept: text/html' \
+        "https://safetech.ge${missing_path}")"
+    missing_robots_count="$(grep -Eo '<meta name="robots" content="[^"]+"' <<< "${missing_html}" \
+        | awk 'END { print NR + 0 }')"
+
+    if [[ "${missing_robots_count}" -ne 1 ]] \
+        || ! grep -Eq '<meta name="robots" content="[^"]*noindex' <<< "${missing_html}"; then
+        echo "Missing-content page must contain exactly one noindex robots tag: ${missing_path}" >&2
+        exit 1
+    fi
 done
 
 invalid_lead_status="$(curl --silent --show-error -o /dev/null -w '%{http_code}' \

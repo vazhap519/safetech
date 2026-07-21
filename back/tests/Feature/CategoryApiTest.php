@@ -76,6 +76,24 @@ class CategoryApiTest extends TestCase
             ->assertJsonPath('data.0.name', 'Русская категория');
     }
 
+    public function test_editing_category_names_does_not_break_existing_public_urls(): void
+    {
+        $serviceCategory = CategoryForService::query()->create([
+            'name' => 'Original service category',
+            'slug' => 'stable-service-category',
+        ]);
+        $projectCategory = ProjectCategory::query()->create([
+            'name' => 'Original project category',
+            'slug' => 'stable-project-category',
+        ]);
+
+        $serviceCategory->update(['name' => 'Renamed service category']);
+        $projectCategory->update(['name' => 'Renamed project category']);
+
+        $this->assertSame('stable-service-category', $serviceCategory->fresh()->slug);
+        $this->assertSame('stable-project-category', $projectCategory->fresh()->slug);
+    }
+
     /** @return array<string, mixed> */
     private function categoryAttributes(string $name, string $slug): array
     {

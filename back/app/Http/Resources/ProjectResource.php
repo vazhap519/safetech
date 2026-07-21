@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\Concerns\LocalizesResourceContent;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -60,7 +61,7 @@ class ProjectResource extends JsonResource
             'specs' => $this->specs ?? [], 'challenges' => $this->challenges ?? [],
             'solutions' => $this->solutions ?? [], 'process' => $this->process ?? [],
             'gallery' => $this->gallery_urls ?: ($this->gallery ?? []), 'results' => $this->results ?? [],
-            'testimonial' => $testimonial, 'related' => $this->related ?? [],
+            'testimonial' => $testimonial, 'related' => $this->relatedProjects($request, $locale),
             'featured' => $this->is_featured, 'publishedAt' => $this->published_at?->toAtomString(),
             'seo' => [
                 'title' => $seoTitle ?: $title,
@@ -71,5 +72,63 @@ class ProjectResource extends JsonResource
                 'schema' => data_get($this->seo, 'schema'),
             ],
         ];
+    }
+
+    private function relatedProjects(Request $request, string $locale): array
+    {
+        if (! $request->routeIs('api.projects.show')) {
+            return [];
+        }
+
+        $configured = collect($this->related ?? [])
+            ->filter(fn ($item): bool => is_array($item) && filled($item['slug'] ?? null))
+            ->values();
+
+        if ($configured->isEmpty()) {
+            return [];
+        }
+
+        $projects = Project::query()
+            ->publiclyVisible()
+            ->whereKeyNot($this->id)
+            ->whereIn('slug', $configured->pluck('slug')->all())
+            ->with(['category', 'media'])
+            ->get()
+            ->keyBy('slug');
+
+        return $configured
+            ->map(function (array $item, int $index) use ($locale, $projects): ?array {
+                /** @var Project|null $project */
+                $project = $projects->get($item['slug']);
+
+                if (! $project) {
+                    return null;
+                }
+
+                $title = $this->translatedModel(
+                    $project,
+                    'title',
+                    $project->title ?: $project->name,
+                    $locale,
+                );
+                $category = $project->category;
+                $categoryName = $category
+                    ? $this->translatedModel($category, 'name', $category->name, $locale)
+                    : $project->category_name;
+
+                return [
+                    'translationIndex' => $index,
+                    'slug' => $project->slug,
+                    'title' => filled($item['title'] ?? null) ? $item['title'] : $title,
+                    'category' => filled($item['category'] ?? null) ? $item['category'] : $categoryName,
+                    'image' => $project->thumb_url,
+                    'imageAlt' => filled($item['imageAlt'] ?? null)
+                        ? $item['imageAlt']
+                        : ($project->image_alt ?: $title),
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 }

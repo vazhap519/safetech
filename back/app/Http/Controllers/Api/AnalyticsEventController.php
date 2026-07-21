@@ -79,7 +79,7 @@ class AnalyticsEventController extends Controller
             return null;
         }
 
-        if (! preg_match('~^/services/([^/?#]+)~', $pagePath, $matches)) {
+        if (! preg_match('~^/(?:(?:ka|en|ru)/)?services/([^/?#]+)~', $pagePath, $matches)) {
             return null;
         }
 

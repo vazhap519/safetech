@@ -48,6 +48,13 @@ jobs:
       - name: Validate Composer metadata
         run: composer validate --strict --no-check-publish
 
+      - name: Reject tracked runtime uploads
+        run: |
+          if git ls-files 'storage/media-library/temp/**' | grep -q .; then
+            echo 'Temporary media-library uploads must not be committed.' >&2
+            exit 1
+          fi
+
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 

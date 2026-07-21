@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import BlogList from "@/components/blog/BlogList";
 import BlogSchema from "@/components/seo/BlogSchema";
@@ -7,6 +8,7 @@ import { createCmsPageMetadata } from "@/lib/cms-metadata";
 import { getBlog, getCategories } from "@/lib/datafetch";
 import { getCurrentLocale } from "@/lib/locale-server";
 import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
+import { firstSearchParam, parsePageNumber } from "@/lib/pagination";
 import { localizeHref } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
@@ -17,15 +19,24 @@ export async function generateMetadata() {
 
 export default async function BlogPage({ heading, searchParams, showPageSchema = true }) {
   const params = await searchParams;
-  const category = params?.category || "all";
-  const requestedPage = Number(params?.page || 1);
-  const currentPage = Number.isInteger(requestedPage) && requestedPage > 0
-    ? requestedPage
-    : 1;
+  const category = firstSearchParam(params?.category) || "all";
+  const parsedPage = parsePageNumber(params?.page);
+  const currentPage = parsedPage || 1;
   const [locale, { translations }] = await Promise.all([
     getCurrentLocale(),
     getSiteSettings(),
   ]);
+
+  if (showPageSchema && (params?.category !== undefined || params?.page !== undefined)) {
+    const categoryPath = category === "all"
+      ? "/blog"
+      : `/blog/category/${encodeURIComponent(category)}`;
+    const canonicalPath = currentPage > 1
+      ? `${categoryPath}/page/${currentPage}`
+      : categoryPath;
+
+    redirect(localizeHref(canonicalPath, locale));
+  }
   const title = translateText(translations, "blog.title", locale, {
     ka: "პრაქტიკული გზამკვლევები და სიახლეები",
     en: "Practical guides and updates",

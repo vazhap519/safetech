@@ -55,10 +55,5 @@ class ProjectCategory extends Model
             }
         });
 
-        static::updating(function ($category) {
-            if ($category->isDirty('name')) {
-                $category->slug = Str::slug($category->name);
-            }
-        });
     }
 }

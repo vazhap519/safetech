@@ -105,17 +105,6 @@ export async function generateMetadata(): Promise<Metadata> {
             description: siteDescription,
             images: [absoluteSiteUrl(branding.defaultImage)],
         },
-        robots: {
-            index: true,
-            follow: true,
-            googleBot: {
-                index: true,
-                follow: true,
-                "max-image-preview": "large",
-                "max-snippet": -1,
-                "max-video-preview": -1,
-            },
-        },
         alternates: {
             canonical,
             languages: {

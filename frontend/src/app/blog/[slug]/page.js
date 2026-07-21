@@ -24,8 +24,19 @@ export async function generateMetadata({ params }) {
   const post = response?.error ? null : response?.data;
 
   if (!post) {
+    const notFoundTitle = translateText(
+      settings.translations,
+      "meta.blog.notFound",
+      locale,
+      {
+        ka: "სტატია ვერ მოიძებნა",
+        en: "Article not found",
+        ru: "Статья не найдена",
+      },
+    );
+
     return {
-      title: withSiteTitle("Article not found", settings.branding.siteName),
+      title: withSiteTitle(notFoundTitle, settings.branding.siteName),
       robots: { index: false, follow: false },
     };
   }

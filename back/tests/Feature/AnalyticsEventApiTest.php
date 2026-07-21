@@ -63,8 +63,9 @@ class AnalyticsEventApiTest extends TestCase
 
         $response = $this->postJson('/api/analytics/events', [
             'event_type' => AnalyticsEvent::TYPE_WHATSAPP_CLICK,
-            'page_path' => '/services/cctv',
+            'page_path' => '/en/services/cctv?campaign=summer',
             'visitor_id' => 'browser-456',
+            'locale' => 'en-US',
         ]);
 
         $response->assertCreated();
@@ -73,7 +74,24 @@ class AnalyticsEventApiTest extends TestCase
             'event_type' => AnalyticsEvent::TYPE_WHATSAPP_CLICK,
             'service_id' => $service->id,
             'service_slug' => 'cctv',
-            'page_path' => '/services/cctv',
+            'page_path' => '/en/services/cctv',
+            'locale' => 'en',
         ]);
+    }
+
+    public function test_it_limits_repeated_events_even_when_the_ip_limit_is_not_reached(): void
+    {
+        $payload = [
+            'event_type' => AnalyticsEvent::TYPE_SERVICE_VIEW,
+            'page_path' => '/services/networking',
+            'visitor_id' => 'repeated-browser',
+        ];
+
+        foreach (range(1, 30) as $attempt) {
+            $this->postJson('/api/analytics/events', $payload)->assertCreated();
+        }
+
+        $this->postJson('/api/analytics/events', $payload)->assertTooManyRequests();
+        $this->assertDatabaseCount('analytics_events', 30);
     }
 }

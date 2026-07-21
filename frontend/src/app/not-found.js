@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LocalizedLink from "@/components/ui/LocalizedLink";
 
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
@@ -36,21 +36,21 @@ export default async function NotFound() {
         {homeLabel || contactLabel ? (
           <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
             {homeLabel ? (
-              <Link
+              <LocalizedLink
                 className="rounded-xl bg-[#00E0B8] px-8 py-3 font-semibold text-black transition hover:scale-105"
                 href="/"
               >
                 {homeLabel}
-              </Link>
+              </LocalizedLink>
             ) : null}
 
             {contactLabel ? (
-              <Link
+              <LocalizedLink
                 className="rounded-xl border border-white/20 px-8 py-3 transition hover:bg-white/10"
                 href="/contact"
               >
                 {contactLabel}
-              </Link>
+              </LocalizedLink>
             ) : null}
           </div>
         ) : null}

@@ -78,6 +78,7 @@ export function useLeadForm(source: string) {
                     locale,
                     source,
                 }),
+                signal: AbortSignal.timeout(15000),
             });
             const result = (await response.json()) as {
                 message?: string;

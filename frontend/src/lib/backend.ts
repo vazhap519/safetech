@@ -380,9 +380,18 @@ function localizeProjectDetail(
         },
         related: project.related.map((item, index) => ({
             ...item,
-            title: t(`${prefix}.related.${index}.title`, item.title),
-            category: t(`${prefix}.related.${index}.category`, item.category),
-            imageAlt: t(`${prefix}.related.${index}.imageAlt`, item.imageAlt),
+            title: t(
+                `${prefix}.related.${item.translationIndex ?? index}.title`,
+                item.title,
+            ),
+            category: t(
+                `${prefix}.related.${item.translationIndex ?? index}.category`,
+                item.category,
+            ),
+            imageAlt: t(
+                `${prefix}.related.${item.translationIndex ?? index}.imageAlt`,
+                item.imageAlt,
+            ),
         })),
     } satisfies ProjectDetail;
 }
