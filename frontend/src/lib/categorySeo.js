@@ -18,6 +18,24 @@ const descriptionFallbacks = {
   },
 };
 
+const titleFallbacks = {
+  services: {
+    ka: (name) => `${name} სერვისები`,
+    en: (name) => `${name} Services`,
+    ru: (name) => `${name}: услуги`,
+  },
+  projects: {
+    ka: (name) => `${name} პროექტები`,
+    en: (name) => `${name} Projects`,
+    ru: (name) => `${name}: проекты`,
+  },
+  blog: {
+    ka: (name) => `${name} სტატიები`,
+    en: (name) => `${name} Articles`,
+    ru: (name) => `${name}: статьи`,
+  },
+};
+
 function plainText(value) {
   return typeof value === "string"
     ? value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
@@ -51,12 +69,29 @@ function fallbackDescription(kind, name, locale) {
   return name ? formatter(name) : "";
 }
 
+function categoryTitle(kind, category, locale) {
+  const name = plainText(category?.name);
+  const seoTitle = plainText(category?.seo_title);
+
+  if (seoTitle && seoTitle.toLocaleLowerCase(locale) !== name.toLocaleLowerCase(locale)) {
+    return seoTitle;
+  }
+
+  const group = titleFallbacks[kind] || titleFallbacks.services;
+  const formatter = group[locale] || group.ka;
+
+  return name ? formatter(name) : seoTitle;
+}
+
 export function categoryMetadata({ category, path, locale, kind }) {
+  const description = plainText(
+    category?.seo_description || category?.intro_text,
+  );
+  const fallback = fallbackDescription(kind, category?.name, locale);
+
   return createMetadata({
-    title: category?.seo_title || category?.name || "",
-    description:
-      plainText(category?.seo_description || category?.intro_text) ||
-      fallbackDescription(kind, category?.name, locale),
+    title: categoryTitle(kind, category, locale),
+    description: description.length >= 50 ? description : fallback || description,
     keywords: keywordValues(category),
     path,
     locale,
