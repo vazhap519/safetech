@@ -5,27 +5,39 @@ import {
   urlset,
   xmlResponse,
 } from "@/lib/sitemap";
+import { supportedLocales } from "@/lib/locales";
+import { hasConfiguredPageHeading } from "@/lib/page-content";
+import { buildTranslationMap } from "@/lib/translations";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const [response, privacyResponse] = await Promise.all([
+  const [response, contentResponse, ...privacyResponses] = await Promise.all([
     safeFetchJson(buildSitemapApiUrl("/seo")),
-    safeFetchJson(buildSitemapApiUrl("/privacy", { locale: "ka" })),
+    safeFetchJson(buildSitemapApiUrl("/content")),
+    ...supportedLocales.map((locale) =>
+      safeFetchJson(buildSitemapApiUrl("/privacy", { locale })),
+    ),
   ]);
 
-  if (!response || !privacyResponse) {
+  if (!response || !contentResponse || privacyResponses.some((item) => !item)) {
     throw new Error("Unable to load required CMS data for the main sitemap");
   }
 
   const seoPages = Array.isArray(response?.data) ? response.data : [];
   const seoByKey = new Map(seoPages.map((page) => [page.key, page]));
-  const privacyContent = privacyResponse?.data ?? privacyResponse;
-  const hasPublishedPrivacyPolicy = [
-    privacyContent?.title,
-    privacyContent?.highlight,
-    privacyContent?.content,
-  ].some((value) => typeof value === "string" && value.trim().length > 0);
+  const translations = buildTranslationMap(
+    contentResponse?.data?.settings?.translations,
+  );
+  const privacyLocales = supportedLocales.filter((locale, index) => {
+    const privacyContent = privacyResponses[index]?.data ?? privacyResponses[index];
+
+    return [
+      privacyContent?.title,
+      privacyContent?.highlight,
+      privacyContent?.content,
+    ].some((value) => typeof value === "string" && value.trim().length > 0);
+  });
   const pages = [
     { key: "home", path: "/", changefreq: "daily", priority: "1.0" },
     { key: "about", path: "/about", changefreq: "monthly", priority: "0.6" },
@@ -40,16 +52,20 @@ export async function GET() {
   return xmlResponse(
     urlset(
       pages
-        .filter((page) => page.key !== "privacy" || hasPublishedPrivacyPolicy)
         .filter((page) => seoByKey.get(page.key)?.noindex !== true)
         .flatMap((page) => {
           const seoPage = seoByKey.get(page.key);
+          const locales = page.key === "privacy"
+            ? privacyLocales
+            : supportedLocales.filter((locale) =>
+              hasConfiguredPageHeading(translations, page.key, locale),
+            );
 
           return localizedUrlEntries(page.path, {
             ...(seoPage?.updated_at ? { lastmod: seoPage.updated_at } : {}),
             changefreq: page.changefreq,
             priority: page.priority,
-          });
+          }, locales);
         }),
     ),
   );

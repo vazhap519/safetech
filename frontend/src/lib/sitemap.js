@@ -70,12 +70,19 @@ function absoluteUrl(pathOrUrl) {
   return `${baseUrl}${path}`;
 }
 
-export function localizedUrlEntries(path, metadata = {}) {
+export function localizedUrlEntries(path, metadata = {}, locales = supportedLocales) {
   const normalizedPath = String(path || "/").startsWith("/") ? path : `/${path}`;
-  const defaultUrl = absoluteUrl(localizePath(normalizedPath, DEFAULT_LOCALE));
+  const availableLocales = supportedLocales.filter((locale) => locales.includes(locale));
+
+  if (!availableLocales.length) return [];
+
+  const defaultLocale = availableLocales.includes(DEFAULT_LOCALE)
+    ? DEFAULT_LOCALE
+    : availableLocales[0];
+  const defaultUrl = absoluteUrl(localizePath(normalizedPath, defaultLocale));
   const alternates = {
     ...Object.fromEntries(
-      supportedLocales.map((locale) => [
+      availableLocales.map((locale) => [
         getLanguageTag(locale),
         absoluteUrl(localizePath(normalizedPath, locale)),
       ]),
@@ -83,7 +90,7 @@ export function localizedUrlEntries(path, metadata = {}) {
     "x-default": defaultUrl,
   };
 
-  return supportedLocales.map((locale) => ({
+  return availableLocales.map((locale) => ({
     ...metadata,
     loc: absoluteUrl(localizePath(normalizedPath, locale)),
     alternates,

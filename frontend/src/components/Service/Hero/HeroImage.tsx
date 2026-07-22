@@ -5,6 +5,8 @@ import { translateText } from "@/lib/translations";
 export default async function HeroImage() {
     const { branding, locale, translations } = await getSiteSettings();
 
+    if (!branding.defaultImage) return null;
+
     return (
         <div
             className="
@@ -23,11 +25,12 @@ export default async function HeroImage() {
         >
             <Image
                 src={branding.defaultImage}
-                alt={translateText(translations, "services.hero.imageAlt", locale, {
-                    ka: "კიბერუსაფრთხოებისა და IT ინფრასტრუქტურის სერვისები",
-                    en: "Cybersecurity and IT infrastructure services",
-                    ru: "Услуги кибербезопасности и IT-инфраструктуры",
-                })}
+                alt={translateText(
+                    translations,
+                    "services.hero.imageAlt",
+                    locale,
+                    branding.siteName,
+                )}
                 sizes="(max-width: 768px) 100vw, 50vw"
 
 width={610}

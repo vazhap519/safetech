@@ -5,11 +5,14 @@ import { translateText } from "@/lib/translations";
 
 export default async function BlogSchema() {
     const settings = await getSiteSettings();
-    const name = translateText(settings.translations, "blog.title", settings.locale, {
-        ka: "SafeTech ბლოგი",
-        en: "SafeTech Blog",
-        ru: "Блог SafeTech",
-    });
+    const name = translateText(
+        settings.translations,
+        "blog.title",
+        settings.locale,
+        null,
+    );
+
+    if (!name) return null;
     const schema = {
         "@context": "https://schema.org",
         "@type": "Blog",

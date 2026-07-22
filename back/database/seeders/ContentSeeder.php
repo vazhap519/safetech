@@ -13,6 +13,61 @@ use Illuminate\Database\Seeder;
 
 class ContentSeeder extends Seeder
 {
+    /** @var array<int, string> */
+    private const SYSTEM_TRANSLATION_PREFIXES = [
+        'accessibility.',
+        'common.',
+        'consent.',
+        'consultation.',
+        'filters.',
+        'floating.',
+        'footer.',
+        'forms.',
+        'nav.',
+        'notFound.',
+        'pagination.',
+        'project.detail.',
+        'service.detail.',
+        'service.hero.',
+        'service.share.',
+    ];
+
+    /** @var array<int, string> */
+    private const SYSTEM_TRANSLATION_KEYS = [
+        'meta.default.title',
+        'meta.default.description',
+        'meta.service.notFound',
+        'meta.project.notFound',
+        'services.catalog.count',
+        'services.catalog.helper',
+        'services.catalog.page',
+        'services.catalog.empty.title',
+        'services.catalog.empty.description',
+        'projects.completed',
+        'projects.video.open',
+        'blog.filter.all',
+        'blog.empty',
+        'blog.breadcrumb',
+        'blog.section',
+        'blog.contents',
+        'blog.minRead',
+        'blog.related',
+        'contact.form.title',
+        'contact.info.phone',
+        'contact.info.email',
+        'contact.info.address',
+        'contact.info.hours',
+        'calculator.empty',
+        'calculator.form.service',
+        'calculator.form.package',
+        'calculator.form.recommended',
+        'calculator.summary.oneTime',
+        'calculator.summary.monthly',
+        'calculator.summary.print',
+        'calculator.contact.title',
+        'calculator.contact.send',
+    ];
+
     public function run(): void
     {
         $this->seedSystemContent();
@@ -58,6 +113,8 @@ class ContentSeeder extends Seeder
 
     protected function seedDemoContent(): void
     {
+        $this->seedDemoTranslations();
+
         $serviceCategories = collect($this->serviceCategories())
             ->mapWithKeys(function (array $category): array {
                 $record = CategoryForService::query()->firstOrCreate(
@@ -564,9 +621,69 @@ class ContentSeeder extends Seeder
                 'indexnow_key' => '',
             ],
             'translations' => [
-                'entries' => $this->defaultTranslationEntries(),
+                'entries' => $this->systemTranslationEntries(),
             ],
         ];
+    }
+
+    /** @return array<int, array<string, string>> */
+    public function systemTranslationEntries(): array
+    {
+        return array_values(array_filter(
+            $this->defaultTranslationEntries(),
+            fn (array $entry): bool => $this->isSystemTranslationKey((string) ($entry['key'] ?? '')),
+        ));
+    }
+
+    /** @return array<int, array<string, string>> */
+    public function demoTranslationEntries(): array
+    {
+        return array_values(array_filter(
+            $this->defaultTranslationEntries(),
+            fn (array $entry): bool => ! $this->isSystemTranslationKey((string) ($entry['key'] ?? '')),
+        ));
+    }
+
+    private function isSystemTranslationKey(string $key): bool
+    {
+        if (in_array($key, self::SYSTEM_TRANSLATION_KEYS, true)) {
+            return true;
+        }
+
+        foreach (self::SYSTEM_TRANSLATION_PREFIXES as $prefix) {
+            if (str_starts_with($key, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function seedDemoTranslations(): void
+    {
+        $setting = SiteSetting::query()->firstOrCreate(
+            ['key' => 'translations'],
+            [
+                'group' => 'general',
+                'value' => ['entries' => []],
+                'is_public' => true,
+            ],
+        );
+        $currentValue = is_array($setting->value) ? $setting->value : [];
+        $mergedValue = $this->mergeMissingTranslationEntries(
+            $currentValue,
+            ['entries' => $this->demoTranslationEntries()],
+        );
+
+        if ($mergedValue === $currentValue) {
+            return;
+        }
+
+        $setting->forceFill([
+            'group' => 'general',
+            'value' => $mergedValue,
+            'is_public' => true,
+        ])->save();
     }
 
     /** @param array<int, string> $names
@@ -586,7 +703,7 @@ class ContentSeeder extends Seeder
         ];
     }
 
-    private function defaultTranslationEntries(): array
+    public function defaultTranslationEntries(): array
     {
         return array_merge([
             ['key' => 'nav.home', 'ka' => 'მთავარი', 'en' => 'Home', 'ru' => 'Главная'],

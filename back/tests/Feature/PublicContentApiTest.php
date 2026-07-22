@@ -7,12 +7,31 @@ use App\Models\Project;
 use App\Models\ProjectCategory;
 use App\Models\Service;
 use Database\Seeders\ContentSeeder;
+use Database\Seeders\SystemContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PublicContentApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_system_bootstrap_does_not_expose_bundled_page_copy(): void
+    {
+        $this->seed(SystemContentSeeder::class);
+
+        $translations = collect(
+            $this->getJson('/api/content')
+                ->assertOk()
+                ->json('data.settings.translations.entries'),
+        )->keyBy('key');
+
+        $this->assertNotEmpty($translations->get('nav.home'));
+        $this->assertNotEmpty($translations->get('forms.email'));
+        $this->assertNull($translations->get('home.hero.titlePrefix'));
+        $this->assertNull($translations->get('home.infrastructure.title'));
+        $this->assertNull($translations->get('about.hero.title'));
+        $this->assertNull($translations->get('services.hero.titlePrefix'));
+    }
 
     public function test_it_returns_published_services(): void
     {

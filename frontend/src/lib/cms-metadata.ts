@@ -2,6 +2,7 @@ import "server-only";
 
 import { getBackendSeoPage } from "@/lib/backend";
 import type { PageSeoPreset } from "@/lib/page-seo-presets";
+import { hasConfiguredPageHeading } from "@/lib/page-content";
 import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
@@ -22,6 +23,13 @@ export async function createCmsPageMetadata(preset: PageSeoPreset) {
         settings.locale,
         preset.description,
     );
+    const hasPageContent =
+        preset.key === "privacy" ||
+        hasConfiguredPageHeading(
+            settings.translations,
+            preset.key,
+            settings.locale,
+        );
 
     return createMetadata({
         title: cmsSeo?.title || translatedTitle,
@@ -35,6 +43,6 @@ export async function createCmsPageMetadata(preset: PageSeoPreset) {
             settings.branding.defaultImage,
         siteName: settings.branding.siteName,
         type: preset.type,
-        noindex: Boolean(cmsSeo?.noindex),
+        noindex: Boolean(cmsSeo?.noindex) || !hasPageContent,
     });
 }

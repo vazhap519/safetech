@@ -37,7 +37,7 @@ type SiteBranding = {
     logo: string | null;
     footerLogo: string | null;
     favicon: string;
-    defaultImage: string;
+    defaultImage: string | null;
 };
 
 type SiteIntegrations = {
@@ -194,7 +194,7 @@ const defaultSiteBranding: SiteBranding = {
     logo: null,
     footerLogo: null,
     favicon: "/icon-192.png",
-    defaultImage: DEFAULT_SOCIAL_IMAGE,
+    defaultImage: null,
 };
 
 export const getSiteSettings = cache(async () => {
@@ -258,11 +258,10 @@ export const getSiteSettings = cache(async () => {
             pickString(configuredBranding.favicon) || null,
             defaultSiteBranding.favicon,
         ),
-        defaultImage: resolveBackendAsset(
+        defaultImage: maybeBackendAsset(
             pickString(configuredBranding.default_image) ||
                 pickString(configuredSeo.default_image) ||
                 null,
-            defaultSiteBranding.defaultImage,
         ),
     } satisfies SiteBranding;
 

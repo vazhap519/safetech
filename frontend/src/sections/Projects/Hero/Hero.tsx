@@ -9,46 +9,38 @@ export default async function ProjectsHeroSection() {
         translations,
         "projects.hero.eyebrow",
         locale,
-        { ka: "განხორციელებული სამუშაოები", en: "Delivered work", ru: "Реализованные работы" },
+        null,
     );
-    const title = translateText(translations, "projects.hero.title", locale, {
-        ka: "IT და უსაფრთხოების პროექტები",
-        en: "IT and security projects",
-        ru: "Проекты IT и безопасности",
-    });
+    const title = translateText(translations, "projects.hero.title", locale, null);
     const description = translateText(
         translations,
         "projects.hero.description",
         locale,
-        {
-            ka: "ნახეთ როგორ ვგეგმავთ და ვნერგავთ ქსელურ, სერვერულ და უსაფრთხოების ინფრასტრუქტურას.",
-            en: "See how we design and deploy network, server, and security infrastructure.",
-            ru: "Посмотрите, как мы проектируем и внедряем сетевую, серверную инфраструктуру и системы безопасности.",
-        },
+        null,
     );
     const imageAlt = translateText(
         translations,
         "projects.hero.imageAlt",
         locale,
-        {
-            ka: "SafeTech-ის განხორციელებული ინფრასტრუქტურის პროექტი",
-            en: "Infrastructure project delivered by SafeTech",
-            ru: "Инфраструктурный проект, реализованный SafeTech",
-        },
+        null,
     );
+
+    if (!eyebrow && !title && !description) return null;
 
     return (
         <section className="relative flex min-h-[70svh] items-center justify-center overflow-hidden px-5 pb-14 pt-28 md:px-8 md:pb-16 xl:px-14">
             <div className="absolute inset-0 z-0">
-                <Image
-                    alt={imageAlt || title}
-                    className="object-cover opacity-10 md:opacity-60"
-                    fill
-                    priority
-                    sizes="100vw"
-                    src={branding.defaultImage}
-                    unoptimized={branding.defaultImage.endsWith(".svg")}
-                />
+                {branding.defaultImage ? (
+                    <Image
+                        alt={imageAlt || title || branding.siteName}
+                        className="object-cover opacity-10 md:opacity-60"
+                        fill
+                        priority
+                        sizes="100vw"
+                        src={branding.defaultImage}
+                        unoptimized={branding.defaultImage.endsWith(".svg")}
+                    />
+                ) : null}
                 <div className="hero-gradient absolute inset-0 z-10" />
             </div>
             <div className="relative z-20 max-w-4xl text-center">

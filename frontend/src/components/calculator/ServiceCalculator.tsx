@@ -201,21 +201,9 @@ export default function ServiceCalculator({
     );
 
     const copy = {
-        eyebrow: t("calculator.hero.eyebrow", {
-            ka: "სერვისების კალკულატორი",
-            en: "Service calculator",
-            ru: "Калькулятор услуг",
-        }),
-        title: t("calculator.hero.title", {
-            ka: "მიიღეთ პროექტის საორიენტაციო ბიუჯეტი",
-            en: "Estimate your project budget",
-            ru: "Рассчитайте ориентировочный бюджет проекта",
-        }),
-        description: t("calculator.hero.description", {
-            ka: "აირჩიეთ სერვისი და მიუთითეთ ობიექტის პარამეტრები. საბოლოო შეთავაზებას ტექნიკური შეფასების შემდეგ მოგიმზადებთ.",
-            en: "Choose a service and enter the site details. We confirm the final offer after a technical assessment.",
-            ru: "Выберите услугу и укажите параметры объекта. Итоговое предложение подтверждается после обследования.",
-        }),
+        eyebrow: t("calculator.hero.eyebrow", null),
+        title: t("calculator.hero.title", null),
+        description: t("calculator.hero.description", null),
         service: t("calculator.form.service", {
             ka: "სერვისი",
             en: "Service",
@@ -271,9 +259,11 @@ export default function ServiceCalculator({
     if (!profile) {
         return (
             <section className="mx-auto min-h-[64svh] max-w-4xl px-5 pb-16 pt-32 text-center md:pt-36">
-                <h1 className="text-[30px] font-semibold leading-[1.2] text-on-surface sm:text-[38px] md:text-[44px]">
-                    {copy.title}
-                </h1>
+                {copy.title ? (
+                    <h1 className="text-[30px] font-semibold leading-[1.2] text-on-surface sm:text-[38px] md:text-[44px]">
+                        {copy.title}
+                    </h1>
+                ) : null}
                 <p className="mx-auto mt-6 max-w-2xl text-on-surface-variant">
                     {copy.empty}
                 </p>
@@ -312,15 +302,21 @@ export default function ServiceCalculator({
         <div className="min-h-screen bg-background pb-20 pt-[76px] print:bg-white print:pb-0 print:pt-0">
             <section className="border-b border-outline-variant/20 px-5 py-10 sm:py-14">
                 <div className="mx-auto max-w-6xl">
-                    <p className="text-sm font-semibold uppercase text-secondary">
-                        {copy.eyebrow}
-                    </p>
-                    <h1 className="mt-3 max-w-4xl text-[32px] font-semibold leading-[1.2] text-on-surface sm:text-[40px] md:text-[48px]">
-                        {copy.title}
-                    </h1>
-                    <p className="mt-5 max-w-3xl text-base leading-7 text-on-surface-variant sm:text-lg">
-                        {copy.description}
-                    </p>
+                    {copy.eyebrow ? (
+                        <p className="text-sm font-semibold uppercase text-secondary">
+                            {copy.eyebrow}
+                        </p>
+                    ) : null}
+                    {copy.title ? (
+                        <h1 className="mt-3 max-w-4xl text-[32px] font-semibold leading-[1.2] text-on-surface sm:text-[40px] md:text-[48px]">
+                            {copy.title}
+                        </h1>
+                    ) : null}
+                    {copy.description ? (
+                        <p className="mt-5 max-w-3xl text-base leading-7 text-on-surface-variant sm:text-lg">
+                            {copy.description}
+                        </p>
+                    ) : null}
                 </div>
             </section>
 

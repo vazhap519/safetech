@@ -409,22 +409,29 @@ for path in "${warm_paths[@]}"; do
     page_html="$(curl --fail --silent --show-error --compressed --retry 3 --retry-delay 1 \
         -H "Accept: text/html" \
         "https://safetech.ge${path}")"
+    page_is_noindex=false
 
-    if ! grep -Eq '<meta name="description" content="[^"]{20,}"' <<< "${page_html}"; then
-        echo "Missing or too-short meta description: https://safetech.ge${path}" >&2
-        exit 1
+    if grep -Eq '<meta name="robots" content="[^"]*noindex' <<< "${page_html}"; then
+        page_is_noindex=true
     fi
 
-    if ! grep -Eq '<h1([[:space:]][^>]*)?>' <<< "${page_html}"; then
-        echo "Missing page heading: https://safetech.ge${path}" >&2
-        exit 1
-    fi
+    if [[ "${page_is_noindex}" == false ]]; then
+        if ! grep -Eq '<meta name="description" content="[^"]{20,}"' <<< "${page_html}"; then
+            echo "Missing or too-short meta description: https://safetech.ge${path}" >&2
+            exit 1
+        fi
 
-    h1_count="$(grep -Eo '<h1([[:space:]][^>]*)?>' <<< "${page_html}" | awk 'END { print NR + 0 }')"
+        if ! grep -Eq '<h1([[:space:]][^>]*)?>' <<< "${page_html}"; then
+            echo "Missing page heading: https://safetech.ge${path}" >&2
+            exit 1
+        fi
 
-    if [[ "${h1_count}" -ne 1 ]]; then
-        echo "Expected one H1, found ${h1_count}: https://safetech.ge${path}" >&2
-        exit 1
+        h1_count="$(grep -Eo '<h1([[:space:]][^>]*)?>' <<< "${page_html}" | awk 'END { print NR + 0 }')"
+
+        if [[ "${h1_count}" -ne 1 ]]; then
+            echo "Expected one H1, found ${h1_count}: https://safetech.ge${path}" >&2
+            exit 1
+        fi
     fi
 
     if ! grep -Eq '<link rel="canonical" href="https://safetech.ge[^\"]*"' <<< "${page_html}"; then

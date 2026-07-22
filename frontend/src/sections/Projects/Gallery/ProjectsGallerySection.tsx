@@ -33,21 +33,13 @@ export default async function ProjectsGallerySection({
                             translations,
                             "projects.gallery.title",
                             locale,
-                            {
-                                ka: "პროექტების კატალოგი",
-                                en: "Project Catalog",
-                                ru: "Каталог проектов",
-                            },
+                            null,
                         )}
                         description={translateText(
                             translations,
                             "projects.gallery.description",
                             locale,
-                            {
-                                ka: "დაათვალიერეთ განხორციელებული გადაწყვეტილებები ინდუსტრიის მიხედვით",
-                                en: "Browse completed solutions by industry",
-                                ru: "Просмотрите реализованные решения по отраслям",
-                            },
+                            null,
                         )}
                     />
                 </div>

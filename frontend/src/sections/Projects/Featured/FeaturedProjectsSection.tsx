@@ -24,21 +24,13 @@ export default async function FeaturedProjectsSection() {
                             translations,
                             "projects.featured.title",
                             locale,
-                            {
-                                ka: "რჩეული პროექტები",
-                                en: "Featured Projects",
-                                ru: "Избранные проекты",
-                            },
+                            null,
                         )}
                         description={translateText(
                             translations,
                             "projects.featured.description",
                             locale,
-                            {
-                                ka: "ჩვენი მასშტაბური ინფრასტრუქტურული ინსტალაციები",
-                                en: "Selected large-scale infrastructure deployments",
-                                ru: "Избранные масштабные инфраструктурные внедрения",
-                            },
+                            null,
                         )}
                     />
                 </div>

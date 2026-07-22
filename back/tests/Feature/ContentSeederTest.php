@@ -29,9 +29,15 @@ class ContentSeederTest extends TestCase
 
             $this->assertSame(0, Service::query()->count());
             $this->assertSame(0, Project::query()->count());
-            $this->assertGreaterThan(300, count(
+            $translations = collect(
                 SiteSetting::query()->where('key', 'translations')->value('value')['entries'] ?? [],
-            ));
+            )->keyBy('key');
+
+            $this->assertNotEmpty($translations->get('nav.home'));
+            $this->assertNotEmpty($translations->get('forms.email'));
+            $this->assertNull($translations->get('home.hero.titlePrefix'));
+            $this->assertNull($translations->get('about.hero.title'));
+            $this->assertNull($translations->get('meta.home.title'));
         } finally {
             $this->app->detectEnvironment(fn (): string => 'testing');
         }

@@ -37,11 +37,7 @@ export default async function BlogPage({ heading, searchParams, showPageSchema =
 
     redirect(localizeHref(canonicalPath, locale));
   }
-  const title = translateText(translations, "blog.title", locale, {
-    ka: "პრაქტიკული გზამკვლევები და სიახლეები",
-    en: "Practical guides and updates",
-    ru: "Практические материалы и новости",
-  });
+  const title = translateText(translations, "blog.title", locale, null);
   const allLabel = translateText(translations, "blog.filter.all", locale, null);
   const emptyLabel = translateText(translations, "blog.empty", locale, null);
   const detailsLabel = translateText(

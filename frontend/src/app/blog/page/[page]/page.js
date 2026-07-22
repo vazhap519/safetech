@@ -35,11 +35,7 @@ export async function generateMetadata({ params }) {
 
   const response = await getBlog({ page: currentPage, locale });
   const lastPage = Number(response?.meta?.last_page || 0);
-  const blogTitle = translateText(settings.translations, "blog.title", locale, {
-    ka: "ბლოგი",
-    en: "Blog",
-    ru: "Блог",
-  });
+  const blogTitle = translateText(settings.translations, "blog.title", locale, null);
 
   return createMetadata({
     title: paginatedTitle(blogTitle, currentPage, locale),
@@ -47,7 +43,7 @@ export async function generateMetadata({ params }) {
     path,
     locale,
     siteName: settings.branding.siteName,
-    noindex: !lastPage || currentPage > lastPage,
+    noindex: !blogTitle || !lastPage || currentPage > lastPage,
   });
 }
 

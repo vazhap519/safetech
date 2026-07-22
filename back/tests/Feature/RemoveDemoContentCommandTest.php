@@ -37,6 +37,15 @@ class RemoveDemoContentCommandTest extends TestCase
             'title' => 'Custom office project',
         ])->save();
 
+        $translationSetting = SiteSetting::query()->where('key', 'translations')->firstOrFail();
+        $translationValue = $translationSetting->value;
+        $editedEntryIndex = collect($translationValue['entries'])->search(
+            fn (array $entry): bool => ($entry['key'] ?? null) === 'home.hero.titlePrefix',
+        );
+        $this->assertNotFalse($editedEntryIndex);
+        $translationValue['entries'][$editedEntryIndex]['en'] = 'Administrator homepage title';
+        $translationSetting->forceFill(['value' => $translationValue])->save();
+
         $this->artisan('cms:remove-demo-content', ['--force' => true])
             ->assertSuccessful();
 
@@ -53,6 +62,18 @@ class RemoveDemoContentCommandTest extends TestCase
         $this->assertDatabaseMissing('category_for_services', ['slug' => 'it-support']);
         $this->assertDatabaseHas('project_categories', ['slug' => 'offices']);
         $this->assertDatabaseHas('site_settings', ['key' => 'translations']);
+
+        $translations = collect(
+            SiteSetting::query()->where('key', 'translations')->value('value')['entries'] ?? [],
+        )->keyBy('key');
+
+        $this->assertNotEmpty($translations->get('nav.home'));
+        $this->assertSame(
+            'Administrator homepage title',
+            $translations->get('home.hero.titlePrefix')['en'] ?? null,
+        );
+        $this->assertNull($translations->get('home.infrastructure.title'));
+        $this->assertNull($translations->get('about.hero.title'));
     }
 
     public function test_content_seeder_keeps_system_defaults_but_skips_demo_catalog_in_production(): void
@@ -76,6 +97,12 @@ class RemoveDemoContentCommandTest extends TestCase
         $this->seed(SystemContentSeeder::class);
 
         $this->assertTrue(SiteSetting::query()->where('key', 'translations')->exists());
+        $systemTranslations = collect(
+            SiteSetting::query()->where('key', 'translations')->value('value')['entries'] ?? [],
+        )->keyBy('key');
+        $this->assertNotEmpty($systemTranslations->get('nav.home'));
+        $this->assertNull($systemTranslations->get('home.hero.titlePrefix'));
+        $this->assertNull($systemTranslations->get('services.hero.titlePrefix'));
         $this->assertSame(1, PrivacyPolicy::query()->count());
         $this->assertSame(0, Service::query()->count());
         $this->assertSame(0, Project::query()->count());
@@ -84,6 +111,11 @@ class RemoveDemoContentCommandTest extends TestCase
 
         $this->assertGreaterThan(0, Service::query()->count());
         $this->assertGreaterThan(0, Project::query()->count());
+        $demoTranslations = collect(
+            SiteSetting::query()->where('key', 'translations')->value('value')['entries'] ?? [],
+        )->keyBy('key');
+        $this->assertNotEmpty($demoTranslations->get('home.hero.titlePrefix'));
+        $this->assertNotEmpty($demoTranslations->get('services.hero.titlePrefix'));
     }
 
     public function test_demo_cleanup_preserves_edited_records_with_bundled_slugs(): void

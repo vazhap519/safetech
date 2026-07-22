@@ -6,8 +6,10 @@ use App\Models\CategoryForService;
 use App\Models\Project;
 use App\Models\ProjectCategory;
 use App\Models\Service;
+use App\Models\SiteSetting;
 use App\Support\FrontendRevalidator;
 use App\Support\PublicContentCache;
+use Database\Seeders\ContentSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -59,7 +61,7 @@ class RemoveDemoContent extends Command
     protected $signature = 'cms:remove-demo-content
                             {--force : Remove matching demo records without confirmation}';
 
-    protected $description = 'Remove untouched bundled demo services and projects while preserving edited CMS records';
+    protected $description = 'Remove untouched bundled catalog and page copy while preserving edited CMS content';
 
     public function handle(): int
     {
@@ -101,11 +103,35 @@ class RemoveDemoContent extends Command
             ->whereDoesntHave('projects')
             ->orderBy('slug')
             ->get();
+        $translationSetting = SiteSetting::query()
+            ->where('key', 'translations')
+            ->first();
+        $translationValue = is_array($translationSetting?->value)
+            ? $translationSetting->value
+            : [];
+        $translationEntries = is_array($translationValue['entries'] ?? null)
+            ? $translationValue['entries']
+            : [];
+        $demoTranslationDefaults = collect((new ContentSeeder)->demoTranslationEntries())
+            ->keyBy('key');
+        $demoTranslationIndexes = collect($translationEntries)
+            ->filter(function (mixed $entry) use ($demoTranslationDefaults): bool {
+                if (! is_array($entry) || blank($entry['key'] ?? null)) {
+                    return false;
+                }
+
+                $default = $demoTranslationDefaults->get((string) $entry['key']);
+
+                return is_array($default) && $this->isUntouchedTranslation($entry, $default);
+            })
+            ->keys()
+            ->all();
 
         if ($services->isEmpty()
             && $projects->isEmpty()
             && $serviceCategories->isEmpty()
-            && $projectCategories->isEmpty()) {
+            && $projectCategories->isEmpty()
+            && $demoTranslationIndexes === []) {
             $this->info('No bundled demo content was found.');
 
             return self::SUCCESS;
@@ -132,11 +158,19 @@ class RemoveDemoContent extends Command
                 $category->slug,
                 $category->name,
             ]))
+            ->when(
+                $demoTranslationIndexes !== [],
+                fn ($rows) => $rows->push([
+                    'Bundled page copy',
+                    (string) count($demoTranslationIndexes),
+                    'Untouched multilingual marketing entries',
+                ]),
+            )
             ->values()
             ->all();
 
         $this->table(['Type', 'Slug', 'Title'], $rows);
-        $this->warn('Only untouched bundled records without uploaded media and their unused categories will be removed. Edited CMS records are preserved.');
+        $this->warn('Only exact bundled values are removed. Edited records and translation entries are preserved.');
 
         if (! $this->option('force') && ! $this->confirm('Remove these demo records?', false)) {
             $this->info('No records were changed.');
@@ -144,7 +178,14 @@ class RemoveDemoContent extends Command
             return self::SUCCESS;
         }
 
-        $deleted = DB::transaction(function () use ($services, $projects): int {
+        $deleted = DB::transaction(function () use (
+            $services,
+            $projects,
+            $translationSetting,
+            $translationValue,
+            $translationEntries,
+            $demoTranslationIndexes,
+        ): int {
             $deleted = 0;
 
             foreach ($services as $service) {
@@ -166,14 +207,37 @@ class RemoveDemoContent extends Command
                 ->whereDoesntHave('projects')
                 ->delete();
 
+            if ($translationSetting && $demoTranslationIndexes !== []) {
+                $indexesToRemove = array_fill_keys($demoTranslationIndexes, true);
+                $translationValue['entries'] = array_values(array_filter(
+                    $translationEntries,
+                    fn (mixed $entry, int|string $index): bool => ! isset($indexesToRemove[$index]),
+                    ARRAY_FILTER_USE_BOTH,
+                ));
+                $translationSetting->forceFill(['value' => $translationValue])->save();
+                $deleted += count($demoTranslationIndexes);
+            }
+
             return $deleted;
         });
 
         PublicContentCache::flush();
         FrontendRevalidator::revalidate('cms');
 
-        $this->info("Removed {$deleted} demo records. CMS records with other slugs were not changed.");
+        $this->info("Removed {$deleted} bundled demo items. Edited CMS content was not changed.");
 
         return self::SUCCESS;
+    }
+
+    /** @param array<string, mixed> $entry @param array<string, mixed> $default */
+    private function isUntouchedTranslation(array $entry, array $default): bool
+    {
+        foreach (['ka', 'en', 'ru'] as $locale) {
+            if (($entry[$locale] ?? null) !== ($default[$locale] ?? null)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

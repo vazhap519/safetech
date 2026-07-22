@@ -1,7 +1,20 @@
 import HeroButtons from "@/components/About/HeroComponents/HeroButtonsComponent";
 import HeroTypography from "@/components/About/HeroComponents/HeroTypography";
+import { getSiteSettings } from "@/lib/site-settings";
+import { hasTranslatedText } from "@/lib/translations";
 
-export default function HeroSection() {
+const heroKeys = [
+    "about.hero.title",
+    "about.hero.description",
+    "about.hero.cta.primary",
+    "about.hero.cta.secondary",
+];
+
+export default async function HeroSection() {
+    const { locale, translations } = await getSiteSettings();
+
+    if (!hasTranslatedText(translations, heroKeys, locale)) return null;
+
     return (
         <section className="relative flex min-h-[58svh] items-center justify-center overflow-hidden px-5 pt-20 md:min-h-[64svh] md:pt-24">
             <div className="topology-overlay pointer-events-none absolute inset-0" />
