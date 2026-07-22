@@ -97,7 +97,7 @@ module.exports = {
                 gutter: "clamp(16px, 2.5vw, 24px)",
 
                 "margin-mobile": "20px",
-                "margin-desktop": "clamp(20px, 5vw, 64px)",
+                "margin-desktop": "clamp(20px, 4vw, 56px)",
 
                 "container-max": "1440px",
             },
@@ -107,18 +107,18 @@ module.exports = {
             },
 
             fontFamily: {
-                display: ["Segoe UI", "system-ui", "sans-serif"],
-                body: ["Segoe UI", "system-ui", "sans-serif"],
+                display: ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
+                body: ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
 
-                "mono-sm": ["Segoe UI", "system-ui", "sans-serif"],
-                "headline-md": ["Segoe UI", "system-ui", "sans-serif"],
-                "headline-xl": ["Segoe UI", "system-ui", "sans-serif"],
-                "headline-lg": ["Segoe UI", "system-ui", "sans-serif"],
-                "display-lg": ["Segoe UI", "system-ui", "sans-serif"],
+                "mono-sm": ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
+                "headline-md": ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
+                "headline-xl": ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
+                "headline-lg": ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
+                "display-lg": ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
 
-                "label-md": ["Segoe UI", "system-ui", "sans-serif"],
-                "body-md": ["Segoe UI", "system-ui", "sans-serif"],
-                "body-lg": ["Segoe UI", "system-ui", "sans-serif"],
+                "label-md": ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
+                "body-md": ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
+                "body-lg": ["var(--font-site)", "Segoe UI", "Arial", "sans-serif"],
             },
 
             fontSize: {
@@ -126,7 +126,6 @@ module.exports = {
                     "12px",
                     {
                         lineHeight: "1.5",
-                        letterSpacing: "0.1em",
                         fontWeight: "400",
                     },
                 ],
@@ -134,9 +133,8 @@ module.exports = {
                 "label-md": [
                     "14px",
                     {
-                        lineHeight: "1",
-                        letterSpacing: "0.05em",
-                        fontWeight: "500",
+                        lineHeight: "1.4",
+                        fontWeight: "600",
                     },
                 ],
 
@@ -157,10 +155,10 @@ module.exports = {
                 ],
 
                 "headline-md": [
-                    "24px",
+                    "22px",
                     {
-                        lineHeight: "1.4",
-                        fontWeight: "500",
+                        lineHeight: "1.35",
+                        fontWeight: "600",
                     },
                 ],
 
@@ -173,7 +171,7 @@ module.exports = {
                 ],
 
                 "headline-xl": [
-                    "40px",
+                    "42px",
                     {
                         lineHeight: "1.2",
                         fontWeight: "600",
@@ -192,7 +190,6 @@ module.exports = {
                     "60px",
                     {
                         lineHeight: "1.1",
-                        letterSpacing: "0",
                         fontWeight: "700",
                     },
                 ],

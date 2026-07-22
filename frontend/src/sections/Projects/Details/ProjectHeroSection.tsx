@@ -57,7 +57,7 @@ export default async function ProjectHeroSection({
                                 </p>
                             ) : null}
                             {project.title ? (
-                                <h1 className="mb-8 font-display-lg text-display-lg-mobile leading-tight text-white md:text-display-lg">
+                                <h1 className="mb-7 font-display-lg text-[34px] font-semibold leading-[1.16] text-white sm:text-[40px] md:text-[48px] lg:text-[54px]">
                                     {project.title}
                                 </h1>
                             ) : null}

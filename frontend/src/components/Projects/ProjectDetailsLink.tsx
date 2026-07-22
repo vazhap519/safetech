@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
+import { CARD_ACTION_CLASS } from "@/components/ui/cardAction";
 import Icon from "@/components/ui/Icon";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 
@@ -10,7 +11,7 @@ type ProjectDetailsLinkProps = {
 };
 
 export default function ProjectDetailsLink({
-    className = "inline-flex items-center gap-2 font-bold text-secondary transition-colors hover:text-primary",
+    className = "",
     slug,
 }: ProjectDetailsLinkProps) {
     const { t } = useLocalization();
@@ -22,7 +23,7 @@ export default function ProjectDetailsLink({
 
     return (
         <LocalizedLink
-            className={className}
+            className={`${CARD_ACTION_CLASS} ${className}`.trim()}
             href={`/projects/${slug}`}
             prefetch={false}
         >

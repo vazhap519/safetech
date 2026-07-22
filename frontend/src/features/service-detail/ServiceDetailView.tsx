@@ -13,7 +13,7 @@ import SolutionsSection from "./sections/SolutionsSection";
 
 export default function ServiceDetailView({ service }: { service: ServiceDetail }) {
     return (
-        <article className="pt-[80px]">
+        <article className="pt-[76px]">
             <ServiceViewTracker serviceSlug={service.slug} />
             <ServiceHero service={service} />
             <ServiceOverview service={service} />

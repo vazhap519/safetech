@@ -3,8 +3,8 @@ import FooterCopy from "@/components/Footer/components/FooterCopy";
 
 export default async function FooterBottom({ marketingEnabled = false }: { marketingEnabled?: boolean }) {
     return (
-        <div className="max-w-container-max mx-auto px-margin-desktop mt-unit-lg pt-unit-md border-t border-outline-variant/5 flex flex-col gap-unit-sm text-center sm:flex-row sm:justify-between sm:text-left items-center text-on-surface-variant/40 text-label-md font-label-md">
-            <FooterCopy/>
+        <div className="mx-auto mt-10 flex max-w-container-max flex-col items-center gap-unit-sm border-t border-outline-variant/10 px-5 pt-6 text-center font-label-md text-sm text-on-surface-variant/60 sm:flex-row sm:justify-between sm:text-left md:px-8 xl:px-14">
+            <FooterCopy />
             <ConsentSettingsButton enabled={marketingEnabled} />
         </div>
 

@@ -25,6 +25,8 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Keep SEO metadata in the initial head for crawlers and validators.
+  htmlLimitedBots: /.*/,
   poweredByHeader: false,
   reactStrictMode: true,
   images: {

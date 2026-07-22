@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { CARD_ACTION_CLASS } from "@/components/ui/cardAction";
+import Icon from "@/components/ui/Icon";
 import Pagination from "@/components/ui/Pagination";
 import type { Locale } from "@/lib/locales";
 import { localizeHref } from "@/lib/seo";
@@ -18,6 +20,7 @@ type BlogListProps = {
     posts: BlogPostCard[];
     category?: string;
     currentPage: number;
+    detailsLabel?: string;
     emptyLabel?: string;
     lastPage: number;
     locale: Locale;
@@ -29,6 +32,7 @@ export default function BlogList({
     posts,
     category = "all",
     currentPage,
+    detailsLabel,
     emptyLabel,
     lastPage,
     locale,
@@ -42,7 +46,7 @@ export default function BlogList({
                     .filter((post) => post.slug)
                     .map((post) => (
                         <Link
-                            className="block h-full"
+                            className="group block h-full"
                             key={post.slug}
                             href={localizeHref(`/blog/${post.slug}`, locale)}
                         >
@@ -67,6 +71,16 @@ export default function BlogList({
                                     <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-on-surface-variant">
                                         {post.excerpt}
                                     </p>
+                                ) : null}
+                                {detailsLabel ? (
+                                    <span className={`${CARD_ACTION_CLASS} mt-4 group-hover:border-secondary/50 group-hover:bg-secondary/10 group-hover:text-secondary`}>
+                                        {detailsLabel}
+                                        <Icon
+                                            aria-hidden="true"
+                                            className="text-[18px]"
+                                            name="arrow_forward"
+                                        />
+                                    </span>
                                 ) : null}
                             </article>
                         </Link>

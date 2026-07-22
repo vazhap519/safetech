@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
+import { CARD_ACTION_CLASS } from "@/components/ui/cardAction";
 import Icon from "@/components/ui/Icon";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 
@@ -13,12 +14,16 @@ type ServiceCard = {
 
 export default function Servicecomponent({ service }: { service: ServiceCard }) {
     const { t } = useLocalization();
-    const readMoreLabel = t("common.readMore", null);
+    const readMoreLabel = t("common.readMore", {
+        ka: "დეტალურად",
+        en: "View details",
+        ru: "Подробнее",
+    });
 
     return (
-        <div className="glass-card flex flex-col gap-unit-md rounded-3xl p-unit-lg">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <Icon className="!text-[40px]" name={service.icon} />
+        <div className="glass-card flex h-full flex-col gap-4 rounded-lg p-6">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Icon className="!text-[30px]" name={service.icon} />
             </div>
             {service.title ? (
                 <h3 className="font-headline-md text-headline-md text-white">
@@ -30,9 +35,9 @@ export default function Servicecomponent({ service }: { service: ServiceCard }) 
                     {service.description}
                 </p>
             ) : null}
-            {readMoreLabel ? (
+            {service.slug && readMoreLabel ? (
                 <LocalizedLink
-                    className="mt-auto inline-flex items-center gap-2 font-label-md text-primary hover:text-secondary"
+                    className={`${CARD_ACTION_CLASS} mt-auto`}
                     href={`/services/${service.slug}`}
                     prefetch={false}
                 >

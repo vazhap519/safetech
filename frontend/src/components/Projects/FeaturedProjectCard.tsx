@@ -13,7 +13,7 @@ export default function FeaturedProjectCard({
     const videoUrl = getYouTubeWatchUrl(project.videoUrl);
 
     return (
-        <article className="glass-card group relative overflow-hidden rounded-xl transition-transform duration-300 motion-safe:hover:scale-[1.02]">
+        <article className="glass-card group relative overflow-hidden rounded-lg transition-transform duration-300 motion-safe:hover:scale-[1.02]">
             <div className="relative aspect-[16/10] overflow-hidden">
                 <Image
                     alt={project.imageAlt}
@@ -70,7 +70,7 @@ export default function FeaturedProjectCard({
                     </dl>
                 ) : null}
                 <ProjectDetailsLink
-                    className="mt-5 inline-flex items-center gap-2 font-bold text-secondary transition-colors hover:text-primary"
+                    className="mt-5"
                     slug={project.slug}
                 />
             </div>

@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import BlogPostSchema from "@/components/seo/BlogPostSchema";
 import JsonLd from "@/components/seo/JsonLd";
+import { CARD_ACTION_CLASS } from "@/components/ui/cardAction";
+import Icon from "@/components/ui/Icon";
 import { getBlogPost } from "@/lib/datafetch";
 import { getCurrentLocale } from "@/lib/locale-server";
 import { createMetadata, localizeHref, withSiteTitle } from "@/lib/seo";
@@ -74,6 +76,12 @@ export default async function BlogDetailPage({ params }) {
   const relatedLabel = translateText(translations, "blog.related", locale, null);
   const contentsLabel = translateText(translations, "blog.contents", locale, null);
   const sectionLabel = translateText(translations, "blog.section", locale, null);
+  const detailsLabel = translateText(
+    translations,
+    "common.readMore",
+    locale,
+    { ka: "დეტალურად", en: "View details", ru: "Подробнее" },
+  );
 
   return (
     <div className="bg-background px-4 pb-20 pt-28 sm:pt-32">
@@ -131,7 +139,7 @@ export default async function BlogDetailPage({ params }) {
             </nav>
           ) : null}
 
-          <div className="group relative h-72 overflow-hidden rounded-2xl border border-outline-variant/20 shadow-card">
+          <div className="group relative h-72 overflow-hidden rounded-lg border border-outline-variant/20 shadow-card">
             <Image
               src={post.image || DEFAULT_IMAGE}
               alt={post.title || ""}
@@ -179,7 +187,7 @@ export default async function BlogDetailPage({ params }) {
                 <section
                   key={section.id ?? index}
                   id={`section-${index}`}
-                  className="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5 shadow-card"
+                  className="rounded-lg border border-outline-variant/20 bg-surface-container-low p-5 shadow-card"
                 >
                   {section.title ? (
                     <h2 className="mb-3 text-xl font-semibold text-on-surface">
@@ -198,7 +206,7 @@ export default async function BlogDetailPage({ params }) {
           ) : null}
 
           {post.author ? (
-            <div className="mt-12 flex items-center gap-4 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-6 shadow-card">
+            <div className="mt-12 flex items-center gap-4 rounded-lg border border-outline-variant/20 bg-surface-container-low p-6 shadow-card">
               <div className="relative h-14 w-14 overflow-hidden rounded-full border border-outline-variant/20">
                 <Image
                   src={post.author.avatar || DEFAULT_IMAGE}
@@ -229,7 +237,7 @@ export default async function BlogDetailPage({ params }) {
                     key={item.slug}
                     href={localizeHref(`/blog/${item.slug}`, locale)}
                   >
-                    <article className="h-full overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-card transition hover:-translate-y-1 hover:border-secondary/30">
+                    <article className="h-full overflow-hidden rounded-lg border border-outline-variant/20 bg-surface-container-low shadow-card transition hover:-translate-y-1 hover:border-secondary/30">
                       <div className="relative h-32 w-full">
                         <Image
                           src={item.image || DEFAULT_IMAGE}
@@ -245,6 +253,12 @@ export default async function BlogDetailPage({ params }) {
                           <h3 className="text-sm font-semibold text-on-surface">
                             {item.title}
                           </h3>
+                          {detailsLabel ? (
+                            <span className={`${CARD_ACTION_CLASS} mt-4`}>
+                              {detailsLabel}
+                              <Icon aria-hidden="true" name="arrow_forward" />
+                            </span>
+                          ) : null}
                         </div>
                       ) : null}
                     </article>
@@ -257,7 +271,7 @@ export default async function BlogDetailPage({ params }) {
 
         {contentsLabel && post.sections?.length ? (
           <aside className="hidden md:block">
-            <div className="sticky top-24 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-6 shadow-card">
+            <div className="sticky top-24 rounded-lg border border-outline-variant/20 bg-surface-container-low p-6 shadow-card">
               <h2 className="mb-4 font-semibold text-on-surface">
                 {contentsLabel}
               </h2>

@@ -33,14 +33,14 @@ export default async function FooterDescription() {
                                 width={180}
                             />
                         ) : (
-                            <span className="font-headline-md text-headline-md font-bold text-primary">
+                            <span className="font-headline-md text-[22px] font-bold text-primary">
                                 {siteName}
                             </span>
                         )}
                     </LocalizedLink>
                 ) : null}
                 {branding.tagline ? (
-                    <p className="font-body-md text-body-md text-on-surface-variant">
+                    <p className="max-w-sm text-[15px] leading-7 text-on-surface-variant">
                         <TranslatedText
                             fallback={branding.tagline}
                             translationKey="footer.tagline"

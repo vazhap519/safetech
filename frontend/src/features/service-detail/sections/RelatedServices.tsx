@@ -1,5 +1,6 @@
 import Icon from "@/components/ui/Icon";
 import LocalizedLink from "@/components/ui/LocalizedLink";
+import { CARD_ACTION_CLASS } from "@/components/ui/cardAction";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 import SectionHeading from "../components/SectionHeading";
@@ -20,8 +21,16 @@ export default async function RelatedServices({
         locale,
         null,
     );
+    const detailsLabel = translateText(
+        translations,
+        "common.readMore",
+        locale,
+        { ka: "დეტალურად", en: "View details", ru: "Подробнее" },
+    );
 
-    if (!related.length) return null;
+    const linkedServices = related.filter((item) => item.slug);
+
+    if (!linkedServices.length) return null;
 
     return (
         <section
@@ -32,9 +41,9 @@ export default async function RelatedServices({
                 <SectionHeading>{title}</SectionHeading>
             </div>
             <div className="grid grid-cols-1 gap-unit-md md:grid-cols-3">
-                {related.map((item) => (
+                {linkedServices.map((item) => (
                     <LocalizedLink
-                        className="glass-card group flex flex-col gap-unit-sm rounded-2xl p-unit-lg hover:border-primary"
+                        className="glass-card group flex flex-col gap-unit-sm rounded-lg p-unit-lg hover:border-primary"
                         href={`/services/${item.slug}`}
                         key={item.slug}
                     >
@@ -48,9 +57,19 @@ export default async function RelatedServices({
                             </h3>
                         ) : null}
                         {item.description ? (
-                            <p className="leading-relaxed text-on-surface-variant">
+                            <p className="flex-1 leading-relaxed text-on-surface-variant">
                                 {item.description}
                             </p>
+                        ) : null}
+                        {detailsLabel ? (
+                            <span className={`${CARD_ACTION_CLASS} mt-2 group-hover:border-secondary/50 group-hover:bg-secondary/10 group-hover:text-secondary`}>
+                                {detailsLabel}
+                                <Icon
+                                    aria-hidden="true"
+                                    className="text-[18px] transition-transform group-hover:translate-x-1"
+                                    name="arrow_forward"
+                                />
+                            </span>
                         ) : null}
                     </LocalizedLink>
                 ))}

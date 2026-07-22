@@ -44,6 +44,12 @@ export default async function BlogPage({ heading, searchParams, showPageSchema =
   });
   const allLabel = translateText(translations, "blog.filter.all", locale, null);
   const emptyLabel = translateText(translations, "blog.empty", locale, null);
+  const detailsLabel = translateText(
+    translations,
+    "common.readMore",
+    locale,
+    { ka: "დეტალურად", en: "View details", ru: "Подробнее" },
+  );
   const previousLabel = translateText(translations, "pagination.previous", locale, {
     ka: "წინა",
     en: "Previous",
@@ -96,7 +102,7 @@ export default async function BlogPage({ heading, searchParams, showPageSchema =
                     cat.slug === "all" ? "/blog" : `/blog/category/${cat.slug}`,
                     locale,
                   )}
-                  className={`inline-flex min-h-11 items-center rounded-xl border px-4 py-2 text-sm transition-all duration-200 ${
+                  className={`inline-flex min-h-11 items-center rounded-lg border px-4 py-2 text-sm transition-all duration-200 ${
                     isActive
                       ? "border-primary-container bg-primary-container text-on-primary-container shadow-lg shadow-blue-500/20"
                       : "border-outline-variant/30 bg-surface-container-low text-on-surface-variant hover:border-secondary/40 hover:text-on-surface"
@@ -112,6 +118,7 @@ export default async function BlogPage({ heading, searchParams, showPageSchema =
         <BlogList
           category={category}
           currentPage={currentPage}
+          detailsLabel={detailsLabel}
           emptyLabel={emptyLabel}
           lastPage={lastPage}
           locale={locale}

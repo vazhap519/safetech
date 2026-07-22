@@ -11,13 +11,13 @@ export default function Infrastructurecomponent({
     description: string;
 }) {
     return (
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-4 text-left">
             <Icon className="mt-1 text-primary" name={icon} />
             <div>
-                <Typography className="font-headline-md text-headline-md text-on-surface" as={"h3"} variant={'section-title'}>
+                <Typography as="h3" variant="why-component-header">
                     {title}
                 </Typography>
-                <Typography className="text-on-surface-variant font-body-md" as={"p"} variant={'description'}>
+                <Typography className="mt-1" as="p" variant="description">
                     {description}
                 </Typography>
             </div>

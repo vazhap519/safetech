@@ -4,10 +4,9 @@ import FooterBottom from "@/sections/Footer/footerBottom";
 
 export default function Footer({ marketingEnabled = false }: { marketingEnabled?: boolean }){
     return (
-   
-        <footer className="w-full py-unit-xl bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-outline-variant/10 mt-unit-xl">
-<FooterTop/>
-            <FooterBottom marketingEnabled={marketingEnabled}/>
+        <footer className="mt-16 w-full border-t border-outline-variant/10 bg-surface-container-lowest py-12 md:mt-20 md:py-16">
+            <FooterTop />
+            <FooterBottom marketingEnabled={marketingEnabled} />
         </footer>
     )
 }

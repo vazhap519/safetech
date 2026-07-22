@@ -35,11 +35,11 @@ export default async function Industries() {
     if (!eyebrow && !title && !description && !items.length) return null;
 
     return (
-        <section className="relative mx-auto max-w-container-max overflow-hidden px-5 py-20 md:px-10 md:py-28 xl:px-margin-desktop">
+        <section className="relative mx-auto max-w-container-max overflow-hidden px-5 py-16 md:px-8 md:py-20 lg:py-24 xl:px-14">
             {eyebrow || title || description ? (
-                <div className="mb-14 text-center md:mb-20">
+                <div className="mb-10 text-center md:mb-14">
                     {eyebrow ? (
-                        <span className="mb-4 inline-block font-mono-sm text-mono-sm uppercase tracking-[0.3em] text-primary">
+                        <span className="mb-3 inline-block font-mono-sm text-mono-sm font-semibold uppercase text-primary">
                             {eyebrow}
                         </span>
                     ) : null}
@@ -61,7 +61,7 @@ export default async function Industries() {
             ) : null}
 
             {items.length ? (
-                <div className="grid grid-cols-1 gap-6 md:gap-gutter sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                     {items.map((item) => (
                         <Industriescomponent
                             icon={item.icon}

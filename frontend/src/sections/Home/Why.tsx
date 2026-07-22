@@ -27,12 +27,12 @@ export default async function Why() {
     if (!eyebrow && !title && !description && !items.length) return null;
 
     return (
-        <section className="relative overflow-hidden bg-surface-container-low py-20 md:py-28">
-            <div className="mx-auto max-w-container-max px-5 md:px-10 xl:px-margin-desktop">
+        <section className="relative overflow-hidden bg-surface-container-low py-16 md:py-20 lg:py-24">
+            <div className="mx-auto max-w-container-max px-5 md:px-8 xl:px-14">
                 {eyebrow || title || description ? (
-                    <div className="mb-14 text-center md:mb-20">
+                    <div className="mb-10 text-center md:mb-14">
                         {eyebrow ? (
-                            <span className="mb-4 inline-block font-mono-sm text-mono-sm uppercase tracking-[0.3em] text-primary">
+                            <span className="mb-3 inline-block font-mono-sm text-mono-sm font-semibold uppercase text-primary">
                                 {eyebrow}
                             </span>
                         ) : null}
@@ -54,7 +54,7 @@ export default async function Why() {
                 ) : null}
 
                 {items.length ? (
-                    <div className="grid grid-cols-1 gap-6 md:gap-gutter sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         {items.map((item) => (
                             <WhyComponent
                                 description={item.description}

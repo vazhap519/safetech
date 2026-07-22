@@ -8,12 +8,12 @@ export default function Industriescomponent({
     title: string;
 }) {
     return (
-        <div className="group relative overflow-hidden rounded-3xl h-64 glass-card flex flex-col items-center justify-center gap-4 hover:bg-primary/10 transition-all cursor-pointer">
+        <div className="glass-card group relative flex h-56 flex-col items-center justify-center gap-4 overflow-hidden rounded-lg px-4 text-center transition-all hover:bg-primary/10 md:h-60">
             <Icon
-                className="text-5xl transition-transform group-hover:scale-110"
+                className="text-[42px] transition-transform group-hover:scale-110"
                 name={icon}
             />
-            <span className="font-headline-md text-headline-md">{title}</span>
+            <span className="font-headline-md text-xl md:text-[22px]">{title}</span>
         </div>
 
     )

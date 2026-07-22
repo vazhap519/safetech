@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Noto_Sans_Georgian } from "next/font/google";
+import localFont from "next/font/local";
+import { cookies } from "next/headers";
 
 import "./globals.css";
 
@@ -25,13 +26,30 @@ import {
 import { buildOrganizationEntity } from "@/lib/organization-schema";
 import { getSiteSettings } from "@/lib/site-settings";
 import { createTranslator } from "@/lib/translations";
+import { ANALYTICS_CONSENT_COOKIE } from "@/lib/consent-config";
 
-const georgianFont = Noto_Sans_Georgian({
+const siteFont = localFont({
+    src: [
+        {
+            path: "../assets/fonts/firago-400.woff2",
+            weight: "400",
+            style: "normal",
+        },
+        {
+            path: "../assets/fonts/firago-600.woff2",
+            weight: "600",
+            style: "normal",
+        },
+        {
+            path: "../assets/fonts/firago-700.woff2",
+            weight: "700",
+            style: "normal",
+        },
+    ],
     display: "swap",
-    preload: false,
-    subsets: ["georgian"],
-    variable: "--font-georgian",
-    weight: "variable",
+    fallback: ["Segoe UI", "Arial", "sans-serif"],
+    preload: true,
+    variable: "--font-site",
 });
 
 function withDynamicSiteTitle(title: string, siteName: string) {
@@ -139,6 +157,12 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const cookieStore = await cookies();
+    const storedConsent = cookieStore.get(ANALYTICS_CONSENT_COOKIE)?.value;
+    const initialConsent =
+        storedConsent === "accepted" || storedConsent === "rejected"
+            ? storedConsent
+            : "unknown";
     const { contact, branding, integrations, locale, socialLinks, translations } =
         await getSiteSettings();
     const siteName = branding.siteName || SITE_NAME;
@@ -190,7 +214,7 @@ export default async function RootLayout({
     return (
         <html
             lang={getLanguageTag(locale)}
-            className={`${georgianFont.variable} dark scroll-smooth`}
+            className={`${siteFont.variable} dark scroll-smooth`}
             suppressHydrationWarning
         >
             <head>
@@ -242,6 +266,7 @@ export default async function RootLayout({
                         enabled={marketingEnabled}
                         googleAnalyticsId={googleAnalyticsId}
                         googleTagManagerId={googleTagManagerId}
+                        initialConsent={initialConsent}
                         metaPixelId={metaPixelId}
                     />
                     <ConsultationProvider>

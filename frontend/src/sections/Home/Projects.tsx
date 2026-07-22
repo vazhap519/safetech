@@ -1,4 +1,5 @@
 import FeaturedProjectCard from "@/components/Projects/FeaturedProjectCard";
+import Typography from "@/components/ui/Typography";
 import { getBackendFeaturedProjects } from "@/lib/backend";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
@@ -26,36 +27,35 @@ export default async function Projects() {
     );
 
     return (
-        <section className="relative mx-auto max-w-container-max overflow-hidden px-5 py-20 md:px-10 md:py-28 xl:px-margin-desktop">
+        <section className="relative mx-auto max-w-container-max overflow-hidden px-5 py-16 md:px-8 md:py-20 lg:py-24 xl:px-14">
             {eyebrow || title || description ? (
-                <div className="mb-14 text-center md:mb-20">
+                <div className="mb-10 text-center md:mb-14">
                     {eyebrow ? (
-                        <span className="mb-4 inline-block font-mono-sm text-mono-sm uppercase tracking-[0.3em] text-primary">
+                        <span className="mb-3 inline-block font-mono-sm text-mono-sm font-semibold uppercase text-primary">
                             {eyebrow}
                         </span>
                     ) : null}
 
                     {title ? (
-                        <h2 className="font-headline-xl text-[36px] leading-tight text-on-surface sm:text-[42px] md:text-[52px] xl:text-headline-xl">
+                        <Typography as="h2" variant="section-title">
                             {title}
-                        </h2>
+                        </Typography>
                     ) : null}
 
                     {description ? (
-                        <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-on-surface-variant md:text-lg">
+                        <p className="mx-auto mt-4 max-w-2xl text-base leading-[1.7] text-on-surface-variant md:text-[17px]">
                             {description}
                         </p>
                     ) : null}
                 </div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-gutter xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {projects.slice(0, 3).map((project) => (
                     <FeaturedProjectCard key={project.slug} project={project} />
                 ))}
             </div>
 
-            <div className="absolute bottom-[-200px] left-[-200px] -z-10 h-[500px] w-[500px] rounded-full bg-primary/5 blur-[150px]" />
         </section>
     );
 }

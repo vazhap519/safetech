@@ -98,17 +98,19 @@ export default function MarketingPixels({
     googleTagManagerId,
     googleAnalyticsId,
     metaPixelId,
+    initialConsent,
 }: {
     enabled: boolean;
     googleTagManagerId?: string;
     googleAnalyticsId?: string;
     metaPixelId?: string;
+    initialConsent: AnalyticsConsent;
 }) {
     const { t } = useLocalization();
     const consent = useSyncExternalStore<AnalyticsConsent>(
         subscribeToAnalyticsConsent,
         readAnalyticsConsent,
-        (): AnalyticsConsent => "unknown",
+        () => initialConsent,
     );
     const gtmId = validId(googleTagManagerId, /^GTM-[A-Z0-9]+$/i);
     const gaId = validId(googleAnalyticsId, /^G-[A-Z0-9]+$/i);
@@ -163,7 +165,7 @@ export default function MarketingPixels({
                         en: "Privacy choice",
                         ru: "Настройки конфиденциальности",
                     })}
-                    className="fixed inset-x-4 bottom-4 z-[80] mx-auto max-w-4xl rounded-lg border border-outline-variant/40 bg-surface-container-high p-4 shadow-2xl sm:flex sm:items-center sm:gap-5"
+                    className="marketing-consent-banner fixed inset-x-4 bottom-4 z-[80] mx-auto flex min-h-56 max-w-4xl flex-col justify-center overflow-y-auto rounded-lg border border-outline-variant/40 bg-surface-container-high p-4 shadow-2xl sm:min-h-28 sm:flex-row sm:items-center sm:gap-5"
                 >
                     <p className="min-w-0 flex-1 text-sm leading-6 text-on-surface-variant">
                         {t("consent.message", {
@@ -181,14 +183,14 @@ export default function MarketingPixels({
                     </p>
                     <div className="mt-4 flex shrink-0 gap-3 sm:mt-0">
                         <button
-                            className="min-h-11 rounded-lg border border-outline-variant/50 px-4 text-sm font-medium text-on-surface"
+                            className="min-h-11 flex-1 rounded-lg border border-outline-variant/50 px-4 text-sm font-medium text-on-surface sm:flex-none"
                             onClick={() => saveAnalyticsConsent("rejected")}
                             type="button"
                         >
                             {t("consent.reject", { ka: "უარყოფა", en: "Reject", ru: "Отклонить" })}
                         </button>
                         <button
-                            className="min-h-11 rounded-lg bg-primary-container px-4 text-sm font-semibold text-on-primary-container"
+                            className="min-h-11 flex-1 rounded-lg bg-primary-container px-4 text-sm font-semibold text-on-primary-container sm:flex-none"
                             onClick={() => saveAnalyticsConsent("accepted")}
                             type="button"
                         >

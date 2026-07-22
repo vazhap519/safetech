@@ -15,7 +15,7 @@ export default function ProjectCard({ project }: { project: Project }) {
 
     return (
         <article
-            className={`glass-card group rounded-xl border-l-4 p-6 ${
+            className={`glass-card group rounded-lg border-l-4 p-6 ${
                 color === "secondary" ? "border-secondary" : "border-primary"
             }`}
         >
@@ -61,10 +61,7 @@ export default function ProjectCard({ project }: { project: Project }) {
                 </p>
             ) : null}
             {project.slug ? (
-                <ProjectDetailsLink
-                    className="inline-flex items-center gap-2 font-bold text-secondary"
-                    slug={project.slug}
-                />
+                <ProjectDetailsLink slug={project.slug} />
             ) : completedLabel ? (
                 <span className="inline-flex items-center gap-2 font-bold text-secondary/70">
                     {completedLabel}

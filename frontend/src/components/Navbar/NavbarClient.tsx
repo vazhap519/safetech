@@ -67,15 +67,15 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
     return (
         <nav
             aria-label={navigationLabel || undefined}
-            className="fixed top-0 z-50 w-full border-b border-outline-variant/20 bg-surface/90 shadow-2xl shadow-primary/5 backdrop-blur-xl"
+            className="fixed top-0 z-50 w-full border-b border-outline-variant/20 bg-surface/95 shadow-lg shadow-black/20 backdrop-blur-xl"
         >
-            <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-5 md:px-margin-desktop">
+            <div className="mx-auto flex h-[76px] max-w-container-max items-center justify-between gap-4 px-5 md:px-8 xl:px-10 2xl:px-14">
                 {hasBrand ? (
                     <LocalizedLink
                         aria-label={[siteName, homeLabel]
                             .filter(Boolean)
                             .join(" - ")}
-                        className="flex min-h-11 items-center gap-3 text-primary"
+                        className="flex min-h-11 shrink-0 items-center gap-3 text-primary"
                         href="/"
                         onClick={closeMobileMenu}
                         prefetch={false}
@@ -83,15 +83,15 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                         {logo ? (
                             <Image
                                 alt={siteName || homeLabel}
-                                className="h-11 w-auto object-contain"
-                                height={44}
+                                className="h-10 w-auto object-contain"
+                                height={40}
                                 src={logo}
                                 unoptimized
                                 width={160}
                             />
                         ) : null}
                         {siteName ? (
-                            <span className="font-headline-md text-headline-md font-bold">
+                            <span className="font-headline-md text-[22px] font-bold leading-none">
                                 {siteName}
                             </span>
                         ) : null}
@@ -100,15 +100,18 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                     <span aria-hidden="true" />
                 )}
 
-                <ul className="hidden items-center gap-unit-lg xl:flex">
+                <ul className="ml-auto hidden items-center gap-4 xl:flex min-[1440px]:gap-5">
                     {navigationItems.map((item) => {
                         const isCurrent = isCurrentPage(item.href);
 
                         return (
-                            <li key={item.href}>
+                            <li
+                                className={item.href === "/" ? "hidden 2xl:block" : undefined}
+                                key={item.href}
+                            >
                                 <LocalizedLink
                                     aria-current={isCurrent ? "page" : undefined}
-                                    className="inline-flex min-h-11 items-center font-label-md text-label-md text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary"
+                                    className="inline-flex min-h-11 items-center whitespace-nowrap font-label-md text-[13px] font-semibold text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary min-[1440px]:text-sm"
                                     href={item.href}
                                     prefetch={false}
                                 >
@@ -119,19 +122,19 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                     })}
                 </ul>
 
-                <div className="hidden items-center gap-3 xl:flex">
+                <div className="hidden shrink-0 items-center gap-2 xl:flex">
                     <LocaleSwitcher variant="header" />
                     {consultationLabel ? (
-                        <ConsultationTrigger className="min-h-11 rounded-xl bg-primary-container px-6 py-3 font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition-all hover:brightness-110">
+                        <ConsultationTrigger className="min-h-11 rounded-lg bg-primary-container px-5 py-3 text-sm font-semibold text-on-primary-container shadow-lg shadow-blue-500/20 transition-all hover:brightness-110">
                             {consultationLabel}
                         </ConsultationTrigger>
                     ) : null}
                 </div>
 
-                <details className="group relative xl:hidden" ref={mobileMenuRef}>
+                <details className="group relative ml-auto xl:hidden" ref={mobileMenuRef}>
                     <summary
                         aria-label={mobileMenuLabel || undefined}
-                        className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl border border-outline-variant/30 bg-surface-container/50 text-on-surface backdrop-blur-xl marker:hidden hover:bg-surface-container-high"
+                        className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg border border-outline-variant/30 bg-surface-container/50 text-on-surface backdrop-blur-xl marker:hidden hover:bg-surface-container-high"
                     >
                         <svg
                             aria-hidden="true"
@@ -160,7 +163,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                             />
                         </svg>
                     </summary>
-                    <div className="absolute right-0 top-14 hidden w-[min(20rem,calc(100vw-2.5rem))] rounded-2xl border border-outline-variant/20 bg-surface/95 p-5 shadow-2xl backdrop-blur-2xl group-open:block">
+                    <div className="absolute right-0 top-14 hidden w-[min(20rem,calc(100vw-2.5rem))] rounded-lg border border-outline-variant/20 bg-surface/98 p-5 shadow-2xl backdrop-blur-2xl group-open:block">
                         <ul className="flex flex-col gap-4">
                             {navigationItems.map((item) => (
                                 <li key={item.href}>
@@ -180,7 +183,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                             </li>
                             {consultationLabel ? (
                                 <li>
-                                    <ConsultationTrigger className="min-h-11 w-full rounded-xl bg-primary-container px-6 py-3 text-center font-medium text-on-primary-container">
+                                    <ConsultationTrigger className="min-h-11 w-full rounded-lg bg-primary-container px-6 py-3 text-center font-semibold text-on-primary-container">
                                         {consultationLabel}
                                     </ConsultationTrigger>
                                 </li>

@@ -16,11 +16,11 @@ export default async function FooterServices() {
                     translationKey="footer.services.title"
                 />
             </Typography>
-            <ul className="space-y-2 font-body-md text-body-md text-on-surface-variant">
+            <ul className="space-y-1 text-[15px] leading-7 text-on-surface-variant">
                 {services.slice(0, 6).map((service) => (
                     <li key={service.slug}>
                         <LocalizedLink
-                            className="inline-flex min-h-10 items-center transition-colors duration-300 hover:text-secondary"
+                            className="inline-flex min-h-9 items-center transition-colors duration-300 hover:text-secondary"
                             href={`/services/${service.slug}`}
                             prefetch={false}
                         >

@@ -1,62 +1,81 @@
 import Image from "@/components/ui/Image";
+import Icon from "@/components/ui/Icon";
+import LocalizedLink from "@/components/ui/LocalizedLink";
 import Typography from "@/components/ui/Typography";
+import { CARD_ACTION_CLASS } from "@/components/ui/cardAction";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
-export default async function FeaturedCardComponent() {
+type FeaturedService = {
+    description: string;
+    slug: string;
+    title: string;
+};
+
+export default async function FeaturedCardComponent({
+    service,
+}: {
+    service: FeaturedService;
+}) {
     const { branding, locale, translations } = await getSiteSettings();
-    const title = translateText(
+    const detailsLabel = translateText(
         translations,
-        "services.featured.card.title",
+        "common.readMore",
         locale,
-        null,
-    );
-    const description = translateText(
-        translations,
-        "services.featured.card.description",
-        locale,
-        null,
+        { ka: "დეტალურად", en: "View details", ru: "Подробнее" },
     );
     const imageAlt = translateText(
         translations,
         "services.featured.card.imageAlt",
         locale,
-        null,
+        service.title,
     );
 
-    if (!title && !description) {
-        return null;
-    }
+    if (!service.slug || (!service.title && !service.description)) return null;
 
     return (
-        <div className="group relative aspect-[4/5] overflow-hidden rounded-2xl">
+        <article className="group relative aspect-[4/5] overflow-hidden rounded-lg border border-outline-variant/20">
             <Image
-                alt={imageAlt || title}
+                alt={imageAlt || service.title}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                 sizes="(max-width: 768px) 100vw, 50vw"
                 src={branding.defaultImage}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-90" />
-            <div className="absolute bottom-0 p-unit-lg">
-                {title ? (
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 flex flex-col p-unit-lg">
+                {service.title ? (
                     <Typography
                         as="h3"
                         className="mb-2 font-headline-md text-headline-md text-white"
-                        variant="section-title"
+                        variant="why-component-header"
                     >
-                        {title}
+                        {service.title}
                     </Typography>
                 ) : null}
-                {description ? (
+                {service.description ? (
                     <Typography
                         as="p"
-                        className="font-body-md text-body-md text-white/70"
+                        className="font-body-md text-body-md text-white/80"
                         variant="description"
                     >
-                        {description}
+                        {service.description}
                     </Typography>
                 ) : null}
+                {detailsLabel ? (
+                    <LocalizedLink
+                        className={`${CARD_ACTION_CLASS} mt-4`}
+                        href={`/services/${service.slug}`}
+                        prefetch={false}
+                    >
+                        {detailsLabel}
+                        <Icon
+                            aria-hidden="true"
+                            className="text-[18px] transition-transform group-hover:translate-x-1"
+                            name="arrow_forward"
+                        />
+                    </LocalizedLink>
+                ) : null}
             </div>
-        </div>
+        </article>
     );
 }

@@ -38,7 +38,7 @@ export default async function ProjectsHeroSection() {
     );
 
     return (
-        <section className="relative flex min-h-[80vh] items-center justify-center overflow-hidden px-margin-desktop pb-unit-xl pt-28">
+        <section className="relative flex min-h-[70svh] items-center justify-center overflow-hidden px-5 pb-14 pt-28 md:px-8 md:pb-16 xl:px-14">
             <div className="absolute inset-0 z-0">
                 <Image
                     alt={imageAlt || title}
@@ -64,7 +64,7 @@ export default async function ProjectsHeroSection() {
                     </div>
                 ) : null}
                 {title ? (
-                    <h1 className="mb-6 max-w-full px-1 font-display-lg text-[26px] leading-tight text-white sm:text-[36px] md:text-display-lg">
+                    <h1 className="mb-5 max-w-full px-1 font-display-lg text-[30px] font-semibold leading-[1.18] text-white sm:text-[36px] md:text-[46px] lg:text-[52px]">
                         {title}
                     </h1>
                 ) : null}

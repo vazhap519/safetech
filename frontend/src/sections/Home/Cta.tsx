@@ -31,13 +31,13 @@ export default function Cta() {
     }
 
     return (
-        <section className="relative mx-auto max-w-container-max overflow-hidden px-5 py-20 md:px-10 md:py-28 xl:px-margin-desktop">
-            <div className="mesh-gradient relative z-10 overflow-hidden rounded-[28px] border border-outline-variant/20 px-6 py-14 text-center sm:px-10 md:rounded-[40px] md:px-16 md:py-20">
+        <section className="relative mx-auto max-w-container-max overflow-hidden px-5 py-16 md:px-8 md:py-20 lg:py-24 xl:px-14">
+            <div className="mesh-gradient relative z-10 overflow-hidden rounded-2xl border border-outline-variant/20 px-6 py-12 text-center sm:px-10 md:px-14 md:py-16">
                 <div className="absolute inset-0 bg-primary/5 opacity-70 blur-[120px]" />
 
-                <div className="relative z-20 mx-auto max-w-4xl space-y-8">
+                <div className="relative z-20 mx-auto max-w-4xl space-y-6">
                     {eyebrow ? (
-                        <span className="inline-block font-mono-sm text-mono-sm uppercase tracking-[0.3em] text-primary">
+                        <span className="inline-block font-mono-sm text-mono-sm font-semibold uppercase text-primary">
                             {eyebrow}
                         </span>
                     ) : null}
@@ -116,7 +116,6 @@ export default function Cta() {
                 </div>
             </div>
 
-            <div className="absolute bottom-[-250px] left-[-250px] -z-10 h-[600px] w-[600px] rounded-full bg-primary/5 blur-[160px]" />
         </section>
     );
 }

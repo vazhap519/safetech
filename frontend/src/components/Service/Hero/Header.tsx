@@ -33,6 +33,7 @@ export default async function Header() {
             {titlePrefix && (titleAccent || titleSuffix) ? (
                 <>
                     <br />
+                    {" "}
                 </>
             ) : null}
             {titleAccent ? (

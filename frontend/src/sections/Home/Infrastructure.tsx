@@ -45,11 +45,10 @@ export default async function Infrastructure() {
     if (!eyebrow && !title && !description && !items.length) return null;
 
     return (
-        <section className="relative overflow-hidden bg-surface-container-lowest/30 py-20 md:py-28">
-            <div className="mx-auto grid max-w-container-max grid-cols-1 items-center gap-16 px-5 md:px-10 lg:grid-cols-2 xl:gap-unit-xl xl:px-margin-desktop">
+        <section className="relative overflow-hidden bg-surface-container-lowest/30 py-16 md:py-20 lg:py-24">
+            <div className="mx-auto grid max-w-container-max grid-cols-1 items-center gap-10 px-5 md:px-8 lg:grid-cols-2 lg:gap-14 xl:px-14">
                 {branding.defaultImage ? (
-                    <div className="group relative order-2 mx-auto w-full max-w-[760px] lg:order-1">
-                        <div className="absolute -inset-4 rounded-full bg-primary/10 blur-3xl transition-all duration-700 group-hover:bg-primary/20" />
+                    <div className="group relative order-2 mx-auto w-full max-w-[650px] lg:order-1">
                         <Image
                             alt={imageAlt || branding.siteName}
                             height={410}
@@ -61,11 +60,11 @@ export default async function Infrastructure() {
                     </div>
                 ) : null}
 
-                <div className="order-1 space-y-8 text-center lg:order-2 lg:text-left">
+                <div className="order-1 space-y-6 text-center lg:order-2 lg:text-left">
                     {eyebrow ? (
                         <div className="glass-card mx-auto inline-flex items-center gap-2 rounded-full px-4 py-2 lg:mx-0">
                             <span className="status-dot" />
-                            <span className="font-mono-sm text-mono-sm uppercase tracking-widest text-secondary">
+                            <span className="font-mono-sm text-mono-sm font-semibold uppercase text-secondary">
                                 {eyebrow}
                             </span>
                         </div>
@@ -88,7 +87,7 @@ export default async function Infrastructure() {
                     ) : null}
 
                     {items.length ? (
-                        <div className="space-y-5 pt-2">
+                        <div className="space-y-4 pt-1">
                             {items.map((item) => (
                                 <Infrastructurecomponent
                                     description={item.description}

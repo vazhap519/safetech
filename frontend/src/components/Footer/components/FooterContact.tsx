@@ -11,7 +11,7 @@ export default async function FooterContact() {
                   key: "phone",
                   content: (
                       <a
-                          className="inline-flex min-h-10 items-center transition-colors hover:text-secondary"
+                        className="inline-flex min-h-9 items-center transition-colors hover:text-secondary"
                           href={toPhoneHref(contact.phone)}
                       >
                           {contact.phone}
@@ -24,7 +24,7 @@ export default async function FooterContact() {
                   key: "email",
                   content: (
                       <a
-                          className="inline-flex min-h-10 items-center break-all transition-colors hover:text-secondary"
+                          className="inline-flex min-h-9 items-center break-all transition-colors hover:text-secondary"
                           href={toEmailHref(contact.email)}
                       >
                           {contact.email}
@@ -56,7 +56,7 @@ export default async function FooterContact() {
                 />
             </Typography>
             <address className="not-italic">
-                <ul className="space-y-2 font-body-md text-body-md text-on-surface-variant">
+                <ul className="space-y-1 text-[15px] leading-7 text-on-surface-variant">
                     {items.map((item) => (
                         <li key={item.key}>{item.content}</li>
                     ))}

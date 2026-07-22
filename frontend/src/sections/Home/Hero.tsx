@@ -57,14 +57,13 @@ export default async function Hero() {
     }
 
     return (
-        <section className="relative mx-auto flex min-h-[90vh] max-w-container-max items-center overflow-hidden px-4 pb-16 pt-24 sm:px-6 md:pb-20 md:pt-32 lg:min-h-screen lg:px-margin-desktop">
-            <div className="pointer-events-none absolute right-[-200px] top-0 -z-10 h-[700px] w-[700px] rounded-full bg-primary/5 blur-[150px]" />
-            <div className="relative z-10 grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-2 xl:gap-unit-xl">
-                <div className="order-1 space-y-6 text-center lg:text-left">
+        <section className="relative mx-auto flex min-h-[calc(100svh-2rem)] max-w-container-max items-center overflow-hidden px-5 pb-12 pt-28 sm:px-6 md:pb-14 lg:px-14 lg:pb-12 lg:pt-28">
+            <div className="relative z-10 grid w-full grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+                <div className="order-1 space-y-5 text-center lg:text-left">
                     {eyebrow ? (
                         <div className="glass-card mx-auto inline-flex items-center gap-2 rounded-full px-4 py-2 lg:mx-0">
                             <span className="status-dot" />
-                            <span className="text-xs uppercase tracking-widest text-secondary md:text-sm">
+                            <span className="text-xs font-semibold uppercase text-secondary md:text-sm">
                                 {eyebrow}
                             </span>
                         </div>
@@ -95,15 +94,15 @@ export default async function Hero() {
                     ) : null}
 
                     {primaryCta || secondaryCta ? (
-                        <div className="flex flex-col items-center justify-center gap-4 pt-2 sm:flex-row lg:items-start lg:justify-start">
+                        <div className="flex flex-col items-center justify-center gap-3 pt-1 sm:flex-row lg:items-start lg:justify-start">
                             {primaryCta ? (
-                                <ConsultationTrigger className="inline-flex max-w-full items-center justify-center rounded-xl bg-primary-container px-8 py-4 text-center text-lg font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition-all hover:brightness-110 motion-safe:hover:-translate-y-1">
+                                <ConsultationTrigger className="inline-flex min-h-12 max-w-full items-center justify-center rounded-lg bg-primary-container px-6 py-3 text-center text-base font-semibold text-on-primary-container shadow-lg shadow-blue-500/20 transition-all hover:brightness-110 motion-safe:hover:-translate-y-1">
                                     {primaryCta}
                                 </ConsultationTrigger>
                             ) : null}
                             {secondaryCta ? (
                                 <ActionLink
-                                    className="px-8 py-4 text-lg"
+                                    className="min-h-12 px-6 py-3 text-base"
                                     href="/services"
                                     variant="glass"
                                 >
@@ -115,8 +114,8 @@ export default async function Hero() {
                 </div>
 
                 {branding.defaultImage ? (
-                    <div className="order-2 relative mx-auto w-full max-w-[720px]">
-                        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[28px]">
+                    <div className="order-2 relative mx-auto w-full max-w-[650px]">
+                        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl">
                             <Image
                                 alt={imageAlt || branding.siteName}
                                 className="h-full w-full object-contain"

@@ -47,7 +47,7 @@ export default async function ServiceHero({
     );
 
     return (
-        <section className="relative flex min-h-[80vh] flex-col justify-center overflow-hidden px-margin-desktop py-unit-xl">
+        <section className="relative flex min-h-[calc(100svh-7rem)] flex-col justify-center overflow-hidden px-5 py-12 md:px-8 md:py-16 xl:px-14">
             <div aria-hidden="true" className="ambient-glow -left-20 -top-20" />
             <ServiceBreadcrumb current={service.name} />
             <div className="grid items-center gap-unit-xl lg:grid-cols-2">
@@ -59,7 +59,7 @@ export default async function ServiceHero({
                         </p>
                     ) : null}
                     {service.title ? (
-                        <h1 className="max-w-4xl font-display-lg text-[34px] leading-[1.08] tracking-tight text-white min-[380px]:text-[38px] sm:text-[48px] md:text-[64px]">
+                        <h1 className="max-w-4xl font-display-lg text-[34px] font-semibold leading-[1.16] text-white sm:text-[40px] md:text-[48px] lg:text-[54px]">
                             {service.title}
                         </h1>
                     ) : null}
@@ -119,7 +119,7 @@ export default async function ServiceHero({
                     />
                     <Image
                         alt={service.name}
-                        className="relative h-auto w-full rounded-3xl border border-white/10 object-cover shadow-2xl"
+                        className="relative h-auto w-full rounded-2xl border border-white/10 object-cover shadow-2xl"
                         height={820}
                         priority
                         sizes="(max-width: 1024px) 100vw, 50vw"

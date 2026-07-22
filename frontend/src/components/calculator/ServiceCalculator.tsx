@@ -270,8 +270,8 @@ export default function ServiceCalculator({
 
     if (!profile) {
         return (
-            <section className="mx-auto min-h-[70vh] max-w-4xl px-5 pb-20 pt-36 text-center">
-                <h1 className="text-3xl font-semibold text-on-surface sm:text-5xl">
+            <section className="mx-auto min-h-[64svh] max-w-4xl px-5 pb-16 pt-32 text-center md:pt-36">
+                <h1 className="text-[30px] font-semibold leading-[1.2] text-on-surface sm:text-[38px] md:text-[44px]">
                     {copy.title}
                 </h1>
                 <p className="mx-auto mt-6 max-w-2xl text-on-surface-variant">
@@ -309,13 +309,13 @@ export default function ServiceCalculator({
     );
 
     return (
-        <div className="min-h-screen bg-background pb-24 pt-28 print:bg-white print:pb-0 print:pt-0">
-            <section className="border-b border-outline-variant/20 px-5 py-12 sm:py-16">
+        <div className="min-h-screen bg-background pb-20 pt-[76px] print:bg-white print:pb-0 print:pt-0">
+            <section className="border-b border-outline-variant/20 px-5 py-10 sm:py-14">
                 <div className="mx-auto max-w-6xl">
                     <p className="text-sm font-semibold uppercase text-secondary">
                         {copy.eyebrow}
                     </p>
-                    <h1 className="mt-3 max-w-4xl text-4xl font-semibold leading-tight text-on-surface sm:text-5xl lg:text-6xl">
+                    <h1 className="mt-3 max-w-4xl text-[32px] font-semibold leading-[1.2] text-on-surface sm:text-[40px] md:text-[48px]">
                         {copy.title}
                     </h1>
                     <p className="mt-5 max-w-3xl text-base leading-7 text-on-surface-variant sm:text-lg">

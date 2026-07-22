@@ -18,18 +18,18 @@ export default async function PrivacyPage() {
   }
 
   return (
-    <div className="bg-white text-gray-800">
+    <div className="bg-background pt-[76px] text-on-surface">
       <CmsPageSchema pageKey="privacy" />
       {privacy?.title || privacy?.highlight ? (
-        <section className="bg-[#0B3C5D] py-20 text-white">
-          <div className="mx-auto max-w-5xl px-4 text-center">
+        <section className="border-b border-outline-variant/20 bg-surface-container-lowest py-12 md:py-16">
+          <div className="mx-auto max-w-5xl px-5 text-center md:px-8">
             {privacy?.title ? (
-              <h1 className="mb-4 text-3xl font-bold md:text-4xl">
+              <h1 className="mb-4 text-[30px] font-semibold leading-[1.2] text-on-surface sm:text-[34px] md:text-[40px]">
                 {privacy.title}
               </h1>
             ) : null}
             {privacy?.highlight ? (
-              <p className="mx-auto max-w-2xl text-gray-300">
+              <p className="mx-auto max-w-2xl text-base leading-[1.7] text-on-surface-variant md:text-[17px]">
                 {privacy.highlight}
               </p>
             ) : null}
@@ -38,13 +38,11 @@ export default async function PrivacyPage() {
       ) : null}
 
       {privacy?.content ? (
-        <section className="mx-auto max-w-5xl px-4 py-20">
-          <div className="rounded-2xl bg-white p-6 shadow-lg md:p-10">
+        <section className="mx-auto max-w-4xl px-5 py-12 md:px-8 md:py-16">
             <div
-              className="prose max-w-none prose-lg prose-h2:mt-10 prose-h2:font-bold prose-h2:text-[#0B3C5D] prose-p:text-gray-600 prose-li:text-gray-600 prose-li:marker:text-[#00C2A8] prose-strong:text-[#0B3C5D] prose-a:text-[#00C2A8] prose-a:no-underline hover:prose-a:underline"
+              className="legal-content"
               dangerouslySetInnerHTML={{ __html: privacy.content }}
             />
-          </div>
         </section>
       ) : null}
     </div>
