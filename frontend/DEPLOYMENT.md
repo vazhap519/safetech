@@ -86,11 +86,11 @@ SESSION_ENCRYPT=true
 SESSION_SECURE_COOKIE=true
 
 ADMIN_NAME="SafeTech Admin"
-ADMIN_EMAIL=your-admin@example.com
+ADMIN_EMAIL=safetechgeorgia@gmail.com
 ADMIN_PASSWORD=replace_with_a_unique_12_plus_character_password
 ```
 
-Also configure SMTP, `LEADS_NOTIFICATION_EMAIL`, CRM credentials when used, and the same strong `REVALIDATE_SECRET` in both applications. `APP_KEY` is generated in the initial-install step.
+Also configure Gmail SMTP with an app password, keep `LEADS_NOTIFICATION_EMAIL=safetechgeorgia@gmail.com`, configure CRM credentials when used, and use the same strong `REVALIDATE_SECRET` in both applications. `APP_KEY` is generated in the initial-install step. The deployment provisions the configured administrator when missing, promotes an existing account with the same email, and never overwrites a password changed later in Filament.
 
 `SQLSTATE ... fe_sendauth: no password supplied` means `DB_PASSWORD` is still blank or Laravel is using cached configuration. Correct `.env`, then run `php artisan config:clear` before retrying.
 

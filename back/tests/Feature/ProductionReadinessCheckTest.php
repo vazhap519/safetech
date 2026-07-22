@@ -16,6 +16,28 @@ class ProductionReadinessCheckTest extends TestCase
 
     public function test_it_accepts_hardened_production_configuration(): void
     {
+        $this->configureHardenedProduction();
+
+        $this->artisan('cms:production-check')
+            ->assertSuccessful()
+            ->expectsOutputToContain('Production configuration is ready for deployment.');
+    }
+
+    public function test_it_rejects_a_mailer_that_can_silently_fall_back_to_logs(): void
+    {
+        $this->configureHardenedProduction();
+        config()->set([
+            'mail.default' => 'failover',
+            'mail.mailers.failover.mailers' => ['smtp', 'log'],
+        ]);
+
+        $this->artisan('cms:production-check')
+            ->assertFailed()
+            ->expectsOutputToContain('[FAIL] Outbound mailer does not fall back to logs');
+    }
+
+    private function configureHardenedProduction(): void
+    {
         $this->app->detectEnvironment(fn (): string => 'production');
 
         config()->set([
@@ -34,11 +56,15 @@ class ProductionReadinessCheckTest extends TestCase
             'session.secure' => true,
             'queue.default' => 'database',
             'cache.default' => 'database',
+            'cms.admin.email' => 'safetechgeorgia@gmail.com',
+            'cms.admin.password' => 'initial-password-123',
+            'leads.notification_email' => 'safetechgeorgia@gmail.com',
             'mail.default' => 'smtp',
+            'mail.from.address' => 'safetechgeorgia@gmail.com',
+            'mail.mailers.smtp.host' => 'smtp.gmail.com',
+            'mail.mailers.smtp.port' => 587,
+            'mail.mailers.smtp.username' => 'safetechgeorgia@gmail.com',
+            'mail.mailers.smtp.password' => 'provider-app-password',
         ]);
-
-        $this->artisan('cms:production-check')
-            ->assertSuccessful()
-            ->expectsOutputToContain('Production configuration is ready for deployment.');
     }
 }

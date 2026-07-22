@@ -297,6 +297,7 @@ php "${API_DIR}/artisan" route:clear
 php "${API_DIR}/artisan" view:clear
 php "${API_DIR}/artisan" cms:production-check
 php "${API_DIR}/artisan" migrate --force
+php "${API_DIR}/artisan" db:seed --class=AdminUserSeeder --force
 php "${API_DIR}/artisan" db:seed --class=SystemContentSeeder --force
 php "${API_DIR}/artisan" cms:remove-demo-content --force
 php "${API_DIR}/artisan" cache:clear
