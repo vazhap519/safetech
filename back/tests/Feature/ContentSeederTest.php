@@ -37,6 +37,65 @@ class ContentSeederTest extends TestCase
         }
     }
 
+    public function test_google_analytics_default_is_installed_without_overwriting_admin_changes(): void
+    {
+        SiteSetting::query()->where('key', 'integrations')->delete();
+        $this->app->detectEnvironment(fn (): string => 'production');
+
+        try {
+            (new ContentSeeder)->run();
+
+            $integrations = SiteSetting::query()
+                ->where('key', 'integrations')
+                ->firstOrFail();
+
+            $this->assertTrue((bool) data_get($integrations->value, 'marketing_enabled'));
+            $this->assertSame(
+                'G-VC9XHNPEG5',
+                data_get($integrations->value, 'google_analytics_id'),
+            );
+
+            $adminValue = $integrations->value;
+            $adminValue['marketing_enabled'] = false;
+            $adminValue['google_analytics_id'] = 'G-ADMIN12345';
+            $integrations->forceFill(['value' => $adminValue])->save();
+
+            (new ContentSeeder)->run();
+
+            $integrations->refresh();
+            $this->assertFalse((bool) data_get($integrations->value, 'marketing_enabled'));
+            $this->assertSame(
+                'G-ADMIN12345',
+                data_get($integrations->value, 'google_analytics_id'),
+            );
+        } finally {
+            $this->app->detectEnvironment(fn (): string => 'testing');
+        }
+    }
+
+    public function test_google_analytics_migration_preserves_existing_admin_configuration(): void
+    {
+        $integrations = SiteSetting::query()
+            ->where('key', 'integrations')
+            ->firstOrFail();
+        $adminValue = $integrations->value;
+        $adminValue['marketing_enabled'] = false;
+        $adminValue['google_analytics_id'] = 'G-ADMIN12345';
+        $integrations->forceFill(['value' => $adminValue])->save();
+
+        $migration = require database_path(
+            'migrations/2026_07_22_000001_configure_google_analytics.php',
+        );
+        $migration->up();
+
+        $integrations->refresh();
+        $this->assertFalse((bool) data_get($integrations->value, 'marketing_enabled'));
+        $this->assertSame(
+            'G-ADMIN12345',
+            data_get($integrations->value, 'google_analytics_id'),
+        );
+    }
+
     public function test_default_sync_repairs_missing_privacy_translations_without_overwriting_admin_copy(): void
     {
         PrivacyPolicy::query()->create([

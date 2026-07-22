@@ -554,9 +554,9 @@ class ContentSeeder extends Seeder
                 'default_image' => null,
             ],
             'integrations' => [
-                'marketing_enabled' => false,
+                'marketing_enabled' => true,
                 'google_tag_manager_id' => '',
-                'google_analytics_id' => '',
+                'google_analytics_id' => 'G-VC9XHNPEG5',
                 'meta_pixel_id' => '',
                 'google_site_verification' => '',
                 'bing_site_verification' => '',

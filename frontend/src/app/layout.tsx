@@ -148,15 +148,24 @@ export default async function RootLayout({
         en: "Skip to main content",
         ru: "Перейти к основному содержанию",
     });
+    const hasAdminGoogleIntegration = Boolean(
+        integrations.googleTagManagerId || integrations.googleAnalyticsId,
+    );
     const googleTagManagerId =
-        integrations.googleTagManagerId || process.env.NEXT_PUBLIC_GTM_ID?.trim();
+        integrations.googleTagManagerId ||
+        (!hasAdminGoogleIntegration
+            ? process.env.NEXT_PUBLIC_GTM_ID?.trim()
+            : undefined);
     const googleAnalyticsId =
-        integrations.googleAnalyticsId || process.env.NEXT_PUBLIC_GA_ID?.trim();
+        integrations.googleAnalyticsId ||
+        (!hasAdminGoogleIntegration
+            ? process.env.NEXT_PUBLIC_GA_ID?.trim()
+            : undefined);
     const metaPixelId =
         integrations.metaPixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
-    const marketingEnabled =
-        integrations.marketingEnabled ||
-        Boolean(googleTagManagerId || googleAnalyticsId || metaPixelId);
+    const marketingEnabled = integrations.marketingEnabled;
+    const googleConsentEnabled =
+        marketingEnabled && Boolean(googleTagManagerId || googleAnalyticsId);
     const publicApiOrigin = (() => {
         try {
             return new URL(process.env.NEXT_PUBLIC_API_URL || "").origin;
@@ -185,6 +194,14 @@ export default async function RootLayout({
             suppressHydrationWarning
         >
             <head>
+                {googleConsentEnabled ? (
+                    <script
+                        id="google-consent-default"
+                        dangerouslySetInnerHTML={{
+                            __html: "window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied'});",
+                        }}
+                    />
+                ) : null}
                 {publicApiOrigin ? (
                     <>
                         <link rel="dns-prefetch" href={publicApiOrigin} />

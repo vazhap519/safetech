@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 import {
+    type AnalyticsConsent,
     readAnalyticsConsent,
     saveAnalyticsConsent,
     subscribeToAnalyticsConsent,
@@ -65,6 +66,28 @@ function MarketingRouteTracker({
     return null;
 }
 
+function GoogleConsentSync({
+    consent,
+    enabled,
+}: {
+    consent: AnalyticsConsent;
+    enabled: boolean;
+}) {
+    useEffect(() => {
+        if (!enabled || !window.gtag) return;
+
+        const state = consent === "accepted" ? "granted" : "denied";
+        window.gtag("consent", "update", {
+            ad_storage: state,
+            ad_user_data: state,
+            ad_personalization: state,
+            analytics_storage: state,
+        });
+    }, [consent, enabled]);
+
+    return null;
+}
+
 function validId(value: string | undefined, pattern: RegExp) {
     const normalized = value?.trim() ?? "";
     return pattern.test(normalized) ? normalized : "";
@@ -82,25 +105,30 @@ export default function MarketingPixels({
     metaPixelId?: string;
 }) {
     const { t } = useLocalization();
-    const consent = useSyncExternalStore(
+    const consent = useSyncExternalStore<AnalyticsConsent>(
         subscribeToAnalyticsConsent,
         readAnalyticsConsent,
-        () => "unknown",
+        (): AnalyticsConsent => "unknown",
     );
     const gtmId = validId(googleTagManagerId, /^GTM-[A-Z0-9]+$/i);
     const gaId = validId(googleAnalyticsId, /^G-[A-Z0-9]+$/i);
     const pixelId = validId(metaPixelId, /^\d{5,30}$/);
     const hasIntegration = Boolean(gtmId || gaId || pixelId);
+    const hasGoogleIntegration = Boolean(gtmId || gaId);
 
     if (!enabled) return null;
 
     return (
         <>
+            <GoogleConsentSync
+                consent={consent}
+                enabled={hasGoogleIntegration}
+            />
             {consent === "accepted" && hasIntegration ? (
                 <>
                     {gtmId ? (
                         <Script id="google-tag-manager" strategy="afterInteractive">
-                            {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
+                            {`gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
                         </Script>
                     ) : gaId ? (
                         <>
@@ -109,7 +137,7 @@ export default function MarketingPixels({
                                 strategy="afterInteractive"
                             />
                             <Script id="google-analytics" strategy="afterInteractive">
-                                {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}window.gtag=gtag;gtag('js',new Date());gtag('config','${gaId}',{anonymize_ip:true});`}
+                                {`gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});gtag('js',new Date());gtag('config','${gaId}',{anonymize_ip:true});`}
                             </Script>
                         </>
                     ) : null}

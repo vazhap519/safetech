@@ -134,6 +134,18 @@ function sitemapCollection(response) {
   return Array.isArray(response?.data) ? response.data : [];
 }
 
+function hasEligibleCategory(response, content, categorySlug) {
+  const eligibleCategorySlugs = new Set(
+    content
+      .map(categorySlug)
+      .filter(hasValidSitemapSlug),
+  );
+
+  return sitemapCollection(response)
+    .filter(isIndexableCategory)
+    .some((category) => eligibleCategorySlugs.has(category.slug));
+}
+
 function meaningfulText(value) {
   if (typeof value === "string") {
     return value
@@ -302,13 +314,7 @@ export async function fetchAllPaginated(path, params = {}) {
   return (await fetchPaginatedPages(path, params)).items;
 }
 
-export async function fetchImageSitemapItems() {
-  const [services, projects, posts] = await Promise.all([
-    fetchAllPaginated("/services"),
-    fetchAllPaginated("/projects"),
-    fetchAllPaginated("/blog"),
-  ]);
-
+function buildImageSitemapItems(services, projects, posts) {
   return [
     ...services.filter(isIndexableService).map((service) => ({
       loc: `${normalizeBaseUrl()}/services/${encodeURIComponent(service.slug)}`,
@@ -326,6 +332,79 @@ export async function fetchImageSitemapItems() {
       title: post.title,
     })),
   ].filter((item) => item.loc && item.image);
+}
+
+export async function fetchImageSitemapItems() {
+  const [services, projects, posts] = await Promise.all([
+    fetchAllPaginated("/services"),
+    fetchAllPaginated("/projects"),
+    fetchAllPaginated("/blog"),
+  ]);
+
+  return buildImageSitemapItems(services, projects, posts);
+}
+
+export async function getSitemapIndexPaths() {
+  const [
+    services,
+    projects,
+    posts,
+    serviceCategoriesResponse,
+    projectCategoriesResponse,
+    blogCategoriesResponse,
+  ] = await Promise.all([
+    fetchAllPaginated("/services"),
+    fetchAllPaginated("/projects"),
+    fetchAllPaginated("/blog"),
+    safeFetchJson(buildSitemapApiUrl("/service-categories")),
+    safeFetchJson(buildSitemapApiUrl("/project-categories")),
+    safeFetchJson(buildSitemapApiUrl("/categories")),
+  ]);
+
+  if (!serviceCategoriesResponse
+    || !projectCategoriesResponse
+    || !blogCategoriesResponse) {
+    throw new Error("Unable to load categories for the sitemap index");
+  }
+
+  const indexableServices = services.filter(isIndexableService);
+  const indexableProjects = projects.filter(isIndexableProject);
+  const indexablePosts = posts.filter(isIndexableBlogPost);
+  const paths = ["/sitemap-main.xml"];
+
+  if (indexableServices.length) paths.push("/sitemap-services.xml");
+  if (hasEligibleCategory(
+    serviceCategoriesResponse,
+    indexableServices,
+    (service) => service?.category?.slug,
+  )) {
+    paths.push("/sitemap-service-categories.xml");
+  }
+  if (indexablePosts.length) paths.push("/sitemap-blog.xml");
+  if (hasEligibleCategory(
+    blogCategoriesResponse,
+    indexablePosts,
+    (post) => post?.category?.slug,
+  )) {
+    paths.push("/sitemap-blog-categories.xml");
+  }
+  if (indexableProjects.length) paths.push("/sitemap-projects.xml");
+  if (hasEligibleCategory(
+    projectCategoriesResponse,
+    indexableProjects,
+    (project) => project?.category,
+  )) {
+    paths.push("/sitemap-project-categories.xml");
+  }
+  if (buildImageSitemapItems(
+    indexableServices,
+    indexableProjects,
+    indexablePosts,
+  ).length) {
+    paths.push("/sitemap-images.xml");
+  }
+
+  return paths;
 }
 
 export function sitemapIndex(paths) {

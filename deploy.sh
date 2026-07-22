@@ -503,9 +503,12 @@ while IFS= read -r sitemap_url; do
         exit 1
     fi
 
-    if [[ -n "${child_page_urls}" ]]; then
-        sitemap_page_urls+=$'\n'"${child_page_urls}"
+    if [[ -z "${child_page_urls}" ]]; then
+        echo "Sitemap index references an empty child sitemap: ${sitemap_url}" >&2
+        exit 1
     fi
+
+    sitemap_page_urls+=$'\n'"${child_page_urls}"
 done <<< "${sitemap_urls}"
 
 sitemap_page_urls="$(printf '%s\n' "${sitemap_page_urls}" \

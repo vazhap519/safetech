@@ -1,18 +1,11 @@
-import { sitemapIndex, xmlResponse } from "@/lib/sitemap";
+import {
+  getSitemapIndexPaths,
+  sitemapIndex,
+  xmlResponse,
+} from "@/lib/sitemap";
 
 export const dynamic = "force-dynamic";
 
-export function GET() {
-  return xmlResponse(
-    sitemapIndex([
-      "/sitemap-main.xml",
-      "/sitemap-services.xml",
-      "/sitemap-service-categories.xml",
-      "/sitemap-blog.xml",
-      "/sitemap-blog-categories.xml",
-      "/sitemap-projects.xml",
-      "/sitemap-project-categories.xml",
-      "/sitemap-images.xml",
-    ])
-  );
+export async function GET() {
+  return xmlResponse(sitemapIndex(await getSitemapIndexPaths()));
 }
