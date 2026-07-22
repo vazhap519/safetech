@@ -88,6 +88,16 @@ SESSION_SECURE_COOKIE=true
 ADMIN_NAME="SafeTech Admin"
 ADMIN_EMAIL=safetechgeorgia@gmail.com
 ADMIN_PASSWORD=replace_with_a_unique_12_plus_character_password
+
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=safetechgeorgia@gmail.com
+MAIL_PASSWORD=replace_with_a_google_app_password
+MAIL_FROM_ADDRESS=safetechgeorgia@gmail.com
+MAIL_FROM_NAME="SafeTech Website"
+LEADS_NOTIFICATION_EMAIL=safetechgeorgia@gmail.com
 ```
 
 Also configure Gmail SMTP with an app password, keep `LEADS_NOTIFICATION_EMAIL=safetechgeorgia@gmail.com`, configure CRM credentials when used, and use the same strong `REVALIDATE_SECRET` in both applications. `APP_KEY` is generated in the initial-install step. The deployment provisions the configured administrator when missing, promotes an existing account with the same email, and never overwrites a password changed later in Filament.

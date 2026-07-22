@@ -31,6 +31,7 @@ class ProductionReadinessCheck extends Command
             : [$defaultMailer];
         $smtpConfig = (array) config('mail.mailers.smtp', []);
         $usesSmtp = in_array('smtp', $mailerTransports, true);
+        $smtpScheme = trim((string) ($smtpConfig['scheme'] ?? ''));
         $smtpConfigured = filled($smtpConfig['url'] ?? null) || (
             filled($smtpConfig['host'] ?? null)
             && filled($smtpConfig['port'] ?? null)
@@ -63,6 +64,7 @@ class ProductionReadinessCheck extends Command
             'Lead notification email is valid' => filter_var($leadEmail, FILTER_VALIDATE_EMAIL) !== false,
             'Mail sender address is valid' => filter_var($mailFrom, FILTER_VALIDATE_EMAIL) !== false,
             'Outbound mailer does not fall back to logs' => $deliveryMailerConfigured,
+            'SMTP scheme is supported' => ! $usesSmtp || in_array($smtpScheme, ['', 'smtp', 'smtps'], true),
             'SMTP credentials are configured when SMTP is used' => ! $usesSmtp || $smtpConfigured,
         ];
 

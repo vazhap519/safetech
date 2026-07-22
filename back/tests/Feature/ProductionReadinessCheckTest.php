@@ -36,6 +36,16 @@ class ProductionReadinessCheckTest extends TestCase
             ->expectsOutputToContain('[FAIL] Outbound mailer does not fall back to logs');
     }
 
+    public function test_it_rejects_an_unsupported_smtp_scheme(): void
+    {
+        $this->configureHardenedProduction();
+        config()->set('mail.mailers.smtp.scheme', 'tls');
+
+        $this->artisan('cms:production-check')
+            ->assertFailed()
+            ->expectsOutputToContain('[FAIL] SMTP scheme is supported');
+    }
+
     private function configureHardenedProduction(): void
     {
         $this->app->detectEnvironment(fn (): string => 'production');
@@ -62,6 +72,7 @@ class ProductionReadinessCheckTest extends TestCase
             'mail.default' => 'smtp',
             'mail.from.address' => 'safetechgeorgia@gmail.com',
             'mail.mailers.smtp.host' => 'smtp.gmail.com',
+            'mail.mailers.smtp.scheme' => 'smtp',
             'mail.mailers.smtp.port' => 587,
             'mail.mailers.smtp.username' => 'safetechgeorgia@gmail.com',
             'mail.mailers.smtp.password' => 'provider-app-password',
