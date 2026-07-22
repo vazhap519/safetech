@@ -136,6 +136,9 @@ cd /var/www/safetech-next
 npm ci
 npm run check
 npm prune --omit=dev
+install -d -o root -g root -m 0755 /var/www/safetech-static
+rsync -a --checksum .next/static/ /var/www/safetech-static/
+chown -R root:root /var/www/safetech-static
 chown -R www-data:www-data .next
 ```
 
@@ -189,7 +192,7 @@ nginx -t
 systemctl reload nginx
 ```
 
-Confirm that the certificate paths and PHP-FPM socket in the config exist before reloading. The config enables HTTP/2 with the current Nginx syntax and keeps a one-minute public HTML microcache; frontend `/api/` routes and React Server Component requests are never cached. Versioned Next.js assets are retained in `/var/www/safetech-static` for 30 days so open tabs keep working across releases. Configure Cloudflare real-IP handling and restrict direct origin access before uncommenting any country-header forwarding lines.
+Confirm that the certificate paths and PHP-FPM socket in the config exist before reloading. The config enables HTTP/2 with the current Nginx syntax and keeps a one-minute public HTML microcache; frontend `/api/` routes and React Server Component requests are never cached. Versioned Next.js assets are retained in `/var/www/safetech-static` for 30 days so open tabs keep working across releases. Missing shared assets fall back to the active Next.js process, which prevents an incomplete manual static sync from rendering an unstyled page. Configure Cloudflare real-IP handling and restrict direct origin access before uncommenting any country-header forwarding lines.
 
 Verify protocol negotiation and the warmed HTML cache:
 
@@ -230,6 +233,15 @@ curl -I https://safetech.ge/llms.txt
 curl -I https://safetech.ge/sitemap.xml
 curl -I https://api.safetech.ge/api/health
 curl -I https://api.safetech.ge/api/services
+```
+
+Confirm that every stylesheet and script referenced by the homepage returns HTTP 200. A `404` under `/_next/static/` means the active HTML and static release do not match:
+
+```bash
+curl -fsS https://safetech.ge/ \
+  | grep -Eo '/_next/static/[^"[:space:]]+\.(css|js)' \
+  | sort -u \
+  | while read -r asset; do curl -fsS -o /dev/null "https://safetech.ge${asset}" || exit 1; done
 ```
 
 Then verify login at `https://api.safetech.ge/admin`, submit each public form, confirm queued email delivery, open all sitemap children, and validate a service, project, blog post and category in Google Rich Results Test and Search Console URL Inspection.

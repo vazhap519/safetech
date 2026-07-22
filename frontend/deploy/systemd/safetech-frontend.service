@@ -8,6 +8,8 @@ User=www-data
 Group=www-data
 WorkingDirectory=/var/www/safetech-next
 Environment=NODE_ENV=production
+ExecStartPre=/usr/bin/test -s /var/www/safetech-next/.next/BUILD_ID
+ExecStartPre=/usr/bin/test -d /var/www/safetech-next/.next/static/chunks
 ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1 --port 3000
 Restart=always
 RestartSec=5

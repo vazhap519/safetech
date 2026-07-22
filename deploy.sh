@@ -147,7 +147,7 @@ if [[ "${EUID}" -ne 0 ]]; then
     exit 1
 fi
 
-required_commands=(git rsync php composer node npm systemctl journalctl curl install nginx ln awk grep tr tail dirname find mv rm sleep)
+required_commands=(git rsync php composer node npm systemctl journalctl curl install nginx ln awk grep tr tail dirname find mv rm sleep cmp sed sort)
 
 for command_name in "${required_commands[@]}"; do
     if ! command -v "${command_name}" >/dev/null 2>&1; then
@@ -314,9 +314,36 @@ if [[ ! -s "${NEXT_RELEASE_DIR}/.next/BUILD_ID" ]]; then
     exit 1
 fi
 
-rsync -a \
+rsync -a --checksum \
     "${NEXT_RELEASE_DIR}/.next/static/" \
     "${NEXT_STATIC_DIR}/"
+
+static_file_count=0
+static_css_count=0
+static_js_count=0
+
+while IFS= read -r -d '' built_asset; do
+    relative_asset="${built_asset#"${NEXT_RELEASE_DIR}/.next/static/"}"
+    shared_asset="${NEXT_STATIC_DIR}/${relative_asset}"
+
+    if [[ ! -f "${shared_asset}" ]] || ! cmp --silent "${built_asset}" "${shared_asset}"; then
+        echo "Static asset synchronization failed: ${relative_asset}" >&2
+        exit 1
+    fi
+
+    static_file_count=$((static_file_count + 1))
+
+    case "${relative_asset}" in
+        *.css) static_css_count=$((static_css_count + 1)) ;;
+        *.js) static_js_count=$((static_js_count + 1)) ;;
+    esac
+done < <(find "${NEXT_RELEASE_DIR}/.next/static" -type f -print0)
+
+if [[ "${static_file_count}" -eq 0 || "${static_css_count}" -eq 0 || "${static_js_count}" -eq 0 ]]; then
+    echo "Next.js build is missing required static assets (files=${static_file_count}, css=${static_css_count}, js=${static_js_count})." >&2
+    exit 1
+fi
+
 find "${NEXT_STATIC_DIR}" -type f -mtime +30 -delete
 find "${NEXT_STATIC_DIR}" -mindepth 1 -type d -empty -delete
 chown -R root:root "${NEXT_STATIC_DIR}"
@@ -415,31 +442,45 @@ done
 home_html="$(curl --fail --silent --show-error --compressed \
     -H 'Accept: text/html' \
     'https://safetech.ge/')"
-static_asset_path="$(grep -Eo '/_next/static/[^"[:space:]]+\.(js|css)' <<< "${home_html}" | head -n 1 || true)"
+static_asset_paths="$(grep -Eo '/_next/static/[^"[:space:]]+\.(js|css)' <<< "${home_html}" | sort -u || true)"
 
-if [[ -z "${static_asset_path}" ]]; then
+if [[ -z "${static_asset_paths}" ]]; then
     echo "Unable to discover a built Next.js asset from the homepage." >&2
     exit 1
 fi
 
-static_asset_type="$(curl --fail --silent --show-error --compressed \
-    -o /dev/null -w '%{content_type}' \
-    "https://safetech.ge${static_asset_path}")"
+live_css_count=0
+live_js_count=0
 
-case "${static_asset_path}" in
-    *.js)
-        [[ "${static_asset_type}" == *javascript* ]] || {
-            echo "Invalid JavaScript MIME type (${static_asset_type}): ${static_asset_path}" >&2
-            exit 1
-        }
-        ;;
-    *.css)
-        [[ "${static_asset_type}" == text/css* ]] || {
-            echo "Invalid CSS MIME type (${static_asset_type}): ${static_asset_path}" >&2
-            exit 1
-        }
-        ;;
-esac
+while IFS= read -r static_asset_path; do
+    [[ -z "${static_asset_path}" ]] && continue
+
+    static_asset_type="$(curl --fail --silent --show-error --compressed \
+        -o /dev/null -w '%{content_type}' \
+        "https://safetech.ge${static_asset_path}")"
+
+    case "${static_asset_path}" in
+        *.js)
+            [[ "${static_asset_type}" == *javascript* ]] || {
+                echo "Invalid JavaScript MIME type (${static_asset_type}): ${static_asset_path}" >&2
+                exit 1
+            }
+            live_js_count=$((live_js_count + 1))
+            ;;
+        *.css)
+            [[ "${static_asset_type}" == text/css* ]] || {
+                echo "Invalid CSS MIME type (${static_asset_type}): ${static_asset_path}" >&2
+                exit 1
+            }
+            live_css_count=$((live_css_count + 1))
+            ;;
+    esac
+done <<< "${static_asset_paths}"
+
+if [[ "${live_css_count}" -eq 0 || "${live_js_count}" -eq 0 ]]; then
+    echo "Homepage is missing required live static assets (css=${live_css_count}, js=${live_js_count})." >&2
+    exit 1
+fi
 
 # shellcheck disable=SC2016
 if ! sitemap_urls="$(php -r '
