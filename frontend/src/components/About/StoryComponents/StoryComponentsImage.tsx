@@ -11,6 +11,8 @@ export default async function StoryComponentsImage() {
         null,
     );
 
+    if (!branding.defaultImage) return null;
+
     return (
         <div className="group relative">
             <div className="absolute -inset-4 rounded-3xl bg-primary/20 blur-2xl transition-all duration-500 group-hover:bg-primary/30" />

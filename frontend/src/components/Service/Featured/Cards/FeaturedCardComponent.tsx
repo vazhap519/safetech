@@ -35,12 +35,14 @@ export default async function FeaturedCardComponent({
 
     return (
         <article className="group relative aspect-[4/5] overflow-hidden rounded-lg border border-outline-variant/20">
-            <Image
-                alt={imageAlt || service.title}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                src={branding.defaultImage}
-            />
+            {branding.defaultImage ? (
+                <Image
+                    alt={imageAlt || service.title}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    src={branding.defaultImage}
+                />
+            ) : null}
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-col p-unit-lg">
                 {service.title ? (

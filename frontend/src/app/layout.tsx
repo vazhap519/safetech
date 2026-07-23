@@ -20,6 +20,7 @@ import {
     absoluteLocalizedUrl,
     absoluteSiteUrl,
     buildLanguageAlternates,
+    DEFAULT_SOCIAL_IMAGE,
     SITE_NAME,
     SITE_URL,
 } from "@/lib/seo";
@@ -82,6 +83,7 @@ export async function generateMetadata(): Promise<Metadata> {
         en: "Professional CCTV, access control, networking, and server infrastructure solutions for businesses.",
         ru: "Профессиональные решения для видеонаблюдения, контроля доступа, сетевой и серверной инфраструктуры для бизнеса.",
     });
+    const socialImage = branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
     const alternateLocales = supportedLocales
         .filter((item) => item !== locale)
         .map(getOgLocale);
@@ -112,7 +114,7 @@ export async function generateMetadata(): Promise<Metadata> {
             description: siteDescription,
             images: [
                 {
-                    url: absoluteSiteUrl(branding.defaultImage),
+                    url: absoluteSiteUrl(socialImage),
                     alt: siteName,
                 },
             ],
@@ -121,7 +123,7 @@ export async function generateMetadata(): Promise<Metadata> {
             card: "summary_large_image",
             title,
             description: siteDescription,
-            images: [absoluteSiteUrl(branding.defaultImage)],
+            images: [absoluteSiteUrl(socialImage)],
         },
         alternates: {
             canonical,

@@ -1,6 +1,10 @@
 import JsonLd from "@/components/seo/JsonLd";
 import { getLanguageTag } from "@/lib/locales";
-import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
+import {
+    absoluteLocalizedUrl,
+    absoluteSiteUrl,
+    DEFAULT_SOCIAL_IMAGE,
+} from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { buildBreadcrumbSchema } from "@/lib/structured-data";
 import { createTranslator } from "@/lib/translations";
@@ -15,14 +19,19 @@ export default async function ServiceStructuredData({
     const { contact, branding, locale, translations } = await getSiteSettings();
     const t = createTranslator(translations, locale);
     const url = absoluteLocalizedUrl(`/services/${service.slug}`, locale);
+    const organizationLogo =
+        branding.logo ||
+        branding.footerLogo ||
+        branding.defaultImage ||
+        DEFAULT_SOCIAL_IMAGE;
+    const serviceImage =
+        service.heroImage || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
     const provider: Record<string, unknown> = {
         "@type": "LocalBusiness",
         "@id": `${absoluteSiteUrl("/")}#organization`,
         name: branding.siteName,
         url: absoluteLocalizedUrl("/", locale),
-        logo: absoluteSiteUrl(
-            branding.logo || branding.footerLogo || branding.defaultImage,
-        ),
+        logo: absoluteSiteUrl(organizationLogo),
         ...(contact.phone ? { telephone: contact.phone } : {}),
         ...(contact.email ? { email: contact.email } : {}),
     };
@@ -35,7 +44,7 @@ export default async function ServiceStructuredData({
             description: service.seoDescription,
             url,
             serviceType: service.name,
-            image: absoluteSiteUrl(service.heroImage || branding.defaultImage),
+            image: absoluteSiteUrl(serviceImage),
             inLanguage: getLanguageTag(locale),
             provider,
             areaServed: {

@@ -40,7 +40,7 @@ export async function createCmsPageMetadata(preset: PageSeoPreset) {
         image:
             cmsSeo?.og?.image ||
             cmsSeo?.share_image ||
-            settings.branding.defaultImage,
+            settings.branding.defaultImage || undefined,
         siteName: settings.branding.siteName,
         type: preset.type,
         noindex: Boolean(cmsSeo?.noindex) || !hasPageContent,

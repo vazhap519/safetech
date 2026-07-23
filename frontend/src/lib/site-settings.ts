@@ -9,7 +9,6 @@ import {
 } from "@/lib/backend";
 import { getCurrentLocale } from "@/lib/locale-server";
 import type { Locale } from "@/lib/locales";
-import { DEFAULT_SOCIAL_IMAGE } from "@/lib/seo";
 import {
     buildTranslationMap,
     type TranslationMap,

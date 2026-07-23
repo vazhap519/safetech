@@ -1,7 +1,11 @@
 import type { ProjectDetail } from "@/lib/projectDetails";
 import JsonLd from "@/components/seo/JsonLd";
 import { getLanguageTag } from "@/lib/locales";
-import { absoluteLocalizedUrl, absoluteSiteUrl } from "@/lib/seo";
+import {
+    absoluteLocalizedUrl,
+    absoluteSiteUrl,
+    DEFAULT_SOCIAL_IMAGE,
+} from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { buildBreadcrumbSchema } from "@/lib/structured-data";
 import { createTranslator } from "@/lib/translations";
@@ -17,6 +21,13 @@ export default async function ProjectDetailSchema({
     const url = absoluteLocalizedUrl(`/projects/${project.slug}`, locale);
     const videoEmbedUrl = getYouTubeEmbedUrl(project.videoUrl);
     const videoWatchUrl = getYouTubeWatchUrl(project.videoUrl);
+    const projectImage =
+        project.image || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
+    const organizationLogo =
+        branding.logo ||
+        branding.footerLogo ||
+        branding.defaultImage ||
+        DEFAULT_SOCIAL_IMAGE;
     const schema = {
         "@context": "https://schema.org",
         "@graph": [
@@ -25,7 +36,7 @@ export default async function ProjectDetailSchema({
                 "@id": `${url}#project`,
                 name: project.title || project.name,
                 description: project.seoDescription,
-                image: absoluteSiteUrl(project.image || branding.defaultImage),
+                image: absoluteSiteUrl(projectImage),
                 url,
                 ...(videoWatchUrl
                     ? {
@@ -33,9 +44,7 @@ export default async function ProjectDetailSchema({
                               "@type": "VideoObject",
                               name: project.title || project.name,
                               description: project.seoDescription,
-                              thumbnailUrl: absoluteSiteUrl(
-                                  project.image || branding.defaultImage,
-                              ),
+                              thumbnailUrl: absoluteSiteUrl(projectImage),
                               url: videoWatchUrl,
                               ...(videoEmbedUrl
                                   ? { embedUrl: videoEmbedUrl }
@@ -47,11 +56,7 @@ export default async function ProjectDetailSchema({
                     "@type": "Organization",
                     name: branding.siteName,
                     url: absoluteLocalizedUrl("/", locale),
-                    logo: absoluteSiteUrl(
-                        branding.logo ||
-                            branding.footerLogo ||
-                            branding.defaultImage,
-                    ),
+                    logo: absoluteSiteUrl(organizationLogo),
                 },
                 inLanguage: getLanguageTag(locale),
             },

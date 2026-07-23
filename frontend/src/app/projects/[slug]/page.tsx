@@ -53,7 +53,11 @@ export async function generateMetadata({
         path: `/projects/${project.slug}`,
         locale,
         keywords: project.seo?.keywords,
-        image: project.seo?.image || project.image || branding.defaultImage,
+        image:
+            project.seo?.image ||
+            project.image ||
+            branding.defaultImage ||
+            undefined,
         siteName,
         type: "article",
         noindex: Boolean(project.seo?.noindex),

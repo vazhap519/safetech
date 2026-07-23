@@ -1,5 +1,10 @@
 import { getLanguageTag } from "@/lib/locales";
-import { absoluteLocalizedUrl, absoluteSiteUrl, SITE_NAME } from "@/lib/seo";
+import {
+    absoluteLocalizedUrl,
+    absoluteSiteUrl,
+    DEFAULT_SOCIAL_IMAGE,
+    SITE_NAME,
+} from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -18,7 +23,10 @@ export default async function HomeSchema() {
         name: siteName,
         url: absoluteLocalizedUrl("/", locale),
         logo: absoluteSiteUrl(
-            branding.logo || branding.footerLogo || branding.defaultImage,
+            branding.logo ||
+                branding.footerLogo ||
+                branding.defaultImage ||
+                DEFAULT_SOCIAL_IMAGE,
         ),
         ...(socialLinks.length
             ? { sameAs: socialLinks.map((item) => item.href) }

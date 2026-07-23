@@ -48,7 +48,11 @@ export async function generateMetadata({
         keywords: service.seo?.keywords?.length
             ? service.seo.keywords
             : service.keywords,
-        image: service.seo?.image || service.heroImage || branding.defaultImage,
+        image:
+            service.seo?.image ||
+            service.heroImage ||
+            branding.defaultImage ||
+            undefined,
         siteName,
         noindex: Boolean(service.seo?.noindex),
     });

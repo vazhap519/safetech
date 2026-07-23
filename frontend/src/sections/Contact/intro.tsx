@@ -95,18 +95,20 @@ export default async function Intro() {
                     ) : null}
                 </div>
 
-                <div className="order-1 md:order-2">
-                    <div className="glass-panel group overflow-hidden rounded-xl p-2">
-                        <Image
-                            alt={imageAlt || title}
-                            height={410}
-                            sizes="(max-width: 768px) 100vw, 50vw"
-                            src={branding.defaultImage}
-                            variant="contact-intro"
-                            width={610}
-                        />
+                {branding.defaultImage ? (
+                    <div className="order-1 md:order-2">
+                        <div className="glass-panel group overflow-hidden rounded-xl p-2">
+                            <Image
+                                alt={imageAlt || title}
+                                height={410}
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                src={branding.defaultImage}
+                                variant="contact-intro"
+                                width={610}
+                            />
+                        </div>
                     </div>
-                </div>
+                ) : null}
             </div>
         </section>
     );

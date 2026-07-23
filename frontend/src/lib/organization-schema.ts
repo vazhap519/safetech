@@ -1,4 +1,4 @@
-import { absoluteSiteUrl } from "@/lib/seo";
+import { absoluteSiteUrl, DEFAULT_SOCIAL_IMAGE } from "@/lib/seo";
 
 type OrganizationContact = {
     phone?: string;
@@ -9,7 +9,7 @@ type OrganizationContact = {
 type OrganizationBranding = {
     logo?: string | null;
     footerLogo?: string | null;
-    defaultImage: string;
+    defaultImage?: string | null;
 };
 
 export function buildOrganizationEntity({
@@ -30,7 +30,10 @@ export function buildOrganizationEntity({
     url: string;
 }): Record<string, unknown> {
     const logo = absoluteSiteUrl(
-        branding.logo || branding.footerLogo || branding.defaultImage,
+        branding.logo ||
+            branding.footerLogo ||
+            branding.defaultImage ||
+            DEFAULT_SOCIAL_IMAGE,
     );
     const contactPoint =
         contact.phone || contact.email
