@@ -20,10 +20,13 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class TestimonialResource extends Resource
 {
     protected static ?string $model = Testimonial::class;
+
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $navigationLabel = 'შეფასებები';
 
@@ -32,6 +35,26 @@ class TestimonialResource extends Resource
     protected static ?string $pluralModelLabel = 'კლიენტების შეფასებები';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Content;
+
+    public static function canViewAny(): bool
+    {
+        return false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
 
     public static function form(Schema $schema): Schema
     {

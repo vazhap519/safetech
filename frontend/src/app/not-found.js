@@ -3,6 +3,13 @@ import LocalizedLink from "@/components/ui/LocalizedLink";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default async function NotFound() {
   const { locale, translations } = await getSiteSettings();
   const title = translateText(translations, "notFound.title", locale, null);

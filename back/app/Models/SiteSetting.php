@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
+use App\Support\SiteSettingValueNormalizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Image\Enums\Fit;
@@ -20,6 +21,18 @@ class SiteSetting extends Model implements HasMedia
     protected function casts(): array
     {
         return ['value' => 'array', 'is_public' => 'boolean'];
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $setting): void {
+            if (is_string($setting->key) && $setting->key !== '') {
+                $setting->value = SiteSettingValueNormalizer::normalize(
+                    $setting->key,
+                    $setting->value,
+                );
+            }
+        });
     }
 
     public function scopePublic(Builder $query): Builder

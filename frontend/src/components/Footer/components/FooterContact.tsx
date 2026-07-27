@@ -5,17 +5,27 @@ import { getSiteSettings } from "@/lib/site-settings";
 
 export default async function FooterContact() {
     const { contact } = await getSiteSettings();
+    const phoneNumbers = contact.phones.length
+        ? contact.phones
+        : contact.phone
+          ? [contact.phone]
+          : [];
     const items = [
-        contact.phone
+        phoneNumbers.length
             ? {
                   key: "phone",
                   content: (
-                      <a
-                        className="inline-flex min-h-9 items-center transition-colors hover:text-secondary"
-                          href={toPhoneHref(contact.phone)}
-                      >
-                          {contact.phone}
-                      </a>
+                      <div className="flex flex-col items-start gap-1">
+                          {phoneNumbers.map((phone) => (
+                              <a
+                                  className="inline-flex min-h-9 items-center transition-colors hover:text-secondary"
+                                  href={toPhoneHref(phone)}
+                                  key={phone}
+                              >
+                                  {phone}
+                              </a>
+                          ))}
+                      </div>
                   ),
               }
             : null,

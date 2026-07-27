@@ -40,7 +40,7 @@ function categoryHref(kind: FilterKind, slug: string) {
 
     return slug === "all"
         ? basePath
-        : `${basePath}?category=${encodeURIComponent(slug)}`;
+        : `${basePath}/category/${encodeURIComponent(slug)}`;
 }
 
 export default function ContentFilterGrid({

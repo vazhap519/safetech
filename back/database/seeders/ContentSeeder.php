@@ -579,6 +579,7 @@ class ContentSeeder extends Seeder
         return [
             'contact' => [
                 'phone' => '',
+                'phones' => [],
                 'email' => '',
                 'address' => '',
                 'whatsapp' => '',

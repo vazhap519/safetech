@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SiteSettingResource\Pages;
+use App\Filament\Support\AdminIconOptions;
+use App\Filament\Support\ManagedPageTranslationFields;
 use App\Filament\Support\NavigationGroup;
 use App\Models\SiteSetting;
 use Filament\Actions\BulkActionGroup;
@@ -26,11 +28,11 @@ class SiteSettingResource extends Resource
 {
     protected static ?string $model = SiteSetting::class;
 
-    protected static ?string $navigationLabel = 'პარამეტრები';
+    protected static ?string $navigationLabel = 'Settings';
 
-    protected static ?string $modelLabel = 'პარამეტრი';
+    protected static ?string $modelLabel = 'Setting';
 
-    protected static ?string $pluralModelLabel = 'პარამეტრები';
+    protected static ?string $pluralModelLabel = 'Settings';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::System;
 
@@ -38,87 +40,88 @@ class SiteSettingResource extends Resource
     {
         return $schema->components([
             Select::make('key')
-                ->label('გასაღები')
+                ->label('Key')
                 ->options([
-                    'contact' => 'კონტაქტი',
-                    'socials' => 'სოციალური ქსელები',
-                    'branding' => 'ბრენდინგი',
+                    'contact' => 'Contact',
+                    'socials' => 'Social links',
+                    'branding' => 'Branding',
                     'seo' => 'SEO',
-                    'integrations' => 'Analytics და საძიებო სისტემები',
-                    'translations' => 'თარგმანები',
+                    'integrations' => 'Analytics and verification',
+                    'translations' => 'Translations',
                 ])
                 ->required()
                 ->unique(ignoreRecord: true)
-                ->helperText('კონტაქტი, სოციალური ქსელები და ბრენდინგი პირდაპირ გამოიყენება ფრონტზე.'),
+                ->helperText('Contact, socials, branding and translations are used directly on the frontend.'),
             Select::make('group')
-                ->label('ჯგუფი')
+                ->label('Group')
                 ->options(['general' => 'General'])
                 ->default('general')
                 ->required(),
 
-            Section::make('კონტაქტი')
+            Section::make('Contact details')
                 ->schema([
                     TextInput::make('value.phone')
-                        ->label('ტელეფონი')
-                        ->required(),
+                        ->label('Primary phone')
+                        ->helperText('Optional. If left empty, the first number from the list below becomes the primary phone.'),
+                    Repeater::make('value.phones')
+                        ->label('Additional phone numbers')
+                        ->simple(
+                            TextInput::make('value')
+                                ->label('Phone number')
+                                ->required(),
+                        )
+                        ->default([]),
                     TextInput::make('value.email')
-                        ->label('ელფოსტა')
+                        ->label('Email')
                         ->email()
                         ->required(),
                     TextInput::make('value.lead_email')
-                        ->label('ფორმების მიმღები ელფოსტა')
+                        ->label('Lead notification email')
                         ->email()
-                        ->helperText('ყველა მოთხოვნის დეტალები ამ მისამართზე გაიგზავნება. თუ production გარემოში LEADS_NOTIFICATION_EMAIL არის მითითებული, პრიორიტეტი მას აქვს.')
+                        ->helperText('Lead form submissions are delivered here unless a production override is configured.')
                         ->default('safetechgeorgia@gmail.com'),
                     TextInput::make('value.whatsapp')
-                        ->label('WhatsApp ნომერი')
-                        ->helperText('მიუთითეთ ნომერი საერთაშორისო ფორმატში, მაგალითად 995599123456.'),
+                        ->label('WhatsApp number')
+                        ->helperText('Use the international number format, for example 995599123456.'),
                     TextInput::make('value.whatsapp_message')
-                        ->label('WhatsApp საწყისი ტექსტი'),
+                        ->label('WhatsApp default message'),
                     TextInput::make('value.hours')
-                        ->label('სამუშაო საათები'),
+                        ->label('Working hours'),
                     Textarea::make('value.address')
-                        ->label('მისამართი')
+                        ->label('Address')
                         ->rows(2)
                         ->required(),
                 ])
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'contact'),
 
-            Section::make('სოციალური ქსელები')
+            Section::make('Footer social networks')
                 ->schema([
                     Repeater::make('value.links')
-                        ->label('ქვედა ზოლის სოციალური ბმულები')
+                        ->label('Social links')
                         ->schema([
                             Select::make('network')
-                                ->label('ქსელი')
-                                ->options([
-                                    'facebook' => 'Facebook',
-                                    'linkedin' => 'LinkedIn',
-                                    'instagram' => 'Instagram',
-                                    'tiktok' => 'TikTok',
-                                    'x' => 'X',
-                                    'youtube' => 'YouTube',
-                                    'telegram' => 'Telegram',
-                                    'whatsapp' => 'WhatsApp',
-                                    'email' => 'Email',
-                                ])
-                                ->required(),
-                            TextInput::make('label')
-                                ->label('სათაური')
-                                ->helperText('მაგ: Facebook, X, WhatsApp'),
-                            TextInput::make('href')
-                                ->label('ბმული ან მნიშვნელობა')
+                                ->label('Network')
+                                ->options(AdminIconOptions::socials())
+                                ->searchable()
+                                ->preload()
                                 ->required()
-                                ->helperText('ელფოსტისთვის მიუთითეთ მისამართი, WhatsApp-სთვის ნომერი, სხვა შემთხვევებში სრული URL ან დომენი.'),
+                                ->helperText('The matching social icon is rendered automatically on the frontend.'),
+                            TextInput::make('label')
+                                ->label('Label')
+                                ->helperText('Optional custom label for the footer tooltip.'),
+                            TextInput::make('href')
+                                ->label('URL or value')
+                                ->required()
+                                ->helperText('Use an email address for Email, a phone number for WhatsApp, or a full URL/domain for the rest.'),
                         ])
                         ->columns(3)
                         ->collapsible()
                         ->reorderable(),
                     TextInput::make('value.share_title')
-                        ->label('გაზიარების სათაური'),
+                        ->label('Share title'),
                     Repeater::make('value.share_buttons')
-                        ->label('გაზიარების ღილაკები')
+                        ->label('Share buttons')
                         ->simple(
                             Select::make('type')->options([
                                 'facebook' => 'Facebook',
@@ -127,73 +130,73 @@ class SiteSettingResource extends Resource
                                 'linkedin' => 'LinkedIn',
                                 'pinterest' => 'Pinterest',
                                 'twitter' => 'X',
-                                'link' => 'ბმულის კოპირება',
+                                'link' => 'Copy link',
                             ]),
                         ),
                 ])
                 ->visible(fn (Get $get): bool => $get('key') === 'socials'),
 
-            Section::make('ბრენდინგი')
+            Section::make('Branding')
                 ->schema([
                     TextInput::make('value.site_name')
-                        ->label('საიტის სახელი')
+                        ->label('Site name')
                         ->required(),
                     TextInput::make('value.tagline')
-                        ->label('სლოგანი')
-                        ->helperText('გამოჩნდება footer-ში ტექსტურად.'),
+                        ->label('Tagline')
+                        ->helperText('Displayed as footer copy.'),
                     SpatieMediaLibraryFileUpload::make('branding_logo')
-                        ->label('ზედა მენიუს ლოგო')
+                        ->label('Header logo')
                         ->collection('logo')
                         ->conversion('webp')
                         ->image()
                         ->imageEditor()
                         ->maxSize(10240),
                     SpatieMediaLibraryFileUpload::make('branding_footer_logo')
-                        ->label('ქვედა კოლონტიტულის ლოგო')
+                        ->label('Footer logo')
                         ->collection('footer_logo')
                         ->conversion('webp')
                         ->image()
                         ->imageEditor()
                         ->maxSize(10240),
                     SpatieMediaLibraryFileUpload::make('branding_favicon')
-                        ->label('საიტის ხატულა')
+                        ->label('Favicon')
                         ->collection('favicon')
                         ->conversion('webp')
                         ->image()
                         ->imageEditor()
                         ->maxSize(2048),
                     SpatieMediaLibraryFileUpload::make('branding_default_image')
-                        ->label('საერთო fallback სურათი')
+                        ->label('Default social/image fallback')
                         ->collection('default_image')
                         ->conversion('webp')
                         ->image()
                         ->imageEditor()
                         ->maxSize(10240)
-                        ->helperText('გამოიყენება ლოგოს გარდა იმ საერთო ვიზუალებში და preview-ებში, სადაც კონკრეტული სურათი არ არის შევსებული.'),
+                        ->helperText('Used when a page or content item does not define its own image.'),
                 ])
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'branding'),
 
-            Section::make('საიტისა და LocalBusiness SEO')
+            Section::make('Site and LocalBusiness SEO')
                 ->schema([
-                    TextInput::make('value.site_name')->label('საიტის სახელი')->default('SafeTech'),
-                    Textarea::make('value.site_description')->label('ორგანიზაციის აღწერა')->rows(3),
-                    TextInput::make('value.city')->label('ქალაქი'),
-                    TextInput::make('value.country')->label('ქვეყნის კოდი')->default('GE')->maxLength(2),
-                    TextInput::make('value.postal_code')->label('საფოსტო ინდექსი'),
-                    TextInput::make('value.lat')->label('განედი (latitude)')->numeric(),
-                    TextInput::make('value.lng')->label('გრძედი (longitude)')->numeric(),
-                    TextInput::make('value.open_time')->label('გახსნის დრო')->type('time'),
-                    TextInput::make('value.close_time')->label('დახურვის დრო')->type('time'),
+                    TextInput::make('value.site_name')->label('Site name')->default('SafeTech'),
+                    Textarea::make('value.site_description')->label('Organization description')->rows(3),
+                    TextInput::make('value.city')->label('City'),
+                    TextInput::make('value.country')->label('Country code')->default('GE')->maxLength(2),
+                    TextInput::make('value.postal_code')->label('Postal code'),
+                    TextInput::make('value.lat')->label('Latitude')->numeric(),
+                    TextInput::make('value.lng')->label('Longitude')->numeric(),
+                    TextInput::make('value.open_time')->label('Open time')->type('time'),
+                    TextInput::make('value.close_time')->label('Close time')->type('time'),
                 ])
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'seo'),
 
-            Section::make('ანალიტიკა, Pixel და ვერიფიკაცია')
-                ->description('ID-ები საჯაროდ იტვირთება მხოლოდ მაშინ, როდესაც შესაბამისი ინტეგრაცია ჩართულია. GTM-ის გამოყენებისას GA4 tag თავად GTM-ში დაამატეთ, რათა page view ორჯერ არ ჩაითვალოს.')
+            Section::make('Analytics, pixels and verification')
+                ->description('IDs are only exposed publicly when marketing integrations are enabled.')
                 ->schema([
                     Toggle::make('value.marketing_enabled')
-                        ->label('ანალიტიკისა და სარეკლამო კოდების ჩართვა')
+                        ->label('Enable analytics and marketing scripts')
                         ->default(false),
                     TextInput::make('value.google_tag_manager_id')
                         ->label('Google Tag Manager ID')
@@ -208,43 +211,42 @@ class SiteSettingResource extends Resource
                         ->regex('/^[0-9]{5,32}$/')
                         ->placeholder('123456789012345'),
                     TextInput::make('value.google_site_verification')
-                        ->label('Google Search Console ვერიფიკაციის კოდი'),
+                        ->label('Google Search Console verification'),
                     TextInput::make('value.bing_site_verification')
-                        ->label('Bing Webmaster Tools ვერიფიკაციის კოდი'),
+                        ->label('Bing Webmaster Tools verification'),
                     TextInput::make('value.yandex_site_verification')
-                        ->label('Yandex Webmaster ვერიფიკაციის კოდი'),
+                        ->label('Yandex Webmaster verification'),
                     TextInput::make('value.indexnow_key')
-                        ->label('IndexNow გასაღები')
-                        ->helperText('გამოიყენება Bing/Yandex-ისთვის URL-ების სწრაფად გასაგზავნად.'),
+                        ->label('IndexNow key')
+                        ->helperText('Used for faster URL notifications to Bing and Yandex.'),
                 ])
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'integrations'),
 
-            Section::make('ინტერფეისის თარგმანები')
+            ...ManagedPageTranslationFields::sections(),
+
+            Section::make('Additional translation entries')
                 ->schema([
                     Repeater::make('value.entries')
-                        ->label('თარგმანის ჩანაწერები')
+                        ->label('Translation entries')
                         ->schema([
                             TextInput::make('key')
-                                ->label('გასაღები')
+                                ->label('Key')
                                 ->required()
-                                ->helperText('მაგ: nav.home, meta.home.title, meta.home.description, services.hero.eyebrow, project.slug.card.title'),
-                            TextInput::make('ka')
-                                ->label('ქართული'),
-                            TextInput::make('en')
-                                ->label('ინგლისური'),
-                            TextInput::make('ru')
-                                ->label('Русский'),
+                                ->helperText('Example: nav.home, blog.title, services.hero.eyebrow, project.slug.card.title'),
+                            TextInput::make('ka')->label('Georgian'),
+                            TextInput::make('en')->label('English'),
+                            TextInput::make('ru')->label('Russian'),
                         ])
                         ->columns(2)
                         ->collapsible()
                         ->reorderable()
-                        ->helperText('აქედან შეგიძლიათ მართოთ UI ტექსტები, navigation labels, გვერდების SEO title/description და საერთო ტექსტები 3 ენაზე. სერვისებისა და პროექტების record-level თარგმანები ავტომატურად დაემატება ამ map-ს.'),
+                        ->helperText('Use this repeater for any page or component copy that does not have a dedicated section above.'),
                 ])
                 ->visible(fn (Get $get): bool => $get('key') === 'translations'),
 
             Toggle::make('is_public')
-                ->label('საჯარო API-ში გამოჩენა')
+                ->label('Expose through the public API')
                 ->default(true),
         ]);
     }
@@ -253,11 +255,11 @@ class SiteSettingResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('key')->label('გასაღები')->searchable()->sortable(),
-                TextColumn::make('group')->label('ჯგუფი')->searchable(),
-                IconColumn::make('is_public')->label('საჯარო')->boolean(),
+                TextColumn::make('key')->label('Key')->searchable()->sortable(),
+                TextColumn::make('group')->label('Group')->searchable(),
+                IconColumn::make('is_public')->label('Public')->boolean(),
                 TextColumn::make('updated_at')
-                    ->label('განახლდა')
+                    ->label('Updated')
                     ->dateTime()
                     ->sortable(),
             ])

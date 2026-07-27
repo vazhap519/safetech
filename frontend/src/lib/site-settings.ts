@@ -16,6 +16,7 @@ import {
 
 type SiteContact = {
     phone: string;
+    phones: string[];
     email: string;
     address: string;
     whatsapp: string;
@@ -68,6 +69,16 @@ function isSocialNetwork(value: string): value is SocialNetwork {
     ].includes(value);
 }
 
+function normalizeSocialNetwork(value: string): SocialNetwork | null {
+    const normalized = value.trim().toLowerCase();
+
+    if (normalized === "twitter") {
+        return "x";
+    }
+
+    return isSocialNetwork(normalized) ? normalized : null;
+}
+
 function fallbackLabel(network: SocialNetwork) {
     switch (network) {
         case "x":
@@ -116,23 +127,25 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
                     return null;
                 }
 
-                if (!isSocialNetwork(item.network)) {
+                const network = normalizeSocialNetwork(item.network);
+
+                if (!network) {
                     return null;
                 }
 
                 const href =
                     typeof item.href === "string"
-                        ? normalizeSocialHref(item.network, item.href)
+                        ? normalizeSocialHref(network, item.href)
                         : "";
 
                 if (!href) return null;
 
                 return {
-                    network: item.network,
+                    network,
                     label:
                         typeof item.label === "string" && item.label.trim()
                             ? item.label.trim()
-                            : fallbackLabel(item.network),
+                            : fallbackLabel(network),
                     href,
                 } satisfies SiteSocialLink;
             })
@@ -144,17 +157,22 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
     if (isRecord(value)) {
         const legacyLinks = Object.entries(value)
             .map(([network, href]) => {
-                if (!isSocialNetwork(network) || typeof href !== "string") {
+                const normalizedNetwork = normalizeSocialNetwork(network);
+
+                if (!normalizedNetwork || typeof href !== "string") {
                     return null;
                 }
 
-                const normalizedHref = normalizeSocialHref(network, href);
+                const normalizedHref = normalizeSocialHref(
+                    normalizedNetwork,
+                    href,
+                );
 
                 if (!normalizedHref) return null;
 
                 return {
-                    network,
-                    label: fallbackLabel(network),
+                    network: normalizedNetwork,
+                    label: fallbackLabel(normalizedNetwork),
                     href: normalizedHref,
                 } satisfies SiteSocialLink;
             })
@@ -175,8 +193,27 @@ function pickString(
     return trim ? value.trim() : value;
 }
 
+function normalizeStringList(value: unknown) {
+    const values = Array.isArray(value)
+        ? value
+              .map((item) => {
+                  if (typeof item === "string") return item;
+                  if (isRecord(item) && typeof item.value === "string") {
+                      return item.value;
+                  }
+
+                  return "";
+              })
+              .map((item) => item.trim())
+              .filter(Boolean)
+        : [];
+
+    return [...new Set(values)];
+}
+
 const defaultSiteContact: SiteContact = {
     phone: "",
+    phones: [],
     email: "",
     address: "",
     whatsapp: "",
@@ -216,9 +253,16 @@ export const getSiteSettings = cache(async () => {
         settings.socials,
         defaultSiteSocialLinks,
     );
+    const configuredPhones = normalizeStringList(configuredContact.phones);
+    const phoneCandidates = [
+        pickString(configuredContact.phone, defaultSiteContact.phone),
+        ...configuredPhones,
+    ].filter(Boolean);
+    const phones = [...new Set(phoneCandidates)];
 
     const contact = {
-        phone: pickString(configuredContact.phone, defaultSiteContact.phone),
+        phone: phones[0] ?? defaultSiteContact.phone,
+        phones,
         email: pickString(configuredContact.email, defaultSiteContact.email),
         address: pickString(
             configuredContact.address,

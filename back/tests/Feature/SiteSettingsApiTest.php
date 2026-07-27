@@ -15,6 +15,10 @@ class SiteSettingsApiTest extends TestCase
         foreach ([
             'contact' => [
                 'phone' => '+995 555 00 00 00',
+                'phones' => [
+                    ['label' => 'Sales', 'value' => '+995 555 00 00 00'],
+                    ['label' => 'Support', 'value' => '+995 577 11 22 33'],
+                ],
                 'email' => 'info@example.com',
                 'address' => 'Tbilisi',
                 'lead_email' => 'private@example.com',
@@ -40,8 +44,13 @@ class SiteSettingsApiTest extends TestCase
         $this->getJson('/api/settings')
             ->assertOk()
             ->assertJsonPath('contact.phone', '+995 555 00 00 00')
+            ->assertJsonPath('contact.phones.0', '+995 555 00 00 00')
+            ->assertJsonPath('contact.phones.1', '+995 577 11 22 33')
             ->assertJsonPath('seo.local_business.city', 'Tbilisi')
+            ->assertJsonPath('seo.local_business.phones.1', '+995 577 11 22 33')
             ->assertJsonPath('seo.same_as.0', 'https://facebook.com/safetech')
+            ->assertJsonPath('socials.0.url', 'https://facebook.com/safetech')
+            ->assertJsonPath('socials.1.url', 'mailto:info@example.com')
             ->assertJsonPath('share.buttons.0.type', 'facebook')
             ->assertJsonMissingPath('contact.lead_email');
     }

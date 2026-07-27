@@ -5,6 +5,11 @@ import { translateText } from "@/lib/translations";
 
 export default async function Info() {
     const { contact, locale, translations } = await getSiteSettings();
+    const phoneNumbers = contact.phones.length
+        ? contact.phones
+        : contact.phone
+          ? [contact.phone]
+          : [];
     const items = [
         {
             icon: "call",
@@ -14,9 +19,19 @@ export default async function Info() {
                 locale,
                 null,
             ),
-            value: contact.phone,
-            href: contact.phone ? toPhoneHref(contact.phone) : "",
-            valueClassName: "break-words",
+            content: phoneNumbers.length ? (
+                <div className="flex flex-col items-center gap-1">
+                    {phoneNumbers.map((phone) => (
+                        <a
+                            className="font-headline-md break-words text-base text-on-surface transition-colors hover:text-primary md:text-headline-md"
+                            href={toPhoneHref(phone)}
+                            key={phone}
+                        >
+                            {phone}
+                        </a>
+                    ))}
+                </div>
+            ) : null,
         },
         {
             icon: "mail",
@@ -26,9 +41,14 @@ export default async function Info() {
                 locale,
                 null,
             ),
-            value: contact.email,
-            href: contact.email ? toEmailHref(contact.email) : "",
-            valueClassName: "break-all",
+            content: contact.email ? (
+                <a
+                    className="font-headline-md break-all text-base text-on-surface transition-colors hover:text-primary md:text-headline-md"
+                    href={toEmailHref(contact.email)}
+                >
+                    {contact.email}
+                </a>
+            ) : null,
         },
         {
             icon: "location_on",
@@ -38,7 +58,11 @@ export default async function Info() {
                 locale,
                 null,
             ),
-            value: contact.address,
+            content: contact.address ? (
+                <p className="font-headline-md text-base text-on-surface md:text-headline-md">
+                    {contact.address}
+                </p>
+            ) : null,
         },
         {
             icon: "schedule",
@@ -48,9 +72,13 @@ export default async function Info() {
                 locale,
                 null,
             ),
-            value: contact.hours,
+            content: contact.hours ? (
+                <p className="font-headline-md text-base text-on-surface md:text-headline-md">
+                    {contact.hours}
+                </p>
+            ) : null,
         },
-    ].filter((item) => item.value);
+    ].filter((item) => item.content);
 
     if (!items.length) return null;
 
@@ -59,7 +87,7 @@ export default async function Info() {
             <div className="mx-auto grid max-w-container-max grid-cols-1 gap-unit-md px-margin-desktop sm:grid-cols-2 lg:grid-cols-4">
                 {items.map((item) => (
                     <div
-                        key={`${item.icon}-${item.value}`}
+                        key={item.icon}
                         className="glass-panel rounded-xl p-unit-md text-center md:p-unit-lg"
                     >
                         <Icon
@@ -73,20 +101,7 @@ export default async function Info() {
                             </p>
                         ) : null}
 
-                        {item.href ? (
-                            <a
-                                className={`font-headline-md text-base text-on-surface transition-colors hover:text-primary md:text-headline-md ${item.valueClassName ?? ""}`}
-                                href={item.href}
-                            >
-                                {item.value}
-                            </a>
-                        ) : (
-                            <p
-                                className={`font-headline-md text-base text-on-surface md:text-headline-md ${item.valueClassName ?? ""}`}
-                            >
-                                {item.value}
-                            </p>
-                        )}
+                        {item.content}
                     </div>
                 ))}
             </div>

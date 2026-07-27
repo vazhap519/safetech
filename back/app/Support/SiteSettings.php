@@ -26,7 +26,11 @@ final class SiteSettings
     {
         $value = self::all()[$key] ?? [];
 
-        return is_array($value) ? $value : [];
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return SiteSettingValueNormalizer::normalize($key, $value);
     }
 
     public static function brandingMediaUrl(string $collection): ?string
@@ -60,8 +64,27 @@ final class SiteSettings
             $socialUrls[(string) $link['network']] = (string) $link['href'];
         }
 
+        $phones = collect(is_array($contact['phones'] ?? null) ? $contact['phones'] : [])
+            ->map(fn ($phone) => is_array($phone) ? ($phone['value'] ?? null) : $phone)
+            ->filter(fn ($phone) => is_string($phone) && trim($phone) !== '')
+            ->map(fn (string $phone): string => trim($phone))
+            ->values();
+
+        if (filled($contact['phone'] ?? null)) {
+            $phones->prepend(trim((string) $contact['phone']));
+        }
+
+        $phones = $phones
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $primaryPhone = $phones[0] ?? null;
+
         return (object) [
-            'phone' => $contact['phone'] ?? null,
+            'phone' => $primaryPhone,
+            'phones' => $phones,
             'email' => $contact['email'] ?? null,
             'address' => $contact['address'] ?? null,
             'city' => $seo['city'] ?? null,
@@ -74,6 +97,7 @@ final class SiteSettings
             'facebook' => $socialUrls['facebook'] ?? null,
             'instagram' => $socialUrls['instagram'] ?? null,
             'linkedin' => $socialUrls['linkedin'] ?? null,
+            'social_links' => $socialUrls,
             'share_title' => $socials['share_title'] ?? null,
             'share_buttons' => is_array($socials['share_buttons'] ?? null)
                 ? $socials['share_buttons']

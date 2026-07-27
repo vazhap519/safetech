@@ -27,7 +27,6 @@ export type ProjectDetail = {
         description: string;
         accent: "primary" | "secondary";
     }>;
-    testimonial: { quote: string; author: string; role: string };
     related: Array<{
         translationIndex?: number;
         slug: string;

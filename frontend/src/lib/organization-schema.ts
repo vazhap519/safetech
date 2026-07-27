@@ -2,6 +2,7 @@ import { absoluteSiteUrl, DEFAULT_SOCIAL_IMAGE } from "@/lib/seo";
 
 type OrganizationContact = {
     phone?: string;
+    phones?: string[];
     email?: string;
     address?: string;
 };
@@ -35,17 +36,33 @@ export function buildOrganizationEntity({
             branding.defaultImage ||
             DEFAULT_SOCIAL_IMAGE,
     );
+    const phones = [
+        ...(contact.phones ?? []),
+        ...(contact.phone ? [contact.phone] : []),
+    ].filter(Boolean);
+    const uniquePhones = [...new Set(phones)];
+    const primaryPhone = uniquePhones[0];
     const contactPoint =
-        contact.phone || contact.email
+        uniquePhones.length || contact.email
             ? [
-                  {
-                      "@type": "ContactPoint",
-                      contactType,
-                      ...(contact.phone ? { telephone: contact.phone } : {}),
-                      ...(contact.email ? { email: contact.email } : {}),
-                      areaServed: "GE",
-                      availableLanguage: ["ka", "en", "ru"],
-                  },
+                  ...(uniquePhones.length
+                      ? uniquePhones.map((phone) => ({
+                            "@type": "ContactPoint",
+                            contactType,
+                            telephone: phone,
+                            ...(contact.email ? { email: contact.email } : {}),
+                            areaServed: "GE",
+                            availableLanguage: ["ka", "en", "ru"],
+                        }))
+                      : [
+                            {
+                                "@type": "ContactPoint",
+                                contactType,
+                                ...(contact.email ? { email: contact.email } : {}),
+                                areaServed: "GE",
+                                availableLanguage: ["ka", "en", "ru"],
+                            },
+                        ]),
               ]
             : undefined;
 
@@ -57,7 +74,7 @@ export function buildOrganizationEntity({
         image: logo,
         areaServed: "Georgia",
         ...(description ? { description } : {}),
-        ...(contact.phone ? { telephone: contact.phone } : {}),
+        ...(primaryPhone ? { telephone: primaryPhone } : {}),
         ...(contact.email ? { email: contact.email } : {}),
         ...(contact.address
             ? {

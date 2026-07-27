@@ -108,12 +108,25 @@ class SocialLinks
             ->filter()
             ->values();
 
+        $fallbackLinks = is_array($settings?->social_links ?? null)
+            ? $settings->social_links
+            : [];
+
         foreach ([
             'facebook' => 'FaFacebook',
             'instagram' => 'FaInstagram',
             'linkedin' => 'FaLinkedin',
+            'tiktok' => 'FaTiktok',
+            'x' => 'FaTwitter',
+            'youtube' => 'FaYoutube',
+            'telegram' => 'FaTelegram',
+            'whatsapp' => 'FaWhatsapp',
+            'email' => 'FaEnvelope',
         ] as $field => $icon) {
-            $url = self::normalizeUrl($settings ? data_get($settings, $field) : null);
+            $url = self::normalizeNetworkUrl(
+                $field,
+                $fallbackLinks[$field] ?? ($settings ? data_get($settings, $field) : null),
+            );
 
             if (! $url || $socials->contains(fn ($item) => $item['url'] === $url)) {
                 continue;
@@ -133,11 +146,16 @@ class SocialLinks
 
     public static function sameAs(?object $settings = null): array
     {
-        return array_values(array_filter([
-            self::normalizeUrl($settings?->facebook),
-            self::normalizeUrl($settings?->instagram),
-            self::normalizeUrl($settings?->linkedin),
-        ]));
+        $configuredLinks = is_array($settings?->social_links ?? null)
+            ? $settings->social_links
+            : [];
+
+        return collect($configuredLinks)
+            ->except(['email', 'whatsapp'])
+            ->map(fn ($url): ?string => self::normalizeUrl(is_string($url) ? $url : null))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     public static function normalizeUrl(?string $url): ?string
@@ -157,6 +175,27 @@ class SocialLinks
         }
 
         return 'https://'.ltrim($url, '/');
+    }
+
+    private static function normalizeNetworkUrl(string $network, mixed $value): ?string
+    {
+        $url = trim((string) $value);
+
+        if ($url === '' || $url === '#') {
+            return null;
+        }
+
+        if ($network === 'email') {
+            return str_starts_with($url, 'mailto:') ? $url : 'mailto:'.$url;
+        }
+
+        if ($network === 'whatsapp' && ! preg_match('#^https?://#i', $url)) {
+            $digits = preg_replace('/\D+/', '', $url) ?? '';
+
+            return $digits !== '' ? 'https://wa.me/'.$digits : null;
+        }
+
+        return self::normalizeUrl($url);
     }
 
     private static function normalizeSocialItem(mixed $item): ?array

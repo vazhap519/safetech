@@ -15,7 +15,6 @@ import ProjectOverviewSection from "@/sections/Projects/Details/ProjectOverviewS
 import RelatedProjectsSection from "@/sections/Projects/Details/RelatedProjectsSection";
 import ResultsSection from "@/sections/Projects/Details/ResultsSection";
 import SolutionsSection from "@/sections/Projects/Details/SolutionsSection";
-import TestimonialSection from "@/sections/Projects/Details/TestimonialSection";
 
 type ProjectPageProps = { params: Promise<{ slug: string }> };
 
@@ -115,9 +114,6 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             <ProcessSection project={project} />
             <GallerySection project={project} />
             <ResultsSection project={project} />
-            {project.testimonial.quote ? (
-                <TestimonialSection testimonial={project.testimonial} />
-            ) : null}
             {relatedProjects.length ? (
                 <RelatedProjectsSection projects={relatedProjects} />
             ) : null}

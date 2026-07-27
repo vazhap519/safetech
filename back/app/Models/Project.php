@@ -7,6 +7,7 @@ use App\Support\PublicMediaUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -28,6 +29,26 @@ class Project extends Model implements HasMedia
             'seo' => 'array', 'translations' => 'array', 'is_published' => 'boolean',
             'published_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Project $project): void {
+            if (filled($project->slug)) {
+                return;
+            }
+
+            $baseSlug = Str::slug($project->name ?: $project->title ?: 'project') ?: 'project';
+            $candidate = $baseSlug;
+            $suffix = 2;
+
+            while (self::query()->where('slug', $candidate)->exists()) {
+                $candidate = "{$baseSlug}-{$suffix}";
+                $suffix++;
+            }
+
+            $project->slug = $candidate;
+        });
     }
 
     public function category(): BelongsTo

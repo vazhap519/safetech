@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -38,6 +39,26 @@ class Service extends Model implements HasMedia
             'translations' => 'array',
             'is_published' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Service $service): void {
+            if (filled($service->slug)) {
+                return;
+            }
+
+            $baseSlug = Str::slug($service->name ?: $service->title ?: 'service') ?: 'service';
+            $candidate = $baseSlug;
+            $suffix = 2;
+
+            while (self::query()->where('slug', $candidate)->exists()) {
+                $candidate = "{$baseSlug}-{$suffix}";
+                $suffix++;
+            }
+
+            $service->slug = $candidate;
+        });
     }
 
     public function category(): BelongsTo

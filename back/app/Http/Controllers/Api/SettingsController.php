@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Support\SiteSettings;
+use App\Support\SiteSettingValueNormalizer;
 use App\Support\SocialLinks;
 use Illuminate\Http\JsonResponse;
 
@@ -13,9 +14,17 @@ class SettingsController extends Controller
     {
         $settings = SiteSettings::businessProfile();
         $branding = SiteSettings::value('branding');
-        $contact = SiteSettings::value('contact');
+        $contact = SiteSettingValueNormalizer::normalize(
+            'contact',
+            SiteSettings::value('contact'),
+        );
         unset($contact['lead_email']);
-        $socials = SiteSettings::value('socials');
+        $contact['phone'] = $settings->phone;
+        $contact['phones'] = is_array($settings->phones ?? null) ? $settings->phones : [];
+        $socials = SiteSettingValueNormalizer::normalize(
+            'socials',
+            SiteSettings::value('socials'),
+        );
         $shareButtons = SocialLinks::shareButtons($settings->share_buttons ?? []);
 
         return response()->json([
@@ -39,6 +48,7 @@ class SettingsController extends Controller
             'seo' => [
                 'local_business' => [
                     'phone' => $settings->phone,
+                    'phones' => $settings->phones ?? [],
                     'email' => $settings->email,
                     'address' => $settings->address,
                     'city' => $settings->city,
@@ -53,6 +63,7 @@ class SettingsController extends Controller
 
             'contact_page' => [
                 'phone' => $contact['phone'] ?? null,
+                'phones' => $contact['phones'] ?? [],
                 'whatsapp' => $contact['whatsapp'] ?? null,
                 'viber' => null,
                 'email' => $contact['email'] ?? null,

@@ -24,7 +24,6 @@ class FilamentResourceSmokeTest extends TestCase
             '/admin/posts/create',
             '/admin/partners/create',
             '/admin/team-members/create',
-            '/admin/testimonials/create',
             '/admin/seo-pages/create',
             '/admin/site-settings/create',
         ] as $url) {

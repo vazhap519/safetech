@@ -17,10 +17,6 @@ class ProjectResource extends JsonResource
         $category = $this->resource->relationLoaded('category')
             ? $this->resource->getRelation('category')
             : null;
-        $testimonial = $this->testimonial ?? [];
-        if (array_is_list($testimonial)) {
-            $testimonial = $testimonial[0] ?? [];
-        }
         $fallbackName = $this->name ?: $this->title;
         $name = $this->translated('name', $fallbackName, $locale);
         $title = $this->translated('title', $this->title ?: $fallbackName, $locale);
@@ -61,7 +57,7 @@ class ProjectResource extends JsonResource
             'specs' => $this->specs ?? [], 'challenges' => $this->challenges ?? [],
             'solutions' => $this->solutions ?? [], 'process' => $this->process ?? [],
             'gallery' => $this->gallery_urls ?: ($this->gallery ?? []), 'results' => $this->results ?? [],
-            'testimonial' => $testimonial, 'related' => $this->relatedProjects($request, $locale),
+            'related' => $this->relatedProjects($request, $locale),
             'featured' => $this->is_featured, 'publishedAt' => $this->published_at?->toAtomString(),
             'seo' => [
                 'title' => $seoTitle ?: $title,

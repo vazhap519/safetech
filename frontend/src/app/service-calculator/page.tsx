@@ -58,6 +58,7 @@ export default async function CalculatorPage({ searchParams }: CalculatorPagePro
             <ServiceCalculator
                 initialService={query.service}
                 profiles={profiles}
+                variant="page"
             />
         </>
     );

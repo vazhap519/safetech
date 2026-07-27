@@ -3,8 +3,10 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectResource\Pages;
+use App\Filament\Support\AdminIconOptions;
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\NavigationGroup;
+use App\Filament\Support\StableSlug;
 use App\Models\Project;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -27,199 +29,206 @@ class ProjectResource extends Resource
 {
     protected static ?string $model = Project::class;
 
-    protected static ?string $navigationLabel = 'პროექტები';
+    protected static ?string $navigationLabel = 'Projects';
 
-    protected static ?string $modelLabel = 'პროექტი';
+    protected static ?string $modelLabel = 'Project';
 
-    protected static ?string $pluralModelLabel = 'პროექტები';
+    protected static ?string $pluralModelLabel = 'Projects';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Projects;
 
     public static function form(Schema $schema): Schema
     {
         $detailCards = [
-            TextInput::make('icon')->label('აიკონი'),
-            TextInput::make('title')->label('სათაური')->required(),
-            Textarea::make('description')->label('აღწერა')->required(),
-            Toggle::make('featured')->label('გამორჩეული'),
+            Select::make('icon')
+                ->label('Icon')
+                ->options(AdminIconOptions::content())
+                ->searchable()
+                ->preload(),
+            TextInput::make('title')->label('Title')->required(),
+            Textarea::make('description')->label('Description')->required(),
+            Toggle::make('featured')->label('Featured'),
         ];
 
         $valueLabel = [
-            TextInput::make('value')->label('მნიშვნელობა')->required(),
-            TextInput::make('label')->label('ეტიკეტი')->required(),
+            TextInput::make('value')->label('Value')->required(),
+            TextInput::make('label')->label('Label')->required(),
         ];
 
         return $schema->components([
-            TextInput::make('name')
-                ->label('სახელი')
-                ->required(),
-            TextInput::make('slug')
-                ->label('URL კოდი')
-                ->required()
-                ->unique(ignoreRecord: true)
-                ->helperText('გამოიყენება URL-ში და უნდა იყოს უნიკალური.'),
-            TextInput::make('title')
-                ->label('სათაური')
-                ->required(),
-            Textarea::make('description')
-                ->label('აღწერა')
-                ->required(),
-            Textarea::make('seo_description')
-                ->label('SEO აღწერა')
-                ->required()
-                ->maxLength(320),
-            SpatieMediaLibraryFileUpload::make('cover')
-                ->label('მთავარი ფოტო')
-                ->collection('cover')
-                ->conversion('webp')
-                ->image()
-                ->imageEditor()
-                ->maxSize(10240)
-                ->imagePreviewHeight('150'),
-            TextInput::make('image_alt')
-                ->label('ფოტოს ALT ტექსტი')
-                ->requiredWith('cover'),
-            Select::make('category_id')
-                ->label('კატეგორია')
-                ->relationship('category', 'name')
-                ->searchable()
-                ->preload()
-                ->required(),
-            TextInput::make('video_url')
-                ->label('YouTube ვიდეოს URL')
-                ->url()
-                ->maxLength(2048)
-                ->placeholder('https://www.youtube.com/watch?v=...')
-                ->helperText('ჩასვით YouTube-ის ბმული; ვიდეო გამოჩნდება პროექტის გვერდზე.'),
-            TextInput::make('technology')
-                ->label('ტექნოლოგია'),
-            Section::make('კონტენტი და SEO 3 ენაზე')
-                ->description('ძირითადი ველები რჩება ქართულ fallback-ად. აქ შეიყვანეთ KA/EN/RU ტექსტები, რომლებიც ფრონტზე ავტომატურად წავა project.{slug} key-ებით.')
+            Section::make('Main project information')
                 ->schema([
-                    ...LocalizedContentFields::inputs('name', 'პროექტის სახელი'),
-                    ...LocalizedContentFields::inputs('title', 'სათაური'),
-                    ...LocalizedContentFields::inputs('description', 'აღწერა', textarea: true),
-                    ...LocalizedContentFields::inputs('seoTitle', 'SEO სათაური'),
-                    ...LocalizedContentFields::inputs('seoDescription', 'SEO აღწერა', textarea: true),
-                    ...LocalizedContentFields::inputs('imageAlt', 'ფოტოს ALT'),
-                    ...LocalizedContentFields::inputs('technology', 'ტექნოლოგია'),
-                    ...LocalizedContentFields::inputs('card.title', 'ბარათის სათაური'),
-                    ...LocalizedContentFields::inputs('card.description', 'ბარათის აღწერა', textarea: true),
-                    ...LocalizedContentFields::inputs('featured.title', 'გამორჩეულის სათაური'),
-                    ...LocalizedContentFields::inputs('featured.category', 'გამორჩეულის კატეგორია'),
-                    ...LocalizedContentFields::inputs('featured.imageAlt', 'გამორჩეულის ALT'),
-                    LocalizedContentFields::customEntries('მაგ: meta.0.label, spec.0.value, challenge.0.title, result.0.description'),
-                ])
-                ->columns(3)
-                ->columnSpanFull(),
-            TextInput::make('icon')
-                ->label('აიკონი')
-                ->default('business')
-                ->required()
-                ->helperText('Material Symbol-ის სახელი.'),
-            Select::make('accent')
-                ->label('აქცენტი')
-                ->options([
-                    'primary' => 'Primary',
-                    'secondary' => 'Secondary',
-                ])
-                ->default('primary')
-                ->required(),
-            Repeater::make('meta')
-                ->label('მეტა ინფორმაცია')
-                ->schema($valueLabel)
-                ->columns(2),
-            Repeater::make('scope')
-                ->label('მასშტაბი')
-                ->schema($valueLabel)
-                ->columns(2),
-            Repeater::make('specs')
-                ->label('სპეციფიკაციები')
-                ->schema($valueLabel)
-                ->columns(2),
-            Repeater::make('challenges')
-                ->label('გამოწვევები')
-                ->schema($detailCards)
-                ->columns(4)
-                ->collapsible(),
-            Repeater::make('solutions')
-                ->label('გადაწყვეტილებები')
-                ->schema($detailCards)
-                ->columns(4)
-                ->collapsible(),
-            Repeater::make('process')
-                ->label('პროცესი')
-                ->schema([
-                    TextInput::make('title')->label('ეტაპი')->required(),
-                    Textarea::make('description')->label('აღწერა')->required(),
-                ])
-                ->columns(2),
-            SpatieMediaLibraryFileUpload::make('media_gallery')
-                ->label('მედია გალერეა')
-                ->collection('gallery')
-                ->conversion('webp')
-                ->multiple()
-                ->reorderable()
-                ->image()
-                ->imageEditor()
-                ->maxSize(10240),
-            Repeater::make('results')
-                ->label('შედეგები')
-                ->schema([
-                    TextInput::make('value')->label('მნიშვნელობა')->required(),
-                    TextInput::make('title')->label('სათაური')->required(),
-                    Textarea::make('description')->label('აღწერა')->required(),
+                    TextInput::make('name')
+                        ->label('Name')
+                        ->required()
+                        ->maxLength(255)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(StableSlug::syncOnCreate()),
+                    TextInput::make('slug')
+                        ->label('Slug')
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->helperText('Generated automatically from the name, but still editable.'),
+                    TextInput::make('title')->label('Headline')->required(),
+                    Textarea::make('description')->label('Description')->required(),
+                    Textarea::make('seo_description')
+                        ->label('SEO description')
+                        ->required()
+                        ->maxLength(320),
+                    SpatieMediaLibraryFileUpload::make('cover')
+                        ->label('Cover image')
+                        ->collection('cover')
+                        ->conversion('webp')
+                        ->image()
+                        ->imageEditor()
+                        ->maxSize(10240)
+                        ->imagePreviewHeight('150'),
+                    TextInput::make('image_alt')
+                        ->label('Image alt text')
+                        ->requiredWith('cover'),
+                    Select::make('category_id')
+                        ->label('Category')
+                        ->relationship('category', 'name')
+                        ->searchable()
+                        ->preload()
+                        ->required(),
+                    TextInput::make('video_url')
+                        ->label('YouTube URL')
+                        ->url()
+                        ->maxLength(2048)
+                        ->placeholder('https://www.youtube.com/watch?v=...'),
+                    TextInput::make('technology')->label('Technology'),
+                    Select::make('icon')
+                        ->label('Icon')
+                        ->options(AdminIconOptions::content())
+                        ->searchable()
+                        ->preload()
+                        ->default('business')
+                        ->required(),
                     Select::make('accent')
-                        ->label('აქცენტი')
+                        ->label('Accent')
                         ->options([
                             'primary' => 'Primary',
                             'secondary' => 'Secondary',
                         ])
-                        ->default('primary'),
-                ])
-                ->columns(4),
-            Repeater::make('testimonial')
-                ->label('კლიენტის შეფასება')
-                ->maxItems(1)
-                ->schema([
-                    Textarea::make('quote')->label('ციტატა')->required(),
-                    TextInput::make('author')->label('ავტორი')->required(),
-                    TextInput::make('role')->label('როლი'),
-                ])
-                ->columns(3),
-            Repeater::make('related')
-                ->label('მსგავსი პროექტები')
-                ->schema([
-                    Select::make('slug')
-                        ->label('დაკავშირებული პროექტი')
-                        ->options(function (?Project $record): array {
-                            return Project::query()
-                                ->when(
-                                    $record,
-                                    fn ($query) => $query->whereKeyNot($record->getKey()),
-                                )
-                                ->orderBy('name')
-                                ->pluck('name', 'slug')
-                                ->all();
-                        })
-                        ->searchable()
-                        ->preload()
+                        ->default('primary')
                         ->required(),
-                    TextInput::make('title')
-                        ->label('ბარათის სათაური')
-                        ->helperText('შეგიძლიათ დატოვოთ იმავე სახელით ან შეცვალოთ მოკლე სათაურად.'),
-                    TextInput::make('category')->label('კატეგორია'),
-                    TextInput::make('imageAlt')->label('ALT ტექსტი'),
                 ])
                 ->columns(2),
-            Toggle::make('is_featured')->label('გამორჩეული'),
-            Toggle::make('is_published')->label('გამოქვეყნებულია'),
-            TextInput::make('sort_order')
-                ->label('რიგითობა')
-                ->numeric()
-                ->default(0),
-            DateTimePicker::make('published_at')
-                ->label('გამოქვეყნების თარიღი'),
+
+            Section::make('Translations and SEO (KA/EN/RU)')
+                ->description('The main fields above remain fallback content. These translations are consumed automatically on the frontend.')
+                ->schema([
+                    ...LocalizedContentFields::inputs('name', 'Project name'),
+                    ...LocalizedContentFields::inputs('title', 'Headline'),
+                    ...LocalizedContentFields::inputs('description', 'Description', textarea: true),
+                    ...LocalizedContentFields::inputs('seoTitle', 'SEO title'),
+                    ...LocalizedContentFields::inputs('seoDescription', 'SEO description', textarea: true),
+                    ...LocalizedContentFields::inputs('imageAlt', 'Image alt'),
+                    ...LocalizedContentFields::inputs('technology', 'Technology'),
+                    ...LocalizedContentFields::inputs('card.title', 'Card title'),
+                    ...LocalizedContentFields::inputs('card.description', 'Card description', textarea: true),
+                    ...LocalizedContentFields::inputs('featured.title', 'Featured title'),
+                    ...LocalizedContentFields::inputs('featured.category', 'Featured category'),
+                    ...LocalizedContentFields::inputs('featured.imageAlt', 'Featured image alt'),
+                    LocalizedContentFields::customEntries('Examples: meta.0.label, spec.0.value, challenge.0.title, result.0.description'),
+                ])
+                ->columns(3),
+
+            Section::make('Project sections')
+                ->schema([
+                    Repeater::make('meta')
+                        ->label('Meta')
+                        ->schema($valueLabel)
+                        ->columns(2),
+                    Repeater::make('scope')
+                        ->label('Scope')
+                        ->schema($valueLabel)
+                        ->columns(2),
+                    Repeater::make('specs')
+                        ->label('Specifications')
+                        ->schema($valueLabel)
+                        ->columns(2),
+                    Repeater::make('challenges')
+                        ->label('Challenges')
+                        ->schema($detailCards)
+                        ->columns(4)
+                        ->collapsible(),
+                    Repeater::make('solutions')
+                        ->label('Solutions')
+                        ->schema($detailCards)
+                        ->columns(4)
+                        ->collapsible(),
+                    Repeater::make('process')
+                        ->label('Process')
+                        ->schema([
+                            TextInput::make('title')->label('Step')->required(),
+                            Textarea::make('description')->label('Description')->required(),
+                        ])
+                        ->columns(2),
+                    SpatieMediaLibraryFileUpload::make('media_gallery')
+                        ->label('Gallery')
+                        ->collection('gallery')
+                        ->conversion('webp')
+                        ->multiple()
+                        ->reorderable()
+                        ->image()
+                        ->imageEditor()
+                        ->maxSize(10240),
+                    Repeater::make('results')
+                        ->label('Results')
+                        ->schema([
+                            TextInput::make('value')->label('Value')->required(),
+                            TextInput::make('title')->label('Title')->required(),
+                            Textarea::make('description')->label('Description')->required(),
+                            Select::make('accent')
+                                ->label('Accent')
+                                ->options([
+                                    'primary' => 'Primary',
+                                    'secondary' => 'Secondary',
+                                ])
+                                ->default('primary'),
+                        ])
+                        ->columns(4),
+                    Repeater::make('related')
+                        ->label('Related projects')
+                        ->schema([
+                            Select::make('slug')
+                                ->label('Project')
+                                ->options(function (?Project $record): array {
+                                    return Project::query()
+                                        ->when(
+                                            $record,
+                                            fn ($query) => $query->whereKeyNot($record->getKey()),
+                                        )
+                                        ->orderBy('name')
+                                        ->pluck('name', 'slug')
+                                        ->all();
+                                })
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+                            TextInput::make('title')
+                                ->label('Card title')
+                                ->helperText('Optional override for the related project title.'),
+                            TextInput::make('category')->label('Category'),
+                            TextInput::make('imageAlt')->label('Image alt'),
+                        ])
+                        ->columns(2),
+                ]),
+
+            Section::make('Publishing')
+                ->schema([
+                    Toggle::make('is_featured')->label('Featured'),
+                    Toggle::make('is_published')->label('Published'),
+                    TextInput::make('sort_order')
+                        ->label('Sort order')
+                        ->numeric()
+                        ->default(0),
+                    DateTimePicker::make('published_at')
+                        ->label('Published at'),
+                ])
+                ->columns(2),
         ]);
     }
 
@@ -228,18 +237,18 @@ class ProjectResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('სახელი')
+                    ->label('Name')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('slug')->label('URL კოდი')->searchable(),
-                TextColumn::make('category.name')->label('კატეგორია')->sortable(),
+                TextColumn::make('slug')->label('Slug')->searchable(),
+                TextColumn::make('category.name')->label('Category')->sortable(),
                 IconColumn::make('is_featured')
-                    ->label('გამორჩეული')
+                    ->label('Featured')
                     ->boolean(),
                 IconColumn::make('is_published')
-                    ->label('გამოქვეყნებული')
+                    ->label('Published')
                     ->boolean(),
-                TextColumn::make('published_at')->label('გამოქვეყნების თარიღი')->dateTime()->sortable(),
+                TextColumn::make('published_at')->label('Published at')->dateTime()->sortable(),
             ])
             ->defaultSort('sort_order')
             ->recordActions([EditAction::make()])

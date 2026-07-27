@@ -41,13 +41,6 @@ export type BackendContent = {
         url?: string;
         category?: string;
     }>;
-    testimonials?: Array<{
-        quote: string;
-        author: string;
-        role?: string;
-        company?: string;
-        image?: string;
-    }>;
     faqs?: Array<{ question: string; answer: string; context?: string }>;
     settings?: Record<string, unknown>;
 };
@@ -92,9 +85,6 @@ function normalizeBackendContent(value: unknown): BackendContent {
         partners: normalizeContentList<
             NonNullable<BackendContent["partners"]>[number]
         >(value.partners),
-        testimonials: normalizeContentList<
-            NonNullable<BackendContent["testimonials"]>[number]
-        >(value.testimonials),
         faqs: normalizeContentList<
             NonNullable<BackendContent["faqs"]>[number]
         >(value.faqs),
@@ -370,14 +360,6 @@ function localizeProjectDetail(
                 item.description,
             ),
         })),
-        testimonial: {
-            quote: t(`${prefix}.testimonial.quote`, project.testimonial.quote),
-            author: t(
-                `${prefix}.testimonial.author`,
-                project.testimonial.author,
-            ),
-            role: t(`${prefix}.testimonial.role`, project.testimonial.role),
-        },
         related: project.related.map((item, index) => ({
             ...item,
             title: t(
@@ -655,7 +637,6 @@ export async function getBackendProject(
             solutions: remote.solutions ?? [],
             process: remote.process ?? [],
             results: remote.results ?? [],
-            testimonial: remote.testimonial ?? { quote: "", author: "", role: "" },
             related: remote.related ?? [],
         },
         locale,

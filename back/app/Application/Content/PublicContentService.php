@@ -8,9 +8,9 @@ use App\Models\Project;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Models\TeamMember;
-use App\Models\Testimonial;
 use App\Support\MultilingualContent;
 use App\Support\PublicContentCache;
+use App\Support\SiteSettingValueNormalizer;
 use Illuminate\Support\Facades\Cache;
 
 final class PublicContentService
@@ -32,7 +32,6 @@ final class PublicContentService
                     'socials' => $member->socials ?? [],
                 ])->values()->all(),
                 'partners' => Partner::query()->active()->get()->map->only(['name', 'logo', 'url', 'category'])->values()->all(),
-                'testimonials' => Testimonial::query()->active()->get()->map->only(['id', 'quote', 'author', 'role', 'company', 'image'])->values()->all(),
                 'faqs' => Faq::query()->active()->whereNull('service_id')->get()->map->only(['id', 'question', 'answer', 'context'])->values()->all(),
                 'settings' => $settings,
             ];
@@ -41,9 +40,11 @@ final class PublicContentService
 
     private function sanitizeSetting(SiteSetting $setting): mixed
     {
-        if ($setting->key === 'branding' && is_array($setting->value)) {
-            $value = $setting->value;
+        $value = is_array($setting->value)
+            ? SiteSettingValueNormalizer::normalize($setting->key, $setting->value)
+            : $setting->value;
 
+        if ($setting->key === 'branding' && is_array($value)) {
             foreach (['logo', 'footer_logo', 'favicon', 'default_image'] as $collection) {
                 $value[$collection] = $setting->brandingMediaUrl($collection)
                     ?: ($value[$collection] ?? null);
@@ -52,11 +53,10 @@ final class PublicContentService
             return $value;
         }
 
-        if ($setting->key !== 'contact' || ! is_array($setting->value)) {
-            return $setting->value;
+        if ($setting->key !== 'contact' || ! is_array($value)) {
+            return $value;
         }
 
-        $value = $setting->value;
         unset($value['lead_email']);
 
         return $value;
@@ -122,16 +122,6 @@ final class PublicContentService
                 'lastName' => 'last_name',
                 'position' => 'position',
                 'bio' => 'bio',
-            ]));
-
-        Testimonial::query()
-            ->active()
-            ->get()
-            ->each(fn (Testimonial $testimonial) => MultilingualContent::mergeModelFields($map, "testimonial.{$testimonial->id}", $testimonial, [
-                'quote' => 'quote',
-                'author' => 'author',
-                'role' => 'role',
-                'company' => 'company',
             ]));
 
         Faq::query()

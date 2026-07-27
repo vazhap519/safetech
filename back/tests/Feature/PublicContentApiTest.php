@@ -6,6 +6,7 @@ use App\Application\Content\PublicContentService;
 use App\Models\Project;
 use App\Models\ProjectCategory;
 use App\Models\Service;
+use App\Models\SiteSetting;
 use Database\Seeders\ContentSeeder;
 use Database\Seeders\SystemContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -64,7 +65,7 @@ class PublicContentApiTest extends TestCase
 
         $content = $this->app->make(PublicContentService::class)->bootstrap();
 
-        foreach (['team', 'partners', 'testimonials', 'faqs'] as $key) {
+        foreach (['team', 'partners', 'faqs'] as $key) {
             $this->assertIsArray($content[$key]);
             $this->assertTrue(array_is_list($content[$key]));
         }
@@ -75,7 +76,56 @@ class PublicContentApiTest extends TestCase
             ->assertJsonPath('data.name', 'Модернизация офисной сети')
             ->assertJsonPath('data.title', 'Полная модернизация офисной сети')
             ->assertJsonPath('data.categoryName', 'Офисы');
-        $this->getJson('/api/content')->assertOk()->assertJsonStructure(['data' => ['team', 'partners', 'testimonials', 'faqs', 'settings']]);
+        $this->getJson('/api/content')->assertOk()->assertJsonStructure(['data' => ['team', 'partners', 'faqs', 'settings']]);
+    }
+
+    public function test_public_content_exposes_contact_phones_and_social_links_without_private_email(): void
+    {
+        $this->seed(ContentSeeder::class);
+
+        SiteSetting::query()->updateOrCreate(
+            ['key' => 'contact'],
+            [
+                'group' => 'general',
+                'is_public' => true,
+                'value' => [
+                    'phone' => '+995 555 00 11 22',
+                    'phones' => [
+                        ['label' => 'Sales', 'value' => '+995 555 00 11 22'],
+                        ['label' => 'Support', 'value' => '+995 577 88 99 00'],
+                    ],
+                    'email' => 'hello@safetech.ge',
+                    'address' => 'Tbilisi, Georgia',
+                    'lead_email' => 'private@safetech.ge',
+                ],
+            ],
+        );
+
+        SiteSetting::query()->updateOrCreate(
+            ['key' => 'socials'],
+            [
+                'group' => 'general',
+                'is_public' => true,
+                'value' => [
+                    'links' => [
+                        ['network' => 'facebook', 'href' => 'https://facebook.com/safetechge'],
+                        ['network' => 'linkedin', 'href' => 'https://linkedin.com/company/safetech'],
+                    ],
+                    'share_title' => 'Share',
+                    'share_buttons' => ['facebook', 'linkedin'],
+                ],
+            ],
+        );
+
+        $this->getJson('/api/content')
+            ->assertOk()
+            ->assertJsonPath('data.settings.contact.phone', '+995 555 00 11 22')
+            ->assertJsonPath('data.settings.contact.phones.0', '+995 555 00 11 22')
+            ->assertJsonPath('data.settings.contact.phones.1', '+995 577 88 99 00')
+            ->assertJsonPath('data.settings.contact.email', 'hello@safetech.ge')
+            ->assertJsonPath('data.settings.socials.links.0.network', 'facebook')
+            ->assertJsonPath('data.settings.socials.links.1.network', 'linkedin')
+            ->assertJsonMissingPath('data.settings.contact.lead_email');
     }
 
     public function test_filament_custom_entries_are_available_to_the_frontend_in_all_locales(): void
