@@ -6,12 +6,14 @@ The repository contains two applications and is deployed into three directories:
 - Laravel API: `/var/www/safetech-api`
 - Next.js frontend: `/var/www/safetech-next`
 
+Use `/var/www/safetech-source/deploy.sh` as the single production deployment entrypoint.
+
 The API virtual host must use `/var/www/safetech-api/public` as its document root. Never expose the Laravel project root.
 
 ## 1. Server requirements
 
 - Ubuntu/Debian server with Nginx
-- PHP 8.2 or newer with FPM, PostgreSQL, GD, DOM/XML, cURL, Mbstring and Zip extensions
+- PHP 8.3 or newer with FPM, PostgreSQL, GD, DOM/XML, cURL, Mbstring and Zip extensions
 - Composer 2
 - PostgreSQL
 - Node.js 20.9 or newer and npm
@@ -222,7 +224,7 @@ Do not edit files inside `/var/www/safetech-source`. Commit and push changes to 
 sudo bash /var/www/safetech-source/deploy.sh
 ```
 
-The script refuses a dirty source tree, fast-forwards `main`, preserves both production environment files and Laravel storage, installs dependencies, runs migrations, syncs production-safe system defaults without demo catalog content, builds/tests the frontend, installs and validates the Nginx site, restarts services, warms localized pages, verifies metadata, HTTP/2, HTML caching, `llms.txt`, the live API and calculator, then loads every URL emitted by the sitemap and fails the release if any URL is malformed or does not return HTTP 200.
+The script refuses a dirty source tree, fast-forwards `main`, preserves both production environment files and Laravel storage, installs dependencies, runs migrations, syncs production-safe system defaults without demo catalog content, builds/tests the frontend, installs and validates the Nginx site, restarts services, warms localized pages, verifies metadata, HTTP/2, HTML caching, `llms.txt`, the live API and calculator, validates the shop when products exist, then loads every URL emitted by the sitemap and fails the release if any URL is malformed or does not return HTTP 200.
 
 Before schema-changing deployments, back up PostgreSQL and uploaded media:
 
@@ -238,9 +240,12 @@ curl -I https://safetech.ge/
 curl -I https://safetech.ge/en/services
 curl -I https://safetech.ge/ru/projects
 curl -I https://safetech.ge/service-calculator
+curl -I https://safetech.ge/shop
 curl -I https://safetech.ge/robots.txt
 curl -I https://safetech.ge/llms.txt
 curl -I https://safetech.ge/sitemap.xml
+curl -I https://safetech.ge/sitemap-product-categories.xml
+curl -I https://safetech.ge/sitemap-products.xml
 curl -I https://api.safetech.ge/api/health
 curl -I https://api.safetech.ge/api/services
 ```

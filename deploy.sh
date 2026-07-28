@@ -6,6 +6,8 @@ SOURCE_DIR="${SAFETECH_SOURCE_DIR:-/var/www/safetech-source}"
 API_DIR="${SAFETECH_API_DIR:-/var/www/safetech-api}"
 NEXT_DIR="${SAFETECH_NEXT_DIR:-/var/www/safetech-next}"
 NEXT_STATIC_DIR="/var/www/safetech-static"
+SITE_URL="${SAFETECH_SITE_URL:-https://safetech.ge}"
+API_URL="${SAFETECH_API_URL:-https://api.safetech.ge}"
 WEB_USER="${SAFETECH_WEB_USER:-www-data}"
 WEB_GROUP="${SAFETECH_WEB_GROUP:-www-data}"
 SYSTEMD_DIR="${SAFETECH_SYSTEMD_DIR:-/etc/systemd/system}"
@@ -17,6 +19,20 @@ FRONTEND_SERVICE="safetech-frontend.service"
 QUEUE_SERVICE="safetech-queue.service"
 NEXT_RELEASE_DIR=""
 NEXT_PREVIOUS_DIR=""
+SITE_HOST=""
+SHOP_ENABLED=false
+
+normalize_base_url() {
+    local url="${1:-}"
+    printf '%s' "${url%/}"
+}
+
+extract_url_host() {
+    local url="${1:-}"
+    url="${url#http://}"
+    url="${url#https://}"
+    printf '%s' "${url%%/*}"
+}
 
 safe_remove_frontend_temp() {
     local target="$1"
@@ -155,6 +171,21 @@ for command_name in "${required_commands[@]}"; do
         exit 1
     fi
 done
+
+SITE_URL="$(normalize_base_url "${SITE_URL}")"
+API_URL="$(normalize_base_url "${API_URL}")"
+
+if [[ ! "${SITE_URL}" =~ ^https?://[^/]+$ ]]; then
+    echo "SAFETECH_SITE_URL must be an absolute site origin without a path: ${SITE_URL}" >&2
+    exit 1
+fi
+
+if [[ ! "${API_URL}" =~ ^https?://[^/]+$ ]]; then
+    echo "SAFETECH_API_URL must be an absolute API origin without a path: ${API_URL}" >&2
+    exit 1
+fi
+
+SITE_HOST="$(extract_url_host "${SITE_URL}")"
 
 for deployment_dir in "${SOURCE_DIR}" "${API_DIR}" "${NEXT_DIR}" "${NEXT_STATIC_DIR}"; do
     if [[ "${deployment_dir}" != /* || "${deployment_dir}" == "/" ]]; then
@@ -360,11 +391,13 @@ clear_nginx_html_cache
 systemctl reload nginx
 
 health_json="$(curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 2 \
-    "https://api.safetech.ge/api/health")"
+    "${API_URL}/api/health")"
 calculator_json="$(curl --fail --silent --show-error --retry 5 --retry-delay 2 \
-    "https://api.safetech.ge/api/service-calculator/profiles?locale=ka")"
+    "${API_URL}/api/service-calculator/profiles?locale=ka")"
+products_json="$(curl --fail --silent --show-error --retry 5 --retry-delay 2 \
+    "${API_URL}/api/products?locale=ka")"
 
-for api_payload in "${health_json}" "${calculator_json}"; do
+for api_payload in "${health_json}" "${calculator_json}" "${products_json}"; do
     if ! php -r '
         json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR);
     ' <<< "${api_payload}"; then
@@ -373,10 +406,24 @@ for api_payload in "${health_json}" "${calculator_json}"; do
     fi
 done
 
+if php -r '
+    $payload = json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR);
+    $data = $payload["data"] ?? [];
+    exit(is_array($data) && count($data) > 0 ? 0 : 1);
+' <<< "${products_json}"; then
+    SHOP_ENABLED=true
+fi
+
 curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 2 \
-    "https://safetech.ge/service-calculator" >/dev/null
+    "${SITE_URL}/service-calculator" >/dev/null
+
+if [[ "${SHOP_ENABLED}" == true ]]; then
+    curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 2 \
+        "${SITE_URL}/shop" >/dev/null
+fi
+
 sitemap_index="$(curl --fail --silent --show-error --retry 5 --retry-delay 2 \
-    "https://safetech.ge/sitemap.xml")"
+    "${SITE_URL}/sitemap.xml")"
 
 warm_paths=(
     "/"
@@ -405,10 +452,18 @@ warm_paths=(
     "/ru/privacy"
 )
 
+if [[ "${SHOP_ENABLED}" == true ]]; then
+    warm_paths+=(
+        "/shop"
+        "/en/shop"
+        "/ru/shop"
+    )
+fi
+
 for path in "${warm_paths[@]}"; do
     page_html="$(curl --fail --silent --show-error --compressed --retry 3 --retry-delay 1 \
         -H "Accept: text/html" \
-        "https://safetech.ge${path}")"
+        "${SITE_URL}${path}")"
     page_is_noindex=false
 
     if grep -Eq '<meta name="robots" content="[^"]*noindex' <<< "${page_html}"; then
@@ -417,39 +472,39 @@ for path in "${warm_paths[@]}"; do
 
     if [[ "${page_is_noindex}" == false ]]; then
         if ! grep -Eq '<meta name="description" content="[^"]{20,}"' <<< "${page_html}"; then
-            echo "Missing or too-short meta description: https://safetech.ge${path}" >&2
+            echo "Missing or too-short meta description: ${SITE_URL}${path}" >&2
             exit 1
         fi
 
         if ! grep -Eq '<h1([[:space:]][^>]*)?>' <<< "${page_html}"; then
-            echo "Missing page heading: https://safetech.ge${path}" >&2
+            echo "Missing page heading: ${SITE_URL}${path}" >&2
             exit 1
         fi
 
         h1_count="$(grep -Eo '<h1([[:space:]][^>]*)?>' <<< "${page_html}" | awk 'END { print NR + 0 }')"
 
         if [[ "${h1_count}" -ne 1 ]]; then
-            echo "Expected one H1, found ${h1_count}: https://safetech.ge${path}" >&2
+            echo "Expected one H1, found ${h1_count}: ${SITE_URL}${path}" >&2
             exit 1
         fi
     fi
 
-    if ! grep -Eq '<link rel="canonical" href="https://safetech.ge[^\"]*"' <<< "${page_html}"; then
-        echo "Missing production canonical URL: https://safetech.ge${path}" >&2
+    if ! grep -Eq "<link rel=\"canonical\" href=\"${SITE_URL//./\\.}[^\"]*\"" <<< "${page_html}"; then
+        echo "Missing production canonical URL: ${SITE_URL}${path}" >&2
         exit 1
     fi
 
     hreflang_count="$(grep -Eo 'hreflang="(ka-GE|en-US|ru-RU|x-default)"' <<< "${page_html}" | awk 'END { print NR + 0 }')"
 
     if [[ "${hreflang_count}" -lt 4 ]]; then
-        echo "Incomplete language alternates: https://safetech.ge${path}" >&2
+        echo "Incomplete language alternates: ${SITE_URL}${path}" >&2
         exit 1
     fi
 done
 
 home_html="$(curl --fail --silent --show-error --compressed \
     -H 'Accept: text/html' \
-    'https://safetech.ge/')"
+    "${SITE_URL}/")"
 static_asset_paths="$(grep -Eo '/_next/static/[^"[:space:]]+\.(js|css)' <<< "${home_html}" | sort -u || true)"
 
 if [[ -z "${static_asset_paths}" ]]; then
@@ -465,7 +520,7 @@ while IFS= read -r static_asset_path; do
 
     static_asset_type="$(curl --fail --silent --show-error --compressed \
         -o /dev/null -w '%{content_type}' \
-        "https://safetech.ge${static_asset_path}")"
+        "${SITE_URL}${static_asset_path}")"
 
     case "${static_asset_path}" in
         *.js)
@@ -518,7 +573,7 @@ while IFS= read -r sitemap_url; do
         "${sitemap_url}")"
 
     # shellcheck disable=SC2016
-    if ! child_page_urls="$(php -r '
+    if ! child_page_urls="$(SITE_HOST="${SITE_HOST}" php -r '
         libxml_use_internal_errors(true);
         $document = new DOMDocument();
         $xml = stream_get_contents(STDIN);
@@ -536,7 +591,7 @@ while IFS= read -r sitemap_url; do
             if (
                 ! is_array($parts)
                 || ($parts["scheme"] ?? null) !== "https"
-                || ($parts["host"] ?? null) !== "safetech.ge"
+                || ($parts["host"] ?? null) !== getenv("SITE_HOST")
                 || isset($parts["user"])
                 || isset($parts["pass"])
                 || isset($parts["port"])
@@ -587,15 +642,15 @@ while IFS= read -r page_url; do
 done <<< "${sitemap_page_urls}"
 
 robots_content="$(curl --fail --silent --show-error --retry 3 --retry-delay 1 \
-    "https://safetech.ge/robots.txt")"
+    "${SITE_URL}/robots.txt")"
 
-if ! grep -Fq 'Sitemap: https://safetech.ge/sitemap.xml' <<< "${robots_content}"; then
+if ! grep -Fq "Sitemap: ${SITE_URL}/sitemap.xml" <<< "${robots_content}"; then
     echo "robots.txt does not reference the production sitemap." >&2
     exit 1
 fi
 
 api_robots_content="$(curl --fail --silent --show-error --retry 3 --retry-delay 1 \
-    "https://api.safetech.ge/robots.txt")"
+    "${API_URL}/robots.txt")"
 
 if ! grep -Eq '^Disallow:[[:space:]]*/[[:space:]]*$' <<< "${api_robots_content}"; then
     echo "API robots.txt does not block crawler access." >&2
@@ -604,7 +659,7 @@ fi
 
 api_robots_header="$(curl --fail --silent --show-error \
     -D - -o /dev/null \
-    'https://api.safetech.ge/api/health' \
+    "${API_URL}/api/health" \
     | awk 'tolower($1) == "x-robots-tag:" { $1=""; sub(/^[[:space:]]+/, ""); print tolower($0) }' \
     | tr -d '\r' \
     | tail -n 1)"
@@ -615,7 +670,7 @@ if [[ "${api_robots_header}" != *noindex* ]]; then
 fi
 
 manifest_json="$(curl --fail --silent --show-error --retry 3 --retry-delay 1 \
-    "https://safetech.ge/manifest.webmanifest")"
+    "${SITE_URL}/manifest.webmanifest")"
 
 # shellcheck disable=SC2016
 if ! php -r '
@@ -631,7 +686,7 @@ for missing_path in \
     "/projects/deployment-qa-missing" \
     "/blog/deployment-qa-missing"; do
     missing_status="$(curl --silent --show-error -o /dev/null -w '%{http_code}' \
-        "https://safetech.ge${missing_path}")"
+        "${SITE_URL}${missing_path}")"
 
     if [[ "${missing_status}" != "404" ]]; then
         echo "Invalid missing-content response (${missing_status}): ${missing_path}" >&2
@@ -640,7 +695,7 @@ for missing_path in \
 
     missing_html="$(curl --silent --show-error --compressed \
         -H 'Accept: text/html' \
-        "https://safetech.ge${missing_path}")"
+        "${SITE_URL}${missing_path}")"
     missing_robots_count="$(grep -Eo '<meta name="robots" content="[^"]+"' <<< "${missing_html}" \
         | awk 'END { print NR + 0 }')"
 
@@ -655,7 +710,7 @@ invalid_lead_status="$(curl --silent --show-error -o /dev/null -w '%{http_code}'
     -X POST \
     -H 'Content-Type: application/json' \
     --data '{}' \
-    'https://safetech.ge/api/contact-leads')"
+    "${SITE_URL}/api/contact-leads")"
 
 if [[ "${invalid_lead_status}" != "422" ]]; then
     echo "Contact validation endpoint returned HTTP ${invalid_lead_status}." >&2
@@ -665,7 +720,7 @@ fi
 frontend_headers="$(curl --fail --silent --show-error --http2 \
     -D - -o /dev/null \
     -H 'Accept: text/html' \
-    'https://safetech.ge/')"
+    "${SITE_URL}/")"
 
 for required_header in \
     'content-security-policy' \
@@ -679,7 +734,7 @@ for required_header in \
 done
 
 llms_content="$(curl --fail --silent --show-error --retry 3 --retry-delay 1 \
-    "https://safetech.ge/llms.txt")"
+    "${SITE_URL}/llms.txt")"
 
 if [[ "${llms_content}" != "# SafeTech"* ]]; then
     echo "Invalid llms.txt response." >&2
@@ -689,7 +744,7 @@ fi
 frontend_http_version="$(curl --fail --silent --show-error --http2 \
     -o /dev/null -w '%{http_version}' \
     -H "Accept: text/html" \
-    "https://safetech.ge/")"
+    "${SITE_URL}/")"
 
 if [[ ! "${frontend_http_version}" =~ ^(2|2\.0|3)$ ]]; then
     echo "Modern HTTP negotiation failed; received HTTP/${frontend_http_version}." >&2
@@ -699,7 +754,7 @@ fi
 frontend_cache_status="$(curl --fail --silent --show-error --compressed \
     -D - -o /dev/null \
     -H "Accept: text/html" \
-    "https://safetech.ge/" \
+    "${SITE_URL}/" \
     | awk 'tolower($1) == "x-safetech-cache:" { print toupper($2) }' \
     | tr -d '\r' \
     | tail -n 1)"
@@ -711,15 +766,15 @@ fi
 
 cors_origin="$(curl --fail --silent --show-error \
     -X OPTIONS \
-    -H 'Origin: https://safetech.ge' \
+    -H "Origin: ${SITE_URL}" \
     -H 'Access-Control-Request-Method: POST' \
     -D - -o /dev/null \
-    'https://api.safetech.ge/api/contact-leads' \
+    "${API_URL}/api/contact-leads" \
     | awk 'tolower($1) == "access-control-allow-origin:" { print $2 }' \
     | tr -d '\r' \
     | tail -n 1)"
 
-if [[ "${cors_origin}" != "https://safetech.ge" ]]; then
+if [[ "${cors_origin}" != "${SITE_URL}" ]]; then
     echo "Production CORS validation failed; origin: ${cors_origin:-missing}." >&2
     exit 1
 fi
