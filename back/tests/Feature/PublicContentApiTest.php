@@ -5,11 +5,14 @@ namespace Tests\Feature;
 use App\Application\Content\PublicContentService;
 use App\Models\Project;
 use App\Models\ProjectCategory;
+use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use Database\Seeders\ContentSeeder;
 use Database\Seeders\SystemContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class PublicContentApiTest extends TestCase
@@ -207,5 +210,62 @@ class PublicContentApiTest extends TestCase
             ->assertJsonPath('data.related.0.slug', $related->slug)
             ->assertJsonPath('data.related.0.title', $related->title)
             ->assertJsonPath('data.related.0.translationIndex', 1);
+    }
+
+    public function test_missing_service_slug_returns_a_clean_not_found_response(): void
+    {
+        $this->seed(ContentSeeder::class);
+
+        $this->getJson('/api/services/no-such-service')
+            ->assertNotFound()
+            ->assertExactJson([
+                'message' => 'Service not found.',
+            ]);
+    }
+
+    public function test_missing_project_slug_returns_a_clean_not_found_response(): void
+    {
+        $this->seed(ContentSeeder::class);
+
+        $this->getJson('/api/projects/no-such-project')
+            ->assertNotFound()
+            ->assertExactJson([
+                'message' => 'Project not found.',
+            ]);
+    }
+
+    public function test_public_content_exposes_shop_feature_flag_only_when_products_exist(): void
+    {
+        $this->getJson('/api/content')
+            ->assertOk()
+            ->assertJsonPath('data.settings.features.shop_enabled', false);
+
+        $category = ProductCategory::query()->create([
+            'name' => 'Shop',
+            'slug' => 'shop',
+        ]);
+        Product::query()->create([
+            'product_category_id' => $category->id,
+            'name' => 'Visible product',
+            'slug' => 'visible-product',
+            'short_description' => 'Short product description',
+            'description' => 'Long product description',
+            'is_published' => true,
+        ]);
+
+        $this->getJson('/api/content')
+            ->assertOk()
+            ->assertJsonPath('data.settings.features.shop_enabled', true);
+    }
+
+    public function test_public_content_gracefully_disables_shop_when_product_tables_are_missing(): void
+    {
+        Schema::dropIfExists('products');
+        Schema::dropIfExists('product_filters');
+        Schema::dropIfExists('product_categories');
+
+        $this->getJson('/api/content')
+            ->assertOk()
+            ->assertJsonPath('data.settings.features.shop_enabled', false);
     }
 }

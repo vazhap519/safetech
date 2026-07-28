@@ -29,6 +29,8 @@ export async function GET() {
   const translations = buildTranslationMap(
     contentResponse?.data?.settings?.translations,
   );
+  const shopEnabled =
+    contentResponse?.data?.settings?.features?.shop_enabled === true;
   const privacyLocales = supportedLocales.filter((locale, index) => {
     const privacyContent = privacyResponses[index]?.data ?? privacyResponses[index];
 
@@ -45,6 +47,7 @@ export async function GET() {
     { key: "service-calculator", path: "/service-calculator", changefreq: "weekly", priority: "0.8" },
     { key: "blog", path: "/blog", changefreq: "weekly", priority: "0.7" },
     { key: "projects", path: "/projects", changefreq: "weekly", priority: "0.7" },
+    { key: "shop", path: "/shop", changefreq: "weekly", priority: "0.8" },
     { key: "contact", path: "/contact", changefreq: "monthly", priority: "0.5" },
     { key: "privacy", path: "/privacy", changefreq: "yearly", priority: "0.2" },
   ];
@@ -52,11 +55,14 @@ export async function GET() {
   return xmlResponse(
     urlset(
       pages
+        .filter((page) => page.key !== "shop" || shopEnabled)
         .filter((page) => seoByKey.get(page.key)?.noindex !== true)
         .flatMap((page) => {
           const seoPage = seoByKey.get(page.key);
           const locales = page.key === "privacy"
             ? privacyLocales
+            : page.key === "shop"
+              ? supportedLocales
             : supportedLocales.filter((locale) =>
               hasConfiguredPageHeading(translations, page.key, locale),
             );

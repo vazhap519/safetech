@@ -43,6 +43,7 @@
 html {
     scroll-behavior: smooth;
     overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -100,6 +101,58 @@ a {
 
 .footer-grid {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
+.shop-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 420px;
+}
+
+.shop-copy > * + *,
+.shop-prose > * + * {
+    margin-top: 1rem;
+}
+
+.shop-prose {
+    color: #c3c6d7;
+    font-size: clamp(1rem, 1.25vw, 1.0625rem);
+    line-height: 1.9;
+}
+
+.shop-prose h2,
+.shop-prose h3,
+.shop-prose h4 {
+    color: #e1e2ed;
+    font-weight: 600;
+    line-height: 1.2;
+    text-wrap: pretty;
+}
+
+.shop-prose h2 {
+    font-size: clamp(1.375rem, 2vw, 1.875rem);
+}
+
+.shop-prose h3 {
+    font-size: clamp(1.2rem, 1.5vw, 1.5rem);
+}
+
+.shop-prose ul,
+.shop-prose ol {
+    padding-left: 1.25rem;
+}
+
+.shop-prose ul {
+    list-style: disc;
+}
+
+.shop-prose ol {
+    list-style: decimal;
+}
+
+.shop-prose a {
+    color: #4cd7f6;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
 }
 
 .legal-content {

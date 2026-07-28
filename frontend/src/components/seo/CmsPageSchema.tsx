@@ -12,10 +12,11 @@ export default async function CmsPageSchema({
     pageKey: string;
     fallback?: ReactNode;
 }) {
-    const { locale, translations } = await getSiteSettings();
+    const { features, locale, translations } = await getSiteSettings();
 
     if (
         pageKey !== "privacy" &&
+        !(pageKey === "shop" && features.shopEnabled) &&
         !hasConfiguredPageHeading(translations, pageKey, locale)
     ) {
         return null;

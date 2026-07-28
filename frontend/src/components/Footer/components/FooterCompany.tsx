@@ -1,11 +1,15 @@
 import TranslatedText from "@/components/i18n/TranslatedText";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 import Typography from "@/components/ui/Typography";
-import { primaryNavigation } from "@/lib/navigation";
+import { buildPrimaryNavigation } from "@/lib/navigation";
+import { getSiteSettings } from "@/lib/site-settings";
 
-const companyLinks = primaryNavigation.filter((item) => item.href !== "/");
+export default async function FooterCompany() {
+    const { features } = await getSiteSettings();
+    const companyLinks = buildPrimaryNavigation(features.shopEnabled).filter(
+        (item) => item.href !== "/",
+    );
 
-export default function FooterCompany() {
     return (
         <nav aria-labelledby="footer-company-title" className="space-y-4">
             <Typography as="h2" id="footer-company-title" variant="footer-title">

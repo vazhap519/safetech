@@ -40,6 +40,12 @@ type SiteBranding = {
     defaultImage: string | null;
 };
 
+type SiteSeoSettings = {
+    defaultKeywords: string[];
+    robotsIndex: boolean;
+    robotsFollow: boolean;
+};
+
 type SiteIntegrations = {
     marketingEnabled: boolean;
     googleTagManagerId: string;
@@ -49,6 +55,10 @@ type SiteIntegrations = {
     bingSiteVerification: string;
     yandexSiteVerification: string;
     indexNowKey: string;
+};
+
+type SiteFeatures = {
+    shopEnabled: boolean;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -233,6 +243,12 @@ const defaultSiteBranding: SiteBranding = {
     defaultImage: null,
 };
 
+const defaultSiteSeo: SiteSeoSettings = {
+    defaultKeywords: [],
+    robotsIndex: true,
+    robotsFollow: true,
+};
+
 export const getSiteSettings = cache(async () => {
     const [content, locale] = await Promise.all([
         getBackendContent(),
@@ -244,6 +260,7 @@ export const getSiteSettings = cache(async () => {
         ? settings.branding
         : {};
     const configuredSeo = isRecord(settings.seo) ? settings.seo : {};
+    const configuredFeatures = isRecord(settings.features) ? settings.features : {};
     const configuredIntegrations = isRecord(settings.integrations)
         ? settings.integrations
         : {};
@@ -332,10 +349,35 @@ export const getSiteSettings = cache(async () => {
         indexNowKey: pickString(configuredIntegrations.indexnow_key),
     } satisfies SiteIntegrations;
 
+    const seo = {
+        defaultKeywords: normalizeStringList(configuredSeo.default_keywords),
+        robotsIndex:
+            configuredSeo.robots_index === undefined
+                ? defaultSiteSeo.robotsIndex
+                : configuredSeo.robots_index === true ||
+                  configuredSeo.robots_index === "true" ||
+                  configuredSeo.robots_index === 1,
+        robotsFollow:
+            configuredSeo.robots_follow === undefined
+                ? defaultSiteSeo.robotsFollow
+                : configuredSeo.robots_follow === true ||
+                  configuredSeo.robots_follow === "true" ||
+                  configuredSeo.robots_follow === 1,
+    } satisfies SiteSeoSettings;
+
+    const features = {
+        shopEnabled:
+            configuredFeatures.shop_enabled === true ||
+            configuredFeatures.shop_enabled === "true" ||
+            configuredFeatures.shop_enabled === 1,
+    } satisfies SiteFeatures;
+
     return {
         contact,
         socialLinks,
         branding,
+        seo,
+        features,
         integrations,
         locale: locale satisfies Locale,
         translations: translations satisfies TranslationMap,

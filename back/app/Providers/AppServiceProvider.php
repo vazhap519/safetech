@@ -3,11 +3,13 @@
 namespace App\Providers;
 
 use App\Domain\Content\Contracts\ProjectRepository;
+use App\Domain\Content\Contracts\ProductRepository;
 use App\Domain\Content\Contracts\ServiceRepository;
 use App\Domain\Leads\Contracts\LeadRepository;
 use App\Events\LeadCreated;
 use App\Infrastructure\Persistence\EloquentLeadRepository;
 use App\Infrastructure\Persistence\EloquentProjectRepository;
+use App\Infrastructure\Persistence\EloquentProductRepository;
 use App\Infrastructure\Persistence\EloquentServiceRepository;
 use App\Listeners\ForwardLeadToCrm;
 use App\Listeners\SendLeadNotification;
@@ -21,6 +23,9 @@ use App\Models\Partner;
 use App\Models\Post;
 use App\Models\PostSection;
 use App\Models\PrivacyPolicy;
+use App\Models\Product;
+use App\Models\ProductCategory;
+use App\Models\ProductFilter;
 use App\Models\Project;
 use App\Models\ProjectCategory;
 use App\Models\SeoPage;
@@ -47,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LeadRepository::class, EloquentLeadRepository::class);
         $this->app->bind(ServiceRepository::class, EloquentServiceRepository::class);
         $this->app->bind(ProjectRepository::class, EloquentProjectRepository::class);
+        $this->app->bind(ProductRepository::class, EloquentProductRepository::class);
     }
 
     /**
@@ -93,6 +99,9 @@ class AppServiceProvider extends ServiceProvider
             Post::class,
             PostSection::class,
             PrivacyPolicy::class,
+            Product::class,
+            ProductCategory::class,
+            ProductFilter::class,
             Project::class,
             ProjectCategory::class,
             SeoPage::class,

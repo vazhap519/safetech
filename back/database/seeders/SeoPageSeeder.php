@@ -98,6 +98,22 @@ class SeoPageSeeder extends Seeder
                 schemaType: 'CollectionPage',
             ),
             $this->page(
+                key: 'shop',
+                slug: '/shop',
+                titles: ['მაღაზია', 'Shop', 'Магазин'],
+                descriptions: [
+                    'დაათვალიერეთ SafeTech-ის პროდუქტები, კატეგორიები და დინამიკური ფილტრები ბიზნესის IT-სა და უსაფრთხოების გადაწყვეტილებებისთვის.',
+                    'Browse SafeTech products, categories, and dynamic filters for business IT and security solutions.',
+                    'Изучите продукты SafeTech, категории и динамические фильтры для IT-и безопасности бизнеса.',
+                ],
+                keywords: [
+                    ['მაღაზია', 'IT პროდუქტები', 'უსაფრთხოების აღჭურვილობა', 'CCTV'],
+                    ['shop', 'IT products', 'security equipment', 'CCTV'],
+                    ['магазин', 'IT-продукты', 'оборудование безопасности', 'CCTV'],
+                ],
+                schemaType: 'CollectionPage',
+            ),
+            $this->page(
                 key: 'about',
                 slug: '/about',
                 titles: ['SafeTech-ის გუნდი და გამოცდილება', 'SafeTech Team and Experience', 'Команда и опыт SafeTech'],

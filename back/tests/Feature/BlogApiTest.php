@@ -140,4 +140,13 @@ class BlogApiTest extends TestCase
 
         $this->getJson('/api/blog/draft')->assertNotFound();
     }
+
+    public function test_missing_blog_post_returns_a_clean_not_found_response(): void
+    {
+        $this->getJson('/api/blog/no-such-post')
+            ->assertNotFound()
+            ->assertExactJson([
+                'message' => 'Blog post not found.',
+            ]);
+    }
 }

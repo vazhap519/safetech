@@ -88,7 +88,7 @@ class ProjectResource extends Resource
                         ->requiredWith('cover'),
                     Select::make('category_id')
                         ->label('Category')
-                        ->relationship('category', 'name')
+                        ->relationship('projectCategory', 'name')
                         ->searchable()
                         ->preload()
                         ->required(),
@@ -241,7 +241,7 @@ class ProjectResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('slug')->label('Slug')->searchable(),
-                TextColumn::make('category.name')->label('Category')->sortable(),
+                TextColumn::make('projectCategory.name')->label('Category')->sortable(),
                 IconColumn::make('is_featured')
                     ->label('Featured')
                     ->boolean(),

@@ -10,3 +10,7 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.production.example
+SERVER_DEPLOY_NOTES.local.txt
+safetech-bootstrap.local.sh
+frontend/qa-frontend*.log
+back/storage/logs/qa-*.log

@@ -25,6 +25,7 @@ export async function createCmsPageMetadata(preset: PageSeoPreset) {
     );
     const hasPageContent =
         preset.key === "privacy" ||
+        (preset.key === "shop" && settings.features.shopEnabled) ||
         hasConfiguredPageHeading(
             settings.translations,
             preset.key,
@@ -36,13 +37,22 @@ export async function createCmsPageMetadata(preset: PageSeoPreset) {
         description: cmsSeo?.description || translatedDescription,
         path: preset.path,
         locale: settings.locale,
-        keywords: cmsSeo?.keywords?.length ? cmsSeo.keywords : preset.keywords,
+        keywords: cmsSeo?.keywords?.length
+            ? cmsSeo.keywords
+            : settings.seo.defaultKeywords.length
+              ? settings.seo.defaultKeywords
+              : preset.keywords,
         image:
             cmsSeo?.og?.image ||
             cmsSeo?.share_image ||
             settings.branding.defaultImage || undefined,
         siteName: settings.branding.siteName,
         type: preset.type,
+        canonical: cmsSeo?.canonical,
+        ogTitle: cmsSeo?.og?.title,
+        ogDescription: cmsSeo?.og?.description,
         noindex: Boolean(cmsSeo?.noindex) || !hasPageContent,
+        robotsIndex: settings.seo.robotsIndex,
+        robotsFollow: settings.seo.robotsFollow,
     });
 }

@@ -12,12 +12,12 @@ final class EloquentProjectRepository implements ProjectRepository
     {
         return Project::query()
             ->publiclyVisible()
-            ->with(['category', 'media'])
+            ->with(['projectCategory', 'media'])
             ->when($featured !== null, fn ($query) => $query->where('is_featured', $featured))
             ->when(
                 $category && $category !== 'all',
                 fn ($query) => $query->whereHas(
-                    'category',
+                    'projectCategory',
                     fn ($categoryQuery) => $categoryQuery->where('slug', $category),
                 ),
             )
@@ -28,7 +28,7 @@ final class EloquentProjectRepository implements ProjectRepository
     {
         return Project::query()
             ->publiclyVisible()
-            ->with(['category', 'media'])
+            ->with(['projectCategory', 'media'])
             ->where('slug', $slug)
             ->first();
     }

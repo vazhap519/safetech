@@ -9,17 +9,23 @@ import { useLocalization } from "@/components/providers/LocalizationProvider";
 import Image from "@/components/ui/Image";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 import { localizePath } from "@/lib/locales";
-import { primaryNavigation } from "@/lib/navigation";
+import { buildPrimaryNavigation, primaryNavigation } from "@/lib/navigation";
 
 type NavbarClientProps = {
     logo: string | null;
     siteName: string;
+    showShop?: boolean;
 };
 
-export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
+export default function NavbarClient({
+    logo,
+    siteName,
+    showShop = true,
+}: NavbarClientProps) {
     const { locale, t } = useLocalization();
     const pathname = usePathname() || "/";
     const mobileMenuRef = useRef<HTMLDetailsElement>(null);
+    const navigation = buildPrimaryNavigation(showShop);
     const homeLabel = t("nav.home", primaryNavigation[0].fallback);
     const consultationLabel = t("nav.consultation", {
         ka: "კონსულტაცია",
@@ -36,7 +42,7 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
         en: "Open menu",
         ru: "Открыть меню",
     });
-    const navigationItems = primaryNavigation
+    const navigationItems = navigation
         .map((item) => ({
             ...item,
             label: t(item.key, item.fallback),

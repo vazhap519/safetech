@@ -1,15 +1,23 @@
 import type { MetadataRoute } from "next";
 
 import { absoluteSiteUrl } from "@/lib/seo";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+    const { seo } = await getSiteSettings();
+
     return {
         rules: [
-            {
-                userAgent: "*",
-                allow: "/",
-                disallow: ["/admin", "/api"],
-            },
+            seo.robotsIndex
+                ? {
+                      userAgent: "*",
+                      allow: "/",
+                      disallow: ["/admin", "/api"],
+                  }
+                : {
+                      userAgent: "*",
+                      disallow: "/",
+                  },
         ],
         sitemap: absoluteSiteUrl("/sitemap.xml"),
     };

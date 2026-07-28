@@ -65,8 +65,9 @@ class BlogController extends Controller
     {
         $locale = $this->locale($request);
         $cacheKey = PublicContentCache::key("blog:post:{$locale}:{$slug}");
+        $data = Cache::get($cacheKey);
 
-        $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($slug, $locale) {
+        if (! is_array($data)) {
             $post = Post::query()
                 ->with([
                     'category:id,name,slug,translations',
@@ -76,14 +77,20 @@ class BlogController extends Controller
                 ])
                 ->where('slug', $slug)
                 ->publiclyVisible()
-                ->firstOrFail();
+                ->first();
 
-            abort_unless(PublicContentEligibility::post($post, $locale), 404);
+            if (! $post || ! PublicContentEligibility::post($post, $locale)) {
+                return response()->json([
+                    'message' => 'Blog post not found.',
+                ], 404);
+            }
 
-            return [
+            $data = [
                 'data' => $this->transformPostDetail($post, $locale),
             ];
-        });
+
+            Cache::put($cacheKey, $data, now()->addMinutes(10));
+        }
 
         return response()->json($data);
     }

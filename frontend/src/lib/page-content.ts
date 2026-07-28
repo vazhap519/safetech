@@ -10,6 +10,7 @@ const PAGE_HEADING_KEYS: Record<string, readonly string[]> = {
     ],
     "service-calculator": ["calculator.hero.title"],
     projects: ["projects.hero.title"],
+    shop: ["shop.hero.title"],
     blog: ["blog.title"],
     about: ["about.hero.title"],
     contact: ["contact.hero.title"],

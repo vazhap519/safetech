@@ -5,6 +5,9 @@ use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContactLeadController;
 use App\Http\Controllers\Api\PrivacyController;
+use App\Http\Controllers\Api\ProductCategoryController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProductFilterController;
 use App\Http\Controllers\Api\ProjectCategoryController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\PublicContentController;
@@ -37,6 +40,10 @@ Route::get('/service-categories', ServiceCategoryController::class)
     ->name('api.service-categories.index');
 Route::get('/project-categories', ProjectCategoryController::class)
     ->name('api.project-categories.index');
+Route::get('/product-categories', ProductCategoryController::class)
+    ->name('api.product-categories.index');
+Route::get('/product-filters', ProductFilterController::class)
+    ->name('api.product-filters.index');
 
 Route::get('/services', [ServiceController::class, 'index'])->name('api.services.index');
 Route::get('/services/{slug}', [ServiceController::class, 'show'])->name('api.services.show');
@@ -44,3 +51,5 @@ Route::get('/service-calculator/profiles', ServiceCalculatorProfileController::c
     ->name('api.service-calculator.profiles');
 Route::get('/projects', [ProjectController::class, 'index'])->name('api.projects.index');
 Route::get('/projects/{slug}', [ProjectController::class, 'show'])->name('api.projects.show');
+Route::get('/products', [ProductController::class, 'index'])->name('api.products.index');
+Route::get('/products/{slug}', [ProductController::class, 'show'])->name('api.products.show');

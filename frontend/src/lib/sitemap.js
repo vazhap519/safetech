@@ -221,6 +221,19 @@ export function isIndexableProject(project) {
   );
 }
 
+export function isIndexableProduct(product) {
+  return Boolean(
+    hasValidSitemapSlug(product?.slug)
+    && !product?.seo?.noindex
+    && hasMeaningfulContent(product?.name)
+    && hasMeaningfulContent(
+      product?.shortDescription,
+      product?.description,
+      product?.details,
+    )
+  );
+}
+
 export function isIndexableBlogPost(post) {
   return Boolean(
     hasValidSitemapSlug(post?.slug)
@@ -321,7 +334,7 @@ export async function fetchAllPaginated(path, params = {}) {
   return (await fetchPaginatedPages(path, params)).items;
 }
 
-function buildImageSitemapItems(services, projects, posts) {
+function buildImageSitemapItems(services, projects, posts, products = []) {
   return [
     ...services.filter(isIndexableService).map((service) => ({
       loc: `${normalizeBaseUrl()}/services/${encodeURIComponent(service.slug)}`,
@@ -338,17 +351,23 @@ function buildImageSitemapItems(services, projects, posts) {
       image: backendAssetUrl(post.image),
       title: post.title,
     })),
+    ...products.filter(isIndexableProduct).map((product) => ({
+      loc: `${normalizeBaseUrl()}/shop/${encodeURIComponent(product.slug)}`,
+      image: backendAssetUrl(product.image),
+      title: product.seo?.title || product.name,
+    })),
   ].filter((item) => item.loc && item.image);
 }
 
 export async function fetchImageSitemapItems() {
-  const [services, projects, posts] = await Promise.all([
+  const [services, projects, posts, products] = await Promise.all([
     fetchAllPaginated("/services"),
     fetchAllPaginated("/projects"),
     fetchAllPaginated("/blog"),
+    fetchAllPaginated("/products"),
   ]);
 
-  return buildImageSitemapItems(services, projects, posts);
+  return buildImageSitemapItems(services, projects, posts, products);
 }
 
 export async function getSitemapIndexPaths() {
@@ -356,6 +375,7 @@ export async function getSitemapIndexPaths() {
     services,
     projects,
     posts,
+    products,
     serviceCategoriesResponse,
     projectCategoriesResponse,
     blogCategoriesResponse,
@@ -363,6 +383,7 @@ export async function getSitemapIndexPaths() {
     fetchAllPaginated("/services"),
     fetchAllPaginated("/projects"),
     fetchAllPaginated("/blog"),
+    fetchAllPaginated("/products"),
     safeFetchJson(buildSitemapApiUrl("/service-categories")),
     safeFetchJson(buildSitemapApiUrl("/project-categories")),
     safeFetchJson(buildSitemapApiUrl("/categories")),
@@ -377,6 +398,7 @@ export async function getSitemapIndexPaths() {
   const indexableServices = services.filter(isIndexableService);
   const indexableProjects = projects.filter(isIndexableProject);
   const indexablePosts = posts.filter(isIndexableBlogPost);
+  const indexableProducts = products.filter(isIndexableProduct);
   const paths = ["/sitemap-main.xml"];
 
   if (indexableServices.length) paths.push("/sitemap-services.xml");
@@ -396,6 +418,7 @@ export async function getSitemapIndexPaths() {
     paths.push("/sitemap-blog-categories.xml");
   }
   if (indexableProjects.length) paths.push("/sitemap-projects.xml");
+  if (indexableProducts.length) paths.push("/sitemap-products.xml");
   if (hasEligibleCategory(
     projectCategoriesResponse,
     indexableProjects,
@@ -407,6 +430,7 @@ export async function getSitemapIndexPaths() {
     indexableServices,
     indexableProjects,
     indexablePosts,
+    indexableProducts,
   ).length) {
     paths.push("/sitemap-images.xml");
   }

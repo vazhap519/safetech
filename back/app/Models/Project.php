@@ -56,6 +56,11 @@ class Project extends Model implements HasMedia
         return $this->belongsTo(ProjectCategory::class, 'category_id');
     }
 
+    public function projectCategory(): BelongsTo
+    {
+        return $this->belongsTo(ProjectCategory::class, 'category_id');
+    }
+
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('is_published', true)->orderBy('sort_order');
@@ -171,7 +176,9 @@ class Project extends Model implements HasMedia
 
     public function getCategorySlugAttribute(): string
     {
-        $category = $this->relationLoaded('category') ? $this->getRelation('category') : null;
+        $category = $this->relationLoaded('projectCategory')
+            ? $this->getRelation('projectCategory')
+            : ($this->relationLoaded('category') ? $this->getRelation('category') : null);
 
         return $category?->slug
             ?: (string) ($this->getRawOriginal('category') ?: 'offices');
@@ -179,7 +186,9 @@ class Project extends Model implements HasMedia
 
     public function getCategoryNameAttribute(): string
     {
-        $category = $this->relationLoaded('category') ? $this->getRelation('category') : null;
+        $category = $this->relationLoaded('projectCategory')
+            ? $this->getRelation('projectCategory')
+            : ($this->relationLoaded('category') ? $this->getRelation('category') : null);
 
         return $category?->name
             ?: (string) ($this->getRawOriginal('category') ?: $this->category_slug);

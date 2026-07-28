@@ -61,6 +61,63 @@ export type BackendSeoPage = {
     schemaOverride?: Record<string, unknown> | Array<Record<string, unknown>>;
 };
 
+export type BackendProductCategory = {
+    id?: number;
+    name: string;
+    slug: string;
+    seo_title?: string;
+    seo_description?: string;
+    seo_keywords?: string[];
+    noindex?: boolean;
+    updated_at?: string;
+};
+
+export type BackendProductFilterOption = {
+    slug: string;
+    name: string;
+    count?: number;
+};
+
+export type BackendProductFilter = {
+    slug: string;
+    name: string;
+    options: BackendProductFilterOption[];
+};
+
+export type BackendProduct = {
+    id: number;
+    slug: string;
+    name: string;
+    shortDescription: string;
+    description: string;
+    details?: string;
+    image?: string | null;
+    cardImage?: string | null;
+    thumb?: string | null;
+    imageAlt?: string;
+    gallery?: Array<{ src: string; thumb?: string; alt: string }>;
+    price?: number | null;
+    currency?: string;
+    contactForPrice?: boolean;
+    category?: {
+        name?: string | null;
+        slug?: string | null;
+    } | null;
+    filters?: BackendProductFilter[];
+    seo?: {
+        title?: string;
+        description?: string;
+        keywords?: string[];
+        image?: string;
+        noindex?: boolean;
+        canonical?: string;
+        ogTitle?: string;
+        ogDescription?: string;
+        schema?: Record<string, unknown> | Array<Record<string, unknown>>;
+    };
+    updated_at?: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -378,6 +435,38 @@ function localizeProjectDetail(
     } satisfies ProjectDetail;
 }
 
+function normalizeBackendProduct(product: BackendProduct): BackendProduct {
+    return {
+        ...product,
+        image: product.image ? resolveBackendAsset(product.image, "") : null,
+        cardImage: product.cardImage
+            ? resolveBackendAsset(product.cardImage, "")
+            : null,
+        thumb: product.thumb ? resolveBackendAsset(product.thumb, "") : null,
+        imageAlt: product.imageAlt || product.name,
+        gallery: (product.gallery ?? []).map((image) => ({
+            ...image,
+            src: resolveBackendAsset(image.src, ""),
+            thumb: image.thumb ? resolveBackendAsset(image.thumb, "") : undefined,
+        })),
+        category: product.category
+            ? {
+                  name: product.category.name || null,
+                  slug: product.category.slug || null,
+              }
+            : null,
+        filters: product.filters ?? [],
+        seo: product.seo
+            ? {
+                  ...product.seo,
+                  image: product.seo.image
+                      ? resolveBackendAsset(product.seo.image, "")
+                      : undefined,
+              }
+            : undefined,
+    };
+}
+
 export async function getBackendServices(category?: string) {
     const [{ locale, translations }, remote] = await Promise.all([
         getTranslationContext(),
@@ -528,6 +617,71 @@ export async function getBackendProjects(category?: string) {
             >
         >(buildApiPath("/projects", { category }))) ?? []
     );
+}
+
+export async function getBackendProductCategories() {
+    const { locale } = await getTranslationContext();
+
+    return (
+        (await fetchData<BackendProductCategory[]>(
+            buildApiPath("/product-categories", { locale }),
+        )) ?? []
+    ).filter((category) => category.slug && category.name);
+}
+
+export async function getBackendProductFilters(category?: string) {
+    const { locale } = await getTranslationContext();
+
+    return (
+        (await fetchData<BackendProductFilter[]>(
+            buildApiPath("/product-filters", {
+                locale,
+                ...(category && category !== "all" ? { category } : {}),
+            }),
+        )) ?? []
+    ).filter((filter) => filter.slug && filter.name && filter.options?.length);
+}
+
+export async function getBackendProducts({
+    category,
+    filters = {},
+}: {
+    category?: string;
+    filters?: Record<string, string[]>;
+} = {}) {
+    const { locale } = await getTranslationContext();
+    const params: Record<string, string> = { locale };
+
+    if (category && category !== "all") {
+        params.category = category;
+    }
+
+    Object.entries(filters).forEach(([filterSlug, optionSlugs]) => {
+        const values = optionSlugs
+            .map((value) => value.trim())
+            .filter(Boolean);
+
+        if (values.length) {
+            params[`filter_${filterSlug}`] = values.join(",");
+        }
+    });
+
+    const remote =
+        (await fetchData<BackendProduct[]>(buildApiPath("/products", params))) ??
+        [];
+
+    return remote.map(normalizeBackendProduct);
+}
+
+export async function getBackendProduct(
+    slug: string,
+): Promise<BackendProduct | undefined> {
+    const { locale } = await getTranslationContext();
+    const remote = await fetchData<BackendProduct>(
+        buildApiPath(`/products/${encodeURIComponent(slug)}`, { locale }),
+    );
+
+    return remote ? normalizeBackendProduct(remote) : undefined;
 }
 
 export async function getBackendFeaturedProjects(): Promise<FeaturedProject[]> {

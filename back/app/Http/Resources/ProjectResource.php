@@ -14,9 +14,9 @@ class ProjectResource extends JsonResource
     public function toArray(Request $request): array
     {
         $locale = $this->locale($request);
-        $category = $this->resource->relationLoaded('category')
-            ? $this->resource->getRelation('category')
-            : null;
+        $category = $this->resource->relationLoaded('projectCategory')
+            ? $this->resource->getRelation('projectCategory')
+            : ($this->resource->relationLoaded('category') ? $this->resource->getRelation('category') : null);
         $fallbackName = $this->name ?: $this->title;
         $name = $this->translated('name', $fallbackName, $locale);
         $title = $this->translated('title', $this->title ?: $fallbackName, $locale);
@@ -88,7 +88,7 @@ class ProjectResource extends JsonResource
             ->publiclyVisible()
             ->whereKeyNot($this->id)
             ->whereIn('slug', $configured->pluck('slug')->all())
-            ->with(['category', 'media'])
+            ->with(['projectCategory', 'media'])
             ->get()
             ->keyBy('slug');
 
@@ -107,7 +107,9 @@ class ProjectResource extends JsonResource
                     $project->title ?: $project->name,
                     $locale,
                 );
-                $category = $project->category;
+                $category = $project->relationLoaded('projectCategory')
+                    ? $project->getRelation('projectCategory')
+                    : ($project->relationLoaded('category') ? $project->getRelation('category') : null);
                 $categoryName = $category
                     ? $this->translatedModel($category, 'name', $category->name, $locale)
                     : $project->category_name;

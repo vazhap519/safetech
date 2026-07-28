@@ -29,7 +29,11 @@ export const PAGE_SEO_PRESETS = {
     services: {
         key: "services",
         path: "/services",
-        title: { ka: "IT და უსაფრთხოების სერვისები", en: "IT and Security Services", ru: "IT-услуги и системы безопасности" },
+        title: {
+            ka: "IT და უსაფრთხოების სერვისები",
+            en: "IT and Security Services",
+            ru: "IT-услуги и системы безопасности",
+        },
         description: {
             ka: "ვიდეოსამეთვალყურეობა, დაშვების კონტროლი, ქსელები, სერვერები და მართვადი IT მხარდაჭერა ბიზნესისთვის საქართველოში.",
             en: "CCTV, access control, networking, server infrastructure, and managed IT support for businesses in Georgia.",
@@ -41,7 +45,11 @@ export const PAGE_SEO_PRESETS = {
         key: "service-calculator",
         translationKey: "serviceCalculator",
         path: "/service-calculator",
-        title: { ka: "IT და უსაფრთხოების სერვისების კალკულატორი", en: "IT and Security Service Calculator", ru: "Калькулятор IT-услуг и систем безопасности" },
+        title: {
+            ka: "IT და უსაფრთხოების სერვისების კალკულატორი",
+            en: "IT and Security Service Calculator",
+            ru: "Калькулятор IT-услуг и систем безопасности",
+        },
         description: {
             ka: "გამოთვალეთ CCTV-ის, ქსელის, დაშვების კონტროლის, სერვერული ინფრასტრუქტურისა და IT მხარდაჭერის საორიენტაციო ბიუჯეტი.",
             en: "Estimate the budget for CCTV, networking, access control, server infrastructure, and managed IT support.",
@@ -52,13 +60,32 @@ export const PAGE_SEO_PRESETS = {
     projects: {
         key: "projects",
         path: "/projects",
-        title: { ka: "განხორციელებული IT და უსაფრთხოების პროექტები", en: "Completed IT and Security Projects", ru: "Реализованные IT-проекты и системы безопасности" },
+        title: {
+            ka: "განხორციელებული IT და უსაფრთხოების პროექტები",
+            en: "Completed IT and Security Projects",
+            ru: "Реализованные IT-проекты и системы безопасности",
+        },
         description: {
             ka: "ნახეთ SafeTech-ის მიერ განხორციელებული ვიდეოსამეთვალყურეობის, ქსელური და სერვერული ინფრასტრუქტურის პროექტები.",
             en: "Explore SafeTech CCTV, networking, and server infrastructure projects delivered for businesses.",
             ru: "Проекты SafeTech по видеонаблюдению, сетевой и серверной инфраструктуре для бизнеса.",
         },
         keywords: ["IT projects", "CCTV projects", "network infrastructure"],
+    },
+    shop: {
+        key: "shop",
+        path: "/shop",
+        title: {
+            ka: "მაღაზია - IT და უსაფრთხოების პროდუქტები",
+            en: "Shop - IT and Security Products",
+            ru: "Магазин - IT и продукты безопасности",
+        },
+        description: {
+            ka: "დაათვალიერეთ SafeTech-ის პროდუქტები დინამიკური ფილტრებით, კატეგორიებით და სრული აღწერებით.",
+            en: "Browse SafeTech products with dynamic filters, categories, and full detail pages.",
+            ru: "Изучите продукты SafeTech с динамическими фильтрами, категориями и подробными страницами.",
+        },
+        keywords: ["shop", "IT products", "security equipment", "CCTV"],
     },
     blog: {
         key: "blog",
@@ -69,7 +96,7 @@ export const PAGE_SEO_PRESETS = {
             ru: "Блог SafeTech - практические советы по IT и безопасности",
         },
         description: {
-            ka: "პრაქტიკული სტატიები ვიდეომეთვალყურეობის, ქსელების, სერვერების, კიბერუსაფრთხოებისა და ბიზნესის IT მხარდაჭერის შესახებ.",
+            ka: "პრაქტიკული სტატიები ვიდეოსამეთვალყურეობის, ქსელების, სერვერების, კიბერუსაფრთხოებისა და ბიზნესის IT მხარდაჭერის შესახებ.",
             en: "Practical articles about CCTV, networking, servers, cybersecurity, and managed IT support for businesses.",
             ru: "Практические статьи о видеонаблюдении, сетях, серверах, кибербезопасности и IT-поддержке бизнеса.",
         },
@@ -78,7 +105,11 @@ export const PAGE_SEO_PRESETS = {
     about: {
         key: "about",
         path: "/about",
-        title: { ka: "SafeTech-ის გუნდი და გამოცდილება", en: "SafeTech Team and Experience", ru: "Команда и опыт SafeTech" },
+        title: {
+            ka: "SafeTech-ის გუნდი და გამოცდილება",
+            en: "SafeTech Team and Experience",
+            ru: "Команда и опыт SafeTech",
+        },
         description: {
             ka: "გაიცანით SafeTech-ის გუნდი, გამოცდილება და მიდგომა უსაფრთხოებისა და IT ინფრასტრუქტურის პროექტებისადმი.",
             en: "Meet the SafeTech team and learn how we deliver security and IT infrastructure projects.",
@@ -89,7 +120,11 @@ export const PAGE_SEO_PRESETS = {
     contact: {
         key: "contact",
         path: "/contact",
-        title: { ka: "კონტაქტი და ტექნიკური კონსულტაცია", en: "Contact and Technical Consultation", ru: "Контакты и техническая консультация" },
+        title: {
+            ka: "კონტაქტი და ტექნიკური კონსულტაცია",
+            en: "Contact and Technical Consultation",
+            ru: "Контакты и техническая консультация",
+        },
         description: {
             ka: "დაუკავშირდით SafeTech-ს IT ინფრასტრუქტურისა და უსაფრთხოების სისტემების კონსულტაციისა და მორგებული შეთავაზებისთვის.",
             en: "Contact SafeTech for an IT infrastructure or security systems consultation and a tailored proposal.",

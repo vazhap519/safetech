@@ -13,6 +13,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -181,6 +182,15 @@ class SiteSettingResource extends Resource
                 ->schema([
                     TextInput::make('value.site_name')->label('Site name')->default('SafeTech'),
                     Textarea::make('value.site_description')->label('Organization description')->rows(3),
+                    TagsInput::make('value.default_keywords')
+                        ->label('Default SEO keywords')
+                        ->helperText('Used as a site-wide fallback when a page or product does not define its own keywords.'),
+                    Toggle::make('value.robots_index')
+                        ->label('Allow search engines to index the site')
+                        ->default(true),
+                    Toggle::make('value.robots_follow')
+                        ->label('Allow search engines to follow links')
+                        ->default(true),
                     TextInput::make('value.city')->label('City'),
                     TextInput::make('value.country')->label('Country code')->default('GE')->maxLength(2),
                     TextInput::make('value.postal_code')->label('Postal code'),

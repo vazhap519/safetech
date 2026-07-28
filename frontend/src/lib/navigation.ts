@@ -1,4 +1,4 @@
-export const primaryNavigation = [
+const basePrimaryNavigation = [
     {
         href: "/",
         key: "nav.home",
@@ -24,6 +24,11 @@ export const primaryNavigation = [
         fallback: { ka: "პროექტები", en: "Projects", ru: "Проекты" },
     },
     {
+        href: "/shop",
+        key: "nav.shop",
+        fallback: { ka: "მაღაზია", en: "Shop", ru: "Магазин" },
+    },
+    {
         href: "/blog",
         key: "nav.blog",
         fallback: { ka: "ბლოგი", en: "Blog", ru: "Блог" },
@@ -39,3 +44,11 @@ export const primaryNavigation = [
         fallback: { ka: "კონტაქტი", en: "Contact", ru: "Контакты" },
     },
 ] as const;
+
+export function buildPrimaryNavigation(showShop = true) {
+    return showShop
+        ? basePrimaryNavigation
+        : basePrimaryNavigation.filter((item) => item.href !== "/shop");
+}
+
+export const primaryNavigation = buildPrimaryNavigation();

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { cookies } from "next/headers";
 
@@ -65,8 +65,15 @@ function withDynamicSiteTitle(title: string, siteName: string) {
         : `${cleanTitle} | ${cleanSiteName}`;
 }
 
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    themeColor: "#070b14",
+};
+
 export async function generateMetadata(): Promise<Metadata> {
-    const { branding, integrations, locale, translations } = await getSiteSettings();
+    const { branding, integrations, locale, seo, translations } = await getSiteSettings();
     const siteName = branding.siteName || SITE_NAME;
     const t = createTranslator(translations, locale);
     const canonical = absoluteLocalizedUrl("/", locale);
@@ -96,14 +103,16 @@ export async function generateMetadata(): Promise<Metadata> {
         publisher: siteName,
         title,
         description: siteDescription,
-        keywords: [
-            "CCTV",
-            "IT Infrastructure",
-            "Networking",
-            "Access Control",
-            "Security Systems",
-            "Tbilisi",
-        ],
+        keywords: seo.defaultKeywords.length
+            ? seo.defaultKeywords
+            : [
+                  "CCTV",
+                  "IT Infrastructure",
+                  "Networking",
+                  "Access Control",
+                  "Security Systems",
+                  "Tbilisi",
+              ],
         openGraph: {
             type: "website",
             locale: getOgLocale(locale),
@@ -149,6 +158,17 @@ export async function generateMetadata(): Promise<Metadata> {
                 ...(integrations.yandexSiteVerification
                     ? { "yandex-verification": integrations.yandexSiteVerification }
                     : {}),
+            },
+        },
+        robots: {
+            index: seo.robotsIndex,
+            follow: seo.robotsFollow,
+            googleBot: {
+                index: seo.robotsIndex,
+                follow: seo.robotsFollow,
+                "max-image-preview": "large",
+                "max-snippet": -1,
+                "max-video-preview": -1,
             },
         },
     };

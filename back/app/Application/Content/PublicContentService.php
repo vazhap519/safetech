@@ -4,6 +4,7 @@ namespace App\Application\Content;
 
 use App\Models\Faq;
 use App\Models\Partner;
+use App\Models\Product;
 use App\Models\Project;
 use App\Models\Service;
 use App\Models\SiteSetting;
@@ -12,6 +13,7 @@ use App\Support\MultilingualContent;
 use App\Support\PublicContentCache;
 use App\Support\SiteSettingValueNormalizer;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 final class PublicContentService
 {
@@ -23,6 +25,12 @@ final class PublicContentService
             )->all();
 
             $settings['translations'] = $this->buildTranslations($settings['translations'] ?? null);
+            $settings['features'] = array_merge(
+                is_array($settings['features'] ?? null) ? $settings['features'] : [],
+                [
+                    'shop_enabled' => $this->shopFeatureEnabled(),
+                ],
+            );
 
             return [
                 'team' => TeamMember::query()->active()->get()->map(fn (TeamMember $member) => [
@@ -36,6 +44,15 @@ final class PublicContentService
                 'settings' => $settings,
             ];
         });
+    }
+
+    private function shopFeatureEnabled(): bool
+    {
+        if (! Schema::hasTable('products')) {
+            return false;
+        }
+
+        return Product::query()->publiclyVisible()->exists();
     }
 
     private function sanitizeSetting(SiteSetting $setting): mixed

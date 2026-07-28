@@ -17,6 +17,11 @@ export type SeoProps = {
     siteName?: string;
     type?: "website" | "article";
     noindex?: boolean;
+    canonical?: string;
+    ogTitle?: string;
+    ogDescription?: string;
+    robotsIndex?: boolean;
+    robotsFollow?: boolean;
 };
 
 export const SITE_NAME = "SafeTech";
@@ -103,8 +108,13 @@ export function createMetadata({
     siteName = SITE_NAME,
     type = "website",
     noindex = false,
+    canonical,
+    ogTitle,
+    ogDescription,
+    robotsIndex,
+    robotsFollow,
 }: SeoProps): Metadata {
-    const url = absoluteLocalizedUrl(path, locale);
+    const url = canonical ? absoluteSiteUrl(canonical) : absoluteLocalizedUrl(path, locale);
     const resolvedSiteName = cleanText(siteName) || SITE_NAME;
     const resolvedTitle = cleanText(title) || resolvedSiteName;
     const suppliedDescription = cleanText(description);
@@ -116,10 +126,14 @@ export function createMetadata({
           : genericDescription;
     const fullTitle = withSiteTitle(resolvedTitle, resolvedSiteName);
     const socialImage = absoluteSiteUrl(image);
+    const resolvedOgTitle = cleanText(ogTitle) || fullTitle;
+    const resolvedOgDescription = cleanText(ogDescription) || resolvedDescription;
     const languageAlternates = buildLanguageAlternates(path);
     const alternateLocales = supportedLocales
         .filter((item) => item !== locale)
         .map(getOgLocale);
+    const indexAllowed = !noindex && (robotsIndex ?? true);
+    const followAllowed = !noindex && (robotsFollow ?? true);
 
     return {
         title: {
@@ -135,8 +149,8 @@ export function createMetadata({
             },
         },
         openGraph: {
-            title: fullTitle,
-            description: resolvedDescription,
+            title: resolvedOgTitle,
+            description: resolvedOgDescription,
             url,
             siteName: resolvedSiteName,
             locale: getOgLocale(locale),
@@ -151,16 +165,16 @@ export function createMetadata({
         },
         twitter: {
             card: "summary_large_image",
-            title: fullTitle,
-            description: resolvedDescription,
+            title: resolvedOgTitle,
+            description: resolvedOgDescription,
             images: [socialImage],
         },
         robots: {
-            index: !noindex,
-            follow: !noindex,
+            index: indexAllowed,
+            follow: followAllowed,
             googleBot: {
-                index: !noindex,
-                follow: !noindex,
+                index: indexAllowed,
+                follow: followAllowed,
                 "max-image-preview": "large",
                 "max-snippet": -1,
                 "max-video-preview": -1,

@@ -281,6 +281,24 @@ final class ManagedPageTranslationFields
                     self::field('contact_final_button', 'contact.final.button', 'Final CTA button'),
                 ],
             ],
+            [
+                'label' => 'Shop Page: Hero, Filters and Empty State',
+                'fields' => [
+                    self::field('shop_hero_eyebrow', 'shop.hero.eyebrow', 'Hero eyebrow'),
+                    self::field('shop_hero_title', 'shop.hero.title', 'Hero title'),
+                    self::field('shop_hero_description', 'shop.hero.description', 'Hero description', 'textarea'),
+                    self::field('shop_filters_title', 'shop.filters.title', 'Filters title'),
+                    self::field('shop_filters_clear', 'shop.filters.clear', 'Clear filters label'),
+                    self::field('shop_categories_title', 'shop.categories.title', 'Categories title'),
+                    self::field('shop_card_cta', 'shop.card.cta', 'Card button label'),
+                    self::field('shop_price_label', 'shop.price.label', 'Price label'),
+                    self::field('shop_price_contact', 'shop.price.contact', 'Contact for price label', 'textarea'),
+                    self::field('shop_empty_title', 'shop.empty.title', 'Empty state title'),
+                    self::field('shop_empty_description', 'shop.empty.description', 'Empty state description', 'textarea'),
+                    self::field('shop_details_title', 'shop.details.title', 'Details section title'),
+                    self::field('shop_category_title', 'shop.category.title', 'Category section title'),
+                ],
+            ],
         ];
     }
 
