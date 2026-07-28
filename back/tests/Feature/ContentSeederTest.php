@@ -43,7 +43,7 @@ class ContentSeederTest extends TestCase
         }
     }
 
-    public function test_google_analytics_default_is_installed_without_overwriting_admin_changes(): void
+    public function test_google_marketing_defaults_are_installed_without_overwriting_admin_changes(): void
     {
         SiteSetting::query()->where('key', 'integrations')->delete();
         $this->app->detectEnvironment(fn (): string => 'production');
@@ -57,12 +57,17 @@ class ContentSeederTest extends TestCase
 
             $this->assertTrue((bool) data_get($integrations->value, 'marketing_enabled'));
             $this->assertSame(
+                'GTM-PHSJ3MHV',
+                data_get($integrations->value, 'google_tag_manager_id'),
+            );
+            $this->assertSame(
                 'G-VC9XHNPEG5',
                 data_get($integrations->value, 'google_analytics_id'),
             );
 
             $adminValue = $integrations->value;
             $adminValue['marketing_enabled'] = false;
+            $adminValue['google_tag_manager_id'] = 'GTM-ADMIN123';
             $adminValue['google_analytics_id'] = 'G-ADMIN12345';
             $integrations->forceFill(['value' => $adminValue])->save();
 
@@ -70,6 +75,10 @@ class ContentSeederTest extends TestCase
 
             $integrations->refresh();
             $this->assertFalse((bool) data_get($integrations->value, 'marketing_enabled'));
+            $this->assertSame(
+                'GTM-ADMIN123',
+                data_get($integrations->value, 'google_tag_manager_id'),
+            );
             $this->assertSame(
                 'G-ADMIN12345',
                 data_get($integrations->value, 'google_analytics_id'),
@@ -99,6 +108,29 @@ class ContentSeederTest extends TestCase
         $this->assertSame(
             'G-ADMIN12345',
             data_get($integrations->value, 'google_analytics_id'),
+        );
+    }
+
+    public function test_google_tag_manager_migration_preserves_existing_admin_configuration(): void
+    {
+        $integrations = SiteSetting::query()
+            ->where('key', 'integrations')
+            ->firstOrFail();
+        $adminValue = $integrations->value;
+        $adminValue['marketing_enabled'] = false;
+        $adminValue['google_tag_manager_id'] = 'GTM-ADMIN123';
+        $integrations->forceFill(['value' => $adminValue])->save();
+
+        $migration = require database_path(
+            'migrations/2026_07_28_000002_configure_google_tag_manager.php',
+        );
+        $migration->up();
+
+        $integrations->refresh();
+        $this->assertFalse((bool) data_get($integrations->value, 'marketing_enabled'));
+        $this->assertSame(
+            'GTM-ADMIN123',
+            data_get($integrations->value, 'google_tag_manager_id'),
         );
     }
 

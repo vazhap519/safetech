@@ -53,6 +53,9 @@ const siteFont = localFont({
     variable: "--font-site",
 });
 
+const GOOGLE_TAG_MANAGER_ID_PATTERN = /^GTM-[A-Z0-9]+$/i;
+const GOOGLE_ANALYTICS_ID_PATTERN = /^G-[A-Z0-9]+$/i;
+
 function withDynamicSiteTitle(title: string, siteName: string) {
     const cleanTitle = title.trim();
     const cleanSiteName = siteName.trim();
@@ -63,6 +66,11 @@ function withDynamicSiteTitle(title: string, siteName: string) {
     return cleanTitle.includes(cleanSiteName)
         ? cleanTitle
         : `${cleanTitle} | ${cleanSiteName}`;
+}
+
+function validIntegrationId(value: string | undefined, pattern: RegExp) {
+    const normalized = value?.trim() ?? "";
+    return pattern.test(normalized) ? normalized : "";
 }
 
 export const viewport: Viewport = {
@@ -194,24 +202,42 @@ export default async function RootLayout({
         en: "Skip to main content",
         ru: "Перейти к основному содержанию",
     });
+    const configuredGoogleTagManagerId = validIntegrationId(
+        integrations.googleTagManagerId,
+        GOOGLE_TAG_MANAGER_ID_PATTERN,
+    );
+    const configuredGoogleAnalyticsId = validIntegrationId(
+        integrations.googleAnalyticsId,
+        GOOGLE_ANALYTICS_ID_PATTERN,
+    );
     const hasAdminGoogleIntegration = Boolean(
-        integrations.googleTagManagerId || integrations.googleAnalyticsId,
+        configuredGoogleTagManagerId || configuredGoogleAnalyticsId,
     );
     const googleTagManagerId =
-        integrations.googleTagManagerId ||
+        configuredGoogleTagManagerId ||
         (!hasAdminGoogleIntegration
-            ? process.env.NEXT_PUBLIC_GTM_ID?.trim()
-            : undefined);
+            ? validIntegrationId(
+                  process.env.NEXT_PUBLIC_GTM_ID,
+                  GOOGLE_TAG_MANAGER_ID_PATTERN,
+              )
+            : "");
     const googleAnalyticsId =
-        integrations.googleAnalyticsId ||
+        configuredGoogleAnalyticsId ||
         (!hasAdminGoogleIntegration
-            ? process.env.NEXT_PUBLIC_GA_ID?.trim()
-            : undefined);
+            ? validIntegrationId(
+                  process.env.NEXT_PUBLIC_GA_ID,
+                  GOOGLE_ANALYTICS_ID_PATTERN,
+              )
+            : "");
     const metaPixelId =
         integrations.metaPixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
     const marketingEnabled = integrations.marketingEnabled;
     const googleConsentEnabled =
         marketingEnabled && Boolean(googleTagManagerId || googleAnalyticsId);
+    const googleTagManagerNoScriptEnabled =
+        marketingEnabled &&
+        initialConsent === "accepted" &&
+        Boolean(googleTagManagerId);
     const publicApiOrigin = (() => {
         try {
             return new URL(process.env.NEXT_PUBLIC_API_URL || "").origin;
@@ -269,6 +295,16 @@ export default async function RootLayout({
                     min-h-screen
                 "
             >
+                {googleTagManagerNoScriptEnabled ? (
+                    <noscript>
+                        <iframe
+                            src={`https://www.googletagmanager.com/ns.html?id=${googleTagManagerId}`}
+                            height="0"
+                            width="0"
+                            style={{ display: "none", visibility: "hidden" }}
+                        />
+                    </noscript>
+                ) : null}
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{

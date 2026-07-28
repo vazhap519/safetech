@@ -613,7 +613,7 @@ class ContentSeeder extends Seeder
             ],
             'integrations' => [
                 'marketing_enabled' => true,
-                'google_tag_manager_id' => '',
+                'google_tag_manager_id' => 'GTM-PHSJ3MHV',
                 'google_analytics_id' => 'G-VC9XHNPEG5',
                 'meta_pixel_id' => '',
                 'google_site_verification' => '',
