@@ -377,6 +377,7 @@ export async function getSitemapIndexPaths() {
     posts,
     products,
     serviceCategoriesResponse,
+    productCategoriesResponse,
     projectCategoriesResponse,
     blogCategoriesResponse,
   ] = await Promise.all([
@@ -385,11 +386,13 @@ export async function getSitemapIndexPaths() {
     fetchAllPaginated("/blog"),
     fetchAllPaginated("/products"),
     safeFetchJson(buildSitemapApiUrl("/service-categories")),
+    safeFetchJson(buildSitemapApiUrl("/product-categories")),
     safeFetchJson(buildSitemapApiUrl("/project-categories")),
     safeFetchJson(buildSitemapApiUrl("/categories")),
   ]);
 
   if (!serviceCategoriesResponse
+    || !productCategoriesResponse
     || !projectCategoriesResponse
     || !blogCategoriesResponse) {
     throw new Error("Unable to load categories for the sitemap index");
@@ -419,6 +422,13 @@ export async function getSitemapIndexPaths() {
   }
   if (indexableProjects.length) paths.push("/sitemap-projects.xml");
   if (indexableProducts.length) paths.push("/sitemap-products.xml");
+  if (hasEligibleCategory(
+    productCategoriesResponse,
+    indexableProducts,
+    (product) => product?.category?.slug,
+  )) {
+    paths.push("/sitemap-product-categories.xml");
+  }
   if (hasEligibleCategory(
     projectCategoriesResponse,
     indexableProjects,

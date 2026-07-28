@@ -220,6 +220,80 @@ class ProductApiTest extends TestCase
             ->assertJsonPath('data.0.slug', 'camera-a');
     }
 
+    public function test_product_list_matches_filter_groups_and_multi_option_values_correctly(): void
+    {
+        $category = ProductCategory::query()->create([
+            'name' => 'Cameras',
+            'slug' => 'cameras',
+        ]);
+
+        ProductFilter::query()->create([
+            'name' => 'Brand',
+            'slug' => 'brand',
+            'options' => [
+                ['label' => 'Dahua', 'slug' => 'dahua'],
+                ['label' => 'Hikvision', 'slug' => 'hikvision'],
+            ],
+        ]);
+
+        ProductFilter::query()->create([
+            'name' => 'Placement',
+            'slug' => 'placement',
+            'options' => [
+                ['label' => 'Outdoor', 'slug' => 'outdoor'],
+                ['label' => 'Indoor', 'slug' => 'indoor'],
+            ],
+        ]);
+
+        Product::query()->create([
+            'product_category_id' => $category->id,
+            'name' => 'Outdoor Camera',
+            'slug' => 'outdoor-camera',
+            'short_description' => 'Outdoor short description',
+            'description' => 'Outdoor long description',
+            'filter_values' => [
+                ['filter_slug' => 'brand', 'option_slugs' => ['dahua', 'hikvision']],
+                ['filter_slug' => 'placement', 'option_slugs' => ['outdoor']],
+            ],
+            'is_published' => true,
+        ]);
+
+        Product::query()->create([
+            'product_category_id' => $category->id,
+            'name' => 'Indoor Camera',
+            'slug' => 'indoor-camera',
+            'short_description' => 'Indoor short description',
+            'description' => 'Indoor long description',
+            'filter_values' => [
+                ['filter_slug' => 'brand', 'option_slugs' => ['dahua']],
+                ['filter_slug' => 'placement', 'option_slugs' => ['indoor']],
+            ],
+            'is_published' => true,
+        ]);
+
+        Product::query()->create([
+            'product_category_id' => $category->id,
+            'name' => 'Accessory Pack',
+            'slug' => 'accessory-pack',
+            'short_description' => 'Accessory short description',
+            'description' => 'Accessory long description',
+            'filter_values' => [
+                ['filter_slug' => 'brand', 'option_slugs' => ['hikvision']],
+                ['filter_slug' => 'placement', 'option_slugs' => ['dahua']],
+            ],
+            'is_published' => true,
+        ]);
+
+        $this->getJson('/api/products?filter_brand=dahua&filter_placement=outdoor')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.slug', 'outdoor-camera');
+
+        $this->getJson('/api/products?filter_brand=dahua,hikvision')
+            ->assertOk()
+            ->assertJsonCount(3, 'data');
+    }
+
     public function test_missing_product_slug_returns_a_clean_not_found_response(): void
     {
         $this->getJson('/api/products/no-such-product')

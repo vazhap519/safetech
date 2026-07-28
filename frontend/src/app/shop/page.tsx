@@ -18,13 +18,17 @@ type ShopPageProps = {
     searchParams?:
         | Promise<Record<string, string | string[] | undefined>>
         | Record<string, string | string[] | undefined>;
+    showPageSchema?: boolean;
 };
 
 export async function generateMetadata() {
     return createCmsPageMetadata(PAGE_SEO_PRESETS.shop);
 }
 
-export default async function ShopPage({ searchParams }: ShopPageProps) {
+export default async function ShopPage({
+    searchParams,
+    showPageSchema = true,
+}: ShopPageProps) {
     const params = (await searchParams) ?? {};
     const settings = await getSiteSettings();
 
@@ -86,7 +90,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
     return (
         <>
-            <CmsPageSchema pageKey="shop" />
+            {showPageSchema ? <CmsPageSchema pageKey="shop" /> : null}
 
             <section className="relative overflow-hidden border-b border-outline-variant/10 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_40%),linear-gradient(180deg,#08111f_0%,#0f172a_100%)] pt-[clamp(6.5rem,10vw,8rem)] text-white">
                 <div className="mx-auto max-w-container-max px-5 pb-12 md:px-8 md:pb-14 xl:px-10 2xl:px-14">

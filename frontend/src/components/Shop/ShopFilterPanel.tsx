@@ -3,11 +3,13 @@
 import { startTransition, useMemo, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import LocalizedLink from "@/components/ui/LocalizedLink";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import type {
     BackendProductCategory,
     BackendProductFilter,
 } from "@/lib/backend";
+import { localizeHref } from "@/lib/seo";
 
 type ShopFilterPanelProps = {
     categories: BackendProductCategory[];
@@ -24,7 +26,7 @@ export default function ShopFilterPanel({
     activeFilters,
     resultCount,
 }: ShopFilterPanelProps) {
-    const { t } = useLocalization();
+    const { locale, t } = useLocalization();
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -68,17 +70,6 @@ export default function ShopFilterPanel({
         });
     }
 
-    function setCategory(nextCategory: string) {
-        replaceSearchParams((params) => {
-            if (!nextCategory || nextCategory === "all") {
-                params.delete("category");
-                return;
-            }
-
-            params.set("category", nextCategory);
-        });
-    }
-
     function toggleOption(filterSlug: string, optionSlug: string) {
         replaceSearchParams((params) => {
             const key = `filter_${filterSlug}`;
@@ -104,9 +95,19 @@ export default function ShopFilterPanel({
     }
 
     function clearAll() {
-        replaceSearchParams((params) => {
-            params.delete("category");
+        if (activeCategory !== "all") {
+            beginTransition(() => {
+                startTransition(() => {
+                    router.replace(localizeHref("/shop", locale), {
+                        scroll: false,
+                    });
+                });
+            });
 
+            return;
+        }
+
+        replaceSearchParams((params) => {
             [...params.keys()]
                 .filter((key) => key.startsWith("filter_"))
                 .forEach((key) => params.delete(key));
@@ -146,21 +147,24 @@ export default function ShopFilterPanel({
                 <div className="flex flex-wrap gap-2">
                     {categoryItems.map((category) => {
                         const active = category.slug === (activeCategory || "all");
+                        const href =
+                            category.slug === "all"
+                                ? "/shop"
+                                : `/shop/category/${encodeURIComponent(category.slug)}`;
 
                         return (
-                            <button
-                                aria-pressed={active}
+                            <LocalizedLink
+                                aria-current={active ? "page" : undefined}
                                 className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                                     active
                                         ? "border-primary bg-primary text-on-primary"
                                         : "border-outline-variant/30 bg-surface-container-low text-on-surface hover:border-primary/40 hover:text-primary"
                                 }`}
+                                href={href}
                                 key={category.slug}
-                                onClick={() => setCategory(category.slug)}
-                                type="button"
                             >
                                 {category.name}
-                            </button>
+                            </LocalizedLink>
                         );
                     })}
                 </div>

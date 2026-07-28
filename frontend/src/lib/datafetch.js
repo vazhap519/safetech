@@ -95,3 +95,9 @@ export const getProjectCategories = ({ locale, ...options } = {}) =>
     next: { tags: ["project-categories"] },
     ...options,
   });
+
+export const getProductCategories = ({ locale, ...options } = {}) =>
+  fetcher(buildUrl("/product-categories", locale ? { locale } : {}), {
+    next: { tags: ["product-categories"] },
+    ...options,
+  });

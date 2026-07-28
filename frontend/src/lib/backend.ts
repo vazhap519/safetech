@@ -68,6 +68,9 @@ export type BackendProductCategory = {
     seo_title?: string;
     seo_description?: string;
     seo_keywords?: string[];
+    intro_text?: string;
+    faq?: Array<Record<string, unknown>>;
+    schema?: Record<string, unknown> | Array<Record<string, unknown>>;
     noindex?: boolean;
     updated_at?: string;
 };
