@@ -23,7 +23,7 @@ final class ManagedPageTranslationFields
     }
 
     /** @param array<string, mixed> $data
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     public static function hydrate(array $data): array
     {
@@ -58,7 +58,7 @@ final class ManagedPageTranslationFields
     }
 
     /** @param array<string, mixed> $data
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     public static function dehydrate(array $data): array
     {
@@ -109,7 +109,7 @@ final class ManagedPageTranslationFields
     }
 
     /** @param array<int, array<string, mixed>> $fields
-     *  @return array<int, TextInput|Textarea>
+     * @return array<int, TextInput|Textarea>
      */
     private static function componentsFor(array $fields): array
     {

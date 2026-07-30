@@ -13,7 +13,6 @@ use App\Models\ProductFilter;
 use App\Models\Project;
 use App\Models\ProjectCategory;
 use App\Models\SeoPage;
-use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Models\User;
 use Database\Seeders\ContentSeeder;
@@ -166,14 +165,14 @@ class FilamentResourceSmokeTest extends TestCase
             '/admin/site-settings/create',
         ];
 
-        $routes[] = '/admin/category-for-services/' . CategoryForService::query()->firstOrFail()->getRouteKey() . '/edit';
-        $routes[] = '/admin/project-categories/' . ProjectCategory::query()->firstOrFail()->getRouteKey() . '/edit';
+        $routes[] = '/admin/category-for-services/'.CategoryForService::query()->firstOrFail()->getRouteKey().'/edit';
+        $routes[] = '/admin/project-categories/'.ProjectCategory::query()->firstOrFail()->getRouteKey().'/edit';
         $routes[] = "/admin/product-categories/{$productCategory->getRouteKey()}/edit";
         $routes[] = "/admin/product-filters/{$productFilter->getRouteKey()}/edit";
-        $routes[] = '/admin/projects/' . Project::query()->firstOrFail()->getRouteKey() . '/edit';
+        $routes[] = '/admin/projects/'.Project::query()->firstOrFail()->getRouteKey().'/edit';
         $routes[] = "/admin/products/{$product->getRouteKey()}/edit";
-        $routes[] = '/admin/seo-pages/' . SeoPage::query()->where('key', 'contact')->firstOrFail()->getRouteKey() . '/edit';
-        $routes[] = '/admin/site-settings/' . SiteSetting::query()->where('key', 'contact')->firstOrFail()->getRouteKey() . '/edit';
+        $routes[] = '/admin/seo-pages/'.SeoPage::query()->where('key', 'contact')->firstOrFail()->getRouteKey().'/edit';
+        $routes[] = '/admin/site-settings/'.SiteSetting::query()->where('key', 'contact')->firstOrFail()->getRouteKey().'/edit';
 
         foreach ($routes as $url) {
             $this->get($url)->assertOk();

@@ -19,7 +19,7 @@ final class SiteSettingValueNormalizer
     }
 
     /** @param array<string, mixed> $value
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     public static function normalizeContact(array $value): array
     {
@@ -51,7 +51,7 @@ final class SiteSettingValueNormalizer
     }
 
     /** @param array<string, mixed> $value
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     public static function normalizeSocials(array $value): array
     {

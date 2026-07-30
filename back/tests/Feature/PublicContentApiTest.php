@@ -3,10 +3,10 @@
 namespace Tests\Feature;
 
 use App\Application\Content\PublicContentService;
-use App\Models\Project;
-use App\Models\ProjectCategory;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\Project;
+use App\Models\ProjectCategory;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use Database\Seeders\ContentSeeder;

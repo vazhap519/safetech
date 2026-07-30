@@ -2,14 +2,14 @@
 
 namespace App\Providers;
 
-use App\Domain\Content\Contracts\ProjectRepository;
 use App\Domain\Content\Contracts\ProductRepository;
+use App\Domain\Content\Contracts\ProjectRepository;
 use App\Domain\Content\Contracts\ServiceRepository;
 use App\Domain\Leads\Contracts\LeadRepository;
 use App\Events\LeadCreated;
 use App\Infrastructure\Persistence\EloquentLeadRepository;
-use App\Infrastructure\Persistence\EloquentProjectRepository;
 use App\Infrastructure\Persistence\EloquentProductRepository;
+use App\Infrastructure\Persistence\EloquentProjectRepository;
 use App\Infrastructure\Persistence\EloquentServiceRepository;
 use App\Listeners\ForwardLeadToCrm;
 use App\Listeners\SendLeadNotification;

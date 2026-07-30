@@ -84,7 +84,7 @@ final class ProductFilterController extends Controller
 
     private function translated(ProductFilter $filter, string $field, mixed $fallback, string $locale): string
     {
-        $values = \App\Support\MultilingualContent::valuesForField($filter, $field, $fallback);
+        $values = MultilingualContent::valuesForField($filter, $field, $fallback);
 
         return $values[$locale] ?: (is_string($fallback) ? $fallback : '');
     }

@@ -406,6 +406,8 @@ for api_payload in "${health_json}" "${calculator_json}" "${products_json}"; do
     fi
 done
 
+# The dollar-prefixed names below are PHP variables, not shell expansions.
+# shellcheck disable=SC2016
 if php -r '
     $payload = json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR);
     $data = $payload["data"] ?? [];
