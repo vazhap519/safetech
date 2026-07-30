@@ -11,6 +11,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="${SAFETECH_PROJECT_DIR:-${SCRIPT_DIR}}"
 BACKEND_DIR="${SAFETECH_BACKEND_DIR:-${PROJECT_DIR}/back}"
 FRONTEND_DIR="${SAFETECH_FRONTEND_DIR:-${PROJECT_DIR}/frontend}"
+STATIC_DIR="${SAFETECH_STATIC_DIR:-/var/www/safetech-static}"
 BRANCH="${SAFETECH_BRANCH:-main}"
 REMOTE="${SAFETECH_REMOTE:-origin}"
 SITE_URL="${SAFETECH_SITE_URL:-https://safetech.ge}"
@@ -19,6 +20,7 @@ WEB_USER="${SAFETECH_WEB_USER:-www-data}"
 WEB_GROUP="${SAFETECH_WEB_GROUP:-www-data}"
 FRONTEND_SERVICE="${SAFETECH_FRONTEND_SERVICE:-safetech-frontend.service}"
 QUEUE_SERVICE="${SAFETECH_QUEUE_SERVICE:-safetech-queue.service}"
+NGINX_CACHE_DIR="${SAFETECH_NGINX_CACHE_DIR:-/var/cache/nginx/safetech}"
 
 log() {
     printf '\n==> %s\n' "$*"
@@ -45,11 +47,26 @@ restart_service_if_present() {
     fi
 }
 
+clear_nginx_cache() {
+    if [[ ! -d "${NGINX_CACHE_DIR}" ]]; then
+        return
+    fi
+
+    case "${NGINX_CACHE_DIR}" in
+        /var/cache/nginx/*)
+            find "${NGINX_CACHE_DIR}" -mindepth 1 -delete
+            ;;
+        *)
+            fail "refusing to clear unexpected Nginx cache path: ${NGINX_CACHE_DIR}"
+            ;;
+    esac
+}
+
 if [[ "${EUID}" -ne 0 ]]; then
     fail "run this script with sudo/root privileges"
 fi
 
-required_commands=(git php composer node npm systemctl curl)
+required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown)
 for command_name in "${required_commands[@]}"; do
     command -v "${command_name}" >/dev/null 2>&1 \
         || fail "missing required command: ${command_name}"
@@ -57,6 +74,8 @@ done
 
 [[ "${PROJECT_DIR}" == /* && "${PROJECT_DIR}" != "/" ]] \
     || fail "SAFETECH_PROJECT_DIR must be an absolute non-root path"
+[[ "${STATIC_DIR}" == /* && "${STATIC_DIR}" != "/" ]] \
+    || fail "SAFETECH_STATIC_DIR must be an absolute non-root path"
 [[ -d "${PROJECT_DIR}/.git" ]] || fail "Git checkout not found: ${PROJECT_DIR}"
 [[ -f "${BACKEND_DIR}/artisan" ]] || fail "Laravel application not found: ${BACKEND_DIR}"
 [[ -f "${BACKEND_DIR}/.env" ]] || fail "Backend production .env not found: ${BACKEND_DIR}/.env"
@@ -105,6 +124,14 @@ npm --prefix "${FRONTEND_DIR}" prune --omit=dev --no-package-lock
 
 [[ -s "${FRONTEND_DIR}/.next/BUILD_ID" ]] \
     || fail "Next.js production build did not create .next/BUILD_ID"
+[[ -d "${FRONTEND_DIR}/.next/static" ]] \
+    || fail "Next.js production build did not create .next/static"
+
+log "Synchronizing Next.js static assets"
+install -d -o root -g root -m 0755 "${STATIC_DIR}"
+rsync -a --checksum "${FRONTEND_DIR}/.next/static/" "${STATIC_DIR}/"
+find "${STATIC_DIR}" -type f -mtime +30 -delete
+find "${STATIC_DIR}" -mindepth 1 -type d -empty -delete
 
 chown -R "${WEB_USER}:${WEB_GROUP}" \
     "${BACKEND_DIR}/storage" \
@@ -117,6 +144,7 @@ restart_service_if_present "${QUEUE_SERVICE}"
 
 if command -v nginx >/dev/null 2>&1; then
     nginx -t
+    clear_nginx_cache
     systemctl reload nginx
 fi
 
@@ -135,6 +163,41 @@ done
 curl --fail --silent --show-error --retry 10 \
     --retry-connrefused --retry-delay 2 \
     "${SITE_URL%/}/service-calculator" >/dev/null
+
+home_html="$(curl --fail --silent --show-error --compressed \
+    -H 'Accept: text/html' "${SITE_URL%/}/")"
+static_asset_paths="$(grep -Eo '/_next/static/[^"[:space:]]+\.(js|css)' \
+    <<< "${home_html}" | sort -u || true)"
+
+[[ -n "${static_asset_paths}" ]] \
+    || fail "homepage does not reference any built CSS or JavaScript assets"
+
+live_css_count=0
+live_js_count=0
+
+while IFS= read -r static_asset_path; do
+    [[ -z "${static_asset_path}" ]] && continue
+
+    static_asset_type="$(curl --fail --silent --show-error --compressed \
+        -o /dev/null -w '%{content_type}' \
+        "${SITE_URL%/}${static_asset_path}")"
+
+    case "${static_asset_path}" in
+        *.css)
+            [[ "${static_asset_type}" == text/css* ]] \
+                || fail "invalid CSS response (${static_asset_type}): ${static_asset_path}"
+            live_css_count=$((live_css_count + 1))
+            ;;
+        *.js)
+            [[ "${static_asset_type}" == *javascript* ]] \
+                || fail "invalid JavaScript response (${static_asset_type}): ${static_asset_path}"
+            live_js_count=$((live_js_count + 1))
+            ;;
+    esac
+done <<< "${static_asset_paths}"
+
+[[ "${live_css_count}" -gt 0 && "${live_js_count}" -gt 0 ]] \
+    || fail "homepage is missing live CSS or JavaScript assets"
 
 log "Deployment completed successfully"
 git -C "${PROJECT_DIR}" log -1 --oneline

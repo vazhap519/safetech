@@ -38,11 +38,13 @@ Other supported overrides are:
 - `SAFETECH_PROJECT_DIR`
 - `SAFETECH_BACKEND_DIR`
 - `SAFETECH_FRONTEND_DIR`
+- `SAFETECH_STATIC_DIR`
 - `SAFETECH_BRANCH`
 - `SAFETECH_REMOTE`
 - `SAFETECH_SITE_URL`
 - `SAFETECH_API_URL`
 - `SAFETECH_WEB_USER`
 - `SAFETECH_WEB_GROUP`
+- `SAFETECH_NGINX_CACHE_DIR`
 
 The script deliberately does not overwrite Nginx or systemd configuration.
