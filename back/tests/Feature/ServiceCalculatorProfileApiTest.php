@@ -10,6 +10,21 @@ class ServiceCalculatorProfileApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_it_returns_default_profiles_when_the_service_catalog_is_empty(): void
+    {
+        $this->getJson('/api/service-calculator/profiles?locale=en')
+            ->assertOk()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('data.0.slug', 'cctv')
+            ->assertJsonPath('data.0.name', 'CCTV');
+
+        $this->getJson('/api/service-calculator/profiles?locale=en&service=networking')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.slug', 'networking')
+            ->assertJsonPath('data.0.name', 'Networking');
+    }
+
     public function test_it_returns_a_localized_dynamic_calculator_profile(): void
     {
         Service::query()->create([

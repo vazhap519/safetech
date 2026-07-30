@@ -34,7 +34,7 @@ class EstimateResource extends Resource
 
     protected static ?string $pluralModelLabel = 'შეფასებები';
 
-    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Sales;
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCalculator;
 

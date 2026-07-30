@@ -9,7 +9,11 @@ import { useLocalization } from "@/components/providers/LocalizationProvider";
 import Image from "@/components/ui/Image";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 import { localizePath } from "@/lib/locales";
-import { buildPrimaryNavigation, primaryNavigation } from "@/lib/navigation";
+import {
+    buildPrimaryNavigation,
+    calculatorNavigationItem,
+    primaryNavigation,
+} from "@/lib/navigation";
 
 type NavbarClientProps = {
     logo: string | null;
@@ -48,6 +52,13 @@ export default function NavbarClient({
             label: t(item.key, item.fallback),
         }))
         .filter((item) => item.label);
+    const calculatorItem = {
+        ...calculatorNavigationItem,
+        label: t(
+            calculatorNavigationItem.key,
+            calculatorNavigationItem.fallback,
+        ),
+    };
     const hasBrand = Boolean(logo || siteName);
 
     useEffect(() => {
@@ -109,6 +120,43 @@ export default function NavbarClient({
                 <ul className="ml-auto hidden items-center gap-4 xl:flex min-[1440px]:gap-5">
                     {navigationItems.map((item) => {
                         const isCurrent = isCurrentPage(item.href);
+
+                        if (item.href === "/services") {
+                            const servicesCurrent =
+                                isCurrent || isCurrentPage(calculatorItem.href);
+
+                            return (
+                                <li key={item.href}>
+                                    <details className="group relative">
+                                        <summary
+                                            aria-current={servicesCurrent ? "page" : undefined}
+                                            className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 whitespace-nowrap font-label-md text-[13px] font-semibold text-on-surface-variant transition-colors marker:hidden hover:text-primary aria-[current=page]:text-primary min-[1440px]:text-sm"
+                                        >
+                                            {item.label}
+                                            <span
+                                                aria-hidden="true"
+                                                className="text-base transition-transform group-open:rotate-180"
+                                            >
+                                                ▾
+                                            </span>
+                                        </summary>
+                                        <div className="absolute left-0 top-12 hidden min-w-56 rounded-lg border border-outline-variant/20 bg-surface/98 p-2 shadow-2xl backdrop-blur-2xl group-open:grid">
+                                            {[item, calculatorItem].map((child) => (
+                                                <LocalizedLink
+                                                    aria-current={isCurrentPage(child.href) ? "page" : undefined}
+                                                    className="flex min-h-11 items-center rounded-md px-4 text-sm font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary aria-[current=page]:text-primary"
+                                                    href={child.href}
+                                                    key={child.href}
+                                                    prefetch={false}
+                                                >
+                                                    {child.label}
+                                                </LocalizedLink>
+                                            ))}
+                                        </div>
+                                    </details>
+                                </li>
+                            );
+                        }
 
                         return (
                             <li
@@ -173,6 +221,33 @@ export default function NavbarClient({
                         <ul className="flex flex-col gap-4">
                             {navigationItems.map((item) => (
                                 <li key={item.href}>
+                                    {item.href === "/services" ? (
+                                        <details className="group">
+                                            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-on-surface-variant marker:hidden transition-colors hover:text-primary">
+                                                {item.label}
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="transition-transform group-open:rotate-180"
+                                                >
+                                                    ▾
+                                                </span>
+                                            </summary>
+                                            <div className="ml-3 grid border-l border-outline-variant/20 pl-4">
+                                                {[item, calculatorItem].map((child) => (
+                                                    <LocalizedLink
+                                                        aria-current={isCurrentPage(child.href) ? "page" : undefined}
+                                                        className="flex min-h-11 items-center text-sm text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary"
+                                                        href={child.href}
+                                                        key={child.href}
+                                                        onClick={closeMobileMenu}
+                                                        prefetch={false}
+                                                    >
+                                                        {child.label}
+                                                    </LocalizedLink>
+                                                ))}
+                                            </div>
+                                        </details>
+                                    ) : (
                                     <LocalizedLink
                                         aria-current={isCurrentPage(item.href) ? "page" : undefined}
                                         className="flex min-h-11 items-center text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary"
@@ -182,6 +257,7 @@ export default function NavbarClient({
                                     >
                                         {item.label}
                                     </LocalizedLink>
+                                    )}
                                 </li>
                             ))}
                             <li className="pt-2">

@@ -10,15 +10,6 @@ const basePrimaryNavigation = [
         fallback: { ka: "სერვისები", en: "Services", ru: "Услуги" },
     },
     {
-        href: "/service-calculator",
-        key: "nav.calculator",
-        fallback: {
-            ka: "კალკულატორი",
-            en: "Calculator",
-            ru: "Калькулятор",
-        },
-    },
-    {
         href: "/projects",
         key: "nav.projects",
         fallback: { ka: "პროექტები", en: "Projects", ru: "Проекты" },
@@ -45,10 +36,31 @@ const basePrimaryNavigation = [
     },
 ] as const;
 
+export const calculatorNavigationItem = {
+    href: "/service-calculator",
+    key: "nav.calculator",
+    fallback: {
+        ka: "კალკულატორი",
+        en: "Calculator",
+        ru: "Калькулятор",
+    },
+} as const;
+
 export function buildPrimaryNavigation(showShop = true) {
     return showShop
         ? basePrimaryNavigation
         : basePrimaryNavigation.filter((item) => item.href !== "/shop");
+}
+
+export function buildFooterNavigation(showShop = true) {
+    const navigation = buildPrimaryNavigation(showShop);
+    const servicesIndex = navigation.findIndex((item) => item.href === "/services");
+
+    return [
+        ...navigation.slice(0, servicesIndex + 1),
+        calculatorNavigationItem,
+        ...navigation.slice(servicesIndex + 1),
+    ];
 }
 
 export const primaryNavigation = buildPrimaryNavigation();

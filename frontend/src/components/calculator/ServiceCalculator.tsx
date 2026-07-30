@@ -230,9 +230,21 @@ export default function ServiceCalculator({
     );
 
     const copy = {
-        eyebrow: t("calculator.hero.eyebrow", null),
-        title: t("calculator.hero.title", null),
-        description: t("calculator.hero.description", null),
+        eyebrow: t("calculator.hero.eyebrow", {
+            ka: "სერვისების კალკულატორი",
+            en: "Service calculator",
+            ru: "Калькулятор услуг",
+        }),
+        title: t("calculator.hero.title", {
+            ka: "გამოთვალეთ პროექტის საორიენტაციო ბიუჯეტი",
+            en: "Estimate your project budget",
+            ru: "Рассчитайте ориентировочный бюджет проекта",
+        }),
+        description: t("calculator.hero.description", {
+            ka: "აირჩიეთ სერვისი და მიუთითეთ პროექტის ძირითადი პარამეტრები.",
+            en: "Choose a service and enter the main project parameters.",
+            ru: "Выберите услугу и укажите основные параметры проекта.",
+        }),
         embeddedTitle: t("calculator.embed.title", {
             ka: "Advanced service calculator",
             en: "Advanced service calculator",
@@ -344,7 +356,7 @@ export default function ServiceCalculator({
             ru: "Контакты",
         }),
         empty: t("calculator.empty", {
-            ka: "კალკულატორის პროფილები ჯერ არ არის დამატებული. ჩართეთ სასურველი სერვისი ადმინის პანელიდან.",
+            ka: "კალკულატორი დროებით მიუწვდომელია. გთხოვთ, მოგვიანებით სცადოთ ან დაგვიკავშირდეთ.",
             en: "No calculator profiles are available yet. Enable a service from the admin panel.",
             ru: "Профили калькулятора пока не добавлены. Включите услугу в панели администратора.",
         }),
