@@ -101,7 +101,7 @@ log "Building frontend"
 npm --prefix "${FRONTEND_DIR}" ci
 npm --prefix "${FRONTEND_DIR}" audit --omit=dev --audit-level=high
 npm --prefix "${FRONTEND_DIR}" run check
-npm --prefix "${FRONTEND_DIR}" prune --omit=dev
+npm --prefix "${FRONTEND_DIR}" prune --omit=dev --no-package-lock
 
 [[ -s "${FRONTEND_DIR}/.next/BUILD_ID" ]] \
     || fail "Next.js production build did not create .next/BUILD_ID"
