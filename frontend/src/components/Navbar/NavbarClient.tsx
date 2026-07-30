@@ -217,13 +217,13 @@ export default function NavbarClient({
                             />
                         </svg>
                     </summary>
-                    <div className="absolute right-0 top-14 hidden w-[min(20rem,calc(100vw-2.5rem))] rounded-lg border border-outline-variant/20 bg-surface/98 p-5 shadow-2xl backdrop-blur-2xl group-open:block">
+                    <div className="absolute right-0 top-14 hidden max-h-[calc(100dvh-6.5rem)] w-[min(20rem,calc(100vw-2.5rem))] overflow-y-auto rounded-lg border border-white/10 bg-[#0b111c] p-5 text-white shadow-2xl shadow-black/50 group-open:block">
                         <ul className="flex flex-col gap-4">
                             {navigationItems.map((item) => (
                                 <li key={item.href}>
                                     {item.href === "/services" ? (
                                         <details className="group">
-                                            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-on-surface-variant marker:hidden transition-colors hover:text-primary">
+                                            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-slate-200 marker:hidden transition-colors hover:text-primary">
                                                 {item.label}
                                                 <span
                                                     aria-hidden="true"
@@ -232,11 +232,11 @@ export default function NavbarClient({
                                                     ▾
                                                 </span>
                                             </summary>
-                                            <div className="ml-3 grid border-l border-outline-variant/20 pl-4">
+                                            <div className="ml-3 grid border-l border-white/15 pl-4">
                                                 {[item, calculatorItem].map((child) => (
                                                     <LocalizedLink
                                                         aria-current={isCurrentPage(child.href) ? "page" : undefined}
-                                                        className="flex min-h-11 items-center text-sm text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary"
+                                                        className="flex min-h-11 items-center text-sm text-slate-300 transition-colors hover:text-primary aria-[current=page]:text-primary"
                                                         href={child.href}
                                                         key={child.href}
                                                         onClick={closeMobileMenu}
@@ -250,7 +250,7 @@ export default function NavbarClient({
                                     ) : (
                                     <LocalizedLink
                                         aria-current={isCurrentPage(item.href) ? "page" : undefined}
-                                        className="flex min-h-11 items-center text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary"
+                                        className="flex min-h-11 items-center text-slate-200 transition-colors hover:text-primary aria-[current=page]:text-primary"
                                         href={item.href}
                                         onClick={closeMobileMenu}
                                         prefetch={false}
