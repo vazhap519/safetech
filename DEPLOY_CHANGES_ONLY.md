@@ -1,32 +1,48 @@
-# SafeTech Change Deploy Commands
+# SafeTech production deployment
 
-Quick commands for updating production from the single `main` branch.
-The only deployment script that should be executed on the server is `deploy.sh`.
+The production checkout is deployed in place:
 
-## 1. Update the source checkout on the server
+```text
+/var/www/safetech/
+├── back/
+├── frontend/
+└── deploy.sh
+```
+
+Run the deployment as root. The script verifies that the checkout is clean,
+updates the `main` branch with a fast-forward-only pull, installs dependencies,
+runs Laravel migrations and production checks, builds Next.js, restarts the
+configured services, and performs smoke checks.
 
 ```bash
 sudo -i
-cd /var/www/safetech-source
-git fetch --prune origin
-git checkout main
-git pull --ff-only origin main
+cd /var/www/safetech
+git status --short
+bash ./deploy.sh
 ```
 
-## 2. Run the deployment script
+If `git status --short` prints any files, do not discard them blindly. Resolve
+or preserve those server-side changes before deploying.
+
+The defaults match the directory layout above. Override them only when the
+server uses different values:
 
 ```bash
-sudo bash /var/www/safetech-source/deploy.sh
+SAFETECH_FRONTEND_SERVICE=my-frontend.service \
+SAFETECH_QUEUE_SERVICE=my-queue.service \
+bash /var/www/safetech/deploy.sh
 ```
 
-## 3. Quick checks after deploy
+Other supported overrides are:
 
-```bash
-systemctl status safetech-frontend safetech-queue --no-pager
-curl -I https://safetech.ge/
-curl -I https://safetech.ge/shop
-curl -I https://safetech.ge/sitemap.xml
-curl -I https://safetech.ge/sitemap-product-categories.xml
-curl -I https://safetech.ge/sitemap-products.xml
-curl -I https://api.safetech.ge/api/health
-```
+- `SAFETECH_PROJECT_DIR`
+- `SAFETECH_BACKEND_DIR`
+- `SAFETECH_FRONTEND_DIR`
+- `SAFETECH_BRANCH`
+- `SAFETECH_REMOTE`
+- `SAFETECH_SITE_URL`
+- `SAFETECH_API_URL`
+- `SAFETECH_WEB_USER`
+- `SAFETECH_WEB_GROUP`
+
+The script deliberately does not overwrite Nginx or systemd configuration.
