@@ -66,7 +66,7 @@ if [[ "${EUID}" -ne 0 ]]; then
     fail "run this script with sudo/root privileges"
 fi
 
-required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown)
+required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown timeout nice)
 for command_name in "${required_commands[@]}"; do
     command -v "${command_name}" >/dev/null 2>&1 \
         || fail "missing required command: ${command_name}"
@@ -116,11 +116,43 @@ php "${BACKEND_DIR}/artisan" storage:link --force
 php "${BACKEND_DIR}/artisan" optimize
 php "${BACKEND_DIR}/artisan" queue:restart
 
-log "Building frontend"
+log "Cleaning previous frontend build"
+rm -rf "${FRONTEND_DIR}/.next"
+rm -rf "/tmp/safetech-eslint-cache"
+rm -f "${FRONTEND_DIR}/.eslintcache"
+mkdir -p "/tmp/safetech-eslint-cache"
+
+log "Installing frontend dependencies"
 npm --prefix "${FRONTEND_DIR}" ci
 npm --prefix "${FRONTEND_DIR}" audit --omit=dev --audit-level=high
-npm --prefix "${FRONTEND_DIR}" run check
-npm --prefix "${FRONTEND_DIR}" prune --omit=dev --no-package-lock
+
+log "Linting frontend"
+(
+    cd "${FRONTEND_DIR}"
+
+    timeout 20m ./node_modules/.bin/eslint . \
+        --ignore-pattern '.next/**' \
+        --ignore-pattern 'node_modules/**' \
+        --ignore-pattern 'out/**' \
+        --ignore-pattern 'dist/**' \
+        --ignore-pattern 'coverage/**' \
+        --cache \
+        --cache-location '/tmp/safetech-eslint-cache/.eslintcache'
+)
+
+log "Type-checking frontend"
+timeout 20m npm --prefix "${FRONTEND_DIR}" run typecheck
+
+log "Building frontend with Webpack"
+NEXT_TELEMETRY_DISABLED=1 \
+NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=1536}" \
+nice -n 10 npm --prefix "${FRONTEND_DIR}" run build -- --webpack
+
+npm --prefix "${FRONTEND_DIR}" prune \
+    --omit=dev \
+    --no-package-lock \
+    --no-audit \
+    --no-fund
 
 [[ -s "${FRONTEND_DIR}/.next/BUILD_ID" ]] \
     || fail "Next.js production build did not create .next/BUILD_ID"
