@@ -2,14 +2,12 @@
 
 namespace Database\Seeders;
 
-final class DemoContentSeeder extends ContentSeeder
+use Illuminate\Database\Seeder;
+
+final class DemoContentSeeder extends Seeder
 {
     public function run(): void
     {
-        if (app()->environment('production') || ! config('app.seed_demo_content')) {
-            return;
-        }
-
-        $this->seedDemoContent();
+        // Demo content has been removed from this project.
     }
 }
