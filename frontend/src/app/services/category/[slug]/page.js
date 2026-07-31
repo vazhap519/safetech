@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import ServicesPage from "@/app/services/page";
+import ServicesPageContent from "@/components/pages/ServicesPageContent";
 import CategorySeoContent from "@/components/seo/CategorySeoContent";
 import {
   createCategoryMetadataGenerator,
@@ -17,7 +17,7 @@ export default async function CategoryPage({ params }) {
 
   return (
     <>
-      <ServicesPage searchParams={{ category: slug }} showPageSchema={false} />
+      <ServicesPageContent searchParams={{ category: slug }} showPageSchema={false} />
       <CategorySeoContent category={category} locale={locale} path={path} />
     </>
   );
