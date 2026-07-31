@@ -1,8 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\AnalyticsEventController;
-use App\Http\Controllers\Api\BlogController;
-use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContactLeadController;
 use App\Http\Controllers\Api\PrivacyController;
 use App\Http\Controllers\Api\ProductCategoryController;
@@ -33,9 +31,6 @@ Route::get('/seo', [SeoController::class, 'index'])->name('api.seo.index');
 Route::get('/seo/{key}', [SeoController::class, 'show'])->name('api.seo.show');
 Route::get('/settings', [SettingsController::class, 'index'])->name('api.settings.index');
 Route::get('/privacy', [PrivacyController::class, 'index'])->name('api.privacy.index');
-Route::get('/blog', [BlogController::class, 'index'])->name('api.blog.index');
-Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('api.blog.show');
-Route::get('/categories', CategoryController::class)->name('api.categories.index');
 Route::get('/service-categories', ServiceCategoryController::class)
     ->name('api.service-categories.index');
 Route::get('/project-categories', ProjectCategoryController::class)
