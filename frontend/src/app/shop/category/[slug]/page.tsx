@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import ShopPage from "@/app/shop/page";
+import ShopPageContent from "@/components/pages/ShopPageContent";
 import CategorySeoContent from "@/components/seo/CategorySeoContent";
 import {
     createCategoryMetadataGenerator,
@@ -14,9 +14,7 @@ export default async function ShopCategoryPage({
     searchParams,
 }: {
     params: Promise<{ slug: string }>;
-    searchParams?:
-        | Promise<Record<string, string | string[] | undefined>>
-        | Record<string, string | string[] | undefined>;
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
     const { slug } = await params;
     const paramsFromQuery = (await searchParams) ?? {};
@@ -28,7 +26,7 @@ export default async function ShopCategoryPage({
 
     return (
         <>
-            <ShopPage
+            <ShopPageContent
                 searchParams={{ ...paramsFromQuery, category: slug }}
                 showPageSchema={false}
             />
