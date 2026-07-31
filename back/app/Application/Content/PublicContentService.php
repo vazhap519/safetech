@@ -4,7 +4,6 @@ namespace App\Application\Content;
 
 use App\Models\Faq;
 use App\Models\Partner;
-use App\Models\Product;
 use App\Models\Project;
 use App\Models\Service;
 use App\Models\SiteSetting;
@@ -13,7 +12,6 @@ use App\Support\MultilingualContent;
 use App\Support\PublicContentCache;
 use App\Support\SiteSettingValueNormalizer;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
 
 final class PublicContentService
 {
@@ -25,34 +23,32 @@ final class PublicContentService
             )->all();
 
             $settings['translations'] = $this->buildTranslations($settings['translations'] ?? null);
-            $settings['features'] = array_merge(
-                is_array($settings['features'] ?? null) ? $settings['features'] : [],
-                [
-                    'shop_enabled' => $this->shopFeatureEnabled(),
-                ],
-            );
 
             return [
                 'team' => TeamMember::query()->active()->get()->map(fn (TeamMember $member) => [
                     'id' => $member->id,
-                    'firstName' => $member->first_name, 'lastName' => $member->last_name,
-                    'position' => $member->position, 'image' => $member->image, 'bio' => $member->bio,
+                    'firstName' => $member->first_name,
+                    'lastName' => $member->last_name,
+                    'position' => $member->position,
+                    'image' => $member->image,
+                    'bio' => $member->bio,
                     'socials' => $member->socials ?? [],
                 ])->values()->all(),
-                'partners' => Partner::query()->active()->get()->map->only(['name', 'logo', 'url', 'category'])->values()->all(),
-                'faqs' => Faq::query()->active()->whereNull('service_id')->get()->map->only(['id', 'question', 'answer', 'context'])->values()->all(),
+                'partners' => Partner::query()->active()->get()->map->only([
+                    'name',
+                    'logo',
+                    'url',
+                    'category',
+                ])->values()->all(),
+                'faqs' => Faq::query()->active()->whereNull('service_id')->get()->map->only([
+                    'id',
+                    'question',
+                    'answer',
+                    'context',
+                ])->values()->all(),
                 'settings' => $settings,
             ];
         });
-    }
-
-    private function shopFeatureEnabled(): bool
-    {
-        if (! Schema::hasTable('products')) {
-            return false;
-        }
-
-        return Product::query()->publiclyVisible()->exists();
     }
 
     private function sanitizeSetting(SiteSetting $setting): mixed
