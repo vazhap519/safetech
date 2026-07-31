@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import ProjectsPage from "@/app/projects/page";
+import ProjectsPageContent from "@/components/pages/ProjectsPageContent";
 import CategorySeoContent from "@/components/seo/CategorySeoContent";
 import {
   createCategoryMetadataGenerator,
@@ -17,7 +17,7 @@ export default async function ProjectCategoryPage({ params }) {
 
   return (
     <>
-      <ProjectsPage searchParams={{ category: slug }} showPageSchema={false} />
+      <ProjectsPageContent searchParams={{ category: slug }} showPageSchema={false} />
       <CategorySeoContent category={category} locale={locale} path={path} />
     </>
   );
