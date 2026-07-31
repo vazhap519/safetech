@@ -20,11 +20,6 @@ const basePrimaryNavigation = [
         fallback: { ka: "მაღაზია", en: "Shop", ru: "Магазин" },
     },
     {
-        href: "/blog",
-        key: "nav.blog",
-        fallback: { ka: "ბლოგი", en: "Blog", ru: "Блог" },
-    },
-    {
         href: "/about",
         key: "nav.about",
         fallback: { ka: "ჩვენ შესახებ", en: "About", ru: "О нас" },
