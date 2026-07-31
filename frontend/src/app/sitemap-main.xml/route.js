@@ -45,7 +45,6 @@ export async function GET() {
     { key: "about", path: "/about", changefreq: "monthly", priority: "0.6" },
     { key: "services", path: "/services", changefreq: "weekly", priority: "0.9" },
     { key: "service-calculator", path: "/service-calculator", changefreq: "weekly", priority: "0.8" },
-    { key: "blog", path: "/blog", changefreq: "weekly", priority: "0.7" },
     { key: "projects", path: "/projects", changefreq: "weekly", priority: "0.7" },
     { key: "shop", path: "/shop", changefreq: "weekly", priority: "0.8" },
     { key: "contact", path: "/contact", changefreq: "monthly", priority: "0.5" },
