@@ -34,17 +34,18 @@ const EMPTY_BREAKDOWN: CalculatorEstimateBreakdown = {
 function money(value: number, currency: string, locale: string) {
     const normalized = Number.isFinite(value) ? Math.max(0, value) : 0;
     const [whole, decimals] = normalized.toFixed(2).split(".");
-    const groupSeparator = locale === "en" ? "," : " ";
-    const decimalSeparator = locale === "en" ? "." : ",";
-    const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, groupSeparator);
+    const grouped = whole.replace(
+        /\B(?=(\d{3})+(?!\d))/g,
+        locale === "en" ? "," : " ",
+    );
     const amount = decimals === "00"
         ? grouped
-        : `${grouped}${decimalSeparator}${decimals}`;
+        : `${grouped}${locale === "en" ? "." : ","}${decimals}`;
 
-    return `${amount} ${currency}`.trim();
+    return `${amount} ${currency}`;
 }
 
-function CalculatorSelect({
+function SelectControl({
     label,
     onChange,
     options,
@@ -61,7 +62,7 @@ function CalculatorSelect({
         <label className="grid gap-2 text-sm text-on-surface-variant">
             <span>{label}</span>
             <select
-                className="min-h-12 rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 text-on-surface outline-none transition-colors focus:border-primary"
+                className="min-h-12 rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 text-on-surface outline-none focus:border-primary"
                 onChange={(event) => onChange(event.target.value)}
                 value={value}
             >
@@ -75,17 +76,17 @@ function CalculatorSelect({
     );
 }
 
-function FieldControl({
+function DynamicField({
     field,
-    value,
     onChange,
+    value,
 }: {
     field: CalculatorField;
-    value: string | number | boolean;
     onChange: (value: string | number | boolean) => void;
+    value: string | number | boolean;
 }) {
-    const baseClass =
-        "min-h-12 w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition-colors focus:border-primary";
+    const inputClass =
+        "min-h-12 w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none focus:border-primary";
 
     if (field.type === "checkbox") {
         return (
@@ -112,7 +113,7 @@ function FieldControl({
 
             {field.type === "select" ? (
                 <select
-                    className={baseClass}
+                    className={inputClass}
                     onChange={(event) => onChange(event.target.value)}
                     required={field.required}
                     value={String(value ?? "")}
@@ -125,7 +126,7 @@ function FieldControl({
                 </select>
             ) : field.type === "textarea" ? (
                 <textarea
-                    className={`${baseClass} min-h-28 resize-y`}
+                    className={`${inputClass} min-h-28 resize-y`}
                     onChange={(event) => onChange(event.target.value)}
                     placeholder={field.placeholder}
                     required={field.required}
@@ -134,7 +135,7 @@ function FieldControl({
             ) : (
                 <div className="relative">
                     <input
-                        className={`${baseClass} ${field.unit ? "pr-16" : ""}`}
+                        className={`${inputClass} ${field.unit ? "pr-16" : ""}`}
                         max={field.max ?? undefined}
                         min={field.min ?? undefined}
                         onChange={(event) => onChange(event.target.value)}
@@ -157,21 +158,33 @@ function FieldControl({
     );
 }
 
-function componentCategoryLabel(
-    category: string,
-    locale: string,
-): string {
+function SummaryRow({
+    label,
+    value,
+}: {
+    label: string;
+    value: string;
+}) {
+    return (
+        <div className="flex items-center justify-between gap-4">
+            <dt className="text-on-surface-variant">{label}</dt>
+            <dd className="font-medium text-on-surface">{value}</dd>
+        </div>
+    );
+}
+
+function componentCategoryLabel(category: string, locale: string) {
     const labels: Record<string, Record<string, string>> = {
         camera: { ka: "კამერა", en: "Camera", ru: "Камера" },
         recorder: { ka: "ჩამწერი", en: "Recorder", ru: "Регистратор" },
         storage: { ka: "საცავი", en: "Storage", ru: "Накопитель" },
         network: { ka: "ქსელი", en: "Network", ru: "Сеть" },
-        cabling: { ka: "კაბელირება", en: "Cabling", ru: "Кабель" },
+        cabling: { ka: "კაბელი", en: "Cabling", ru: "Кабель" },
         accessory: { ka: "აქსესუარი", en: "Accessory", ru: "Аксессуар" },
         labor: { ka: "სამუშაო", en: "Labor", ru: "Работа" },
         power: { ka: "კვება", en: "Power", ru: "Питание" },
-        lock: { ka: "საკეტი", en: "Lock", ru: "Замок" },
         intercom: { ka: "ინტერკომი", en: "Intercom", ru: "Домофон" },
+        lock: { ka: "საკეტი", en: "Lock", ru: "Замок" },
         server: { ka: "სერვერი", en: "Server", ru: "Сервер" },
     };
 
@@ -183,9 +196,9 @@ export default function ServiceCalculator({
     initialService,
 }: ServiceCalculatorProps) {
     const { locale, t } = useLocalization();
-    const initialProfile =
-        profiles.find((profile) => profile.slug === initialService) ?? profiles[0];
-    const [serviceSlug, setServiceSlug] = useState(initialProfile?.slug ?? "");
+    const defaultProfile =
+        profiles.find((item) => item.slug === initialService) ?? profiles[0];
+    const [serviceSlug, setServiceSlug] = useState(defaultProfile?.slug ?? "");
     const profile =
         profiles.find((item) => item.slug === serviceSlug) ?? profiles[0];
     const [valuesByService, setValuesByService] = useState<
@@ -222,8 +235,9 @@ export default function ServiceCalculator({
             ]),
         ),
     );
-    const [componentSelectionsByService, setComponentSelectionsByService] =
-        useState<Record<string, Record<string, CalculatorSelection>>>({});
+    const [selectionsByService, setSelectionsByService] = useState<
+        Record<string, Record<string, CalculatorSelection>>
+    >({});
 
     const values = useMemo(
         () => (profile ? valuesByService[profile.slug] ?? EMPTY_VALUES : EMPTY_VALUES),
@@ -258,9 +272,10 @@ export default function ServiceCalculator({
                 : [],
         [profile, values, projectSize, propertyType, packageKey],
     );
-    const componentSelections = profile
-        ? componentSelectionsByService[profile.slug] ?? {}
-        : {};
+    const selections = useMemo(
+        () => (profile ? selectionsByService[profile.slug] ?? {} : {}),
+        [profile, selectionsByService],
+    );
     const totals = useMemo(
         () =>
             profile
@@ -268,7 +283,7 @@ export default function ServiceCalculator({
                       profile,
                       estimate,
                       compatibleComponents,
-                      componentSelections,
+                      selections,
                   )
                 : {
                       serviceSubtotal: 0,
@@ -280,7 +295,7 @@ export default function ServiceCalculator({
                       total: 0,
                       monthlyTotal: 0,
                   },
-        [profile, estimate, compatibleComponents, componentSelections],
+        [profile, estimate, compatibleComponents, selections],
     );
 
     const copy = {
@@ -295,9 +310,9 @@ export default function ServiceCalculator({
             ru: "Калькулятор и конфигуратор услуг",
         }),
         description: t("calculator.embed.description", {
-            ka: "აირჩიეთ სერვისი და პარამეტრები. სისტემა ავტომატურად შემოგთავაზებთ თავსებად მოწყობილობებსა და სამუშაოებს.",
-            en: "Choose a service and its parameters. The system automatically recommends compatible equipment and labor.",
-            ru: "Выберите услугу и параметры. Система автоматически предложит совместимое оборудование и работы.",
+            ka: "აირჩიეთ სერვისი და პარამეტრები. სისტემა ავტომატურად შემოგთავაზებთ თავსებად მოწყობილობებს, მასალებსა და სამუშაოებს.",
+            en: "Choose a service and its parameters. Compatible equipment, materials and labor are recommended automatically.",
+            ru: "Выберите услугу и параметры. Совместимое оборудование, материалы и работы будут предложены автоматически.",
         }),
         service: t("calculator.form.service", {
             ka: "მომსახურების ტიპი",
@@ -325,7 +340,7 @@ export default function ServiceCalculator({
             ru: "Совместимые компоненты и работы",
         }),
         componentsDescription: t("calculator.components.description", {
-            ka: "რეკომენდაციები იცვლება არჩეული რაოდენობის, ტექნოლოგიისა და მახასიათებლების მიხედვით.",
+            ka: "რეკომენდაციები იცვლება რაოდენობის, ტექნოლოგიისა და არჩეული მახასიათებლების მიხედვით.",
             en: "Recommendations change according to quantity, technology and selected specifications.",
             ru: "Рекомендации меняются в зависимости от количества, технологии и характеристик.",
         }),
@@ -334,17 +349,17 @@ export default function ServiceCalculator({
             en: "Quantity",
             ru: "Количество",
         }),
-        serviceSubtotal: t("calculator.summary.service", {
+        servicePrice: t("calculator.summary.service", {
             ka: "მომსახურების საფასური",
             en: "Service price",
             ru: "Стоимость услуги",
         }),
-        componentsSubtotal: t("calculator.summary.components", {
+        componentPrice: t("calculator.summary.components", {
             ka: "კომპონენტების საფასური",
             en: "Component cost",
             ru: "Стоимость компонентов",
         }),
-        laborSubtotal: t("calculator.summary.labor", {
+        laborPrice: t("calculator.summary.labor", {
             ka: "ფიქსირებული სამუშაოს საფასური",
             en: "Fixed labor fee",
             ru: "Фиксированная стоимость работ",
@@ -369,7 +384,7 @@ export default function ServiceCalculator({
             en: "Monthly service",
             ru: "Ежемесячное обслуживание",
         }),
-        breakdown: t("calculator.summary.breakdown", {
+        configuration: t("calculator.summary.configuration", {
             ka: "არჩეული კონფიგურაცია",
             en: "Selected configuration",
             ru: "Выбранная конфигурация",
@@ -379,83 +394,76 @@ export default function ServiceCalculator({
             en: "Request an exact quote",
             ru: "Запросить точное предложение",
         }),
-        emptyComponents: t("calculator.components.empty", {
-            ka: "ამ არჩევანისთვის თავსებადი კომპონენტი ჯერ არ არის დამატებული. ადმინისტრატორს შეუძლია კატალოგის შევსება.",
-            en: "No compatible components are configured for this selection yet. The administrator can extend the catalog.",
-            ru: "Для этого выбора пока не настроены совместимые компоненты. Администратор может дополнить каталог.",
+        noComponents: t("calculator.components.empty", {
+            ka: "ამ არჩევანისთვის თავსებადი კომპონენტი ჯერ არ არის დამატებული.",
+            en: "No compatible components are configured for this selection yet.",
+            ru: "Для этого выбора пока не настроены совместимые компоненты.",
         }),
     };
 
     if (!profile) return null;
 
     const updateField = (
-        fieldKey: string,
+        key: string,
         nextValue: string | number | boolean,
     ) => {
         setValuesByService((current) => ({
             ...current,
             [profile.slug]: {
                 ...(current[profile.slug] ?? {}),
-                [fieldKey]: nextValue,
+                [key]: nextValue,
             },
         }));
     };
 
-    const updateComponentSelection = (
-        recommendation: CompatibleCalculatorComponent,
+    const selectionFor = (item: CompatibleCalculatorComponent) => {
+        const override = selections[item.component.key];
+
+        return {
+            selected: item.component.required
+                ? true
+                : override?.selected ?? item.component.recommended,
+            quantity: override?.quantity ?? item.quantity,
+        };
+    };
+
+    const updateSelection = (
+        item: CompatibleCalculatorComponent,
         update: Partial<CalculatorSelection>,
     ) => {
-        const { component, quantity } = recommendation;
-
-        setComponentSelectionsByService((current) => {
+        setSelectionsByService((current) => {
             const serviceSelections = current[profile.slug] ?? {};
-            const previous = serviceSelections[component.key];
+            const previous = serviceSelections[item.component.key];
+            const selected = item.component.required
+                ? true
+                : (update.selected ??
+                  previous?.selected ??
+                  item.component.recommended);
 
             return {
                 ...current,
                 [profile.slug]: {
                     ...serviceSelections,
-                    [component.key]: {
-                        selected:
-                            component.required ||
-                            update.selected ??
-                            previous?.selected ??
-                            component.recommended,
+                    [item.component.key]: {
+                        selected,
                         quantity:
-                            update.quantity ?? previous?.quantity ?? quantity,
+                            update.quantity ?? previous?.quantity ?? item.quantity,
                     },
                 },
             };
         });
     };
 
-    const isComponentSelected = (
-        recommendation: CompatibleCalculatorComponent,
-    ) => {
-        const { component } = recommendation;
-        const override = componentSelections[component.key];
-
-        return component.required
-            ? true
-            : override?.selected ?? component.recommended;
-    };
-
-    const componentQuantity = (
-        recommendation: CompatibleCalculatorComponent,
-    ) =>
-        componentSelections[recommendation.component.key]?.quantity ??
-        recommendation.quantity;
-
-    const selectedComponents = compatibleComponents.filter((recommendation) =>
-        isComponentSelected(recommendation),
+    const selectedComponents = compatibleComponents.filter(
+        (item) => selectionFor(item).selected,
     );
 
     return (
         <section className="scroll-mt-28 pt-unit-2xl" id="service-calculator">
             <div className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container/70 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-                <div className="border-b border-outline-variant/20 bg-primary/5 px-5 py-7 sm:px-8 sm:py-9">
+                <header className="border-b border-outline-variant/20 bg-primary/5 px-5 py-7 sm:px-8 sm:py-9">
                     <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                        <Icon className="text-base" name="calculate" />
+                        <Icon name="calculate" />
                         {copy.eyebrow}
                     </div>
                     <h2 className="mt-4 max-w-4xl text-2xl font-semibold leading-tight text-on-surface sm:text-3xl">
@@ -464,15 +472,15 @@ export default function ServiceCalculator({
                     <p className="mt-3 max-w-4xl text-sm leading-6 text-on-surface-variant sm:text-base">
                         {copy.description}
                     </p>
-                </div>
+                </header>
 
                 <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-start">
-                    <div className="space-y-9">
-                        <div className="space-y-7 rounded-2xl border border-outline-variant/20 bg-surface p-5 sm:p-6">
+                    <div className="space-y-8">
+                        <section className="space-y-7 rounded-2xl border border-outline-variant/20 bg-surface p-5 sm:p-6">
                             <label className="grid gap-2 text-sm text-on-surface-variant">
                                 <span>{copy.service}</span>
                                 <select
-                                    className="min-h-14 rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 text-base font-semibold text-on-surface outline-none transition-colors focus:border-primary"
+                                    className="min-h-14 rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 text-base font-semibold text-on-surface outline-none focus:border-primary"
                                     onChange={(event) => setServiceSlug(event.target.value)}
                                     value={profile.slug}
                                 >
@@ -491,7 +499,7 @@ export default function ServiceCalculator({
                             ) : null}
 
                             <div className="grid gap-5 sm:grid-cols-2">
-                                <CalculatorSelect
+                                <SelectControl
                                     label={profile.projectSize.label}
                                     onChange={(value) =>
                                         setProjectSizes((current) => ({
@@ -502,7 +510,7 @@ export default function ServiceCalculator({
                                     options={profile.projectSize.options}
                                     value={projectSize}
                                 />
-                                <CalculatorSelect
+                                <SelectControl
                                     label={profile.propertyType.label}
                                     onChange={(value) =>
                                         setPropertyTypes((current) => ({
@@ -515,38 +523,36 @@ export default function ServiceCalculator({
                                 />
                             </div>
 
-                            {profile.fields.length ? (
-                                <div className="grid gap-5 sm:grid-cols-2">
-                                    {profile.fields.map((field) => (
-                                        <div
-                                            className={
-                                                field.type === "textarea"
-                                                    ? "sm:col-span-2"
-                                                    : ""
+                            <div className="grid gap-5 sm:grid-cols-2">
+                                {profile.fields.map((field) => (
+                                    <div
+                                        className={
+                                            field.type === "textarea"
+                                                ? "sm:col-span-2"
+                                                : ""
+                                        }
+                                        key={field.key}
+                                    >
+                                        <DynamicField
+                                            field={field}
+                                            onChange={(value) =>
+                                                updateField(field.key, value)
                                             }
-                                            key={field.key}
-                                        >
-                                            <FieldControl
-                                                field={field}
-                                                onChange={(nextValue) =>
-                                                    updateField(field.key, nextValue)
-                                                }
-                                                value={values[field.key] ?? ""}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : null}
+                                            value={values[field.key] ?? ""}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
 
                             {profile.packages.length ? (
-                                <fieldset className="space-y-3">
+                                <fieldset>
                                     <legend className="mb-3 text-lg font-semibold text-on-surface">
                                         {copy.package}
                                     </legend>
                                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                                         {profile.packages.map((item) => (
                                             <label
-                                                className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-low/60 p-4 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/10"
+                                                className="flex cursor-pointer items-start gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-low/60 p-4 has-[:checked]:border-primary has-[:checked]:bg-primary/10"
                                                 key={item.key}
                                             >
                                                 <input
@@ -561,7 +567,7 @@ export default function ServiceCalculator({
                                                     }
                                                     type="radio"
                                                 />
-                                                <span className="min-w-0 flex-1">
+                                                <span className="min-w-0">
                                                     <span className="flex flex-wrap items-center gap-2 font-medium text-on-surface">
                                                         {item.title}
                                                         {item.recommended ? (
@@ -581,11 +587,11 @@ export default function ServiceCalculator({
                                     </div>
                                 </fieldset>
                             ) : null}
-                        </div>
+                        </section>
 
                         <section className="rounded-2xl border border-outline-variant/20 bg-surface p-5 sm:p-6">
                             <div className="flex items-start gap-3">
-                                <span className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
+                                <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
                                     <Icon name="inventory_2" />
                                 </span>
                                 <div>
@@ -600,17 +606,14 @@ export default function ServiceCalculator({
 
                             {compatibleComponents.length ? (
                                 <div className="mt-6 grid gap-3">
-                                    {compatibleComponents.map((recommendation) => {
-                                        const { component } = recommendation;
-                                        const selected =
-                                            isComponentSelected(recommendation);
-                                        const quantity =
-                                            componentQuantity(recommendation);
+                                    {compatibleComponents.map((item) => {
+                                        const { component } = item;
+                                        const selection = selectionFor(item);
 
                                         return (
                                             <article
-                                                className={`rounded-2xl border p-4 transition-colors ${
-                                                    selected
+                                                className={`rounded-2xl border p-4 ${
+                                                    selection.selected
                                                         ? "border-primary/40 bg-primary/5"
                                                         : "border-outline-variant/20 bg-surface-container-low/50"
                                                 }`}
@@ -619,18 +622,15 @@ export default function ServiceCalculator({
                                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                                     <label className="flex min-w-0 cursor-pointer items-start gap-3">
                                                         <input
-                                                            checked={selected}
+                                                            checked={selection.selected}
                                                             className="mt-1 size-5 accent-primary"
                                                             disabled={component.required}
                                                             onChange={(event) =>
-                                                                updateComponentSelection(
-                                                                    recommendation,
-                                                                    {
-                                                                        selected:
-                                                                            event.target
-                                                                                .checked,
-                                                                    },
-                                                                )
+                                                                updateSelection(item, {
+                                                                    selected:
+                                                                        event.target
+                                                                            .checked,
+                                                                })
                                                             }
                                                             type="checkbox"
                                                         />
@@ -666,13 +666,6 @@ export default function ServiceCalculator({
                                                                     profile.currency,
                                                                     locale,
                                                                 )}
-                                                                {component.monthlyPrice > 0
-                                                                    ? ` + ${money(
-                                                                          component.monthlyPrice,
-                                                                          profile.currency,
-                                                                          locale,
-                                                                      )} / ${copy.monthly}`
-                                                                    : ""}
                                                             </span>
                                                         </span>
                                                     </label>
@@ -681,25 +674,22 @@ export default function ServiceCalculator({
                                                         <span>{copy.quantity}</span>
                                                         <input
                                                             className="min-h-11 rounded-xl border border-outline-variant/30 bg-surface px-3 text-on-surface outline-none focus:border-primary disabled:opacity-50"
-                                                            disabled={!selected}
+                                                            disabled={!selection.selected}
                                                             min={0}
                                                             onChange={(event) =>
-                                                                updateComponentSelection(
-                                                                    recommendation,
-                                                                    {
-                                                                        quantity: Math.max(
-                                                                            0,
-                                                                            Number(
-                                                                                event.target
-                                                                                    .value,
-                                                                            ) || 0,
-                                                                        ),
-                                                                    },
-                                                                )
+                                                                updateSelection(item, {
+                                                                    quantity: Math.max(
+                                                                        0,
+                                                                        Number(
+                                                                            event.target
+                                                                                .value,
+                                                                        ) || 0,
+                                                                    ),
+                                                                })
                                                             }
                                                             step="1"
                                                             type="number"
-                                                            value={quantity}
+                                                            value={selection.quantity}
                                                         />
                                                     </label>
                                                 </div>
@@ -708,8 +698,8 @@ export default function ServiceCalculator({
                                     })}
                                 </div>
                             ) : (
-                                <p className="mt-6 rounded-xl border border-dashed border-outline-variant/40 px-4 py-6 text-sm leading-6 text-on-surface-variant">
-                                    {copy.emptyComponents}
+                                <p className="mt-6 rounded-xl border border-dashed border-outline-variant/40 px-4 py-6 text-sm text-on-surface-variant">
+                                    {copy.noComponents}
                                 </p>
                             )}
                         </section>
@@ -727,55 +717,41 @@ export default function ServiceCalculator({
                         </p>
 
                         <dl className="mt-6 space-y-3 border-t border-outline-variant/20 pt-5 text-sm">
-                            <div className="flex items-center justify-between gap-4">
-                                <dt className="text-on-surface-variant">
-                                    {copy.serviceSubtotal}
-                                </dt>
-                                <dd className="font-medium text-on-surface">
-                                    {money(
-                                        totals.serviceSubtotal,
-                                        profile.currency,
-                                        locale,
-                                    )}
-                                </dd>
-                            </div>
-                            <div className="flex items-center justify-between gap-4">
-                                <dt className="text-on-surface-variant">
-                                    {copy.componentsSubtotal}
-                                </dt>
-                                <dd className="font-medium text-on-surface">
-                                    {money(
-                                        totals.componentSubtotal,
-                                        profile.currency,
-                                        locale,
-                                    )}
-                                </dd>
-                            </div>
+                            <SummaryRow
+                                label={copy.servicePrice}
+                                value={money(
+                                    totals.serviceSubtotal,
+                                    profile.currency,
+                                    locale,
+                                )}
+                            />
+                            <SummaryRow
+                                label={copy.componentPrice}
+                                value={money(
+                                    totals.componentSubtotal,
+                                    profile.currency,
+                                    locale,
+                                )}
+                            />
                             {totals.laborSubtotal > 0 ? (
-                                <div className="flex items-center justify-between gap-4">
-                                    <dt className="text-on-surface-variant">
-                                        {copy.laborSubtotal}
-                                    </dt>
-                                    <dd className="font-medium text-on-surface">
-                                        {money(
-                                            totals.laborSubtotal,
-                                            profile.currency,
-                                            locale,
-                                        )}
-                                    </dd>
-                                </div>
+                                <SummaryRow
+                                    label={copy.laborPrice}
+                                    value={money(
+                                        totals.laborSubtotal,
+                                        profile.currency,
+                                        locale,
+                                    )}
+                                />
                             ) : null}
-                            <div className="flex items-center justify-between gap-4 border-t border-outline-variant/20 pt-3">
-                                <dt className="text-on-surface-variant">
-                                    {copy.subtotal}
-                                </dt>
-                                <dd className="font-medium text-on-surface">
-                                    {money(
+                            <div className="border-t border-outline-variant/20 pt-3">
+                                <SummaryRow
+                                    label={copy.subtotal}
+                                    value={money(
                                         totals.subtotalBeforeDiscount,
                                         profile.currency,
                                         locale,
                                     )}
-                                </dd>
+                                />
                             </div>
                             {totals.discountAmount > 0 ? (
                                 <div className="flex items-center justify-between gap-4 rounded-xl bg-success/10 px-3 py-2 text-success">
@@ -811,27 +787,26 @@ export default function ServiceCalculator({
                         {selectedComponents.length ? (
                             <div className="mt-6 border-t border-outline-variant/20 pt-5">
                                 <p className="text-sm font-semibold text-on-surface">
-                                    {copy.breakdown}
+                                    {copy.configuration}
                                 </p>
                                 <div className="mt-4 space-y-3">
-                                    {selectedComponents.map((recommendation) => {
-                                        const quantity =
-                                            componentQuantity(recommendation);
-                                        const { component } = recommendation;
+                                    {selectedComponents.map((item) => {
+                                        const selection = selectionFor(item);
 
                                         return (
                                             <div
                                                 className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-3"
-                                                key={component.key}
+                                                key={item.component.key}
                                             >
                                                 <div className="flex items-start justify-between gap-3">
-                                                    <div className="min-w-0">
+                                                    <div>
                                                         <p className="text-sm font-medium text-on-surface">
-                                                            {component.title}
+                                                            {item.component.title}
                                                         </p>
                                                         <p className="mt-1 text-xs text-on-surface-variant">
-                                                            {quantity} × {money(
-                                                                component.unitPrice,
+                                                            {selection.quantity} × {money(
+                                                                item.component
+                                                                    .unitPrice,
                                                                 profile.currency,
                                                                 locale,
                                                             )}
@@ -839,15 +814,16 @@ export default function ServiceCalculator({
                                                     </div>
                                                     <p className="text-right text-xs font-semibold text-primary">
                                                         {money(
-                                                            component.unitPrice *
-                                                                quantity,
+                                                            item.component
+                                                                .unitPrice *
+                                                                selection.quantity,
                                                             profile.currency,
                                                             locale,
                                                         )}
                                                     </p>
                                                 </div>
                                             </div>
-                                        );
+                                        )
                                     })}
                                 </div>
                             </div>
@@ -860,7 +836,7 @@ export default function ServiceCalculator({
                         ) : null}
 
                         <LocalizedLink
-                            className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-on-primary transition-colors hover:bg-primary/90"
+                            className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-on-primary hover:bg-primary/90"
                             href="/contact"
                         >
                             <Icon name="mail" />
