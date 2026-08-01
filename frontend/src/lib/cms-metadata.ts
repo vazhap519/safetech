@@ -1,39 +1,37 @@
 import "server-only";
 
 import { getBackendSeoPage } from "@/lib/backend";
+import { getCurrentLocale } from "@/lib/locale-server";
 import type { PageSeoPreset } from "@/lib/page-seo-presets";
-import { hasConfiguredPageHeading } from "@/lib/page-content";
 import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export async function createCmsPageMetadata(preset: PageSeoPreset) {
-    const settings = await getSiteSettings();
-    const cmsSeo = await getBackendSeoPage(preset.key, settings.locale);
+    const locale = await getCurrentLocale();
+    const [settings, cmsSeo] = await Promise.all([
+        getSiteSettings(),
+        getBackendSeoPage(preset.key, locale),
+    ]);
     const translationKey = preset.translationKey ?? preset.key;
     const translatedTitle = translateText(
         settings.translations,
         `meta.${translationKey}.title`,
-        settings.locale,
+        locale,
         preset.title,
     );
     const translatedDescription = translateText(
         settings.translations,
         `meta.${translationKey}.description`,
-        settings.locale,
+        locale,
         preset.description,
-    );
-    const hasPageContent = hasConfiguredPageHeading(
-        settings.translations,
-        preset.key,
-        settings.locale,
     );
 
     return createMetadata({
         title: cmsSeo?.title || translatedTitle,
         description: cmsSeo?.description || translatedDescription,
         path: preset.path,
-        locale: settings.locale,
+        locale,
         keywords: cmsSeo?.keywords?.length
             ? cmsSeo.keywords
             : settings.seo.defaultKeywords.length
@@ -48,7 +46,7 @@ export async function createCmsPageMetadata(preset: PageSeoPreset) {
         canonical: cmsSeo?.canonical,
         ogTitle: cmsSeo?.og?.title,
         ogDescription: cmsSeo?.og?.description,
-        noindex: Boolean(cmsSeo?.noindex) || !hasPageContent,
+        noindex: Boolean(cmsSeo?.noindex),
         robotsIndex: settings.seo.robotsIndex,
         robotsFollow: settings.seo.robotsFollow,
     });
