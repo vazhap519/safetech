@@ -21,7 +21,6 @@ final class DefaultCalculatorProfiles
     {
         $profiles = self::all();
         $value = mb_strtolower(trim("{$slug} {$name}"));
-
         $matches = [
             'cctv' => ['cctv', 'camera', 'surveillance', 'video', 'კამერ', 'ვიდეო'],
             'networking' => ['network', 'wi-fi', 'wifi', 'lan', 'router', 'switch', 'ქსელ', 'ინტერნეტ'],
@@ -53,13 +52,6 @@ final class DefaultCalculatorProfiles
             ],
             propertyLabels: ['ობიექტის ტიპი', 'Property type', 'Тип объекта'],
             propertyOptions: self::propertyOptions(),
-            pricing: [
-                'currency' => 'GEL',
-                'base_price' => 0,
-                'minimum_price' => 0,
-                'labor_price' => 0,
-                'discount_percentage' => 0,
-            ],
             fields: [
                 self::field('camera_technology', 'select', ['სისტემის ტექნოლოგია', 'System technology', 'Технология системы'], [
                     'required' => true,
@@ -131,13 +123,21 @@ final class DefaultCalculatorProfiles
             ],
             propertyLabels: ['ქსელის გარემო', 'Network environment', 'Тип объекта'],
             propertyOptions: self::propertyOptions(),
-            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
                 self::field('network_points', 'number', ['ქსელის წერტილები', 'Network points', 'Сетевые точки'], [
-                    'required' => true, 'min' => 1, 'max' => 2000, 'step' => 1, 'default' => 8,
+                    'required' => true,
+                    'min' => 1,
+                    'max' => 2000,
+                    'step' => 1,
+                    'default' => 8,
                 ]),
                 self::field('cable_meters', 'number', ['კაბელის სიგრძე', 'Cable length', 'Длина кабеля'], [
-                    'required' => true, 'min' => 1, 'max' => 100000, 'step' => 1, 'default' => 150, 'unit' => ['მ', 'm', 'м'],
+                    'required' => true,
+                    'min' => 1,
+                    'max' => 100000,
+                    'step' => 1,
+                    'default' => 150,
+                    'unit' => ['მ', 'm', 'м'],
                 ]),
                 self::field('cable_type', 'select', ['კაბელის ტიპი', 'Cable type', 'Тип кабеля'], [
                     'options' => [
@@ -148,7 +148,10 @@ final class DefaultCalculatorProfiles
                     ],
                 ]),
                 self::field('access_points', 'number', ['Wi‑Fi წვდომის წერტილები', 'Wi‑Fi access points', 'Точки доступа Wi‑Fi'], [
-                    'min' => 0, 'max' => 500, 'step' => 1, 'default' => 1,
+                    'min' => 0,
+                    'max' => 500,
+                    'step' => 1,
+                    'default' => 1,
                 ]),
             ],
             packages: self::standardPackages(),
@@ -167,16 +170,25 @@ final class DefaultCalculatorProfiles
             ],
             propertyLabels: ['ობიექტის ტიპი', 'Property type', 'Тип объекта'],
             propertyOptions: self::propertyOptions(),
-            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
                 self::field('doors', 'number', ['კარების რაოდენობა', 'Number of doors', 'Количество дверей'], [
-                    'required' => true, 'min' => 1, 'max' => 200, 'step' => 1, 'default' => 1,
+                    'required' => true,
+                    'min' => 1,
+                    'max' => 200,
+                    'step' => 1,
+                    'default' => 1,
                 ]),
                 self::field('intercoms', 'number', ['ვიდეო ინტერკომები', 'Video intercoms', 'Видеодомофоны'], [
-                    'min' => 0, 'max' => 100, 'step' => 1, 'default' => 1,
+                    'min' => 0,
+                    'max' => 100,
+                    'step' => 1,
+                    'default' => 1,
                 ]),
                 self::field('credentials', 'number', ['ბარათები/ჩიპები', 'Cards / tags', 'Карты / брелоки'], [
-                    'min' => 0, 'max' => 5000, 'step' => 1, 'default' => 10,
+                    'min' => 0,
+                    'max' => 5000,
+                    'step' => 1,
+                    'default' => 10,
                 ]),
                 self::field('backup_power', 'checkbox', ['სარეზერვო კვება', 'Backup power', 'Резервное питание']),
             ],
@@ -196,16 +208,26 @@ final class DefaultCalculatorProfiles
             ],
             propertyLabels: ['გარემო', 'Environment', 'Среда'],
             propertyOptions: self::propertyOptions(),
-            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
                 self::field('servers', 'number', ['სერვერების რაოდენობა', 'Number of servers', 'Количество серверов'], [
-                    'required' => true, 'min' => 1, 'max' => 100, 'step' => 1, 'default' => 1,
+                    'required' => true,
+                    'min' => 1,
+                    'max' => 100,
+                    'step' => 1,
+                    'default' => 1,
                 ]),
                 self::field('workstations', 'number', ['სამუშაო სადგურები', 'Workstations', 'Рабочие станции'], [
-                    'min' => 0, 'max' => 3000, 'step' => 1, 'default' => 10,
+                    'min' => 0,
+                    'max' => 3000,
+                    'step' => 1,
+                    'default' => 10,
                 ]),
                 self::field('backup_tb', 'number', ['სარეზერვო საცავი', 'Backup storage', 'Резервное хранилище'], [
-                    'min' => 0, 'max' => 1000, 'step' => 1, 'default' => 2, 'unit' => ['TB', 'TB', 'ТБ'],
+                    'min' => 0,
+                    'max' => 1000,
+                    'step' => 1,
+                    'default' => 2,
+                    'unit' => ['TB', 'TB', 'ТБ'],
                 ]),
                 self::field('virtualization', 'checkbox', ['ვირტუალიზაცია', 'Virtualization', 'Виртуализация']),
             ],
@@ -229,18 +251,31 @@ final class DefaultCalculatorProfiles
                 self::option('onsite', 'ადგილზე', 'On-site', 'На месте', 50),
                 self::option('hybrid', 'ჰიბრიდული', 'Hybrid', 'Гибридный', 80),
             ],
-            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
                 self::field('devices', 'number', ['მოწყობილობების რაოდენობა', 'Number of devices', 'Количество устройств'], [
-                    'required' => true, 'min' => 1, 'max' => 3000, 'step' => 1, 'default' => 1,
+                    'required' => true,
+                    'min' => 1,
+                    'max' => 3000,
+                    'step' => 1,
+                    'default' => 1,
                 ]),
                 self::field('onsite_hours', 'number', ['ადგილზე სამუშაო საათები', 'On-site hours', 'Часы на объекте'], [
-                    'min' => 0, 'max' => 500, 'step' => 1, 'default' => 1, 'unit' => ['სთ', 'h', 'ч'],
+                    'min' => 0,
+                    'max' => 500,
+                    'step' => 1,
+                    'default' => 1,
+                    'unit' => ['სთ', 'h', 'ч'],
                 ]),
                 self::field('remote_hours', 'number', ['დისტანციური სამუშაო საათები', 'Remote hours', 'Удаленные часы'], [
-                    'min' => 0, 'max' => 500, 'step' => 1, 'default' => 0, 'unit' => ['სთ', 'h', 'ч'],
+                    'min' => 0,
+                    'max' => 500,
+                    'step' => 1,
+                    'default' => 0,
+                    'unit' => ['სთ', 'h', 'ч'],
                 ]),
-                self::field('urgent', 'checkbox', ['სასწრაფო მომსახურება', 'Urgent service', 'Срочное обслуживание'], ['unit_price' => 120]),
+                self::field('urgent', 'checkbox', ['სასწრაფო მომსახურება', 'Urgent service', 'Срочное обслуживание'], [
+                    'unit_price' => 120,
+                ]),
             ],
             packages: self::standardPackages(),
         );
@@ -261,13 +296,20 @@ final class DefaultCalculatorProfiles
                 self::option('remote', 'დისტანციური', 'Remote', 'Удаленно'),
                 self::option('onsite', 'ადგილზე', 'On-site', 'На месте', 50),
             ],
-            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
                 self::field('devices', 'number', ['რაოდენობა', 'Quantity', 'Количество'], [
-                    'required' => true, 'min' => 1, 'max' => 10000, 'step' => 1, 'default' => 1,
+                    'required' => true,
+                    'min' => 1,
+                    'max' => 10000,
+                    'step' => 1,
+                    'default' => 1,
                 ]),
                 self::field('onsite_hours', 'number', ['სამუშაო საათები', 'Work hours', 'Рабочие часы'], [
-                    'min' => 0, 'max' => 500, 'step' => 1, 'default' => 1, 'unit' => ['სთ', 'h', 'ч'],
+                    'min' => 0,
+                    'max' => 500,
+                    'step' => 1,
+                    'default' => 1,
+                    'unit' => ['სთ', 'h', 'ч'],
                 ]),
             ],
             packages: self::standardPackages(),
@@ -296,28 +338,25 @@ final class DefaultCalculatorProfiles
         ];
     }
 
-    /**
-     * @param array{0: string, 1: string, 2: string} $projectLabels
-     * @param array<int, array<string, mixed>> $projectOptions
-     * @param array{0: string, 1: string, 2: string} $propertyLabels
-     * @param array<int, array<string, mixed>> $propertyOptions
-     * @param array<string, mixed> $pricing
-     * @param array<int, array<string, mixed>> $fields
-     * @param array<int, array<string, mixed>> $packages
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private static function profile(
         array $projectLabels,
         array $projectOptions,
         array $propertyLabels,
         array $propertyOptions,
-        array $pricing,
         array $fields,
         array $packages,
     ): array {
         return [
             'calculator_enabled' => true,
-            'pricing' => $pricing,
+            'pricing' => [
+                'currency' => 'GEL',
+                'base_price' => 0,
+                'monthly_base_price' => 0,
+                'minimum_price' => 0,
+                'labor_price' => 0,
+                'discount_percentage' => 0,
+            ],
             'project_size_label_ka' => $projectLabels[0],
             'project_size_label_en' => $projectLabels[1],
             'project_size_label_ru' => $projectLabels[2],
@@ -353,13 +392,13 @@ final class DefaultCalculatorProfiles
         ];
     }
 
-    /**
-     * @param array{0: string, 1: string, 2: string} $labels
-     * @param array<string, mixed> $settings
-     * @return array<string, mixed>
-     */
-    private static function field(string $key, string $type, array $labels, array $settings = []): array
-    {
+    /** @return array<string, mixed> */
+    private static function field(
+        string $key,
+        string $type,
+        array $labels,
+        array $settings = [],
+    ): array {
         $field = [
             'key' => $key,
             'type' => $type,
@@ -379,11 +418,7 @@ final class DefaultCalculatorProfiles
         return array_merge($field, $settings);
     }
 
-    /**
-     * @param array{0: string, 1: string, 2: string} $titles
-     * @param array{0: string, 1: string, 2: string} $descriptions
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private static function package(
         string $key,
         array $titles,
