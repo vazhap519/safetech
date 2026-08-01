@@ -10,13 +10,24 @@ class ServiceCalculatorProfileApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_returns_default_profiles_when_the_service_catalog_is_empty(): void
+    public function test_it_returns_default_profiles_and_component_catalog_when_the_service_catalog_is_empty(): void
     {
         $this->getJson('/api/service-calculator/profiles?locale=en')
             ->assertOk()
             ->assertJsonCount(5, 'data')
             ->assertJsonPath('data.0.slug', 'cctv')
-            ->assertJsonPath('data.0.name', 'CCTV');
+            ->assertJsonPath('data.0.name', 'CCTV')
+            ->assertJsonPath('data.0.discountPercentage', 0)
+            ->assertJsonPath('data.0.fields.0.key', 'camera_technology')
+            ->assertJsonFragment([
+                'key' => 'nvr-16ch-poe',
+                'category' => 'recorder',
+                'unitPrice' => 1040,
+                'quantityMode' => 'ceil',
+                'quantityField' => 'camera_count',
+                'unitsPerComponent' => 16,
+                'required' => true,
+            ]);
 
         $this->getJson('/api/service-calculator/profiles?locale=en&service=networking')
             ->assertOk()
@@ -25,7 +36,7 @@ class ServiceCalculatorProfileApiTest extends TestCase
             ->assertJsonPath('data.0.name', 'Networking');
     }
 
-    public function test_it_returns_a_localized_dynamic_calculator_profile(): void
+    public function test_it_returns_admin_managed_prices_discount_fields_and_components(): void
     {
         Service::query()->create([
             'slug' => 'networking',
@@ -42,20 +53,43 @@ class ServiceCalculatorProfileApiTest extends TestCase
             ],
             'lead_form' => [
                 'calculator_enabled' => true,
-                'pricing' => ['currency' => 'GEL', 'base_price' => 250],
+                'pricing' => [
+                    'currency' => 'GEL',
+                    'base_price' => 250,
+                    'labor_price' => 180,
+                    'discount_percentage' => 12.5,
+                ],
                 'project_size_label_en' => 'Network size',
                 'project_size_options' => [
                     ['value' => 'small', 'ka' => 'პატარა', 'en' => 'Small', 'one_time_price' => 100],
                 ],
                 'extra_fields' => [
                     [
-                        'key' => 'cable_meters',
+                        'key' => 'network_points',
                         'type' => 'number',
-                        'ka' => 'კაბელი',
-                        'en' => 'Cable length',
-                        'unit_en' => 'm',
+                        'ka' => 'წერტილები',
+                        'en' => 'Network points',
+                        'unit_en' => 'points',
                         'unit_price' => 2.5,
-                        'price_multiplier_field' => 'rooms',
+                    ],
+                ],
+                'components' => [
+                    [
+                        'key' => 'switch-24',
+                        'category' => 'network',
+                        'title_ka' => '24-პორტიანი სვიჩი',
+                        'title_en' => '24-port switch',
+                        'unit_price' => 450,
+                        'quantity_mode' => 'ceil',
+                        'quantity_field' => 'network_points',
+                        'units_per_component' => 24,
+                        'required' => true,
+                        'recommended' => true,
+                        'exclusive_group' => 'switch',
+                        'priority' => 100,
+                        'rules' => [
+                            ['field' => 'network_points', 'operator' => 'gte', 'value' => '1'],
+                        ],
                     ],
                 ],
             ],
@@ -66,13 +100,17 @@ class ServiceCalculatorProfileApiTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.name', 'Networking')
             ->assertJsonPath('data.0.basePrice', 250)
+            ->assertJsonPath('data.0.laborPrice', 180)
+            ->assertJsonPath('data.0.discountPercentage', 12.5)
             ->assertJsonPath('data.0.projectSize.options.0.label', 'Small')
-            ->assertJsonPath('data.0.fields.0.key', 'cable_meters')
-            ->assertJsonPath('data.0.fields.0.priceMultiplierField', 'rooms')
-            ->assertJsonPath('data.0.fields.0.unitPrice', 2.5);
+            ->assertJsonPath('data.0.fields.0.key', 'network_points')
+            ->assertJsonPath('data.0.fields.0.unitPrice', 2.5)
+            ->assertJsonPath('data.0.components.0.key', 'switch-24')
+            ->assertJsonPath('data.0.components.0.title', '24-port switch')
+            ->assertJsonPath('data.0.components.0.rules.0.operator', 'gte');
     }
 
-    public function test_it_supplies_a_default_profile_for_a_published_service_without_calculator_settings(): void
+    public function test_it_supplies_a_compatibility_aware_default_profile_for_a_published_service_without_settings(): void
     {
         Service::query()->create([
             'slug' => 'cctv-installation',
@@ -88,8 +126,20 @@ class ServiceCalculatorProfileApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.slug', 'cctv-installation')
-            ->assertJsonPath('data.0.fields.0.key', 'camera_count')
-            ->assertJsonPath('data.0.currency', 'GEL');
+            ->assertJsonPath('data.0.fields.0.key', 'camera_technology')
+            ->assertJsonPath('data.0.fields.1.key', 'camera_count')
+            ->assertJsonPath('data.0.currency', 'GEL')
+            ->assertJsonFragment([
+                'key' => 'camera-ip-4mp-2-8',
+                'unitPrice' => 176,
+                'quantityMode' => 'field',
+                'quantityField' => 'camera_count',
+            ])
+            ->assertJsonFragment([
+                'field' => 'resolution',
+                'operator' => 'equals',
+                'value' => '4mp',
+            ]);
     }
 
     public function test_it_hides_disabled_and_unpublished_profiles(): void
