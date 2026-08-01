@@ -73,8 +73,8 @@ final class CalculatorProfileBuilder
      * Merge associative configuration recursively while replacing list values
      * (fields, options, packages and components) as complete admin-managed collections.
      *
-     * @param array<string, mixed> $defaults
-     * @param array<string, mixed> $custom
+     * @param  array<string, mixed>  $defaults
+     * @param  array<string, mixed>  $custom
      * @return array<string, mixed>
      */
     private function mergeConfig(array $defaults, array $custom): array
@@ -84,8 +84,8 @@ final class CalculatorProfileBuilder
                 isset($defaults[$key])
                 && is_array($defaults[$key])
                 && is_array($value)
-                && ! array_is_list($defaults[$key])
-                && ! array_is_list($value)
+                && array_is_list($defaults[$key]) === false
+                && array_is_list($value) === false
             ) {
                 $defaults[$key] = $this->mergeConfig($defaults[$key], $value);
 
@@ -112,7 +112,7 @@ final class CalculatorProfileBuilder
     /** @return array<int, array<string, mixed>> */
     private function options(mixed $options, string $locale): array
     {
-        if (! is_array($options)) {
+        if (is_array($options) === false) {
             return [];
         }
 
@@ -131,7 +131,7 @@ final class CalculatorProfileBuilder
     /** @return array<int, array<string, mixed>> */
     private function fields(mixed $fields, string $locale): array
     {
-        if (! is_array($fields)) {
+        if (is_array($fields) === false) {
             return [];
         }
 
@@ -169,7 +169,7 @@ final class CalculatorProfileBuilder
     /** @return array<int, array<string, mixed>> */
     private function packages(mixed $packages, string $locale): array
     {
-        if (! is_array($packages)) {
+        if (is_array($packages) === false) {
             return [];
         }
 
@@ -190,7 +190,7 @@ final class CalculatorProfileBuilder
     /** @return array<int, array<string, mixed>> */
     private function components(mixed $components, string $locale): array
     {
-        if (! is_array($components)) {
+        if (is_array($components) === false) {
             return [];
         }
 
@@ -240,7 +240,7 @@ final class CalculatorProfileBuilder
             ->all();
     }
 
-    /** @param array<string, mixed> $source */
+    /** @param  array<string, mixed>  $source */
     private function localizedLabel(
         array $source,
         string $prefix,
@@ -254,7 +254,7 @@ final class CalculatorProfileBuilder
         ], $locale, $fallback);
     }
 
-    /** @param array<string, mixed> $values */
+    /** @param  array<string, mixed>  $values */
     private function localizedValue(array $values, string $locale, string $fallback = ''): string
     {
         foreach ([$locale, 'ka', 'en', 'ru'] as $candidate) {
