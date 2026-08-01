@@ -2,7 +2,7 @@ import "server-only";
 
 import { getBackendSeoPage } from "@/lib/backend";
 import { getCurrentLocale } from "@/lib/locale-server";
-import type { Locale } from "@/lib/locales";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/locales";
 import type { PageSeoPreset } from "@/lib/page-seo-presets";
 import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -47,7 +47,7 @@ export async function createCmsPageMetadata(
             settings.branding.defaultImage || undefined,
         siteName: settings.branding.siteName,
         type: preset.type,
-        canonical: cmsSeo?.canonical,
+        canonical: locale === DEFAULT_LOCALE ? cmsSeo?.canonical : undefined,
         ogTitle: cmsSeo?.og?.title,
         ogDescription: cmsSeo?.og?.description,
         noindex: Boolean(cmsSeo?.noindex),
