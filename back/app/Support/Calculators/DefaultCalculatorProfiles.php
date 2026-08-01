@@ -20,22 +20,12 @@ final class DefaultCalculatorProfiles
     public static function for(string $slug, string $name = ''): array
     {
         $profiles = self::all();
-        $key = self::matchKey(trim("{$slug} {$name}"));
-
-        return $key !== null ? $profiles[$key] : self::generic();
-    }
-
-    private static function matchKey(string $value): ?string
-    {
-        $value = mb_strtolower($value);
+        $value = mb_strtolower(trim("{$slug} {$name}"));
 
         $matches = [
             'cctv' => ['cctv', 'camera', 'surveillance', 'video', 'კამერ', 'ვიდეო'],
             'networking' => ['network', 'wi-fi', 'wifi', 'lan', 'router', 'switch', 'ქსელ', 'ინტერნეტ'],
-            'access-control' => [
-                'access', 'intercom', 'door', 'gate', 'lock', 'alarm', 'ajax', 'fire',
-                'დომოფონ', 'დაშვ', 'საკეტ', 'კარ', 'სიგნალიზ', 'სახანძრო', 'აჯაქს',
-            ],
+            'access-control' => ['access', 'intercom', 'door', 'gate', 'lock', 'alarm', 'ajax', 'fire', 'დომოფონ', 'დაშვ', 'საკეტ', 'სიგნალიზ', 'სახანძრო', 'აჯაქს'],
             'server-infrastructure' => ['server', 'backup', 'virtual', 'rack', 'სერვერ', 'ბექაფ', 'ვირტუალ'],
             'it-support' => ['support', 'computer', 'printer', 'windows', 'pos', 'კომპიუტ', 'პრინტერ', 'მხარდაჭერ', 'სალარო'],
         ];
@@ -43,12 +33,12 @@ final class DefaultCalculatorProfiles
         foreach ($matches as $key => $needles) {
             foreach ($needles as $needle) {
                 if (str_contains($value, $needle)) {
-                    return $key;
+                    return $profiles[$key];
                 }
             }
         }
 
-        return null;
+        return self::generic();
     }
 
     /** @return array<string, mixed> */
@@ -58,54 +48,73 @@ final class DefaultCalculatorProfiles
             projectLabels: ['კამერების მასშტაბი', 'Camera scale', 'Масштаб камер'],
             projectOptions: [
                 self::option('small', '1–8 კამერა', '1–8 cameras', '1–8 камер'),
-                self::option('medium', '9–24 კამერა', '9–24 cameras', '9–24 камеры', 250),
-                self::option('large', '25+ კამერა', '25+ cameras', '25+ камер', 600),
+                self::option('medium', '9–16 კამერა', '9–16 cameras', '9–16 камер', 150),
+                self::option('large', '17+ კამერა', '17+ cameras', '17+ камер', 400),
             ],
             propertyLabels: ['ობიექტის ტიპი', 'Property type', 'Тип объекта'],
             propertyOptions: self::propertyOptions(),
-            pricing: ['currency' => 'GEL', 'base_price' => 250, 'minimum_price' => 500],
+            pricing: [
+                'currency' => 'GEL',
+                'base_price' => 0,
+                'minimum_price' => 0,
+                'labor_price' => 0,
+                'discount_percentage' => 0,
+            ],
             fields: [
+                self::field('camera_technology', 'select', ['სისტემის ტექნოლოგია', 'System technology', 'Технология системы'], [
+                    'required' => true,
+                    'options' => [
+                        self::option('ip', 'IP / PoE', 'IP / PoE', 'IP / PoE'),
+                        self::option('analog', 'ანალოგური', 'Analog', 'Аналоговая'),
+                    ],
+                ]),
                 self::field('camera_count', 'number', ['კამერების რაოდენობა', 'Number of cameras', 'Количество камер'], [
                     'required' => true,
                     'min' => 1,
                     'max' => 256,
                     'step' => 1,
                     'default' => 4,
-                    'unit_price' => 220,
                     'unit' => ['ც', 'pcs', 'шт'],
                 ]),
+                self::field('resolution', 'select', ['გარჩევადობა', 'Resolution', 'Разрешение'], [
+                    'required' => true,
+                    'options' => [
+                        self::option('2mp', '2MP', '2MP', '2MP'),
+                        self::option('4mp', '4MP', '4MP', '4MP'),
+                        self::option('8mp', '8MP / 4K', '8MP / 4K', '8MP / 4K'),
+                    ],
+                ]),
+                self::field('lens', 'select', ['ობიექტივი', 'Lens', 'Объектив'], [
+                    'required' => true,
+                    'options' => [
+                        self::option('2.8mm', '2.8mm — ფართო კუთხე', '2.8mm — wide angle', '2.8mm — широкий угол'),
+                        self::option('3.6mm', '3.6mm — საშუალო კუთხე', '3.6mm — medium angle', '3.6mm — средний угол'),
+                        self::option('varifocal', 'ვარიაფოკალური', 'Varifocal', 'Варифокальный'),
+                    ],
+                ]),
                 self::field('recording_days', 'number', ['ჩანაწერის შენახვა', 'Recording retention', 'Срок хранения'], [
+                    'required' => true,
                     'min' => 1,
                     'max' => 180,
                     'step' => 1,
                     'default' => 14,
-                    'unit_price' => 2,
                     'unit' => ['დღე', 'days', 'дней'],
-                ]),
-                self::field('resolution', 'select', ['გარჩევადობა', 'Resolution', 'Разрешение'], [
-                    'options' => [
-                        self::option('2mp', '2MP', '2MP', '2MP'),
-                        self::option('4mp', '4MP', '4MP', '4MP', 70),
-                        self::option('8mp', '8MP / 4K', '8MP / 4K', '8MP / 4K', 170),
-                    ],
                 ]),
                 self::field('cable_meters', 'number', ['კაბელის სიგრძე', 'Cable length', 'Длина кабеля'], [
                     'min' => 0,
                     'max' => 20000,
                     'step' => 1,
                     'default' => 100,
-                    'unit_price' => 2.5,
                     'unit' => ['მ', 'm', 'м'],
                 ]),
-                self::field('remote_monitoring', 'checkbox', ['დისტანციური მონიტორინგი', 'Remote monitoring', 'Удаленный мониторинг'], [
+                self::field('remote_monitoring', 'checkbox', ['დისტანციური წვდომის გამართვა', 'Remote access setup', 'Настройка удаленного доступа'], [
                     'unit_price' => 120,
-                    'monthly_unit_price' => 25,
                 ]),
             ],
             packages: [
-                self::package('standard', ['სტანდარტი', 'Standard', 'Стандарт'], ['მონტაჟი და საბაზისო გამართვა', 'Installation and basic setup', 'Монтаж и базовая настройка']),
-                self::package('business', ['ბიზნესი', 'Business', 'Бизнес'], ['გაფართოებული გამართვა და დისტანციური წვდომა', 'Advanced setup and remote access', 'Расширенная настройка и удаленный доступ'], 350, 0, true),
-                self::package('managed', ['მართვადი', 'Managed', 'Управляемый'], ['პრიორიტეტული მხარდაჭერა და პერიოდული შემოწმება', 'Priority support and scheduled checks', 'Приоритетная поддержка и плановые проверки'], 500, 120),
+                self::package('standard', ['სტანდარტი', 'Standard', 'Стандарт'], ['მონტაჟი და საბაზისო გამართვა', 'Installation and basic setup', 'Монтаж и базовая настройка'], recommended: true),
+                self::package('business', ['ბიზნესი', 'Business', 'Бизнес'], ['გაფართოებული გამართვა და დისტანციური წვდომა', 'Advanced setup and remote access', 'Расширенная настройка и удаленный доступ'], oneTimePrice: 250),
+                self::package('managed', ['მართვადი', 'Managed', 'Управляемый'], ['პრიორიტეტული მხარდაჭერა და პერიოდული შემოწმება', 'Priority support and scheduled checks', 'Приоритетная поддержка и плановые проверки'], oneTimePrice: 350, monthlyPrice: 120),
             ],
         );
     }
@@ -117,60 +126,32 @@ final class DefaultCalculatorProfiles
             projectLabels: ['ქსელის მასშტაბი', 'Network size', 'Размер сети'],
             projectOptions: [
                 self::option('small', '1–12 წერტილი', '1–12 points', '1–12 точек'),
-                self::option('medium', '13–48 წერტილი', '13–48 points', '13–48 точек', 250),
-                self::option('large', '49+ წერტილი', '49+ points', '49+ точек', 650),
+                self::option('medium', '13–48 წერტილი', '13–48 points', '13–48 точек', 150),
+                self::option('large', '49+ წერტილი', '49+ points', '49+ точек', 400),
             ],
             propertyLabels: ['ქსელის გარემო', 'Network environment', 'Тип объекта'],
             propertyOptions: self::propertyOptions(),
-            pricing: ['currency' => 'GEL', 'base_price' => 300, 'minimum_price' => 450],
+            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
                 self::field('network_points', 'number', ['ქსელის წერტილები', 'Network points', 'Сетевые точки'], [
-                    'required' => true,
-                    'min' => 1,
-                    'max' => 2000,
-                    'step' => 1,
-                    'default' => 8,
-                    'unit_price' => 65,
-                    'unit' => ['წერტილი', 'points', 'точек'],
+                    'required' => true, 'min' => 1, 'max' => 2000, 'step' => 1, 'default' => 8,
                 ]),
                 self::field('cable_meters', 'number', ['კაბელის სიგრძე', 'Cable length', 'Длина кабеля'], [
-                    'required' => true,
-                    'min' => 1,
-                    'max' => 100000,
-                    'step' => 1,
-                    'default' => 150,
-                    'unit_price' => 2.2,
-                    'unit' => ['მ', 'm', 'м'],
+                    'required' => true, 'min' => 1, 'max' => 100000, 'step' => 1, 'default' => 150, 'unit' => ['მ', 'm', 'м'],
                 ]),
                 self::field('cable_type', 'select', ['კაბელის ტიპი', 'Cable type', 'Тип кабеля'], [
-                    'price_multiplier_field' => 'cable_meters',
                     'options' => [
                         self::option('cat5e', 'Cat5e', 'Cat5e', 'Cat5e'),
-                        self::option('cat6', 'Cat6', 'Cat6', 'Cat6', 0.8),
-                        self::option('cat6a', 'Cat6A', 'Cat6A', 'Cat6A', 1.8),
-                        self::option('fiber', 'ოპტიკური ბოჭკო', 'Fiber optic', 'Оптоволокно', 5),
+                        self::option('cat6', 'Cat6', 'Cat6', 'Cat6'),
+                        self::option('cat6a', 'Cat6A', 'Cat6A', 'Cat6A'),
+                        self::option('fiber', 'ოპტიკური ბოჭკო', 'Fiber optic', 'Оптоволокно'),
                     ],
                 ]),
                 self::field('access_points', 'number', ['Wi‑Fi წვდომის წერტილები', 'Wi‑Fi access points', 'Точки доступа Wi‑Fi'], [
-                    'min' => 0,
-                    'max' => 500,
-                    'step' => 1,
-                    'default' => 1,
-                    'unit_price' => 320,
-                ]),
-                self::field('rack', 'select', ['Rack კარადა', 'Rack cabinet', 'Серверный шкаф'], [
-                    'options' => [
-                        self::option('none', 'არ არის საჭირო', 'Not required', 'Не требуется'),
-                        self::option('wall', 'კედლის 6U–15U', 'Wall-mounted 6U–15U', 'Настенный 6U–15U', 450),
-                        self::option('floor', 'იატაკის 18U–42U', 'Floor-standing 18U–42U', 'Напольный 18U–42U', 1200),
-                    ],
+                    'min' => 0, 'max' => 500, 'step' => 1, 'default' => 1,
                 ]),
             ],
-            packages: [
-                self::package('cabling', ['კაბელირება', 'Cabling', 'Кабельная система'], ['პასიური ქსელი და ტესტირება', 'Passive network and testing', 'Пассивная сеть и тестирование']),
-                self::package('business', ['ბიზნეს ქსელი', 'Business network', 'Бизнес-сеть'], ['კაბელირება, მართვადი მოწყობილობები და Wi‑Fi', 'Cabling, managed equipment and Wi‑Fi', 'Кабельная система, управляемое оборудование и Wi‑Fi'], 600, 0, true),
-                self::package('managed', ['მართვადი ქსელი', 'Managed network', 'Управляемая сеть'], ['მონიტორინგი და პრიორიტეტული მხარდაჭერა', 'Monitoring and priority support', 'Мониторинг и приоритетная поддержка'], 900, 180),
-            ],
+            packages: self::standardPackages(),
         );
     }
 
@@ -181,47 +162,25 @@ final class DefaultCalculatorProfiles
             projectLabels: ['წვდომის წერტილები', 'Access points', 'Точки доступа'],
             projectOptions: [
                 self::option('small', '1–2 კარი', '1–2 doors', '1–2 двери'),
-                self::option('medium', '3–8 კარი', '3–8 doors', '3–8 дверей', 250),
-                self::option('large', '9+ კარი', '9+ doors', '9+ дверей', 600),
+                self::option('medium', '3–8 კარი', '3–8 doors', '3–8 дверей', 150),
+                self::option('large', '9+ კარი', '9+ doors', '9+ дверей', 400),
             ],
             propertyLabels: ['ობიექტის ტიპი', 'Property type', 'Тип объекта'],
             propertyOptions: self::propertyOptions(),
-            pricing: ['currency' => 'GEL', 'base_price' => 250, 'minimum_price' => 450],
+            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
                 self::field('doors', 'number', ['კარების რაოდენობა', 'Number of doors', 'Количество дверей'], [
-                    'required' => true,
-                    'min' => 1,
-                    'max' => 200,
-                    'step' => 1,
-                    'default' => 1,
-                    'unit_price' => 450,
+                    'required' => true, 'min' => 1, 'max' => 200, 'step' => 1, 'default' => 1,
                 ]),
                 self::field('intercoms', 'number', ['ვიდეო ინტერკომები', 'Video intercoms', 'Видеодомофоны'], [
-                    'min' => 0,
-                    'max' => 100,
-                    'step' => 1,
-                    'default' => 1,
-                    'unit_price' => 550,
+                    'min' => 0, 'max' => 100, 'step' => 1, 'default' => 1,
                 ]),
                 self::field('credentials', 'number', ['ბარათები/ჩიპები', 'Cards / tags', 'Карты / брелоки'], [
-                    'min' => 0,
-                    'max' => 5000,
-                    'step' => 1,
-                    'default' => 10,
-                    'unit_price' => 8,
+                    'min' => 0, 'max' => 5000, 'step' => 1, 'default' => 10,
                 ]),
-                self::field('biometric', 'checkbox', ['ბიომეტრიული წვდომა', 'Biometric access', 'Биометрический доступ'], [
-                    'unit_price' => 350,
-                ]),
-                self::field('backup_power', 'checkbox', ['სარეზერვო კვება', 'Backup power', 'Резервное питание'], [
-                    'unit_price' => 220,
-                ]),
+                self::field('backup_power', 'checkbox', ['სარეზერვო კვება', 'Backup power', 'Резервное питание']),
             ],
-            packages: [
-                self::package('basic', ['საბაზისო', 'Basic', 'Базовый'], ['მონტაჟი და პროგრამირება', 'Installation and programming', 'Монтаж и программирование']),
-                self::package('secure', ['გაძლიერებული', 'Enhanced', 'Расширенный'], ['UPS, გასვლის ღილაკი და დეტალური კონფიგურაცია', 'UPS, exit button and advanced configuration', 'ИБП, кнопка выхода и расширенная настройка'], 350, 0, true),
-                self::package('managed', ['მართვადი', 'Managed', 'Управляемый'], ['პერიოდული შემოწმება და მხარდაჭერა', 'Scheduled checks and support', 'Плановые проверки и поддержка'], 500, 100),
-            ],
+            packages: self::standardPackages(),
         );
     }
 
@@ -232,49 +191,25 @@ final class DefaultCalculatorProfiles
             projectLabels: ['ინფრასტრუქტურის მასშტაბი', 'Infrastructure size', 'Масштаб инфраструктуры'],
             projectOptions: [
                 self::option('small', '1 სერვერი', '1 server', '1 сервер'),
-                self::option('medium', '2–4 სერვერი', '2–4 servers', '2–4 сервера', 500),
-                self::option('large', '5+ სერვერი', '5+ servers', '5+ серверов', 1400),
+                self::option('medium', '2–4 სერვერი', '2–4 servers', '2–4 сервера', 300),
+                self::option('large', '5+ სერვერი', '5+ servers', '5+ серверов', 800),
             ],
             propertyLabels: ['გარემო', 'Environment', 'Среда'],
             propertyOptions: self::propertyOptions(),
-            pricing: ['currency' => 'GEL', 'base_price' => 600, 'minimum_price' => 900],
+            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
                 self::field('servers', 'number', ['სერვერების რაოდენობა', 'Number of servers', 'Количество серверов'], [
-                    'required' => true,
-                    'min' => 1,
-                    'max' => 100,
-                    'step' => 1,
-                    'default' => 1,
-                    'unit_price' => 850,
+                    'required' => true, 'min' => 1, 'max' => 100, 'step' => 1, 'default' => 1,
                 ]),
                 self::field('workstations', 'number', ['სამუშაო სადგურები', 'Workstations', 'Рабочие станции'], [
-                    'min' => 0,
-                    'max' => 3000,
-                    'step' => 1,
-                    'default' => 10,
-                    'unit_price' => 35,
+                    'min' => 0, 'max' => 3000, 'step' => 1, 'default' => 10,
                 ]),
                 self::field('backup_tb', 'number', ['სარეზერვო საცავი', 'Backup storage', 'Резервное хранилище'], [
-                    'min' => 0,
-                    'max' => 1000,
-                    'step' => 1,
-                    'default' => 2,
-                    'unit_price' => 150,
-                    'unit' => ['TB', 'TB', 'ТБ'],
+                    'min' => 0, 'max' => 1000, 'step' => 1, 'default' => 2, 'unit' => ['TB', 'TB', 'ТБ'],
                 ]),
-                self::field('virtualization', 'checkbox', ['ვირტუალიზაცია', 'Virtualization', 'Виртуализация'], [
-                    'unit_price' => 700,
-                ]),
-                self::field('monitoring', 'checkbox', ['24/7 მონიტორინგი', '24/7 monitoring', 'Мониторинг 24/7'], [
-                    'unit_price' => 250,
-                    'monthly_unit_price' => 180,
-                ]),
+                self::field('virtualization', 'checkbox', ['ვირტუალიზაცია', 'Virtualization', 'Виртуализация']),
             ],
-            packages: [
-                self::package('deployment', ['ინსტალაცია', 'Deployment', 'Развертывание'], ['ინსტალაცია და საბაზისო გამართვა', 'Installation and basic setup', 'Установка и базовая настройка']),
-                self::package('business', ['ბიზნეს', 'Business', 'Бизнес'], ['Backup, უსაფრთხოება და დოკუმენტაცია', 'Backup, security and documentation', 'Резервное копирование, безопасность и документация'], 900, 0, true),
-                self::package('managed', ['მართვადი ინფრასტრუქტურა', 'Managed infrastructure', 'Управляемая инфраструктура'], ['მონიტორინგი და SLA მხარდაჭერა', 'Monitoring and SLA support', 'Мониторинг и поддержка по SLA'], 1300, 350),
-            ],
+            packages: self::standardPackages(),
         );
     }
 
@@ -285,8 +220,8 @@ final class DefaultCalculatorProfiles
             projectLabels: ['მომსახურების მასშტაბი', 'Support scope', 'Объем поддержки'],
             projectOptions: [
                 self::option('small', '1–5 მოწყობილობა', '1–5 devices', '1–5 устройств'),
-                self::option('medium', '6–20 მოწყობილობა', '6–20 devices', '6–20 устройств', 120),
-                self::option('large', '21+ მოწყობილობა', '21+ devices', '21+ устройств', 350),
+                self::option('medium', '6–20 მოწყობილობა', '6–20 devices', '6–20 устройств', 80),
+                self::option('large', '21+ მოწყობილობა', '21+ devices', '21+ устройств', 200),
             ],
             propertyLabels: ['მომსახურების ტიპი', 'Support type', 'Тип поддержки'],
             propertyOptions: [
@@ -294,44 +229,20 @@ final class DefaultCalculatorProfiles
                 self::option('onsite', 'ადგილზე', 'On-site', 'На месте', 50),
                 self::option('hybrid', 'ჰიბრიდული', 'Hybrid', 'Гибридный', 80),
             ],
-            pricing: ['currency' => 'GEL', 'base_price' => 80, 'minimum_price' => 120],
+            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
                 self::field('devices', 'number', ['მოწყობილობების რაოდენობა', 'Number of devices', 'Количество устройств'], [
-                    'required' => true,
-                    'min' => 1,
-                    'max' => 3000,
-                    'step' => 1,
-                    'default' => 1,
-                    'unit_price' => 50,
+                    'required' => true, 'min' => 1, 'max' => 3000, 'step' => 1, 'default' => 1,
                 ]),
                 self::field('onsite_hours', 'number', ['ადგილზე სამუშაო საათები', 'On-site hours', 'Часы на объекте'], [
-                    'min' => 0,
-                    'max' => 500,
-                    'step' => 1,
-                    'default' => 1,
-                    'unit_price' => 70,
-                    'unit' => ['სთ', 'h', 'ч'],
+                    'min' => 0, 'max' => 500, 'step' => 1, 'default' => 1, 'unit' => ['სთ', 'h', 'ч'],
                 ]),
                 self::field('remote_hours', 'number', ['დისტანციური სამუშაო საათები', 'Remote hours', 'Удаленные часы'], [
-                    'min' => 0,
-                    'max' => 500,
-                    'step' => 1,
-                    'default' => 0,
-                    'unit_price' => 45,
-                    'unit' => ['სთ', 'h', 'ч'],
+                    'min' => 0, 'max' => 500, 'step' => 1, 'default' => 0, 'unit' => ['სთ', 'h', 'ч'],
                 ]),
-                self::field('urgent', 'checkbox', ['სასწრაფო მომსახურება', 'Urgent service', 'Срочное обслуживание'], [
-                    'unit_price' => 120,
-                ]),
-                self::field('monthly_support', 'checkbox', ['ყოველთვიური მხარდაჭერა', 'Monthly support', 'Ежемесячная поддержка'], [
-                    'monthly_unit_price' => 150,
-                ]),
+                self::field('urgent', 'checkbox', ['სასწრაფო მომსახურება', 'Urgent service', 'Срочное обслуживание'], ['unit_price' => 120]),
             ],
-            packages: [
-                self::package('one-time', ['ერთჯერადი', 'One-time', 'Разово'], ['დიაგნოსტიკა და სამუშაო', 'Diagnostics and service', 'Диагностика и обслуживание']),
-                self::package('priority', ['პრიორიტეტული', 'Priority', 'Приоритетный'], ['სწრაფი რეაგირება და გაფართოებული სამუშაო', 'Faster response and extended service', 'Быстрое реагирование и расширенное обслуживание'], 120, 0, true),
-                self::package('contract', ['აბონენტური', 'Managed contract', 'Абонентский договор'], ['გეგმური მოვლა და მხარდაჭერა', 'Planned maintenance and support', 'Плановое обслуживание и поддержка'], 180, 220),
-            ],
+            packages: self::standardPackages(),
         );
     }
 
@@ -342,38 +253,35 @@ final class DefaultCalculatorProfiles
             projectLabels: ['პროექტის მასშტაბი', 'Project size', 'Масштаб проекта'],
             projectOptions: [
                 self::option('small', 'მცირე', 'Small', 'Малый'),
-                self::option('medium', 'საშუალო', 'Medium', 'Средний', 150),
-                self::option('large', 'დიდი', 'Large', 'Большой', 400),
+                self::option('medium', 'საშუალო', 'Medium', 'Средний', 100),
+                self::option('large', 'დიდი', 'Large', 'Большой', 300),
             ],
             propertyLabels: ['მომსახურების ფორმატი', 'Service format', 'Формат услуги'],
             propertyOptions: [
                 self::option('remote', 'დისტანციური', 'Remote', 'Удаленно'),
                 self::option('onsite', 'ადგილზე', 'On-site', 'На месте', 50),
             ],
-            pricing: ['currency' => 'GEL', 'base_price' => 100, 'minimum_price' => 150],
+            pricing: ['currency' => 'GEL', 'base_price' => 0, 'minimum_price' => 0, 'labor_price' => 0, 'discount_percentage' => 0],
             fields: [
-                self::field('hours', 'number', ['სამუშაო საათები', 'Work hours', 'Рабочие часы'], [
-                    'required' => true,
-                    'min' => 1,
-                    'max' => 500,
-                    'step' => 1,
-                    'default' => 1,
-                    'unit_price' => 70,
-                    'unit' => ['სთ', 'h', 'ч'],
+                self::field('devices', 'number', ['რაოდენობა', 'Quantity', 'Количество'], [
+                    'required' => true, 'min' => 1, 'max' => 10000, 'step' => 1, 'default' => 1,
                 ]),
-                self::field('visits', 'number', ['ადგილზე ვიზიტები', 'On-site visits', 'Выезды на объект'], [
-                    'min' => 0,
-                    'max' => 100,
-                    'step' => 1,
-                    'default' => 0,
-                    'unit_price' => 40,
+                self::field('onsite_hours', 'number', ['სამუშაო საათები', 'Work hours', 'Рабочие часы'], [
+                    'min' => 0, 'max' => 500, 'step' => 1, 'default' => 1, 'unit' => ['სთ', 'h', 'ч'],
                 ]),
             ],
-            packages: [
-                self::package('standard', ['სტანდარტი', 'Standard', 'Стандарт'], ['საბაზისო მომსახურება', 'Basic service', 'Базовое обслуживание'], 0, 0, true),
-                self::package('priority', ['პრიორიტეტული', 'Priority', 'Приоритетный'], ['სწრაფი რეაგირება', 'Faster response', 'Быстрое реагирование'], 120),
-            ],
+            packages: self::standardPackages(),
         );
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function standardPackages(): array
+    {
+        return [
+            self::package('standard', ['სტანდარტი', 'Standard', 'Стандарт'], ['საბაზისო მომსახურება', 'Core service', 'Базовое обслуживание'], recommended: true),
+            self::package('priority', ['პრიორიტეტული', 'Priority', 'Приоритетный'], ['სწრაფი რეაგირება და გაფართოებული გამართვა', 'Faster response and extended setup', 'Быстрое реагирование и расширенная настройка'], oneTimePrice: 120),
+            self::package('managed', ['აბონენტური', 'Managed', 'Абонентский'], ['პერიოდული მოვლა და მხარდაჭერა', 'Scheduled maintenance and support', 'Плановое обслуживание и поддержка'], oneTimePrice: 180, monthlyPrice: 150),
+        ];
     }
 
     /** @return array<int, array<string, mixed>> */
