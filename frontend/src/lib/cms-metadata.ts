@@ -2,13 +2,17 @@ import "server-only";
 
 import { getBackendSeoPage } from "@/lib/backend";
 import { getCurrentLocale } from "@/lib/locale-server";
+import type { Locale } from "@/lib/locales";
 import type { PageSeoPreset } from "@/lib/page-seo-presets";
 import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
-export async function createCmsPageMetadata(preset: PageSeoPreset) {
-    const locale = await getCurrentLocale();
+export async function createCmsPageMetadata(
+    preset: PageSeoPreset,
+    explicitLocale?: Locale,
+) {
+    const locale = explicitLocale ?? (await getCurrentLocale());
     const [settings, cmsSeo] = await Promise.all([
         getSiteSettings(),
         getBackendSeoPage(preset.key, locale),
