@@ -98,12 +98,5 @@ export function getOgLocale(locale: Locale) {
 }
 
 export function getLanguageTag(locale: Locale) {
-    switch (locale) {
-        case "en":
-            return "en-US";
-        case "ru":
-            return "ru-RU";
-        default:
-            return "ka-GE";
-    }
+    return locale;
 }
