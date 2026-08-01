@@ -7,10 +7,11 @@ import {
 } from "@/lib/locales";
 
 const DEFAULT_API_BASE = "http://127.0.0.1:8000/api";
+const SITEMAP_FETCH_TIMEOUT_MS = 2000;
 
 const sitemapHeaders = {
   "Content-Type": "application/xml; charset=utf-8",
-  "Cache-Control": "public, max-age=300, s-maxage=300",
+  "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
 };
 
 function normalizeApiBase(value) {
@@ -112,13 +113,13 @@ export async function safeFetchJson(url) {
     try {
       const response = await fetch(url, {
         cache: "no-store",
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(SITEMAP_FETCH_TIMEOUT_MS),
       });
 
       if (response.ok) return await response.json();
       if (response.status < 500 && response.status !== 429) return null;
     } catch {
-      // Retry one transient failure.
+      // Retry one transient failure, then return a safe fallback.
     }
 
     if (attempt === 0) {
@@ -213,9 +214,7 @@ export async function fetchPaginatedPages(path, params = {}) {
 
   do {
     const json = await safeFetchJson(buildSitemapApiUrl(path, { ...params, page: String(page) }));
-    if (!json) {
-      throw new Error(`Unable to load sitemap content from ${path}, page ${page}`);
-    }
+    if (!json) break;
 
     const pageItems = json?.data?.services || json?.data || [];
     const meta = json?.data?.meta || json?.meta || {};
@@ -253,7 +252,7 @@ export async function categorySitemapResponse({
   ]);
 
   if (!response) {
-    throw new Error(`Unable to load sitemap categories from ${endpoint}`);
+    return xmlResponse(urlset([]));
   }
 
   const eligibleCategorySlugs = contentEndpoint
@@ -305,6 +304,8 @@ export async function fetchImageSitemapItems() {
 }
 
 function hasEligibleCategory(response, content, categorySlug) {
+  if (!response) return false;
+
   const eligibleCategorySlugs = new Set(
     content.map(categorySlug).filter(hasValidSitemapSlug),
   );
@@ -326,10 +327,6 @@ export async function getSitemapIndexPaths() {
     safeFetchJson(buildSitemapApiUrl("/service-categories")),
     safeFetchJson(buildSitemapApiUrl("/project-categories")),
   ]);
-
-  if (!serviceCategoriesResponse || !projectCategoriesResponse) {
-    throw new Error("Unable to load categories for the sitemap index");
-  }
 
   const indexableServices = services.filter(isIndexableService);
   const indexableProjects = projects.filter(isIndexableProject);

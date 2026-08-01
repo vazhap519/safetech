@@ -1,4 +1,5 @@
 import ProjectsPageContent from "@/components/pages/ProjectsPageContent";
+import CorePageFallback from "@/components/seo/CorePageFallback";
 import { createCmsPageMetadata } from "@/lib/cms-metadata";
 import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
 
@@ -11,5 +12,10 @@ type ProjectsRouteProps = {
 };
 
 export default function ProjectsPage({ searchParams }: ProjectsRouteProps) {
-    return <ProjectsPageContent searchParams={searchParams} />;
+    return (
+        <>
+            <CorePageFallback pageKey="projects" />
+            <ProjectsPageContent searchParams={searchParams} />
+        </>
+    );
 }

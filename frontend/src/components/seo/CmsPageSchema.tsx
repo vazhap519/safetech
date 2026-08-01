@@ -2,8 +2,7 @@ import type { ReactNode } from "react";
 
 import JsonLd from "@/components/seo/JsonLd";
 import { getBackendSeoPage } from "@/lib/backend";
-import { hasConfiguredPageHeading } from "@/lib/page-content";
-import { getSiteSettings } from "@/lib/site-settings";
+import { getCurrentLocale } from "@/lib/locale-server";
 
 export default async function CmsPageSchema({
     pageKey,
@@ -12,12 +11,7 @@ export default async function CmsPageSchema({
     pageKey: string;
     fallback?: ReactNode;
 }) {
-    const { locale, translations } = await getSiteSettings();
-
-    if (!hasConfiguredPageHeading(translations, pageKey, locale)) {
-        return null;
-    }
-
+    const locale = await getCurrentLocale();
     const seo = await getBackendSeoPage(pageKey, locale);
     const schema = seo?.schemaOverride || seo?.schema;
 

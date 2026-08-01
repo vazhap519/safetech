@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run typecheck && npm run build"
+    "seo:smoke": "node scripts/seo-smoke.mjs",
+    "check": "npm run lint && npm run typecheck && npm run build -- --webpack"
   },
   "dependencies": {
     "clsx": "^2.1.1",

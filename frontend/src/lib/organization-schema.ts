@@ -72,7 +72,10 @@ export function buildOrganizationEntity({
         url,
         logo,
         image: logo,
-        areaServed: "Georgia",
+        areaServed: {
+            "@type": "Country",
+            name: "Georgia",
+        },
         ...(description ? { description } : {}),
         ...(primaryPhone ? { telephone: primaryPhone } : {}),
         ...(contact.email ? { email: contact.email } : {}),
@@ -82,7 +85,6 @@ export function buildOrganizationEntity({
                       "@type": "PostalAddress",
                       streetAddress: contact.address,
                       addressCountry: "GE",
-                      addressLocality: "Tbilisi",
                   },
               }
             : {}),
