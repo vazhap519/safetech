@@ -12,18 +12,13 @@ export default async function CmsPageSchema({
     pageKey: string;
     fallback?: ReactNode;
 }) {
-    const { features, locale, translations } = await getSiteSettings();
+    const { locale, translations } = await getSiteSettings();
 
-    if (
-        pageKey !== "privacy" &&
-        !(pageKey === "shop" && features.shopEnabled) &&
-        !hasConfiguredPageHeading(translations, pageKey, locale)
-    ) {
+    if (!hasConfiguredPageHeading(translations, pageKey, locale)) {
         return null;
     }
 
     const seo = await getBackendSeoPage(pageKey, locale);
-
     const schema = seo?.schemaOverride || seo?.schema;
 
     return schema ? <JsonLd data={schema} /> : fallback;
