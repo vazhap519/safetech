@@ -1,3 +1,4 @@
+import CorePageFallback from "@/components/seo/CorePageFallback";
 import HomeSchema from "@/components/seo/HomeSchema";
 import CmsPageSchema from "@/components/seo/CmsPageSchema";
 import { createCmsPageMetadata } from "@/lib/cms-metadata";
@@ -19,6 +20,7 @@ export default function HomePage() {
     return (
         <>
             <CmsPageSchema pageKey="home" fallback={<HomeSchema />} />
+            <CorePageFallback pageKey="home" />
             <div className="overflow-x-hidden">
                 <Hero />
                 <Trust />
