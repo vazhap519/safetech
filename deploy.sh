@@ -2,11 +2,6 @@
 
 set -Eeuo pipefail
 
-# This project is deployed in place:
-#   /var/www/safetech/back
-#   /var/www/safetech/frontend
-#
-# Every default can be overridden without editing this file.
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="${SAFETECH_PROJECT_DIR:-${SCRIPT_DIR}}"
 BACKEND_DIR="${SAFETECH_BACKEND_DIR:-${PROJECT_DIR}/back}"
@@ -110,6 +105,7 @@ php "${BACKEND_DIR}/artisan" cms:production-check
 php "${BACKEND_DIR}/artisan" migrate --force
 php "${BACKEND_DIR}/artisan" db:seed --class=AdminUserSeeder --force
 php "${BACKEND_DIR}/artisan" db:seed --class=SystemContentSeeder --force
+php "${BACKEND_DIR}/artisan" db:seed --class=SeoPageSeeder --force
 php "${BACKEND_DIR}/artisan" cms:remove-demo-content --force
 php "${BACKEND_DIR}/artisan" cache:clear
 php "${BACKEND_DIR}/artisan" storage:link --force
@@ -183,18 +179,22 @@ fi
 log "Running smoke checks"
 health_json="$(curl --fail --silent --show-error --retry 10 \
     --retry-connrefused --retry-delay 2 "${API_URL%/}/api/health")"
-calculator_json="$(curl --fail --silent --show-error --retry 5 \
-    --retry-delay 2 "${API_URL%/}/api/service-calculator/profiles?locale=ka")"
+services_json="$(curl --fail --silent --show-error --retry 5 \
+    --retry-delay 2 "${API_URL%/}/api/services")"
+projects_json="$(curl --fail --silent --show-error --retry 5 \
+    --retry-delay 2 "${API_URL%/}/api/projects")"
 
-for api_payload in "${health_json}" "${calculator_json}"; do
+for api_payload in "${health_json}" "${services_json}" "${projects_json}"; do
     php -r '
         json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR);
     ' <<< "${api_payload}" || fail "a required production API returned invalid JSON"
 done
 
-curl --fail --silent --show-error --retry 10 \
-    --retry-connrefused --retry-delay 2 \
-    "${SITE_URL%/}/service-calculator" >/dev/null
+for page_path in / /about /services /projects /contact; do
+    curl --fail --silent --show-error --retry 10 \
+        --retry-connrefused --retry-delay 2 \
+        "${SITE_URL%/}${page_path}" >/dev/null
+done
 
 home_html="$(curl --fail --silent --show-error --compressed \
     -H 'Accept: text/html' "${SITE_URL%/}/")"
