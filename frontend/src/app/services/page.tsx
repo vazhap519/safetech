@@ -8,7 +8,7 @@ export async function generateMetadata() {
 }
 
 type ServicesRouteProps = {
-    searchParams?: Promise<{ category?: string }>;
+    searchParams?: Promise<{ category?: string; service?: string }>;
 };
 
 export default function ServicesPage({ searchParams }: ServicesRouteProps) {

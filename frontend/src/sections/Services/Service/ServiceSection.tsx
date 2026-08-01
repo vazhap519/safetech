@@ -11,8 +11,10 @@ import { translateText } from "@/lib/translations";
 
 export default async function ServiceSection({
     category,
+    initialService,
 }: {
     category?: string;
+    initialService?: string;
 }) {
     const [services, categories, profiles, { locale, translations }] =
         await Promise.all([
@@ -63,7 +65,7 @@ export default async function ServiceSection({
 
             {profiles.length ? (
                 <ServiceCalculator
-                    initialService={services[0]?.slug}
+                    initialService={initialService || services[0]?.slug}
                     profiles={profiles}
                 />
             ) : null}

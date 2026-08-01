@@ -51,7 +51,7 @@ export default async function ServiceCta({
             actions={[
                 {
                     label: calculatorLabel,
-                    href: `/service-calculator?service=${encodeURIComponent(service.slug)}`,
+                    href: `/services?service=${encodeURIComponent(service.slug)}#service-calculator`,
                     className:
                         "glow-button px-unit-xl py-unit-md font-headline-md hover:shadow-[0_0_30px_rgba(37,99,235,0.4)]",
                 },
