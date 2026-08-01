@@ -1,3 +1,4 @@
+import CorePageFallback from "@/components/seo/CorePageFallback";
 import ContactSchema from "@/components/seo/ContactSchema";
 import CmsPageSchema from "@/components/seo/CmsPageSchema";
 import { createCmsPageMetadata } from "@/lib/cms-metadata";
@@ -18,6 +19,7 @@ export default function Contact() {
     return (
         <>
             <CmsPageSchema pageKey="contact" fallback={<ContactSchema />} />
+            <CorePageFallback pageKey="contact" />
             <Hero />
             <Intro />
             <Form />
