@@ -27,7 +27,7 @@ export default async function ServiceStructuredData({
     const serviceImage =
         service.heroImage || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
     const provider: Record<string, unknown> = {
-        "@type": "LocalBusiness",
+        "@type": "Organization",
         "@id": `${absoluteSiteUrl("/")}#organization`,
         name: branding.siteName,
         url: absoluteLocalizedUrl("/", locale),
@@ -55,18 +55,18 @@ export default async function ServiceStructuredData({
         buildBreadcrumbSchema([
             {
                 name: t("nav.home", {
-                        ka: "მთავარი",
-                        en: "Home",
-                        ru: "Главная",
-                    }),
+                    ka: "მთავარი",
+                    en: "Home",
+                    ru: "Главная",
+                }),
                 url: absoluteLocalizedUrl("/", locale),
             },
             {
                 name: t("nav.services", {
-                        ka: "სერვისები",
-                        en: "Services",
-                        ru: "Услуги",
-                    }),
+                    ka: "სერვისები",
+                    en: "Services",
+                    ru: "Услуги",
+                }),
                 url: absoluteLocalizedUrl("/services", locale),
             },
             {
