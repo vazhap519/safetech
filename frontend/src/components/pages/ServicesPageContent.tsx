@@ -14,7 +14,9 @@ import ServiceSection from "@/sections/Services/Service/ServiceSection";
 import WorkSection from "@/sections/Services/Work/WorkSection";
 
 type ServicesPageContentProps = {
-    searchParams?: Promise<{ category?: string }> | { category?: string };
+    searchParams?:
+        | Promise<{ category?: string; service?: string }>
+        | { category?: string; service?: string };
     showPageSchema?: boolean;
 };
 
@@ -22,7 +24,9 @@ export default async function ServicesPageContent({
     searchParams,
     showPageSchema = true,
 }: ServicesPageContentProps) {
-    const category = firstSearchParam((await searchParams)?.category);
+    const resolvedSearchParams = await searchParams;
+    const category = firstSearchParam(resolvedSearchParams?.category);
+    const selectedService = firstSearchParam(resolvedSearchParams?.service);
 
     if (showPageSchema && category) {
         const locale = await getCurrentLocale();
@@ -40,7 +44,10 @@ export default async function ServicesPageContent({
             ) : null}
             <HeroSection />
             <PartnerSection />
-            <ServiceSection category={category || undefined} />
+            <ServiceSection
+                category={category || undefined}
+                initialService={selectedService || undefined}
+            />
             <FeaturedSection />
             <WhySection />
             <WorkSection />
