@@ -35,6 +35,8 @@ final class CalculatorProfileBuilder
             'basePrice' => $this->money($pricing['base_price'] ?? 0),
             'monthlyBasePrice' => $this->money($pricing['monthly_base_price'] ?? 0),
             'minimumPrice' => $this->money($pricing['minimum_price'] ?? 0),
+            'laborPrice' => $this->money($pricing['labor_price'] ?? 0),
+            'discountPercentage' => $this->percentage($pricing['discount_percentage'] ?? 0),
             'projectSize' => [
                 'label' => $this->localizedLabel($config, 'project_size_label', $locale, 'Project size'),
                 'options' => $this->options($config['project_size_options'] ?? [], $locale),
@@ -45,6 +47,7 @@ final class CalculatorProfileBuilder
             ],
             'fields' => $this->fields($config['extra_fields'] ?? [], $locale),
             'packages' => $this->packages($config['packages'] ?? [], $locale),
+            'components' => $this->components($config['components'] ?? [], $locale),
             'disclaimer' => $this->localizedLabel(
                 $config,
                 'calculator_disclaimer',
@@ -57,10 +60,10 @@ final class CalculatorProfileBuilder
     /** @return array<string, mixed> */
     private function config(Service $service): array
     {
-        $defaults = DefaultCalculatorProfiles::for(
-            $this->string($service->slug),
-            $this->string($service->name ?: $service->title),
-        );
+        $slug = $this->string($service->slug);
+        $name = $this->string($service->name ?: $service->title);
+        $defaults = DefaultCalculatorProfiles::for($slug, $name);
+        $defaults['components'] = DefaultConfiguratorComponents::for($slug, $name);
         $custom = is_array($service->lead_form) ? $service->lead_form : [];
 
         return $this->mergeConfig($defaults, $custom);
@@ -68,7 +71,7 @@ final class CalculatorProfileBuilder
 
     /**
      * Merge associative configuration recursively while replacing list values
-     * (fields, options and packages) as complete admin-managed collections.
+     * (fields, options, packages and components) as complete admin-managed collections.
      *
      * @param array<string, mixed> $defaults
      * @param array<string, mixed> $custom
@@ -184,6 +187,59 @@ final class CalculatorProfileBuilder
             ->all();
     }
 
+    /** @return array<int, array<string, mixed>> */
+    private function components(mixed $components, string $locale): array
+    {
+        if (! is_array($components)) {
+            return [];
+        }
+
+        $quantityModes = ['fixed', 'field', 'ceil'];
+        $operators = ['equals', 'not_equals', 'gte', 'lte', 'contains', 'truthy', 'falsy'];
+
+        return collect($components)
+            ->filter(fn ($component): bool => is_array($component) && filled($component['key'] ?? null))
+            ->map(function (array $component) use ($locale, $quantityModes, $operators): array {
+                $rules = collect(is_array($component['rules'] ?? null) ? $component['rules'] : [])
+                    ->filter(fn ($rule): bool => is_array($rule) && filled($rule['field'] ?? null))
+                    ->map(function (array $rule) use ($operators): array {
+                        $operator = $this->string($rule['operator'] ?? 'equals');
+
+                        return [
+                            'field' => $this->string($rule['field']),
+                            'operator' => in_array($operator, $operators, true) ? $operator : 'equals',
+                            'value' => $this->string($rule['value'] ?? ''),
+                        ];
+                    })
+                    ->values()
+                    ->all();
+                $mode = $this->string($component['quantity_mode'] ?? 'fixed');
+
+                return [
+                    'key' => $this->string($component['key']),
+                    'category' => $this->string($component['category'] ?? 'other'),
+                    'title' => $this->localizedLabel($component, 'title', $locale, $this->string($component['key'])),
+                    'description' => $this->localizedLabel($component, 'description', $locale),
+                    'unitPrice' => $this->money($component['unit_price'] ?? 0),
+                    'monthlyPrice' => $this->money($component['monthly_price'] ?? 0),
+                    'quantityMode' => in_array($mode, $quantityModes, true) ? $mode : 'fixed',
+                    'quantityField' => $this->string($component['quantity_field'] ?? ''),
+                    'defaultQuantity' => max(0, $this->number($component['default_quantity'] ?? 1)),
+                    'unitsPerComponent' => max(1, $this->number($component['units_per_component'] ?? 1)),
+                    'minimumQuantity' => max(0, $this->number($component['minimum_quantity'] ?? 0)),
+                    'maximumQuantity' => $this->positiveNumberOrNull($component['maximum_quantity'] ?? null),
+                    'required' => (bool) ($component['required'] ?? false),
+                    'recommended' => (bool) ($component['recommended'] ?? false),
+                    'exclusiveGroup' => $this->string($component['exclusive_group'] ?? ''),
+                    'priority' => (int) ($component['priority'] ?? 0),
+                    'rules' => $rules,
+                ];
+            })
+            ->sortByDesc('priority')
+            ->values()
+            ->all();
+    }
+
     /** @param array<string, mixed> $source */
     private function localizedLabel(
         array $source,
@@ -222,8 +278,23 @@ final class CalculatorProfileBuilder
         return round(max(0, is_numeric($value) ? (float) $value : 0), 2);
     }
 
+    private function percentage(mixed $value): float
+    {
+        return round(min(100, max(0, is_numeric($value) ? (float) $value : 0)), 2);
+    }
+
+    private function number(mixed $value): float
+    {
+        return is_numeric($value) ? (float) $value : 0;
+    }
+
     private function numberOrNull(mixed $value): ?float
     {
         return is_numeric($value) ? (float) $value : null;
+    }
+
+    private function positiveNumberOrNull(mixed $value): ?float
+    {
+        return is_numeric($value) && (float) $value > 0 ? (float) $value : null;
     }
 }
