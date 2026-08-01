@@ -1,6 +1,7 @@
 import { getCurrentLocale } from "@/lib/locale-server";
 import {
     PAGE_SEO_PRESETS,
+    type PageSeoPreset,
     type PageSeoPresetKey,
 } from "@/lib/page-seo-presets";
 import { hasConfiguredPageHeading } from "@/lib/page-content";
@@ -19,7 +20,7 @@ export default async function CorePageFallback({
         return null;
     }
 
-    const preset = PAGE_SEO_PRESETS[pageKey];
+    const preset = PAGE_SEO_PRESETS[pageKey] as PageSeoPreset;
     const translationKey = preset.translationKey ?? preset.key;
     const title = translateText(
         translations,
