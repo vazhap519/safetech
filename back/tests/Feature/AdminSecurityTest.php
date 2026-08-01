@@ -15,26 +15,14 @@ class AdminSecurityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_users_support_recoverable_app_authentication(): void
+    public function test_multi_factor_authentication_is_disabled_for_admin_users(): void
     {
         $user = User::factory()->create(['is_admin' => true]);
 
-        $this->assertInstanceOf(HasAppAuthentication::class, $user);
-        $this->assertInstanceOf(HasAppAuthenticationRecovery::class, $user);
-        $this->assertTrue(Schema::hasColumns('users', [
-            'app_authentication_secret',
-            'app_authentication_recovery_codes',
-        ]));
-
-        $user->saveAppAuthenticationSecret('test-mfa-secret');
-        $user->saveAppAuthenticationRecoveryCodes(['recovery-code']);
-
-        $raw = $user->fresh()->getAttributes();
-
-        $this->assertNotSame('test-mfa-secret', $raw['app_authentication_secret']);
-        $this->assertNotSame('["recovery-code"]', $raw['app_authentication_recovery_codes']);
-        $this->assertArrayNotHasKey('app_authentication_secret', $user->fresh()->toArray());
-        $this->assertArrayNotHasKey('app_authentication_recovery_codes', $user->fresh()->toArray());
+        $this->assertNotInstanceOf(HasAppAuthentication::class, $user);
+        $this->assertNotInstanceOf(HasAppAuthenticationRecovery::class, $user);
+        $this->assertFalse(Schema::hasColumn('users', 'app_authentication_secret'));
+        $this->assertFalse(Schema::hasColumn('users', 'app_authentication_recovery_codes'));
     }
 
     public function test_admin_model_changes_are_audited_and_secrets_are_redacted(): void

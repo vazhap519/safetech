@@ -44,8 +44,10 @@ class FilamentResourceSmokeTest extends TestCase
         }
     }
 
-    public function test_administrator_can_authenticate_through_the_filament_login_page(): void
+    public function test_configured_administrator_can_authenticate_through_the_filament_login_page(): void
     {
+        config()->set('cms.admin.email', 'admin@example.com');
+
         $admin = User::factory()->create([
             'email' => 'admin@example.com',
             'password' => 'password',
@@ -68,6 +70,8 @@ class FilamentResourceSmokeTest extends TestCase
 
     public function test_non_administrators_cannot_authenticate_into_the_admin_panel(): void
     {
+        config()->set('cms.admin.email', 'editor@example.com');
+
         User::factory()->create([
             'email' => 'editor@example.com',
             'password' => 'password',
@@ -88,12 +92,42 @@ class FilamentResourceSmokeTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_core_admin_resource_pages_render_for_an_administrator(): void
+    public function test_other_admin_flagged_users_cannot_authenticate(): void
+    {
+        config()->set('cms.admin.email', 'owner@example.com');
+
+        User::factory()->create([
+            'email' => 'other-admin@example.com',
+            'password' => 'password',
+            'is_admin' => true,
+        ]);
+
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::test(Login::class)
+            ->fillForm([
+                'email' => 'other-admin@example.com',
+                'password' => 'password',
+                'remember' => false,
+            ])
+            ->call('authenticate')
+            ->assertHasErrors(['data.email']);
+
+        $this->assertGuest();
+    }
+
+    public function test_core_admin_resource_pages_render_for_the_configured_administrator(): void
     {
         $this->seed(ContentSeeder::class);
         $this->seed(SeoPageSeeder::class);
 
-        $admin = User::factory()->create(['is_admin' => true]);
+        config()->set('cms.admin.email', 'admin@example.com');
+
+        $admin = User::factory()->create([
+            'email' => 'admin@example.com',
+            'is_admin' => true,
+        ]);
+
         $this->actingAs($admin);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
 
@@ -108,5 +142,7 @@ class FilamentResourceSmokeTest extends TestCase
         ] as $url) {
             $this->get($url)->assertOk();
         }
+
+        $this->get('/admin/users')->assertNotFound();
     }
 }

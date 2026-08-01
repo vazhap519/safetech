@@ -3,29 +3,22 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
-use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
-use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
-use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
-use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, Notifiable;
+    use HasFactory, Notifiable;
 
     protected $fillable = ['name', 'email', 'password', 'is_admin'];
 
     protected $hidden = [
         'password',
         'remember_token',
-        'app_authentication_secret',
-        'app_authentication_recovery_codes',
     ];
 
     /**
@@ -44,6 +37,12 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->is_admin;
+        $configuredAdminEmail = mb_strtolower(trim((string) config('cms.admin.email')));
+        $userEmail = mb_strtolower(trim((string) $this->email));
+
+        return $panel->getId() === 'admin'
+            && $this->is_admin
+            && $configuredAdminEmail !== ''
+            && hash_equals($configuredAdminEmail, $userEmail);
     }
 }

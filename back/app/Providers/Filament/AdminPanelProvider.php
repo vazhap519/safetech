@@ -3,7 +3,6 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Support\NavigationGroup;
-use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -28,12 +27,6 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->profile(isSimple: false)
-            ->multiFactorAuthentication([
-                AppAuthentication::make()
-                    ->recoverable()
-                    ->codeWindow(4),
-            ], isRequired: app()->environment('production'))
             ->revealablePasswords(false)
             ->brandName('SafeTech CMS')
             ->colors(['primary' => Color::Blue])
