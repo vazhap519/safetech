@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 final class AdminUserSeeder extends Seeder
@@ -26,17 +27,23 @@ final class AdminUserSeeder extends Seeder
             throw new RuntimeException('ADMIN_PASSWORD must contain at least 12 characters.');
         }
 
-        $admin = User::query()->firstOrNew(['email' => $email]);
-        $attributes = [
-            'name' => $name !== '' ? $name : 'SafeTech Admin',
-            'is_admin' => true,
-            'email_verified_at' => $admin->email_verified_at ?? now(),
-        ];
+        DB::transaction(function () use ($email, $name, $password): void {
+            $admin = User::query()->firstOrNew(['email' => $email]);
+            $attributes = [
+                'name' => $name !== '' ? $name : 'SafeTech Admin',
+                'is_admin' => true,
+                'email_verified_at' => $admin->email_verified_at ?? now(),
+            ];
 
-        if (! $admin->exists) {
-            $attributes['password'] = $password;
-        }
+            if (! $admin->exists) {
+                $attributes['password'] = $password;
+            }
 
-        $admin->forceFill($attributes)->save();
+            $admin->forceFill($attributes)->save();
+
+            User::query()
+                ->where('id', '!=', $admin->getKey())
+                ->delete();
+        });
     }
 }
