@@ -2,9 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Category;
 use App\Models\CategoryForService;
-use App\Models\Post;
 use App\Models\Project;
 use App\Models\ProjectCategory;
 use App\Models\Service;
@@ -93,84 +91,5 @@ class PublicContentEligibilityTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.slug', 'offices');
-    }
-
-    public function test_visually_empty_blog_posts_are_excluded_from_lists_categories_and_details(): void
-    {
-        $emptyCategory = Category::query()->create([
-            'name' => 'Empty category',
-            'slug' => 'empty-category',
-        ]);
-        $category = Category::query()->create([
-            'name' => 'Guides',
-            'slug' => 'guides',
-        ]);
-
-        Post::query()->create([
-            'title' => 'Empty post',
-            'slug' => 'empty-post',
-            'body' => '<p><br></p>',
-            'category_id' => $emptyCategory->id,
-            'is_published' => true,
-        ]);
-        Post::query()->create([
-            'title' => 'Network guide',
-            'slug' => 'network-guide',
-            'body' => '<p>Useful network planning content.</p>',
-            'category_id' => $category->id,
-            'is_published' => true,
-        ]);
-
-        $this->getJson('/api/blog')
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.slug', 'network-guide')
-            ->assertJsonPath('data.0.has_content', true)
-            ->assertJsonPath('meta.total', 1);
-        $this->getJson('/api/blog/empty-post')->assertNotFound();
-        $this->getJson('/api/blog/network-guide')
-            ->assertOk()
-            ->assertJsonPath('data.sections.0.content', '<p>Useful network planning content.</p>');
-        $this->getJson('/api/categories')
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.slug', 'guides');
-    }
-
-    public function test_filtered_blog_results_keep_stable_pagination_across_cached_pages(): void
-    {
-        $category = Category::query()->create([
-            'name' => 'Articles',
-            'slug' => 'articles',
-        ]);
-
-        foreach (range(1, 10) as $number) {
-            Post::query()->create([
-                'title' => "Article {$number}",
-                'slug' => "article-{$number}",
-                'body' => "<p>Useful article {$number} content.</p>",
-                'category_id' => $category->id,
-                'is_published' => true,
-            ]);
-        }
-
-        $this->getJson('/api/blog?page=1')
-            ->assertOk()
-            ->assertJsonCount(9, 'data')
-            ->assertJsonPath('meta.current_page', 1)
-            ->assertJsonPath('meta.last_page', 2)
-            ->assertJsonPath('meta.total', 10);
-
-        $this->getJson('/api/blog?page=2')
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('meta.current_page', 2)
-            ->assertJsonPath('meta.last_page', 2)
-            ->assertJsonPath('meta.total', 10);
-
-        $this->getJson('/api/blog?page=-10')
-            ->assertOk()
-            ->assertJsonCount(9, 'data')
-            ->assertJsonPath('meta.current_page', 1);
     }
 }

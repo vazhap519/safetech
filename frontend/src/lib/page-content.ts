@@ -3,16 +3,13 @@ import type { TranslationMap } from "@/lib/translations";
 
 const PAGE_HEADING_KEYS: Record<string, readonly string[]> = {
     home: ["home.hero.titlePrefix", "home.hero.titleAccent"],
+    about: ["about.hero.title"],
     services: [
         "services.hero.titlePrefix",
         "services.hero.titleAccent",
         "services.hero.titleSuffix",
     ],
-    "service-calculator": ["calculator.hero.title"],
     projects: ["projects.hero.title"],
-    shop: ["shop.hero.title"],
-    blog: ["blog.title"],
-    about: ["about.hero.title"],
     contact: ["contact.hero.title"],
 };
 

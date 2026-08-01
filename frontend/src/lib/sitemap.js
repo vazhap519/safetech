@@ -64,10 +64,8 @@ function absoluteUrl(pathOrUrl) {
   if (!pathOrUrl) return "";
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
 
-  const baseUrl = normalizeBaseUrl();
   const path = String(pathOrUrl).startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
-
-  return `${baseUrl}${path}`;
+  return `${normalizeBaseUrl()}${path}`;
 }
 
 export function localizedUrlEntries(path, metadata = {}, locales = supportedLocales) {
@@ -79,7 +77,6 @@ export function localizedUrlEntries(path, metadata = {}, locales = supportedLoca
   const defaultLocale = availableLocales.includes(DEFAULT_LOCALE)
     ? DEFAULT_LOCALE
     : availableLocales[0];
-  const defaultUrl = absoluteUrl(localizePath(normalizedPath, defaultLocale));
   const alternates = {
     ...Object.fromEntries(
       availableLocales.map((locale) => [
@@ -87,7 +84,7 @@ export function localizedUrlEntries(path, metadata = {}, locales = supportedLoca
         absoluteUrl(localizePath(normalizedPath, locale)),
       ]),
     ),
-    "x-default": defaultUrl,
+    "x-default": absoluteUrl(localizePath(normalizedPath, defaultLocale)),
   };
 
   return availableLocales.map((locale) => ({
@@ -102,14 +99,10 @@ function backendAssetUrl(pathOrUrl) {
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
 
   const value = String(pathOrUrl);
-
   if (value.startsWith("/storage") || value.startsWith("/uploads")) {
     return `${new URL(getSitemapApiBase()).origin}${value}`;
   }
-
-  if (value.startsWith("/")) {
-    return absoluteUrl(value);
-  }
+  if (value.startsWith("/")) return absoluteUrl(value);
 
   return `${new URL(getSitemapApiBase()).origin}/storage/${value.replace(/^\/+/, "")}`;
 }
@@ -117,15 +110,15 @@ function backendAssetUrl(pathOrUrl) {
 export async function safeFetchJson(url) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const res = await fetch(url, {
+      const response = await fetch(url, {
         cache: "no-store",
         signal: AbortSignal.timeout(8000),
       });
 
-      if (res.ok) return await res.json();
-      if (res.status < 500 && res.status !== 429) return null;
+      if (response.ok) return await response.json();
+      if (response.status < 500 && response.status !== 429) return null;
     } catch {
-      // Retry transient network failures once before failing the sitemap request.
+      // Retry one transient failure.
     }
 
     if (attempt === 0) {
@@ -141,18 +134,6 @@ function sitemapCollection(response) {
   return Array.isArray(response?.data) ? response.data : [];
 }
 
-function hasEligibleCategory(response, content, categorySlug) {
-  const eligibleCategorySlugs = new Set(
-    content
-      .map(categorySlug)
-      .filter(hasValidSitemapSlug),
-  );
-
-  return sitemapCollection(response)
-    .filter(isIndexableCategory)
-    .some((category) => eligibleCategorySlugs.has(category.slug));
-}
-
 function meaningfulText(value) {
   if (typeof value === "string") {
     return value
@@ -161,15 +142,10 @@ function meaningfulText(value) {
       .replace(/\s+/g, " ")
       .trim();
   }
-
-  if (Array.isArray(value)) {
-    return value.map(meaningfulText).filter(Boolean).join(" ");
-  }
-
+  if (Array.isArray(value)) return value.map(meaningfulText).filter(Boolean).join(" ");
   if (value && typeof value === "object") {
     return Object.values(value).map(meaningfulText).filter(Boolean).join(" ");
   }
-
   return "";
 }
 
@@ -221,37 +197,46 @@ export function isIndexableProject(project) {
   );
 }
 
-export function isIndexableProduct(product) {
-  return Boolean(
-    hasValidSitemapSlug(product?.slug)
-    && !product?.seo?.noindex
-    && hasMeaningfulContent(product?.name)
-    && hasMeaningfulContent(
-      product?.shortDescription,
-      product?.description,
-      product?.details,
-    )
-  );
-}
-
-export function isIndexableBlogPost(post) {
-  return Boolean(
-    hasValidSitemapSlug(post?.slug)
-    && !post?.meta?.noindex
-    && hasMeaningfulContent(post?.title)
-    && (
-      post?.has_content === true
-      || hasMeaningfulContent(post?.excerpt, post?.body, post?.sections)
-    )
-  );
-}
-
 export function isIndexableCategory(category) {
   return Boolean(
     hasValidSitemapSlug(category?.slug)
     && !category?.noindex
     && hasMeaningfulContent(category?.name)
   );
+}
+
+export async function fetchPaginatedPages(path, params = {}) {
+  let page = 1;
+  let lastPage = 1;
+  const items = [];
+  const pages = [];
+
+  do {
+    const json = await safeFetchJson(buildSitemapApiUrl(path, { ...params, page: String(page) }));
+    if (!json) {
+      throw new Error(`Unable to load sitemap content from ${path}, page ${page}`);
+    }
+
+    const pageItems = json?.data?.services || json?.data || [];
+    const meta = json?.data?.meta || json?.meta || {};
+
+    if (Array.isArray(pageItems)) {
+      items.push(...pageItems);
+      pages.push({ page, items: pageItems });
+    }
+
+    const reportedLastPage = Number(meta.last_page || 1);
+    lastPage = Number.isFinite(reportedLastPage)
+      ? Math.max(1, Math.min(reportedLastPage, 1000))
+      : 1;
+    page += 1;
+  } while (page <= lastPage);
+
+  return { items, pages, lastPage };
+}
+
+export async function fetchAllPaginated(path, params = {}) {
+  return (await fetchPaginatedPages(path, params)).items;
 }
 
 export async function categorySitemapResponse({
@@ -279,8 +264,9 @@ export async function categorySitemapResponse({
         .filter(hasValidSitemapSlug),
     )
     : null;
+
   const urls = sitemapCollection(response)
-    .filter((category) => isIndexableCategory(category))
+    .filter(isIndexableCategory)
     .filter((category) => !eligibleCategorySlugs || eligibleCategorySlugs.has(category.slug))
     .flatMap((category) => localizedUrlEntries(
       `${pathPrefix}/${encodeURIComponent(category.slug)}`,
@@ -294,114 +280,59 @@ export async function categorySitemapResponse({
   return xmlResponse(urlset(urls));
 }
 
-export async function fetchPaginatedPages(path, params = {}) {
-  let page = 1;
-  let lastPage = 1;
-  const items = [];
-  const pages = [];
-
-  do {
-    const query = {
-      ...params,
-      page: String(page),
-    };
-
-    const json = await safeFetchJson(buildSitemapApiUrl(path, query));
-
-    if (!json) {
-      throw new Error(`Unable to load sitemap content from ${path}, page ${page}`);
-    }
-
-    const pageItems = json?.data?.services || json?.data || [];
-    const meta = json?.data?.meta || json?.meta || {};
-
-    if (Array.isArray(pageItems)) {
-      items.push(...pageItems);
-      pages.push({ page, items: pageItems });
-    }
-
-    const reportedLastPage = Number(meta.last_page || 1);
-    lastPage = Number.isFinite(reportedLastPage)
-      ? Math.max(1, Math.min(reportedLastPage, 1000))
-      : 1;
-    page += 1;
-  } while (page <= lastPage);
-
-  return { items, pages, lastPage };
-}
-
-export async function fetchAllPaginated(path, params = {}) {
-  return (await fetchPaginatedPages(path, params)).items;
-}
-
-function buildImageSitemapItems(services, projects, posts, products = []) {
+function buildImageSitemapItems(services, projects) {
   return [
     ...services.filter(isIndexableService).map((service) => ({
-      loc: `${normalizeBaseUrl()}/services/${encodeURIComponent(service.slug)}`,
+      loc: absoluteUrl(`/services/${encodeURIComponent(service.slug)}`),
       image: backendAssetUrl(service.image),
       title: service.title || service.name,
     })),
     ...projects.filter(isIndexableProject).map((project) => ({
-      loc: `${normalizeBaseUrl()}/projects/${encodeURIComponent(project.slug)}`,
+      loc: absoluteUrl(`/projects/${encodeURIComponent(project.slug)}`),
       image: backendAssetUrl(project.image),
       title: project.title || project.name,
-    })),
-    ...posts.filter(isIndexableBlogPost).map((post) => ({
-      loc: `${normalizeBaseUrl()}/blog/${encodeURIComponent(post.slug)}`,
-      image: backendAssetUrl(post.image),
-      title: post.title,
-    })),
-    ...products.filter(isIndexableProduct).map((product) => ({
-      loc: `${normalizeBaseUrl()}/shop/${encodeURIComponent(product.slug)}`,
-      image: backendAssetUrl(product.image),
-      title: product.seo?.title || product.name,
     })),
   ].filter((item) => item.loc && item.image);
 }
 
 export async function fetchImageSitemapItems() {
-  const [services, projects, posts, products] = await Promise.all([
+  const [services, projects] = await Promise.all([
     fetchAllPaginated("/services"),
     fetchAllPaginated("/projects"),
-    fetchAllPaginated("/blog"),
-    fetchAllPaginated("/products"),
   ]);
 
-  return buildImageSitemapItems(services, projects, posts, products);
+  return buildImageSitemapItems(services, projects);
+}
+
+function hasEligibleCategory(response, content, categorySlug) {
+  const eligibleCategorySlugs = new Set(
+    content.map(categorySlug).filter(hasValidSitemapSlug),
+  );
+
+  return sitemapCollection(response)
+    .filter(isIndexableCategory)
+    .some((category) => eligibleCategorySlugs.has(category.slug));
 }
 
 export async function getSitemapIndexPaths() {
   const [
     services,
     projects,
-    posts,
-    products,
     serviceCategoriesResponse,
-    productCategoriesResponse,
     projectCategoriesResponse,
-    blogCategoriesResponse,
   ] = await Promise.all([
     fetchAllPaginated("/services"),
     fetchAllPaginated("/projects"),
-    fetchAllPaginated("/blog"),
-    fetchAllPaginated("/products"),
     safeFetchJson(buildSitemapApiUrl("/service-categories")),
-    safeFetchJson(buildSitemapApiUrl("/product-categories")),
     safeFetchJson(buildSitemapApiUrl("/project-categories")),
-    safeFetchJson(buildSitemapApiUrl("/categories")),
   ]);
 
-  if (!serviceCategoriesResponse
-    || !productCategoriesResponse
-    || !projectCategoriesResponse
-    || !blogCategoriesResponse) {
+  if (!serviceCategoriesResponse || !projectCategoriesResponse) {
     throw new Error("Unable to load categories for the sitemap index");
   }
 
   const indexableServices = services.filter(isIndexableService);
   const indexableProjects = projects.filter(isIndexableProject);
-  const indexablePosts = posts.filter(isIndexableBlogPost);
-  const indexableProducts = products.filter(isIndexableProduct);
   const paths = ["/sitemap-main.xml"];
 
   if (indexableServices.length) paths.push("/sitemap-services.xml");
@@ -412,23 +343,8 @@ export async function getSitemapIndexPaths() {
   )) {
     paths.push("/sitemap-service-categories.xml");
   }
-  if (indexablePosts.length) paths.push("/sitemap-blog.xml");
-  if (hasEligibleCategory(
-    blogCategoriesResponse,
-    indexablePosts,
-    (post) => post?.category?.slug,
-  )) {
-    paths.push("/sitemap-blog-categories.xml");
-  }
+
   if (indexableProjects.length) paths.push("/sitemap-projects.xml");
-  if (indexableProducts.length) paths.push("/sitemap-products.xml");
-  if (hasEligibleCategory(
-    productCategoriesResponse,
-    indexableProducts,
-    (product) => product?.category?.slug,
-  )) {
-    paths.push("/sitemap-product-categories.xml");
-  }
   if (hasEligibleCategory(
     projectCategoriesResponse,
     indexableProjects,
@@ -436,12 +352,8 @@ export async function getSitemapIndexPaths() {
   )) {
     paths.push("/sitemap-project-categories.xml");
   }
-  if (buildImageSitemapItems(
-    indexableServices,
-    indexableProjects,
-    indexablePosts,
-    indexableProducts,
-  ).length) {
+
+  if (buildImageSitemapItems(indexableServices, indexableProjects).length) {
     paths.push("/sitemap-images.xml");
   }
 
@@ -453,13 +365,7 @@ export function sitemapIndex(paths) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${paths
-  .map(
-    (path) => `  <sitemap>
-    <loc>${escapeXml(`${baseUrl}${path}`)}</loc>
-  </sitemap>`
-  )
-  .join("\n")}
+${paths.map((path) => `  <sitemap>\n    <loc>${escapeXml(`${baseUrl}${path}`)}</loc>\n  </sitemap>`).join("\n")}
 </sitemapindex>`;
 }
 
@@ -471,19 +377,7 @@ export function urlset(urls) {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${hasAlternates ? '\n  xmlns:xhtml="http://www.w3.org/1999/xhtml"' : ""}>
-${uniqueUrls
-  .map(
-    (item) => `  <url>
-    <loc>${escapeXml(item.loc)}</loc>
-    ${item.alternates ? Object.entries(item.alternates)
-      .map(([hreflang, href]) => `<xhtml:link rel="alternate" hreflang="${escapeXml(hreflang)}" href="${escapeXml(href)}" />`)
-      .join("\n    ") : ""}
-    ${item.lastmod ? `<lastmod>${escapeXml(item.lastmod)}</lastmod>` : ""}
-    ${item.changefreq ? `<changefreq>${escapeXml(item.changefreq)}</changefreq>` : ""}
-    ${item.priority ? `<priority>${escapeXml(item.priority)}</priority>` : ""}
-  </url>`
-  )
-  .join("\n")}
+${uniqueUrls.map((item) => `  <url>\n    <loc>${escapeXml(item.loc)}</loc>\n    ${item.alternates ? Object.entries(item.alternates).map(([hreflang, href]) => `<xhtml:link rel="alternate" hreflang="${escapeXml(hreflang)}" href="${escapeXml(href)}" />`).join("\n    ") : ""}\n    ${item.lastmod ? `<lastmod>${escapeXml(item.lastmod)}</lastmod>` : ""}\n    ${item.changefreq ? `<changefreq>${escapeXml(item.changefreq)}</changefreq>` : ""}\n    ${item.priority ? `<priority>${escapeXml(item.priority)}</priority>` : ""}\n  </url>`).join("\n")}
 </urlset>`;
 }
 
@@ -499,22 +393,10 @@ export function imageUrlset(items) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-${uniqueItems
-  .map(
-    (item) => `  <url>
-    <loc>${escapeXml(item.loc)}</loc>
-    <image:image>
-      <image:loc>${escapeXml(item.image)}</image:loc>
-      ${item.title ? `<image:title>${escapeXml(item.title)}</image:title>` : ""}
-    </image:image>
-  </url>`
-  )
-  .join("\n")}
+${uniqueItems.map((item) => `  <url>\n    <loc>${escapeXml(item.loc)}</loc>\n    <image:image>\n      <image:loc>${escapeXml(item.image)}</image:loc>\n      ${item.title ? `<image:title>${escapeXml(item.title)}</image:title>` : ""}\n    </image:image>\n  </url>`).join("\n")}
 </urlset>`;
 }
 
 export function xmlResponse(xml) {
-  return new Response(xml, {
-    headers: sitemapHeaders,
-  });
+  return new Response(xml, { headers: sitemapHeaders });
 }

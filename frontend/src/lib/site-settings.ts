@@ -57,10 +57,6 @@ type SiteIntegrations = {
     indexNowKey: string;
 };
 
-type SiteFeatures = {
-    shopEnabled: boolean;
-};
-
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -82,9 +78,7 @@ function isSocialNetwork(value: string): value is SocialNetwork {
 function normalizeSocialNetwork(value: string): SocialNetwork | null {
     const normalized = value.trim().toLowerCase();
 
-    if (normalized === "twitter") {
-        return "x";
-    }
+    if (normalized === "twitter") return "x";
 
     return isSocialNetwork(normalized) ? normalized : null;
 }
@@ -110,18 +104,14 @@ function normalizeSocialHref(network: SocialNetwork, href: string) {
     const trimmed = href.trim();
 
     if (!trimmed) return "";
-
     if (network === "email") {
         return trimmed.startsWith("mailto:") ? trimmed : `mailto:${trimmed}`;
     }
-
     if (network === "whatsapp") {
         if (trimmed.startsWith("http")) return trimmed;
-
         const digits = trimmed.replace(/[^\d]/g, "");
         return digits ? `https://wa.me/${digits}` : "";
     }
-
     if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
         return trimmed;
     }
@@ -136,18 +126,11 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
                 if (!isRecord(item) || typeof item.network !== "string") {
                     return null;
                 }
-
                 const network = normalizeSocialNetwork(item.network);
-
-                if (!network) {
-                    return null;
-                }
-
-                const href =
-                    typeof item.href === "string"
-                        ? normalizeSocialHref(network, item.href)
-                        : "";
-
+                if (!network) return null;
+                const href = typeof item.href === "string"
+                    ? normalizeSocialHref(network, item.href)
+                    : "";
                 if (!href) return null;
 
                 return {
@@ -168,16 +151,8 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
         const legacyLinks = Object.entries(value)
             .map(([network, href]) => {
                 const normalizedNetwork = normalizeSocialNetwork(network);
-
-                if (!normalizedNetwork || typeof href !== "string") {
-                    return null;
-                }
-
-                const normalizedHref = normalizeSocialHref(
-                    normalizedNetwork,
-                    href,
-                );
-
+                if (!normalizedNetwork || typeof href !== "string") return null;
+                const normalizedHref = normalizeSocialHref(normalizedNetwork, href);
                 if (!normalizedHref) return null;
 
                 return {
@@ -211,7 +186,6 @@ function normalizeStringList(value: unknown) {
                   if (isRecord(item) && typeof item.value === "string") {
                       return item.value;
                   }
-
                   return "";
               })
               .map((item) => item.trim())
@@ -260,16 +234,11 @@ export const getSiteSettings = cache(async () => {
         ? settings.branding
         : {};
     const configuredSeo = isRecord(settings.seo) ? settings.seo : {};
-    const configuredFeatures = isRecord(settings.features) ? settings.features : {};
     const configuredIntegrations = isRecord(settings.integrations)
         ? settings.integrations
         : {};
     const translations = buildTranslationMap(settings.translations);
-
-    const socialLinks = parseSocialLinks(
-        settings.socials,
-        defaultSiteSocialLinks,
-    );
+    const socialLinks = parseSocialLinks(settings.socials, defaultSiteSocialLinks);
     const configuredPhones = normalizeStringList(configuredContact.phones);
     const phoneCandidates = [
         pickString(configuredContact.phone, defaultSiteContact.phone),
@@ -281,14 +250,8 @@ export const getSiteSettings = cache(async () => {
         phone: phones[0] ?? defaultSiteContact.phone,
         phones,
         email: pickString(configuredContact.email, defaultSiteContact.email),
-        address: pickString(
-            configuredContact.address,
-            defaultSiteContact.address,
-        ),
-        whatsapp: pickString(
-            configuredContact.whatsapp,
-            defaultSiteContact.whatsapp,
-        ),
+        address: pickString(configuredContact.address, defaultSiteContact.address),
+        whatsapp: pickString(configuredContact.whatsapp, defaultSiteContact.whatsapp),
         whatsappMessage: pickString(
             configuredContact.whatsapp_message,
             defaultSiteContact.whatsappMessage,
@@ -306,9 +269,7 @@ export const getSiteSettings = cache(async () => {
             pickString(configuredSeo.site_name) ||
             defaultSiteBranding.siteName,
         tagline: pickString(configuredBranding.tagline),
-        logo: maybeBackendAsset(
-            pickString(configuredBranding.logo) || null,
-        ),
+        logo: maybeBackendAsset(pickString(configuredBranding.logo) || null),
         footerLogo: maybeBackendAsset(
             pickString(configuredBranding.footer_logo) ||
                 pickString(configuredBranding.logo) ||
@@ -330,12 +291,8 @@ export const getSiteSettings = cache(async () => {
             configuredIntegrations.marketing_enabled === true ||
             configuredIntegrations.marketing_enabled === "true" ||
             configuredIntegrations.marketing_enabled === 1,
-        googleTagManagerId: pickString(
-            configuredIntegrations.google_tag_manager_id,
-        ),
-        googleAnalyticsId: pickString(
-            configuredIntegrations.google_analytics_id,
-        ),
+        googleTagManagerId: pickString(configuredIntegrations.google_tag_manager_id),
+        googleAnalyticsId: pickString(configuredIntegrations.google_analytics_id),
         metaPixelId: pickString(configuredIntegrations.meta_pixel_id),
         googleSiteVerification: pickString(
             configuredIntegrations.google_site_verification,
@@ -365,19 +322,11 @@ export const getSiteSettings = cache(async () => {
                   configuredSeo.robots_follow === 1,
     } satisfies SiteSeoSettings;
 
-    const features = {
-        shopEnabled:
-            configuredFeatures.shop_enabled === true ||
-            configuredFeatures.shop_enabled === "true" ||
-            configuredFeatures.shop_enabled === 1,
-    } satisfies SiteFeatures;
-
     return {
         contact,
         socialLinks,
         branding,
         seo,
-        features,
         integrations,
         locale: locale satisfies Locale,
         translations: translations satisfies TranslationMap,

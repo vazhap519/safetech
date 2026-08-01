@@ -2,11 +2,9 @@ import TranslatedText from "@/components/i18n/TranslatedText";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 import Typography from "@/components/ui/Typography";
 import { buildFooterNavigation } from "@/lib/navigation";
-import { getSiteSettings } from "@/lib/site-settings";
 
-export default async function FooterCompany() {
-    const { features } = await getSiteSettings();
-    const companyLinks = buildFooterNavigation(features.shopEnabled).filter(
+export default function FooterCompany() {
+    const companyLinks = buildFooterNavigation().filter(
         (item) => item.href !== "/",
     );
 

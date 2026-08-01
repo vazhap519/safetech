@@ -53,37 +53,6 @@ function buildUrl(path, params = {}) {
   return `${url}${query ? `?${query}` : ""}`;
 }
 
-export const getPrivacy = ({ locale, ...options } = {}) =>
-  fetcher(buildUrl("/privacy", locale ? { locale } : {}), {
-    next: { tags: ["privacy"] },
-    ...options,
-  });
-
-export const getBlog = ({ page = 1, category = "all", locale } = {}, options = {}) =>
-  fetcher(
-    buildUrl("/blog", {
-      page,
-      ...(locale ? { locale } : {}),
-      ...(category !== "all" ? { category } : {}),
-    }),
-    {
-      next: { tags: ["blog"] },
-      ...options,
-    },
-  );
-
-export const getBlogPost = (slug, { locale, ...options } = {}) =>
-  fetcher(buildUrl(`/blog/${slug}`, locale ? { locale } : {}), {
-    next: { tags: [`post-${slug}`] },
-    ...options,
-  });
-
-export const getCategories = ({ locale, ...options } = {}) =>
-  fetcher(buildUrl("/categories", locale ? { locale } : {}), {
-    next: { tags: ["categories"] },
-    ...options,
-  });
-
 export const getServiceCategories = ({ locale, ...options } = {}) =>
   fetcher(buildUrl("/service-categories", locale ? { locale } : {}), {
     next: { tags: ["service-categories"] },
@@ -93,11 +62,5 @@ export const getServiceCategories = ({ locale, ...options } = {}) =>
 export const getProjectCategories = ({ locale, ...options } = {}) =>
   fetcher(buildUrl("/project-categories", locale ? { locale } : {}), {
     next: { tags: ["project-categories"] },
-    ...options,
-  });
-
-export const getProductCategories = ({ locale, ...options } = {}) =>
-  fetcher(buildUrl("/product-categories", locale ? { locale } : {}), {
-    next: { tags: ["product-categories"] },
     ...options,
   });

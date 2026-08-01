@@ -1,8 +1,6 @@
-import ServiceCalculator from "@/components/calculator/ServiceCalculator";
 import ServiceTypographyComponent from "@/components/Service/ServiceTypography/ServiceTypographyComponent";
 import ContentFilterGrid from "@/components/filters/ContentFilterGrid";
 import {
-    getBackendCalculatorProfiles,
     getBackendFilterCategories,
     getBackendServices,
 } from "@/lib/backend";
@@ -14,10 +12,9 @@ export default async function ServiceSection({
 }: {
     category?: string;
 }) {
-    const [services, categories, profiles, { locale, translations }] = await Promise.all([
+    const [services, categories, { locale, translations }] = await Promise.all([
         getBackendServices(category),
         getBackendFilterCategories("services"),
-        getBackendCalculatorProfiles(),
         getSiteSettings(),
     ]);
 
@@ -51,26 +48,12 @@ export default async function ServiceSection({
                 </div>
             ) : null}
 
-            <div className={profiles.length ? "grid gap-8 xl:grid-cols-[minmax(0,1fr)_26rem] xl:items-start" : ""}>
-                <div>
-                    <ContentFilterGrid
-                        activeCategory={category}
-                        categories={categories}
-                        items={services}
-                        kind="services"
-                    />
-                </div>
-
-                {profiles.length ? (
-                    <div className="xl:sticky xl:top-28">
-                        <ServiceCalculator
-                            initialService={services[0]?.slug}
-                            profiles={profiles}
-                            variant="embedded"
-                        />
-                    </div>
-                ) : null}
-            </div>
+            <ContentFilterGrid
+                activeCategory={category}
+                categories={categories}
+                items={services}
+                kind="services"
+            />
         </section>
     );
 }

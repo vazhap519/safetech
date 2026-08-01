@@ -1,8 +1,6 @@
 import "server-only";
 
 import {
-    getCategories,
-    getProductCategories,
     getProjectCategories,
     getServiceCategories,
 } from "@/lib/datafetch";
@@ -10,20 +8,14 @@ import { categoryMetadata, findCategory } from "@/lib/categorySeo";
 import { getCurrentLocale } from "@/lib/locale-server";
 import { createMetadata } from "@/lib/seo";
 
-export type CategoryKind = "blog" | "projects" | "services" | "shop";
+export type CategoryKind = "projects" | "services";
 
 const categoryLoaders = {
-    blog: getCategories,
     projects: getProjectCategories,
     services: getServiceCategories,
-    shop: getProductCategories,
 } as const;
 
 const missingCategoryCopy = {
-    blog: {
-        title: "Category not found",
-        description: "The requested blog category does not exist.",
-    },
     projects: {
         title: "Category not found",
         description: "The requested project category does not exist.",
@@ -32,17 +24,9 @@ const missingCategoryCopy = {
         title: "Category not found",
         description: "The requested service category does not exist.",
     },
-    shop: {
-        title: "Category not found",
-        description: "The requested product category does not exist.",
-    },
 } as const;
 
 function categoryPath(kind: CategoryKind, slug: string): string {
-    if (kind === "shop") {
-        return `/shop/category/${encodeURIComponent(slug)}`;
-    }
-
     return `/${kind}/category/${encodeURIComponent(slug)}`;
 }
 

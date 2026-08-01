@@ -5,6 +5,11 @@ const basePrimaryNavigation = [
         fallback: { ka: "მთავარი", en: "Home", ru: "Главная" },
     },
     {
+        href: "/about",
+        key: "nav.about",
+        fallback: { ka: "ჩვენ შესახებ", en: "About", ru: "О нас" },
+    },
+    {
         href: "/services",
         key: "nav.services",
         fallback: { ka: "სერვისები", en: "Services", ru: "Услуги" },
@@ -15,52 +20,18 @@ const basePrimaryNavigation = [
         fallback: { ka: "პროექტები", en: "Projects", ru: "Проекты" },
     },
     {
-        href: "/shop",
-        key: "nav.shop",
-        fallback: { ka: "მაღაზია", en: "Shop", ru: "Магазин" },
-    },
-    {
-        href: "/blog",
-        key: "nav.blog",
-        fallback: { ka: "ბლოგი", en: "Blog", ru: "Блог" },
-    },
-    {
-        href: "/about",
-        key: "nav.about",
-        fallback: { ka: "ჩვენ შესახებ", en: "About", ru: "О нас" },
-    },
-    {
         href: "/contact",
         key: "nav.contact",
         fallback: { ka: "კონტაქტი", en: "Contact", ru: "Контакты" },
     },
 ] as const;
 
-export const calculatorNavigationItem = {
-    href: "/service-calculator",
-    key: "nav.calculator",
-    fallback: {
-        ka: "კალკულატორი",
-        en: "Calculator",
-        ru: "Калькулятор",
-    },
-} as const;
-
-export function buildPrimaryNavigation(showShop = true) {
-    return showShop
-        ? basePrimaryNavigation
-        : basePrimaryNavigation.filter((item) => item.href !== "/shop");
+export function buildPrimaryNavigation() {
+    return basePrimaryNavigation;
 }
 
-export function buildFooterNavigation(showShop = true) {
-    const navigation = buildPrimaryNavigation(showShop);
-    const servicesIndex = navigation.findIndex((item) => item.href === "/services");
-
-    return [
-        ...navigation.slice(0, servicesIndex + 1),
-        calculatorNavigationItem,
-        ...navigation.slice(servicesIndex + 1),
-    ];
+export function buildFooterNavigation() {
+    return basePrimaryNavigation;
 }
 
-export const primaryNavigation = buildPrimaryNavigation();
+export const primaryNavigation = basePrimaryNavigation;

@@ -9,27 +9,18 @@ import { useLocalization } from "@/components/providers/LocalizationProvider";
 import Image from "@/components/ui/Image";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 import { localizePath } from "@/lib/locales";
-import {
-    buildPrimaryNavigation,
-    calculatorNavigationItem,
-    primaryNavigation,
-} from "@/lib/navigation";
+import { buildPrimaryNavigation, primaryNavigation } from "@/lib/navigation";
 
 type NavbarClientProps = {
     logo: string | null;
     siteName: string;
-    showShop?: boolean;
 };
 
-export default function NavbarClient({
-    logo,
-    siteName,
-    showShop = true,
-}: NavbarClientProps) {
+export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
     const { locale, t } = useLocalization();
     const pathname = usePathname() || "/";
     const mobileMenuRef = useRef<HTMLDetailsElement>(null);
-    const navigation = buildPrimaryNavigation(showShop);
+    const navigation = buildPrimaryNavigation();
     const homeLabel = t("nav.home", primaryNavigation[0].fallback);
     const consultationLabel = t("nav.consultation", {
         ka: "კონსულტაცია",
@@ -52,19 +43,10 @@ export default function NavbarClient({
             label: t(item.key, item.fallback),
         }))
         .filter((item) => item.label);
-    const calculatorItem = {
-        ...calculatorNavigationItem,
-        label: t(
-            calculatorNavigationItem.key,
-            calculatorNavigationItem.fallback,
-        ),
-    };
     const hasBrand = Boolean(logo || siteName);
 
     useEffect(() => {
-        if (mobileMenuRef.current) {
-            mobileMenuRef.current.open = false;
-        }
+        if (mobileMenuRef.current) mobileMenuRef.current.open = false;
     }, [pathname]);
 
     function isCurrentPage(href: string) {
@@ -76,9 +58,7 @@ export default function NavbarClient({
     }
 
     function closeMobileMenu() {
-        if (mobileMenuRef.current) {
-            mobileMenuRef.current.open = false;
-        }
+        if (mobileMenuRef.current) mobileMenuRef.current.open = false;
     }
 
     return (
@@ -89,9 +69,7 @@ export default function NavbarClient({
             <div className="mx-auto flex h-[76px] max-w-container-max items-center justify-between gap-4 px-5 md:px-8 xl:px-10 2xl:px-14">
                 {hasBrand ? (
                     <LocalizedLink
-                        aria-label={[siteName, homeLabel]
-                            .filter(Boolean)
-                            .join(" - ")}
+                        aria-label={[siteName, homeLabel].filter(Boolean).join(" - ")}
                         className="flex min-h-11 shrink-0 items-center gap-3 text-primary"
                         href="/"
                         onClick={closeMobileMenu}
@@ -118,62 +96,18 @@ export default function NavbarClient({
                 )}
 
                 <ul className="ml-auto hidden items-center gap-4 xl:flex min-[1440px]:gap-5">
-                    {navigationItems.map((item) => {
-                        const isCurrent = isCurrentPage(item.href);
-
-                        if (item.href === "/services") {
-                            const servicesCurrent =
-                                isCurrent || isCurrentPage(calculatorItem.href);
-
-                            return (
-                                <li key={item.href}>
-                                    <details className="group relative">
-                                        <summary
-                                            aria-current={servicesCurrent ? "page" : undefined}
-                                            className="inline-flex min-h-11 cursor-pointer list-none items-center gap-1 whitespace-nowrap font-label-md text-[13px] font-semibold text-on-surface-variant transition-colors marker:hidden hover:text-primary aria-[current=page]:text-primary min-[1440px]:text-sm"
-                                        >
-                                            {item.label}
-                                            <span
-                                                aria-hidden="true"
-                                                className="text-base transition-transform group-open:rotate-180"
-                                            >
-                                                ▾
-                                            </span>
-                                        </summary>
-                                        <div className="absolute left-0 top-12 hidden min-w-56 rounded-lg border border-outline-variant/20 bg-surface/98 p-2 shadow-2xl backdrop-blur-2xl group-open:grid">
-                                            {[item, calculatorItem].map((child) => (
-                                                <LocalizedLink
-                                                    aria-current={isCurrentPage(child.href) ? "page" : undefined}
-                                                    className="flex min-h-11 items-center rounded-md px-4 text-sm font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary aria-[current=page]:text-primary"
-                                                    href={child.href}
-                                                    key={child.href}
-                                                    prefetch={false}
-                                                >
-                                                    {child.label}
-                                                </LocalizedLink>
-                                            ))}
-                                        </div>
-                                    </details>
-                                </li>
-                            );
-                        }
-
-                        return (
-                            <li
-                                className={item.href === "/" ? "hidden 2xl:block" : undefined}
-                                key={item.href}
+                    {navigationItems.map((item) => (
+                        <li key={item.href}>
+                            <LocalizedLink
+                                aria-current={isCurrentPage(item.href) ? "page" : undefined}
+                                className="inline-flex min-h-11 items-center whitespace-nowrap font-label-md text-[13px] font-semibold text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary min-[1440px]:text-sm"
+                                href={item.href}
+                                prefetch={false}
                             >
-                                <LocalizedLink
-                                    aria-current={isCurrent ? "page" : undefined}
-                                    className="inline-flex min-h-11 items-center whitespace-nowrap font-label-md text-[13px] font-semibold text-on-surface-variant transition-colors hover:text-primary aria-[current=page]:text-primary min-[1440px]:text-sm"
-                                    href={item.href}
-                                    prefetch={false}
-                                >
-                                    {item.label}
-                                </LocalizedLink>
-                            </li>
-                        );
-                    })}
+                                {item.label}
+                            </LocalizedLink>
+                        </li>
+                    ))}
                 </ul>
 
                 <div className="hidden shrink-0 items-center gap-2 xl:flex">
@@ -211,43 +145,13 @@ export default function NavbarClient({
                             strokeWidth="1.5"
                             viewBox="0 0 24 24"
                         >
-                            <path
-                                d="M6 18 18 6M6 6l12 12"
-                                strokeLinecap="round"
-                            />
+                            <path d="M6 18 18 6M6 6l12 12" strokeLinecap="round" />
                         </svg>
                     </summary>
                     <div className="absolute right-0 top-14 hidden max-h-[calc(100dvh-6.5rem)] w-[min(20rem,calc(100vw-2.5rem))] overflow-y-auto rounded-lg border border-white/10 bg-[#0b111c] p-5 text-white shadow-2xl shadow-black/50 group-open:block">
                         <ul className="flex flex-col gap-4">
                             {navigationItems.map((item) => (
                                 <li key={item.href}>
-                                    {item.href === "/services" ? (
-                                        <details className="group">
-                                            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-slate-200 marker:hidden transition-colors hover:text-primary">
-                                                {item.label}
-                                                <span
-                                                    aria-hidden="true"
-                                                    className="transition-transform group-open:rotate-180"
-                                                >
-                                                    ▾
-                                                </span>
-                                            </summary>
-                                            <div className="ml-3 grid border-l border-white/15 pl-4">
-                                                {[item, calculatorItem].map((child) => (
-                                                    <LocalizedLink
-                                                        aria-current={isCurrentPage(child.href) ? "page" : undefined}
-                                                        className="flex min-h-11 items-center text-sm text-slate-300 transition-colors hover:text-primary aria-[current=page]:text-primary"
-                                                        href={child.href}
-                                                        key={child.href}
-                                                        onClick={closeMobileMenu}
-                                                        prefetch={false}
-                                                    >
-                                                        {child.label}
-                                                    </LocalizedLink>
-                                                ))}
-                                            </div>
-                                        </details>
-                                    ) : (
                                     <LocalizedLink
                                         aria-current={isCurrentPage(item.href) ? "page" : undefined}
                                         className="flex min-h-11 items-center text-slate-200 transition-colors hover:text-primary aria-[current=page]:text-primary"
@@ -257,7 +161,6 @@ export default function NavbarClient({
                                     >
                                         {item.label}
                                     </LocalizedLink>
-                                    )}
                                 </li>
                             ))}
                             <li className="pt-2">
