@@ -1,3 +1,4 @@
+import CorePageFallback from "@/components/seo/CorePageFallback";
 import AboutSchema from "@/components/seo/AboutSchema";
 import CmsPageSchema from "@/components/seo/CmsPageSchema";
 import { createCmsPageMetadata } from "@/lib/cms-metadata";
@@ -20,6 +21,7 @@ export default function About() {
     return (
         <>
             <CmsPageSchema pageKey="about" fallback={<AboutSchema />} />
+            <CorePageFallback pageKey="about" />
             <HeroSection />
             <StorySection />
             <WhoSection />
