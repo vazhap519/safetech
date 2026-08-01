@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ProjectCategoryController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\PublicContentController;
 use App\Http\Controllers\Api\SeoController;
+use App\Http\Controllers\Api\ServiceCalculatorProfileController;
 use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\SettingsController;
@@ -32,5 +33,7 @@ Route::get('/project-categories', ProjectCategoryController::class)
 
 Route::get('/services', [ServiceController::class, 'index'])->name('api.services.index');
 Route::get('/services/{slug}', [ServiceController::class, 'show'])->name('api.services.show');
+Route::get('/service-calculator/profiles', ServiceCalculatorProfileController::class)
+    ->name('api.service-calculator.profiles');
 Route::get('/projects', [ProjectController::class, 'index'])->name('api.projects.index');
 Route::get('/projects/{slug}', [ProjectController::class, 'show'])->name('api.projects.show');
