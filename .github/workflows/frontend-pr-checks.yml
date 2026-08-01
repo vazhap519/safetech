@@ -14,7 +14,7 @@ permissions:
 jobs:
   frontend:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: frontend
@@ -46,3 +46,27 @@ jobs:
 
       - name: Build with Webpack
         run: npm run build -- --webpack
+
+      - name: Google SEO smoke test with unavailable CMS
+        run: |
+          BACKEND_API_URL=http://127.0.0.1:9/api npm run start -- -p 3000 > /tmp/safetech-next.log 2>&1 &
+          server_pid=$!
+          trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
+
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/ >/dev/null; then
+              break
+            fi
+            if ! kill -0 "${server_pid}" 2>/dev/null; then
+              cat /tmp/safetech-next.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          if ! curl --fail --silent http://127.0.0.1:3000/ >/dev/null; then
+            cat /tmp/safetech-next.log
+            exit 1
+          fi
+
+          SEO_BASE_URL=http://127.0.0.1:3000 npm run seo:smoke
