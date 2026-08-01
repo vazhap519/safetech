@@ -31,7 +31,7 @@ jobs:
       SESSION_DRIVER: array
       QUEUE_CONNECTION: sync
       MAIL_MAILER: array
-      SEED_DEMO_CONTENT: "true"
+      SEED_DEMO_CONTENT: "false"
 
     steps:
       - name: Checkout
