@@ -23,14 +23,11 @@ export async function createCmsPageMetadata(preset: PageSeoPreset) {
         settings.locale,
         preset.description,
     );
-    const hasPageContent =
-        preset.key === "privacy" ||
-        (preset.key === "shop" && settings.features.shopEnabled) ||
-        hasConfiguredPageHeading(
-            settings.translations,
-            preset.key,
-            settings.locale,
-        );
+    const hasPageContent = hasConfiguredPageHeading(
+        settings.translations,
+        preset.key,
+        settings.locale,
+    );
 
     return createMetadata({
         title: cmsSeo?.title || translatedTitle,
