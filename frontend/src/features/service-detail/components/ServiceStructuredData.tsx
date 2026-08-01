@@ -1,5 +1,9 @@
 import JsonLd from "@/components/seo/JsonLd";
-import { getLanguageTag } from "@/lib/locales";
+import {
+    getLanguageTag,
+    TARGET_COUNTRY_CODE,
+    TARGET_COUNTRY_NAME,
+} from "@/lib/locales";
 import {
     absoluteLocalizedUrl,
     absoluteSiteUrl,
@@ -32,6 +36,11 @@ export default async function ServiceStructuredData({
         name: branding.siteName,
         url: absoluteLocalizedUrl("/", locale),
         logo: absoluteSiteUrl(organizationLogo),
+        areaServed: {
+            "@type": "Country",
+            name: TARGET_COUNTRY_NAME,
+            identifier: TARGET_COUNTRY_CODE,
+        },
         ...(contact.phone ? { telephone: contact.phone } : {}),
         ...(contact.email ? { email: contact.email } : {}),
     };
@@ -49,7 +58,8 @@ export default async function ServiceStructuredData({
             provider,
             areaServed: {
                 "@type": "Country",
-                name: "Georgia",
+                name: TARGET_COUNTRY_NAME,
+                identifier: TARGET_COUNTRY_CODE,
             },
         },
         buildBreadcrumbSchema([

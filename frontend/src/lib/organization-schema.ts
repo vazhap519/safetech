@@ -1,3 +1,9 @@
+import {
+    getLanguageTag,
+    supportedLocales,
+    TARGET_COUNTRY_CODE,
+    TARGET_COUNTRY_NAME,
+} from "@/lib/locales";
 import { absoluteSiteUrl, DEFAULT_SOCIAL_IMAGE } from "@/lib/seo";
 
 type OrganizationContact = {
@@ -42,6 +48,7 @@ export function buildOrganizationEntity({
     ].filter(Boolean);
     const uniquePhones = [...new Set(phones)];
     const primaryPhone = uniquePhones[0];
+    const availableLanguage = supportedLocales.map(getLanguageTag);
     const contactPoint =
         uniquePhones.length || contact.email
             ? [
@@ -51,16 +58,16 @@ export function buildOrganizationEntity({
                             contactType,
                             telephone: phone,
                             ...(contact.email ? { email: contact.email } : {}),
-                            areaServed: "GE",
-                            availableLanguage: ["ka", "en", "ru"],
+                            areaServed: TARGET_COUNTRY_CODE,
+                            availableLanguage,
                         }))
                       : [
                             {
                                 "@type": "ContactPoint",
                                 contactType,
                                 ...(contact.email ? { email: contact.email } : {}),
-                                areaServed: "GE",
-                                availableLanguage: ["ka", "en", "ru"],
+                                areaServed: TARGET_COUNTRY_CODE,
+                                availableLanguage,
                             },
                         ]),
               ]
@@ -74,7 +81,8 @@ export function buildOrganizationEntity({
         image: logo,
         areaServed: {
             "@type": "Country",
-            name: "Georgia",
+            name: TARGET_COUNTRY_NAME,
+            identifier: TARGET_COUNTRY_CODE,
         },
         ...(description ? { description } : {}),
         ...(primaryPhone ? { telephone: primaryPhone } : {}),
@@ -84,7 +92,7 @@ export function buildOrganizationEntity({
                   address: {
                       "@type": "PostalAddress",
                       streetAddress: contact.address,
-                      addressCountry: "GE",
+                      addressCountry: TARGET_COUNTRY_CODE,
                   },
               }
             : {}),

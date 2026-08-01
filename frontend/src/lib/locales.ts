@@ -1,6 +1,8 @@
 export const supportedLocales = ["ka", "en", "ru"] as const;
 export const LOCALE_COOKIE_NAME = "safetech_locale";
 export const DEFAULT_LOCALE = "ka";
+export const TARGET_COUNTRY_CODE = "GE";
+export const TARGET_COUNTRY_NAME = "Georgia";
 
 export type Locale = (typeof supportedLocales)[number];
 
@@ -89,14 +91,21 @@ export function localizePath(path: string, locale: Locale): string {
 export function getOgLocale(locale: Locale) {
     switch (locale) {
         case "en":
-            return "en_US";
+            return "en_GE";
         case "ru":
-            return "ru_RU";
+            return "ru_GE";
         default:
             return "ka_GE";
     }
 }
 
 export function getLanguageTag(locale: Locale) {
-    return locale;
+    switch (locale) {
+        case "en":
+            return "en-GE";
+        case "ru":
+            return "ru-GE";
+        default:
+            return "ka-GE";
+    }
 }
