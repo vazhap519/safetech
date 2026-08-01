@@ -78,6 +78,8 @@ done
 [[ -f "${FRONTEND_DIR}/package-lock.json" ]] || fail "Frontend package-lock.json not found"
 [[ -f "${FRONTEND_DIR}/.env.production" ]] \
     || fail "Frontend production .env not found: ${FRONTEND_DIR}/.env.production"
+[[ -f "${FRONTEND_DIR}/scripts/seo-smoke.mjs" ]] \
+    || fail "Frontend SEO smoke test not found"
 
 if [[ -n "$(git -C "${PROJECT_DIR}" status --porcelain)" ]]; then
     git -C "${PROJECT_DIR}" status --short >&2
@@ -230,6 +232,11 @@ done <<< "${static_asset_paths}"
 
 [[ "${live_css_count}" -gt 0 && "${live_js_count}" -gt 0 ]] \
     || fail "homepage is missing live CSS or JavaScript assets"
+
+log "Running Google SEO smoke checks"
+SEO_BASE_URL="${SITE_URL%/}" \
+NEXT_PUBLIC_SITE_URL="${SITE_URL%/}" \
+node "${FRONTEND_DIR}/scripts/seo-smoke.mjs"
 
 log "Deployment completed successfully"
 git -C "${PROJECT_DIR}" log -1 --oneline
