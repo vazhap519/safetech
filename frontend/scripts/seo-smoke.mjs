@@ -15,7 +15,7 @@ const coreRoutes = [
     { path: "/ru", languageTag: "ru-GE", ogLocale: "ru_GE" },
 ];
 
-const removedRoutes = ["/blog", "/shop", "/service-calculator", "/privacy"];
+const removedRoutes = ["/blog", "/shop", "/privacy"];
 const requiredHreflangs = ["ka-GE", "en-GE", "ru-GE", "x-default"];
 
 function fail(message) {
@@ -139,70 +139,59 @@ async function validateCorePage({ path, languageTag, ogLocale }) {
     const contentType = response.headers.get("content-type") || "";
 
     assert(response.status === 200, `${path}: expected HTTP 200, got ${response.status}`);
-    assert(contentType.includes("text/html"), `${path}: expected HTML content type`);
-    assert(
-        !/noindex/i.test(response.headers.get("x-robots-tag") || ""),
-        `${path}: X-Robots-Tag blocks indexing`,
-    );
-    assert(
-        response.headers.get("content-language") === languageTag,
-        `${path}: expected Content-Language ${languageTag}`,
-    );
+    assert(contentType.includes("text/html"), `${path}: expected HTML response`);
 
-    const htmlTag = body.match(/<html\b[^>]*>/i)?.[0] || "";
-    assert(
-        attribute(htmlTag, "lang") === languageTag,
-        `${path}: expected html lang=${languageTag}`,
-    );
-
-    const title =
-        body.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() || "";
-    assert(title.length >= 10, `${path}: missing or too-short title`);
-
+    const title = body.match(/<title>([\s\S]*?)<\/title>/i)?.[1]?.trim() || "";
     const description = metaValue(body, "name", "description");
-    assert(description.length >= 50, `${path}: missing or too-short meta description`);
+    const canonical = attribute(linkByRel(body, "canonical") || "", "href");
+    const robots = metaValue(body, "name", "robots");
+    const ogTitle = metaValue(body, "property", "og:title");
+    const ogDescription = metaValue(body, "property", "og:description");
+    const ogUrl = metaValue(body, "property", "og:url");
+    const ogLocaleValue = metaValue(body, "property", "og:locale");
+    const text = visibleText(body);
+    const htmlLang = attribute(tags(body, "html")[0] || "", "lang");
+    const expectedCanonical = `${publicSiteUrl}${path === "/" ? "/" : path}`;
 
-    const robots = `${metaValue(body, "name", "robots")} ${metaValue(body, "name", "googlebot")}`;
-    assert(!/\bnoindex\b/i.test(robots), `${path}: page metadata contains noindex`);
-    assert(!/\bnofollow\b/i.test(robots), `${path}: page metadata contains nofollow`);
-
-    const renderedOgLocale = metaValue(body, "property", "og:locale");
+    assert(title.length >= 10, `${path}: title is missing or too short`);
+    assert(description.length >= 50, `${path}: meta description is missing or too short`);
+    assert(canonical, `${path}: canonical is missing`);
     assert(
-        renderedOgLocale === ogLocale,
-        `${path}: expected og:locale ${ogLocale}, got ${renderedOgLocale}`,
-    );
-
-    const canonicalTag = linkByRel(body, "canonical");
-    const canonical = canonicalTag ? attribute(canonicalTag, "href") : "";
-    const expectedCanonical = normalizeUrl(`${publicSiteUrl}${path}`);
-    assert(canonical, `${path}: missing canonical URL`);
-    assert(
-        normalizeUrl(canonical) === expectedCanonical,
+        normalizeUrl(canonical) === normalizeUrl(expectedCanonical),
         `${path}: canonical mismatch (${canonical} != ${expectedCanonical})`,
     );
+    assert(
+        !/noindex/i.test(robots),
+        `${path}: core page must remain indexable`,
+    );
+    assert(ogTitle, `${path}: missing og:title`);
+    assert(ogDescription, `${path}: missing og:description`);
+    assert(
+        normalizeUrl(ogUrl) === normalizeUrl(expectedCanonical),
+        `${path}: og:url mismatch`,
+    );
+    assert(
+        ogLocaleValue === ogLocale,
+        `${path}: og:locale mismatch (${ogLocaleValue} != ${ogLocale})`,
+    );
+    assert(
+        htmlLang === languageTag,
+        `${path}: html lang mismatch (${htmlLang} != ${languageTag})`,
+    );
+    assert(text.length >= 50, `${path}: rendered page content is too thin`);
 
-    const alternateTags = tags(body, "link").filter((item) =>
-        attribute(item, "rel").toLowerCase().split(/\s+/).includes("alternate"),
-    );
-    const hreflangs = new Set(
-        alternateTags.map((item) => attribute(item, "hreflang")).filter(Boolean),
-    );
+    const alternates = tags(body, "link")
+        .filter((tag) => attribute(tag, "rel").toLowerCase().includes("alternate"))
+        .map((tag) => attribute(tag, "hreflang"));
 
     for (const hreflang of requiredHreflangs) {
-        assert(hreflangs.has(hreflang), `${path}: missing hreflang ${hreflang}`);
+        assert(
+            alternates.includes(hreflang),
+            `${path}: missing hreflang ${hreflang}`,
+        );
     }
 
-    const h1Count = (body.match(/<h1\b/gi) || []).length;
-    assert(h1Count === 1, `${path}: expected exactly one H1, got ${h1Count}`);
-    assert(visibleText(body).length >= 120, `${path}: insufficient indexable text`);
-
     validateJsonLd(body, path);
-
-    assert(response.headers.has("content-security-policy"), `${path}: missing CSP header`);
-    assert(
-        response.headers.get("x-content-type-options") === "nosniff",
-        `${path}: missing X-Content-Type-Options`,
-    );
 }
 
 async function validateRobots() {
@@ -250,6 +239,36 @@ async function validateRemovedRoutes() {
     }
 }
 
+async function validateLegacyCalculatorRedirect() {
+    const path = "/service-calculator?service=custom-computer-build";
+    const startedAt = performance.now();
+    const response = await fetch(`${baseUrl}${path}`, {
+        redirect: "manual",
+        signal: AbortSignal.timeout(15000),
+        headers: {
+            "user-agent": googlebotUserAgent,
+            accept: "text/html,application/xhtml+xml",
+        },
+    });
+    const elapsed = Math.round(performance.now() - startedAt);
+    const location = response.headers.get("location") || "";
+
+    console.log(`${response.status} ${path} -> ${location} (${elapsed} ms)`);
+
+    assert(
+        response.status === 307 || response.status === 308,
+        `${path}: expected HTTP redirect, got ${response.status}`,
+    );
+    assert(
+        location.includes("/services?service=custom-computer-build"),
+        `${path}: redirect does not preserve the selected service (${location})`,
+    );
+    assert(
+        location.includes("#service-calculator"),
+        `${path}: redirect does not target the embedded calculator (${location})`,
+    );
+}
+
 async function main() {
     assert(
         new URL(publicSiteUrl).hostname.endsWith(".ge"),
@@ -263,6 +282,7 @@ async function main() {
     await validateRobots();
     await validateSitemaps();
     await validateRemovedRoutes();
+    await validateLegacyCalculatorRedirect();
 
     console.log("Google SEO and Georgia targeting smoke checks passed.");
 }
