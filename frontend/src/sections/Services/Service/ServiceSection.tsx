@@ -1,9 +1,11 @@
+import ServiceCalculator from "@/components/calculator/ServiceCalculator";
 import ServiceTypographyComponent from "@/components/Service/ServiceTypography/ServiceTypographyComponent";
 import ContentFilterGrid from "@/components/filters/ContentFilterGrid";
 import {
     getBackendFilterCategories,
     getBackendServices,
 } from "@/lib/backend";
+import { getServiceCalculatorProfiles } from "@/lib/service-calculator-api";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -12,13 +14,15 @@ export default async function ServiceSection({
 }: {
     category?: string;
 }) {
-    const [services, categories, { locale, translations }] = await Promise.all([
-        getBackendServices(category),
-        getBackendFilterCategories("services"),
-        getSiteSettings(),
-    ]);
+    const [services, categories, profiles, { locale, translations }] =
+        await Promise.all([
+            getBackendServices(category),
+            getBackendFilterCategories("services"),
+            getServiceCalculatorProfiles(),
+            getSiteSettings(),
+        ]);
 
-    if (!services.length) return null;
+    if (!services.length && !profiles.length) return null;
 
     const countLabel = translateText(
         translations,
@@ -37,7 +41,7 @@ export default async function ServiceSection({
         <section className="mx-auto max-w-container-max px-margin-desktop py-unit-xl">
             <ServiceTypographyComponent />
 
-            {countLabel || helperText ? (
+            {services.length && (countLabel || helperText) ? (
                 <div className="mb-unit-xl flex flex-col gap-2 text-sm text-on-surface-variant sm:flex-row sm:items-center sm:justify-between">
                     {countLabel ? (
                         <p>
@@ -48,12 +52,21 @@ export default async function ServiceSection({
                 </div>
             ) : null}
 
-            <ContentFilterGrid
-                activeCategory={category}
-                categories={categories}
-                items={services}
-                kind="services"
-            />
+            {services.length ? (
+                <ContentFilterGrid
+                    activeCategory={category}
+                    categories={categories}
+                    items={services}
+                    kind="services"
+                />
+            ) : null}
+
+            {profiles.length ? (
+                <ServiceCalculator
+                    initialService={services[0]?.slug}
+                    profiles={profiles}
+                />
+            ) : null}
         </section>
     );
 }
