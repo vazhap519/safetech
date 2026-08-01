@@ -39,6 +39,39 @@ export type CalculatorPackage = {
     recommended: boolean;
 };
 
+export type CalculatorCompatibilityRule = {
+    field: string;
+    operator:
+        | "equals"
+        | "not_equals"
+        | "gte"
+        | "lte"
+        | "contains"
+        | "truthy"
+        | "falsy";
+    value: string;
+};
+
+export type CalculatorComponent = {
+    key: string;
+    category: string;
+    title: string;
+    description: string;
+    unitPrice: number;
+    monthlyPrice: number;
+    quantityMode: "fixed" | "field" | "ceil";
+    quantityField: string;
+    defaultQuantity: number;
+    unitsPerComponent: number;
+    minimumQuantity: number;
+    maximumQuantity: number | null;
+    required: boolean;
+    recommended: boolean;
+    exclusiveGroup: string;
+    priority: number;
+    rules: CalculatorCompatibilityRule[];
+};
+
 export type CalculatorProfile = {
     serviceId: number;
     slug: string;
@@ -49,6 +82,8 @@ export type CalculatorProfile = {
     basePrice: number;
     monthlyBasePrice: number;
     minimumPrice: number;
+    laborPrice: number;
+    discountPercentage: number;
     projectSize: {
         label: string;
         options: CalculatorOption[];
@@ -59,6 +94,7 @@ export type CalculatorProfile = {
     };
     fields: CalculatorField[];
     packages: CalculatorPackage[];
+    components: CalculatorComponent[];
     disclaimer: string;
 };
 
@@ -88,7 +124,28 @@ export type CalculatorEstimateBreakdown = CalculatorEstimate & {
     lines: CalculatorEstimateLine[];
 };
 
-function roundMoney(value: number) {
+export type CompatibleCalculatorComponent = {
+    component: CalculatorComponent;
+    quantity: number;
+};
+
+export type CalculatorSelection = {
+    selected: boolean;
+    quantity: number;
+};
+
+export type ConfiguratorTotals = {
+    serviceSubtotal: number;
+    componentSubtotal: number;
+    laborSubtotal: number;
+    subtotalBeforeDiscount: number;
+    discountPercentage: number;
+    discountAmount: number;
+    total: number;
+    monthlyTotal: number;
+};
+
+export function roundMoney(value: number) {
     return Math.round(Math.max(0, value) * 100) / 100;
 }
 
@@ -113,6 +170,169 @@ export function initialCalculatorValues(profile: CalculatorProfile) {
                     : "",
         ]),
     ) satisfies CalculatorValues;
+}
+
+function compatibilityValue(
+    values: CalculatorValues,
+    projectSize: string,
+    propertyType: string,
+    packageKey: string,
+    field: string,
+) {
+    if (field === "project_size") return projectSize;
+    if (field === "property_type") return propertyType;
+    if (field === "package") return packageKey;
+
+    return values[field];
+}
+
+function booleanValue(value: unknown) {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value !== 0;
+
+    return ["1", "true", "yes", "on"].includes(
+        String(value ?? "").trim().toLowerCase(),
+    );
+}
+
+function ruleMatches(
+    rule: CalculatorCompatibilityRule,
+    values: CalculatorValues,
+    projectSize: string,
+    propertyType: string,
+    packageKey: string,
+) {
+    const actual = compatibilityValue(
+        values,
+        projectSize,
+        propertyType,
+        packageKey,
+        rule.field,
+    );
+    const actualString = String(actual ?? "").trim().toLowerCase();
+    const expectedString = rule.value.trim().toLowerCase();
+
+    switch (rule.operator) {
+        case "not_equals":
+            return actualString !== expectedString;
+        case "gte":
+            return Number(actual) >= Number(rule.value);
+        case "lte":
+            return Number(actual) <= Number(rule.value);
+        case "contains":
+            return actualString.includes(expectedString);
+        case "truthy":
+            return booleanValue(actual);
+        case "falsy":
+            return !booleanValue(actual);
+        case "equals":
+        default:
+            return actualString === expectedString;
+    }
+}
+
+function calculatedComponentQuantity(
+    component: CalculatorComponent,
+    values: CalculatorValues,
+) {
+    const source = Math.max(0, Number(values[component.quantityField]) || 0);
+    let quantity = component.defaultQuantity || 1;
+
+    if (component.quantityMode === "field") {
+        quantity = source;
+    } else if (component.quantityMode === "ceil") {
+        quantity = Math.ceil(source / Math.max(1, component.unitsPerComponent));
+    }
+
+    quantity = Math.max(component.minimumQuantity || 0, quantity);
+
+    if (component.maximumQuantity !== null) {
+        quantity = Math.min(component.maximumQuantity, quantity);
+    }
+
+    return roundMoney(quantity);
+}
+
+export function getCompatibleComponents(
+    profile: CalculatorProfile,
+    values: CalculatorValues,
+    projectSize: string,
+    propertyType: string,
+    packageKey: string,
+): CompatibleCalculatorComponent[] {
+    const compatible = profile.components
+        .filter((component) =>
+            component.rules.every((rule) =>
+                ruleMatches(rule, values, projectSize, propertyType, packageKey),
+            ),
+        )
+        .sort((left, right) => right.priority - left.priority);
+    const usedExclusiveGroups = new Set<string>();
+
+    return compatible
+        .filter((component) => {
+            if (!component.exclusiveGroup) return true;
+            if (usedExclusiveGroups.has(component.exclusiveGroup)) return false;
+
+            usedExclusiveGroups.add(component.exclusiveGroup);
+            return true;
+        })
+        .map((component) => ({
+            component,
+            quantity: calculatedComponentQuantity(component, values),
+        }))
+        .filter(({ quantity }) => quantity > 0);
+}
+
+export function calculateConfiguratorTotals(
+    profile: CalculatorProfile,
+    estimate: CalculatorEstimateBreakdown,
+    compatibleComponents: CompatibleCalculatorComponent[],
+    selections: Record<string, CalculatorSelection>,
+): ConfiguratorTotals {
+    let componentSubtotal = 0;
+    let componentMonthly = 0;
+
+    for (const recommendation of compatibleComponents) {
+        const { component } = recommendation;
+        const override = selections[component.key];
+        const selected = component.required
+            ? true
+            : override?.selected ?? component.recommended;
+        const quantity = Math.max(
+            0,
+            override?.quantity ?? recommendation.quantity,
+        );
+
+        if (!selected || quantity <= 0) continue;
+
+        componentSubtotal += component.unitPrice * quantity;
+        componentMonthly += component.monthlyPrice * quantity;
+    }
+
+    const serviceSubtotal = estimate.oneTime;
+    const laborSubtotal = profile.laborPrice;
+    const subtotalBeforeDiscount = roundMoney(
+        serviceSubtotal + componentSubtotal + laborSubtotal,
+    );
+    const discountPercentage = Math.min(
+        100,
+        Math.max(0, profile.discountPercentage),
+    );
+    const discountAmount = roundMoney(
+        subtotalBeforeDiscount * (discountPercentage / 100),
+    );
+
+    return {
+        serviceSubtotal: roundMoney(serviceSubtotal),
+        componentSubtotal: roundMoney(componentSubtotal),
+        laborSubtotal: roundMoney(laborSubtotal),
+        subtotalBeforeDiscount,
+        discountPercentage: roundMoney(discountPercentage),
+        discountAmount,
+        total: roundMoney(subtotalBeforeDiscount - discountAmount),
+        monthlyTotal: roundMoney(estimate.monthly + componentMonthly),
+    };
 }
 
 export function calculateEstimateBreakdown(
@@ -151,9 +371,7 @@ export function calculateEstimateBreakdown(
             monthly: roundMoney(selectedProjectSize.monthlyPrice),
         };
 
-        if (shouldDisplayLine(line)) {
-            lines.push(line);
-        }
+        if (shouldDisplayLine(line)) lines.push(line);
     }
 
     const selectedPropertyType = findOption(
@@ -173,9 +391,7 @@ export function calculateEstimateBreakdown(
             monthly: roundMoney(selectedPropertyType.monthlyPrice),
         };
 
-        if (shouldDisplayLine(line)) {
-            lines.push(line);
-        }
+        if (shouldDisplayLine(line)) lines.push(line);
     }
 
     const selectedPackage = profile.packages.find(
@@ -194,9 +410,7 @@ export function calculateEstimateBreakdown(
             monthly: roundMoney(selectedPackage.monthlyPrice),
         };
 
-        if (shouldDisplayLine(line)) {
-            lines.push(line);
-        }
+        if (shouldDisplayLine(line)) lines.push(line);
     }
 
     for (const field of profile.fields) {
@@ -209,53 +423,50 @@ export function calculateEstimateBreakdown(
                 Math.max(field.min ?? 0, rawQuantity),
             );
 
-            if (quantity <= 0) {
-                continue;
-            }
+            if (quantity <= 0) continue;
 
             const lineOneTime = quantity * field.unitPrice;
             const lineMonthly = quantity * field.monthlyUnitPrice;
             oneTime += lineOneTime;
             monthly += lineMonthly;
 
-            lines.push({
-                key: `field:${field.key}`,
-                label: field.label,
-                detail: field.unit ? `${quantity} ${field.unit}` : String(quantity),
-                kind: "field",
-                oneTime: roundMoney(lineOneTime),
-                monthly: roundMoney(lineMonthly),
-            });
+            if (lineOneTime > 0 || lineMonthly > 0) {
+                lines.push({
+                    key: `field:${field.key}`,
+                    label: field.label,
+                    detail: field.unit ? `${quantity} ${field.unit}` : String(quantity),
+                    kind: "field",
+                    oneTime: roundMoney(lineOneTime),
+                    monthly: roundMoney(lineMonthly),
+                });
+            }
 
             continue;
         }
 
         if (field.type === "checkbox") {
-            if (!Boolean(value)) {
-                continue;
-            }
+            if (!Boolean(value)) continue;
 
             oneTime += field.unitPrice;
             monthly += field.monthlyUnitPrice;
 
-            lines.push({
-                key: `field:${field.key}`,
-                label: field.label,
-                detail: "",
-                kind: "field",
-                oneTime: roundMoney(field.unitPrice),
-                monthly: roundMoney(field.monthlyUnitPrice),
-            });
+            if (field.unitPrice > 0 || field.monthlyUnitPrice > 0) {
+                lines.push({
+                    key: `field:${field.key}`,
+                    label: field.label,
+                    detail: "",
+                    kind: "field",
+                    oneTime: roundMoney(field.unitPrice),
+                    monthly: roundMoney(field.monthlyUnitPrice),
+                });
+            }
 
             continue;
         }
 
         if (field.type === "select") {
             const selectedOption = findOption(field.options, String(value ?? ""));
-
-            if (!selectedOption) {
-                continue;
-            }
+            if (!selectedOption) continue;
 
             const multiplier = field.priceMultiplierField
                 ? Math.max(0, Number(values[field.priceMultiplierField]) || 0)
@@ -277,9 +488,7 @@ export function calculateEstimateBreakdown(
                 monthly: roundMoney(lineMonthly),
             };
 
-            if (shouldDisplayLine(line)) {
-                lines.push(line);
-            }
+            if (shouldDisplayLine(line)) lines.push(line);
         }
     }
 
@@ -292,7 +501,6 @@ export function calculateEstimateBreakdown(
             oneTime: roundMoney(profile.minimumPrice - oneTime),
             monthly: 0,
         });
-
         oneTime = profile.minimumPrice;
     }
 
