@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
     DEFAULT_LOCALE,
+    getLanguageTag,
     isSupportedLocale,
     normalizeLocale,
     stripLocalePrefix,
@@ -18,6 +19,12 @@ function localeFromRequest(request: NextRequest): Locale {
     return DEFAULT_LOCALE;
 }
 
+function withLocaleHeaders(response: NextResponse, locale: Locale) {
+    response.headers.set("Content-Language", getLanguageTag(locale));
+
+    return response;
+}
+
 export function proxy(request: NextRequest) {
     const firstSegment = request.nextUrl.pathname.split("/").filter(Boolean)[0];
     const locale = localeFromRequest(request);
@@ -26,17 +33,20 @@ export function proxy(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = stripLocalePrefix(url.pathname);
 
-        return NextResponse.redirect(url, 308);
+        return withLocaleHeaders(NextResponse.redirect(url, 308), locale);
     }
 
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-safetech-locale", locale);
 
-    return NextResponse.next({
-        request: {
-            headers: requestHeaders,
-        },
-    });
+    return withLocaleHeaders(
+        NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        }),
+        locale,
+    );
 }
 
 export const config = {
