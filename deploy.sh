@@ -16,6 +16,12 @@ WEB_GROUP="${SAFETECH_WEB_GROUP:-www-data}"
 FRONTEND_SERVICE="${SAFETECH_FRONTEND_SERVICE:-safetech-frontend.service}"
 QUEUE_SERVICE="${SAFETECH_QUEUE_SERVICE:-safetech-queue.service}"
 NGINX_CACHE_DIR="${SAFETECH_NGINX_CACHE_DIR:-/var/cache/nginx/safetech}"
+FRONTEND_HOST="${SAFETECH_FRONTEND_HOST:-127.0.0.1}"
+FRONTEND_PORT="${SAFETECH_FRONTEND_PORT:-3000}"
+FRONTEND_READY_URL="${SAFETECH_FRONTEND_READY_URL:-http://${FRONTEND_HOST}:${FRONTEND_PORT}/}"
+FRONTEND_READY_ATTEMPTS="${SAFETECH_FRONTEND_READY_ATTEMPTS:-30}"
+FRONTEND_READY_DELAY="${SAFETECH_FRONTEND_READY_DELAY:-2}"
+DEPLOY_LOCK_FILE="${SAFETECH_DEPLOY_LOCK_FILE:-/var/lock/safetech-deploy.lock}"
 
 log() {
     printf '\n==> %s\n' "$*"
@@ -28,6 +34,94 @@ fail() {
 
 service_exists() {
     systemctl cat "$1" >/dev/null 2>&1
+}
+
+frontend_port_is_listening() {
+    ss -H -ltn "sport = :${FRONTEND_PORT}" | grep -q .
+}
+
+show_frontend_diagnostics() {
+    systemctl status "${FRONTEND_SERVICE}" --no-pager -l >&2 || true
+    journalctl -u "${FRONTEND_SERVICE}" --no-pager -n 100 >&2 || true
+    ss -ltnp "sport = :${FRONTEND_PORT}" >&2 || true
+}
+
+wait_for_http_200() {
+    local url="$1"
+    local label="$2"
+    local attempt
+    local status
+
+    for ((attempt = 1; attempt <= FRONTEND_READY_ATTEMPTS; attempt++)); do
+        status="$(curl --silent --location --output /dev/null \
+            --write-out '%{http_code}' --max-time 10 "${url}" 2>/dev/null || true)"
+
+        if [[ "${status}" == "200" ]]; then
+            return 0
+        fi
+
+        printf 'Waiting for %s (%s), attempt %d/%d, HTTP=%s\n' \
+            "${label}" "${url}" "${attempt}" "${FRONTEND_READY_ATTEMPTS}" \
+            "${status:-unreachable}"
+        sleep "${FRONTEND_READY_DELAY}"
+    done
+
+    fail "${label} did not return HTTP 200: ${url}"
+}
+
+release_frontend_port() {
+    local attempt
+
+    if ! frontend_port_is_listening; then
+        return
+    fi
+
+    printf 'Port %s is still occupied after stopping %s; terminating the stale listener.\n' \
+        "${FRONTEND_PORT}" "${FRONTEND_SERVICE}"
+
+    fuser -k "${FRONTEND_PORT}/tcp" >/dev/null 2>&1 || true
+
+    for ((attempt = 1; attempt <= 10; attempt++)); do
+        if ! frontend_port_is_listening; then
+            return
+        fi
+
+        sleep 1
+    done
+
+    ss -ltnp "sport = :${FRONTEND_PORT}" >&2 || true
+    fail "frontend port ${FRONTEND_PORT} is still occupied"
+}
+
+restart_frontend_service() {
+    if ! service_exists "${FRONTEND_SERVICE}"; then
+        fail "missing required systemd service: ${FRONTEND_SERVICE}"
+    fi
+
+    systemctl stop "${FRONTEND_SERVICE}"
+    release_frontend_port
+    systemctl reset-failed "${FRONTEND_SERVICE}" || true
+    systemctl start "${FRONTEND_SERVICE}"
+
+    wait_for_http_200 "${FRONTEND_READY_URL}" "local Next.js readiness"
+
+    sleep 5
+
+    if ! systemctl is-active --quiet "${FRONTEND_SERVICE}"; then
+        show_frontend_diagnostics
+        fail "frontend service did not remain active: ${FRONTEND_SERVICE}"
+    fi
+
+    if ! frontend_port_is_listening; then
+        show_frontend_diagnostics
+        fail "frontend service is active but port ${FRONTEND_PORT} is not listening"
+    fi
+
+    if ! curl --fail --silent --show-error --location --max-time 10 \
+        "${FRONTEND_READY_URL}" >/dev/null; then
+        show_frontend_diagnostics
+        fail "frontend failed the post-start stability check"
+    fi
 }
 
 restart_service_if_present() {
@@ -61,11 +155,24 @@ if [[ "${EUID}" -ne 0 ]]; then
     fail "run this script with sudo/root privileges"
 fi
 
-required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown timeout nice)
+required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown chmod timeout nice flock ss fuser sleep journalctl)
 for command_name in "${required_commands[@]}"; do
     command -v "${command_name}" >/dev/null 2>&1 \
         || fail "missing required command: ${command_name}"
 done
+
+[[ "${FRONTEND_PORT}" =~ ^[0-9]+$ ]] \
+    || fail "SAFETECH_FRONTEND_PORT must be numeric"
+[[ "${FRONTEND_READY_ATTEMPTS}" =~ ^[1-9][0-9]*$ ]] \
+    || fail "SAFETECH_FRONTEND_READY_ATTEMPTS must be a positive integer"
+[[ "${FRONTEND_READY_DELAY}" =~ ^[1-9][0-9]*$ ]] \
+    || fail "SAFETECH_FRONTEND_READY_DELAY must be a positive integer"
+[[ "${DEPLOY_LOCK_FILE}" == /* ]] \
+    || fail "SAFETECH_DEPLOY_LOCK_FILE must be an absolute path"
+
+install -d -o root -g root -m 0755 "$(dirname -- "${DEPLOY_LOCK_FILE}")"
+exec 9>"${DEPLOY_LOCK_FILE}"
+flock -n 9 || fail "another SafeTech deployment is already running"
 
 [[ "${PROJECT_DIR}" == /* && "${PROJECT_DIR}" != "/" ]] \
     || fail "SAFETECH_PROJECT_DIR must be an absolute non-root path"
@@ -157,9 +264,20 @@ npm --prefix "${FRONTEND_DIR}" prune \
 [[ -d "${FRONTEND_DIR}/.next/static" ]] \
     || fail "Next.js production build did not create .next/static"
 
-log "Synchronizing Next.js static assets"
+log "Synchronizing and verifying Next.js static assets"
 install -d -o root -g root -m 0755 "${STATIC_DIR}"
 rsync -a --checksum "${FRONTEND_DIR}/.next/static/" "${STATIC_DIR}/"
+
+static_sync_diff="$(rsync -a --checksum --dry-run --itemize-changes \
+    "${FRONTEND_DIR}/.next/static/" "${STATIC_DIR}/")"
+[[ -z "${static_sync_diff}" ]] || {
+    printf '%s\n' "${static_sync_diff}" >&2
+    fail "Next.js static asset synchronization is incomplete"
+}
+
+chown -R root:root "${STATIC_DIR}"
+find "${STATIC_DIR}" -type d -exec chmod 0755 {} +
+find "${STATIC_DIR}" -type f -exec chmod 0644 {} +
 find "${STATIC_DIR}" -type f -mtime +30 -delete
 find "${STATIC_DIR}" -mindepth 1 -type d -empty -delete
 
@@ -169,7 +287,7 @@ chown -R "${WEB_USER}:${WEB_GROUP}" \
     "${FRONTEND_DIR}/.next"
 
 log "Restarting application services"
-restart_service_if_present "${FRONTEND_SERVICE}"
+restart_frontend_service
 restart_service_if_present "${QUEUE_SERVICE}"
 
 if command -v nginx >/dev/null 2>&1; then
@@ -179,12 +297,15 @@ if command -v nginx >/dev/null 2>&1; then
 fi
 
 log "Running smoke checks"
-health_json="$(curl --fail --silent --show-error --retry 10 \
-    --retry-connrefused --retry-delay 2 "${API_URL%/}/api/health")"
-services_json="$(curl --fail --silent --show-error --retry 5 \
-    --retry-delay 2 "${API_URL%/}/api/services")"
-projects_json="$(curl --fail --silent --show-error --retry 5 \
-    --retry-delay 2 "${API_URL%/}/api/projects")"
+wait_for_http_200 "${API_URL%/}/api/health" "Laravel API health"
+wait_for_http_200 "${SITE_URL%/}/" "public homepage"
+
+health_json="$(curl --fail --silent --show-error --location \
+    --max-time 20 "${API_URL%/}/api/health")"
+services_json="$(curl --fail --silent --show-error --location \
+    --max-time 20 "${API_URL%/}/api/services")"
+projects_json="$(curl --fail --silent --show-error --location \
+    --max-time 20 "${API_URL%/}/api/projects")"
 
 for api_payload in "${health_json}" "${services_json}" "${projects_json}"; do
     php -r '
@@ -193,13 +314,15 @@ for api_payload in "${health_json}" "${services_json}" "${projects_json}"; do
 done
 
 for page_path in / /about /services /projects /contact; do
-    curl --fail --silent --show-error --retry 10 \
-        --retry-connrefused --retry-delay 2 \
-        "${SITE_URL%/}${page_path}" >/dev/null
+    wait_for_http_200 "${SITE_URL%/}${page_path}" "public page ${page_path}"
 done
 
-home_html="$(curl --fail --silent --show-error --compressed \
-    -H 'Accept: text/html' "${SITE_URL%/}/")"
+build_id="$(<"${FRONTEND_DIR}/.next/BUILD_ID")"
+home_html="$(curl --fail --silent --show-error --compressed --location \
+    --max-time 20 \
+    -H 'Accept: text/html' \
+    -H 'Cache-Control: no-cache' \
+    "${SITE_URL%/}/?deploy_check=${build_id}")"
 static_asset_paths="$(grep -Eo '/_next/static/[^"[:space:]]+\.(js|css)' \
     <<< "${home_html}" | sort -u || true)"
 
@@ -213,6 +336,8 @@ while IFS= read -r static_asset_path; do
     [[ -z "${static_asset_path}" ]] && continue
 
     static_asset_type="$(curl --fail --silent --show-error --compressed \
+        --location --retry 5 --retry-all-errors --retry-delay 2 --max-time 20 \
+        -H 'Cache-Control: no-cache' \
         -o /dev/null -w '%{content_type}' \
         "${SITE_URL%/}${static_asset_path}")"
 
