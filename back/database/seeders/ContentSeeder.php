@@ -14,16 +14,50 @@ class ContentSeeder extends Seeder
 
     protected function seedSystemContent(): void
     {
-        foreach ($this->defaultSiteSettings() as $key => $value) {
-            SiteSetting::query()->updateOrCreate(
+        foreach ($this->defaultSiteSettings() as $key => $defaults) {
+            $setting = SiteSetting::query()->firstOrCreate(
                 ['key' => $key],
                 [
                     'group' => 'general',
-                    'value' => $value,
+                    'value' => $defaults,
                     'is_public' => true,
                 ],
             );
+
+            if ($setting->wasRecentlyCreated) {
+                continue;
+            }
+
+            $current = is_array($setting->value) ? $setting->value : [];
+            $merged = $this->mergeMissingValues($current, $defaults);
+
+            $setting->forceFill([
+                'group' => filled($setting->group) ? $setting->group : 'general',
+                'value' => $merged,
+                'is_public' => true,
+            ])->save();
         }
+    }
+
+    private function mergeMissingValues(array $current, array $defaults): array
+    {
+        if (array_is_list($defaults)) {
+            return $current === [] ? $defaults : $current;
+        }
+
+        foreach ($defaults as $key => $default) {
+            if (! array_key_exists($key, $current)) {
+                $current[$key] = $default;
+
+                continue;
+            }
+
+            if (is_array($default) && is_array($current[$key])) {
+                $current[$key] = $this->mergeMissingValues($current[$key], $default);
+            }
+        }
+
+        return $current;
     }
 
     /** @return array<string, array<string, mixed>> */
