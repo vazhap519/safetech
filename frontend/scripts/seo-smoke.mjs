@@ -6,17 +6,17 @@ const googlebotUserAgent =
     "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
 const coreRoutes = [
-    { path: "/", locale: "ka" },
-    { path: "/about", locale: "ka" },
-    { path: "/services", locale: "ka" },
-    { path: "/projects", locale: "ka" },
-    { path: "/contact", locale: "ka" },
-    { path: "/en", locale: "en" },
-    { path: "/ru", locale: "ru" },
+    { path: "/", languageTag: "ka-GE", ogLocale: "ka_GE" },
+    { path: "/about", languageTag: "ka-GE", ogLocale: "ka_GE" },
+    { path: "/services", languageTag: "ka-GE", ogLocale: "ka_GE" },
+    { path: "/projects", languageTag: "ka-GE", ogLocale: "ka_GE" },
+    { path: "/contact", languageTag: "ka-GE", ogLocale: "ka_GE" },
+    { path: "/en", languageTag: "en-GE", ogLocale: "en_GE" },
+    { path: "/ru", languageTag: "ru-GE", ogLocale: "ru_GE" },
 ];
 
 const removedRoutes = ["/blog", "/shop", "/service-calculator", "/privacy"];
-const requiredHreflangs = ["ka", "en", "ru", "x-default"];
+const requiredHreflangs = ["ka-GE", "en-GE", "ru-GE", "x-default"];
 
 function fail(message) {
     throw new Error(message);
@@ -40,9 +40,11 @@ function attribute(tag, name) {
     return match?.[1] || "";
 }
 
-function metaContent(html, name) {
+function metaValue(html, attributeName, attributeValue) {
     const tag = tags(html, "meta").find(
-        (item) => attribute(item, "name").toLowerCase() === name.toLowerCase(),
+        (item) =>
+            attribute(item, attributeName).toLowerCase() ===
+            attributeValue.toLowerCase(),
     );
 
     return tag ? attribute(tag, "content") : "";
@@ -59,7 +61,8 @@ function linkByRel(html, rel) {
 
 function normalizeUrl(value) {
     const url = new URL(value);
-    const normalizedPath = url.pathname === "/" ? "/" : url.pathname.replace(/\/$/, "");
+    const normalizedPath =
+        url.pathname === "/" ? "/" : url.pathname.replace(/\/$/, "");
 
     return `${url.origin}${normalizedPath}${url.search}`;
 }
@@ -75,6 +78,21 @@ function visibleText(html) {
         .trim();
 }
 
+function targetsGeorgia(value) {
+    if (Array.isArray(value)) return value.some(targetsGeorgia);
+    if (!value || typeof value !== "object") return false;
+
+    const areaServed = value.areaServed;
+    const areaTargetsGeorgia =
+        areaServed === "GE" ||
+        areaServed === "Georgia" ||
+        (areaServed &&
+            typeof areaServed === "object" &&
+            (areaServed.name === "Georgia" || areaServed.identifier === "GE"));
+
+    return areaTargetsGeorgia || Object.values(value).some(targetsGeorgia);
+}
+
 function validateJsonLd(html, path) {
     const scripts = [
         ...html.matchAll(
@@ -84,13 +102,18 @@ function validateJsonLd(html, path) {
 
     assert(scripts.length > 0, `${path}: missing JSON-LD structured data`);
 
-    for (const [, payload] of scripts) {
+    const schemas = scripts.map(([, payload]) => {
         try {
-            JSON.parse(payload.trim());
+            return JSON.parse(payload.trim());
         } catch (error) {
             fail(`${path}: invalid JSON-LD (${error.message})`);
         }
-    }
+    });
+
+    assert(
+        schemas.some(targetsGeorgia),
+        `${path}: structured data does not target Georgia`,
+    );
 }
 
 async function request(path, options = {}) {
@@ -108,29 +131,46 @@ async function request(path, options = {}) {
 
     console.log(`${response.status} ${path} (${elapsed} ms)`);
 
-    return { response, body, elapsed };
+    return { response, body };
 }
 
-async function validateCorePage({ path, locale }) {
+async function validateCorePage({ path, languageTag, ogLocale }) {
     const { response, body } = await request(path);
     const contentType = response.headers.get("content-type") || "";
 
     assert(response.status === 200, `${path}: expected HTTP 200, got ${response.status}`);
     assert(contentType.includes("text/html"), `${path}: expected HTML content type`);
-    assert(!/noindex/i.test(response.headers.get("x-robots-tag") || ""), `${path}: X-Robots-Tag blocks indexing`);
+    assert(
+        !/noindex/i.test(response.headers.get("x-robots-tag") || ""),
+        `${path}: X-Robots-Tag blocks indexing`,
+    );
+    assert(
+        response.headers.get("content-language") === languageTag,
+        `${path}: expected Content-Language ${languageTag}`,
+    );
 
     const htmlTag = body.match(/<html\b[^>]*>/i)?.[0] || "";
-    assert(attribute(htmlTag, "lang") === locale, `${path}: expected html lang=${locale}`);
+    assert(
+        attribute(htmlTag, "lang") === languageTag,
+        `${path}: expected html lang=${languageTag}`,
+    );
 
-    const title = body.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() || "";
+    const title =
+        body.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() || "";
     assert(title.length >= 10, `${path}: missing or too-short title`);
 
-    const description = metaContent(body, "description");
+    const description = metaValue(body, "name", "description");
     assert(description.length >= 50, `${path}: missing or too-short meta description`);
 
-    const robots = `${metaContent(body, "robots")} ${metaContent(body, "googlebot")}`;
+    const robots = `${metaValue(body, "name", "robots")} ${metaValue(body, "name", "googlebot")}`;
     assert(!/\bnoindex\b/i.test(robots), `${path}: page metadata contains noindex`);
     assert(!/\bnofollow\b/i.test(robots), `${path}: page metadata contains nofollow`);
+
+    const renderedOgLocale = metaValue(body, "property", "og:locale");
+    assert(
+        renderedOgLocale === ogLocale,
+        `${path}: expected og:locale ${ogLocale}, got ${renderedOgLocale}`,
+    );
 
     const canonicalTag = linkByRel(body, "canonical");
     const canonical = canonicalTag ? attribute(canonicalTag, "href") : "";
@@ -166,14 +206,16 @@ async function validateCorePage({ path, locale }) {
 }
 
 async function validateRobots() {
-    const { response, body } = await request("/robots.txt", { accept: "text/plain" });
+    const { response, body } = await request("/robots.txt", {
+        accept: "text/plain",
+    });
 
     assert(response.status === 200, `robots.txt: expected HTTP 200, got ${response.status}`);
     assert(/user-agent:\s*\*/i.test(body), "robots.txt: missing wildcard user-agent");
     assert(/allow:\s*\//i.test(body), "robots.txt: missing root allow rule");
     assert(!/^disallow:\s*\/\s*$/im.test(body), "robots.txt: site-wide crawl block detected");
     assert(
-        new RegExp(`sitemap:\\s*${publicSiteUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/sitemap\\.xml`, "i").test(body),
+        body.includes(`Sitemap: ${publicSiteUrl}/sitemap.xml`),
         "robots.txt: missing canonical sitemap declaration",
     );
 }
@@ -209,6 +251,11 @@ async function validateRemovedRoutes() {
 }
 
 async function main() {
+    assert(
+        new URL(publicSiteUrl).hostname.endsWith(".ge"),
+        "NEXT_PUBLIC_SITE_URL must use Georgia's .ge country-code domain",
+    );
+
     for (const route of coreRoutes) {
         await validateCorePage(route);
     }
@@ -217,7 +264,7 @@ async function main() {
     await validateSitemaps();
     await validateRemovedRoutes();
 
-    console.log("Google SEO smoke checks passed.");
+    console.log("Google SEO and Georgia targeting smoke checks passed.");
 }
 
 main().catch((error) => {
