@@ -44,10 +44,10 @@ class ServiceCatalogSeederTest extends TestCase
 
         $this->assertSame(
             'CCTV Camera Installation in Georgia | SafeTech',
-            data_get($translationMap, 'service.security-camera-installation.seoTitle.en'),
+            $translationMap['service.security-camera-installation.seoTitle']['en'] ?? null,
         );
         $this->assertNotEmpty(
-            data_get($translationMap, 'service.router-wifi-configuration.seoDescription.ru'),
+            $translationMap['service.router-wifi-configuration.seoDescription']['ru'] ?? null,
         );
     }
 
