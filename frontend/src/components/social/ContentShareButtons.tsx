@@ -160,7 +160,7 @@ export default function ContentShareButtons({
         const shareUrl = externalShareUrl(button.type, pageTitle, pageUrl);
 
         if (shareUrl.startsWith("mailto:") || shareUrl.startsWith("viber:")) {
-            window.location.href = shareUrl;
+            window.location.assign(shareUrl);
             return;
         }
 
