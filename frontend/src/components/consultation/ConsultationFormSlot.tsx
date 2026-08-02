@@ -1,15 +1,62 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import {
+    useEffect,
+    useState,
+    type ComponentType,
+} from "react";
 
-const ConsultationForm = dynamic(
-    () => import("@/components/consultation/ConsultationForm"),
-    {
-        ssr: false,
-        loading: () => null,
-    },
-);
+import { CONSULTATION_POPOVER_ID } from "@/components/consultation/constants";
+
+type ConsultationFormComponent = ComponentType;
 
 export default function ConsultationFormSlot() {
-    return <ConsultationForm />;
+    const [Form, setForm] = useState<ConsultationFormComponent | null>(null);
+
+    useEffect(() => {
+        const popover = document.getElementById(CONSULTATION_POPOVER_ID);
+        if (!popover) return;
+
+        let cancelled = false;
+        let loading = false;
+
+        async function loadForm() {
+            if (Form || loading) return;
+            loading = true;
+
+            const module = await import(
+                "@/components/consultation/ConsultationForm"
+            );
+
+            if (!cancelled) {
+                setForm(() => module.default);
+            }
+        }
+
+        function handleToggle() {
+            if (popover.matches(":popover-open")) {
+                void loadForm();
+            }
+        }
+
+        if (popover.matches(":popover-open")) {
+            void loadForm();
+        }
+
+        popover.addEventListener("toggle", handleToggle);
+
+        return () => {
+            cancelled = true;
+            popover.removeEventListener("toggle", handleToggle);
+        };
+    }, [Form]);
+
+    return Form ? (
+        <Form />
+    ) : (
+        <div
+            aria-hidden="true"
+            className="min-h-48 animate-pulse rounded-2xl bg-surface-container-high/40"
+        />
+    );
 }
