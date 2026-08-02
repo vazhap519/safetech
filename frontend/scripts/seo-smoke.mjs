@@ -15,7 +15,8 @@ const coreRoutes = [
     { path: "/ru", languageTag: "ru-GE", ogLocale: "ru_GE" },
 ];
 
-const removedRoutes = ["/blog", "/shop", "/privacy"];
+const noindexRoutes = ["/privacy", "/en/privacy", "/ru/privacy"];
+const removedRoutes = ["/blog", "/shop"];
 const requiredHreflangs = ["ka-GE", "en-GE", "ru-GE", "x-default"];
 
 function fail(message) {
@@ -194,6 +195,26 @@ async function validateCorePage({ path, languageTag, ogLocale }) {
     validateJsonLd(body, path);
 }
 
+async function validateNoindexPage(path) {
+    const { response, body } = await request(path);
+    const contentType = response.headers.get("content-type") || "";
+    const title = body.match(/<title>([\s\S]*?)<\/title>/i)?.[1]?.trim() || "";
+    const canonical = attribute(linkByRel(body, "canonical") || "", "href");
+    const robots = metaValue(body, "name", "robots");
+    const expectedCanonical = `${publicSiteUrl}${path}`;
+
+    assert(response.status === 200, `${path}: expected HTTP 200, got ${response.status}`);
+    assert(contentType.includes("text/html"), `${path}: expected HTML response`);
+    assert(title.length >= 10, `${path}: title is missing or too short`);
+    assert(visibleText(body).length >= 200, `${path}: legal content is too thin`);
+    assert(/noindex/i.test(robots), `${path}: expected a noindex directive`);
+    assert(canonical, `${path}: canonical is missing`);
+    assert(
+        normalizeUrl(canonical) === normalizeUrl(expectedCanonical),
+        `${path}: canonical mismatch (${canonical} != ${expectedCanonical})`,
+    );
+}
+
 async function validateRobots() {
     const { response, body } = await request("/robots.txt", {
         accept: "text/plain",
@@ -223,6 +244,11 @@ async function validateSitemaps() {
         const expected = `${publicSiteUrl}${route === "/" ? "/" : route}`;
         assert(main.body.includes(`<loc>${expected}</loc>`), `sitemap-main.xml: missing ${expected}`);
     }
+
+    assert(
+        !main.body.includes(`<loc>${publicSiteUrl}/privacy</loc>`),
+        "sitemap-main.xml: noindex privacy page must not be listed",
+    );
 
     for (const hreflang of requiredHreflangs) {
         assert(
@@ -277,6 +303,10 @@ async function main() {
 
     for (const route of coreRoutes) {
         await validateCorePage(route);
+    }
+
+    for (const route of noindexRoutes) {
+        await validateNoindexPage(route);
     }
 
     await validateRobots();

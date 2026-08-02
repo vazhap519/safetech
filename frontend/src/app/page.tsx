@@ -3,7 +3,7 @@ import HomeSchema from "@/components/seo/HomeSchema";
 import CmsPageSchema from "@/components/seo/CmsPageSchema";
 import { createCmsPageMetadata } from "@/lib/cms-metadata";
 import { PAGE_SEO_PRESETS } from "@/lib/page-seo-presets";
-import Cta from "@/sections/Home/Cta";
+import DeferredCta from "@/sections/Home/DeferredCta";
 import Hero from "@/sections/Home/Hero";
 import Industries from "@/sections/Home/Industries";
 import Infrastructure from "@/sections/Home/Infrastructure";
@@ -29,7 +29,7 @@ export default function HomePage() {
                 <Projects />
                 <Why />
                 <Industries />
-                <Cta />
+                <DeferredCta />
             </div>
         </>
     );

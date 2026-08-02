@@ -8,6 +8,7 @@ export type PageSeoPreset = {
     description: TranslationFallback;
     keywords: string[];
     type?: "website" | "article";
+    noindex?: boolean;
 };
 
 export const PAGE_SEO_PRESETS = {
@@ -85,6 +86,22 @@ export const PAGE_SEO_PRESETS = {
             ru: "Свяжитесь с SafeTech в Грузии для консультации и предложения по IT-инфраструктуре и системам безопасности.",
         },
         keywords: ["SafeTech Georgia contact", "IT consultation Georgia", "security systems Georgia"],
+    },
+    privacy: {
+        key: "privacy",
+        path: "/privacy",
+        title: {
+            ka: "კონფიდენციალურობის პოლიტიკა",
+            en: "Privacy Policy",
+            ru: "Политика конфиденциальности",
+        },
+        description: {
+            ka: "SafeTech-ის კონფიდენციალურობის პოლიტიკა განმარტავს, როგორ ვაგროვებთ, ვიყენებთ და ვიცავთ მომხმარებლის მონაცემებს.",
+            en: "The SafeTech privacy policy explains how we collect, use, and protect customer information.",
+            ru: "Политика конфиденциальности SafeTech объясняет, как мы собираем, используем и защищаем данные клиентов.",
+        },
+        keywords: ["SafeTech privacy policy", "personal data Georgia", "website privacy"],
+        noindex: true,
     },
 } as const satisfies Record<string, PageSeoPreset>;
 

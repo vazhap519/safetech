@@ -50,7 +50,7 @@ export async function createCmsPageMetadata(
         canonical: locale === DEFAULT_LOCALE ? cmsSeo?.canonical : undefined,
         ogTitle: cmsSeo?.og?.title,
         ogDescription: cmsSeo?.og?.description,
-        noindex: Boolean(cmsSeo?.noindex),
+        noindex: Boolean(preset.noindex || cmsSeo?.noindex),
         robotsIndex: settings.seo.robotsIndex,
         robotsFollow: settings.seo.robotsFollow,
     });
