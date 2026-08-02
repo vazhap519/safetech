@@ -11,6 +11,9 @@ use App\Models\SiteSetting;
 use App\Models\TeamMember;
 use App\Models\Testimonial;
 use App\Support\CmsMedia;
+use App\Support\DeploymentInfo;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -81,5 +84,59 @@ class CmsMediaUploadConfigurationTest extends TestCase
 
         $this->assertSame([], Storage::disk('local')->allFiles());
         $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+    public function test_upload_smoke_command_checks_the_public_deployment_and_livewire_endpoint(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $commit = str_repeat('a', 40);
+        DeploymentInfo::writeCommit($commit);
+
+        Http::fake(function (Request $request) use ($commit) {
+            if (str_contains($request->url(), '/api/health')) {
+                return Http::response(['status' => 'ok', 'commit' => $commit]);
+            }
+
+            if (str_contains($request->url(), '/livewire/upload-file')) {
+                return Http::response(['paths' => ['livewire-tmp/smoke.png']]);
+            }
+
+            return Http::response(status: 404);
+        });
+
+        $this->artisan('cms:upload-smoke', [
+            '--http-base-url' => 'https://api.example.test',
+        ])
+            ->expectsOutput('CMS upload smoke test passed.')
+            ->assertSuccessful();
+
+        Http::assertSentCount(2);
+        Http::assertSent(
+            fn (Request $request): bool => str_contains($request->url(), '/livewire/upload-file')
+                && $request->hasFile('files[]', 'safetech-upload-smoke.png'),
+        );
+    }
+
+    public function test_upload_smoke_command_rejects_a_stale_public_backend(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        DeploymentInfo::writeCommit(str_repeat('a', 40));
+
+        Http::fake([
+            'https://api.example.test/api/health*' => Http::response([
+                'status' => 'ok',
+                'commit' => str_repeat('b', 40),
+            ]),
+        ]);
+
+        $this->artisan('cms:upload-smoke', [
+            '--http-base-url' => 'https://api.example.test',
+        ])
+            ->expectsOutputToContain('The public API is serving commit')
+            ->assertFailed();
     }
 }
