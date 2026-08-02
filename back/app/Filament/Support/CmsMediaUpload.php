@@ -37,7 +37,5 @@ final class CmsMediaUpload
         }
     }
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }
