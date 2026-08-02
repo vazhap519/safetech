@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Partner;
 use App\Models\Project;
+use App\Models\SeoPage;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Models\TeamMember;
@@ -33,6 +34,7 @@ class CmsMediaUploadConfigurationTest extends TestCase
         $models = [
             new Partner,
             new Project,
+            new SeoPage,
             new Service,
             new SiteSetting,
             new TeamMember,
