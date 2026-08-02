@@ -119,9 +119,11 @@ export default async function Hero() {
                             <Image
                                 alt={imageAlt || branding.siteName}
                                 className="h-full w-full object-contain"
+                                fetchPriority="high"
                                 height={410}
-                                priority
-                                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 720px"
+                                loading="eager"
+                                quality={68}
+                                sizes="(max-width: 639px) 92vw, (max-width: 1023px) 560px, (max-width: 1280px) 46vw, 610px"
                                 src={branding.defaultImage}
                                 variant="home-hero"
                                 width={610}
