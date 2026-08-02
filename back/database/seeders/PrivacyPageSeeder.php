@@ -58,7 +58,7 @@ class PrivacyPageSeeder extends Seeder
             ],
         ];
 
-        if (!$record->exists) {
+        if ($record->exists === false) {
             $record->fill($defaults)->save();
 
             return;
@@ -73,7 +73,7 @@ class PrivacyPageSeeder extends Seeder
             $current = $record->getAttribute($field);
 
             if (is_array($default)) {
-                if (!is_array($current) || $current === []) {
+                if (is_array($current) === false || $current === []) {
                     $record->setAttribute($field, $default);
                 }
                 continue;
