@@ -101,7 +101,7 @@ class CmsMediaUploadConfigurationTest extends TestCase
             'X-SafeTech-Upload-Probe-Signature' => $signature,
         ])->getJson('/api/health')
             ->assertOk()
-            ->assertJsonPath('request_root', 'http://localhost')
+            ->assertJsonPath('request_root', 'http://localhost:8000')
             ->assertJsonStructure(['livewire_upload_url']);
     }
 
