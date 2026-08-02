@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Filament\Support\CmsMediaUpload;
 use App\Support\CmsMedia;
 use App\Support\DeploymentInfo;
+use GuzzleHttp\Cookie\CookieJar;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\UploadedFile;
@@ -175,9 +176,16 @@ class CmsUploadSmoke extends Command
             throw new RuntimeException('The HTTP upload smoke-test base URL is invalid.');
         }
 
-        $signedUrl = $this->publicLivewireUploadUrl($baseUrl);
+        $cookieJar = new CookieJar;
+        $probe = $this->publicLivewireUploadProbe($baseUrl, $cookieJar);
 
         $response = Http::acceptJson()
+            ->withOptions(['cookies' => $cookieJar])
+            ->withHeaders([
+                'X-CSRF-TOKEN' => $probe['csrf_token'],
+                'Origin' => $baseUrl,
+                'Referer' => $baseUrl.'/admin',
+            ])
             ->timeout(60)
             ->connectTimeout(10)
             ->attach(
@@ -186,12 +194,15 @@ class CmsUploadSmoke extends Command
                 'safetech-upload-smoke.png',
                 ['Content-Type' => 'image/png'],
             )
-            ->post($signedUrl);
+            ->post($probe['signed_url']);
 
-        $this->assertSuccessfulUploadResponse($response, $signedUrl);
+        $this->assertSuccessfulUploadResponse($response, $probe['signed_url']);
     }
 
-    private function publicLivewireUploadUrl(string $baseUrl): string
+    /**
+     * @return array{signed_url: string, csrf_token: string}
+     */
+    private function publicLivewireUploadProbe(string $baseUrl, CookieJar $cookieJar): array
     {
         $localCommit = DeploymentInfo::commit();
 
@@ -209,19 +220,20 @@ class CmsUploadSmoke extends Command
         $probeSignature = hash_hmac('sha256', $nonce, $appKey);
 
         $response = Http::acceptJson()
+            ->withOptions(['cookies' => $cookieJar])
             ->withHeaders([
                 'X-SafeTech-Upload-Probe-Nonce' => $nonce,
                 'X-SafeTech-Upload-Probe-Signature' => $probeSignature,
             ])
             ->timeout(20)
             ->connectTimeout(10)
-            ->get($baseUrl.'/api/health', [
+            ->get($baseUrl.'/_safetech/upload-probe', [
                 'deployment_check' => Str::uuid()->toString(),
             ]);
 
         if (! $response->successful()) {
             throw new RuntimeException(
-                "The public API health check failed with HTTP {$response->status()}.",
+                "The public upload probe failed with HTTP {$response->status()}.",
             );
         }
 
@@ -247,6 +259,14 @@ class CmsUploadSmoke extends Command
             throw new RuntimeException(
                 "The public backend sees request root '{$requestRoot}', expected '{$baseUrl}'. "
                 .'Check trusted proxies and X-Forwarded-Host/X-Forwarded-Proto.',
+            );
+        }
+
+        $csrfToken = (string) $response->json('csrf_token');
+
+        if ($csrfToken === '') {
+            throw new RuntimeException(
+                'The public upload probe did not establish a browser session or return a CSRF token.',
             );
         }
 
@@ -286,7 +306,10 @@ class CmsUploadSmoke extends Command
             );
         }
 
-        return $signedUrl;
+        return [
+            'signed_url' => $signedUrl,
+            'csrf_token' => $csrfToken,
+        ];
     }
 
     private function assertSuccessfulUploadResponse(Response $response, string $signedUrl): void
