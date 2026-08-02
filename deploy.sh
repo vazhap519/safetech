@@ -15,6 +15,7 @@ WEB_USER="${SAFETECH_WEB_USER:-www-data}"
 WEB_GROUP="${SAFETECH_WEB_GROUP:-www-data}"
 FRONTEND_SERVICE="${SAFETECH_FRONTEND_SERVICE:-safetech-frontend.service}"
 QUEUE_SERVICE="${SAFETECH_QUEUE_SERVICE:-safetech-queue.service}"
+PHP_FPM_SERVICE="${SAFETECH_PHP_FPM_SERVICE:-php8.3-fpm.service}"
 NGINX_CACHE_DIR="${SAFETECH_NGINX_CACHE_DIR:-/var/cache/nginx/safetech}"
 FRONTEND_HOST="${SAFETECH_FRONTEND_HOST:-127.0.0.1}"
 FRONTEND_PORT="${SAFETECH_FRONTEND_PORT:-3000}"
@@ -155,7 +156,7 @@ if [[ "${EUID}" -ne 0 ]]; then
     fail "run this script with sudo/root privileges"
 fi
 
-required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown chmod timeout nice flock ss fuser sleep journalctl)
+required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown chmod timeout nice flock ss fuser sleep journalctl runuser)
 for command_name in "${required_commands[@]}"; do
     command -v "${command_name}" >/dev/null 2>&1 \
         || fail "missing required command: ${command_name}"
@@ -220,6 +221,7 @@ php "${BACKEND_DIR}/artisan" cache:clear
 php "${BACKEND_DIR}/artisan" storage:link --force
 php "${BACKEND_DIR}/artisan" optimize
 php "${BACKEND_DIR}/artisan" queue:restart
+restart_service_if_present "${PHP_FPM_SERVICE}"
 
 log "Cleaning previous frontend build"
 rm -rf "${FRONTEND_DIR}/.next"
@@ -299,6 +301,11 @@ fi
 log "Running smoke checks"
 wait_for_http_200 "${API_URL%/}/api/health" "Laravel API health"
 wait_for_http_200 "${SITE_URL%/}/" "public homepage"
+
+log "Testing the public Filament/Livewire upload path"
+runuser -u "${WEB_USER}" -- php "${BACKEND_DIR}/artisan" cms:upload-smoke \
+    --check-nginx-runtime \
+    --http-base-url="${API_URL%/}"
 
 health_json="$(curl --fail --silent --show-error --location \
     --max-time 20 "${API_URL%/}/api/health")"
