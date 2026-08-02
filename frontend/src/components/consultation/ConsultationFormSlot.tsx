@@ -24,12 +24,12 @@ export default function ConsultationFormSlot() {
             if (Form || loading) return;
             loading = true;
 
-            const module = await import(
+            const loadedForm = await import(
                 "@/components/consultation/ConsultationForm"
             );
 
             if (!cancelled) {
-                setForm(() => module.default);
+                setForm(() => loadedForm.default);
             }
         }
 
