@@ -50,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
 
         CmsMediaUpload::registerDefaults();
         CmsMediaUpload::ensureTemporaryDirectory();
+        CmsMediaUpload::installProductionNginxLimits();
 
         foreach ($this->auditedModels() as $model) {
             $model::observe(AdminAuditObserver::class);
