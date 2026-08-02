@@ -14,7 +14,5 @@ final class CmsMedia
         'image/avif',
     ];
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }
