@@ -6,6 +6,7 @@ use App\Domain\Content\Contracts\ProjectRepository;
 use App\Domain\Content\Contracts\ServiceRepository;
 use App\Domain\Leads\Contracts\LeadRepository;
 use App\Events\LeadCreated;
+use App\Filament\Support\CmsMediaUpload;
 use App\Infrastructure\Persistence\EloquentLeadRepository;
 use App\Infrastructure\Persistence\EloquentProjectRepository;
 use App\Infrastructure\Persistence\EloquentServiceRepository;
@@ -46,6 +47,9 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
         }
+
+        CmsMediaUpload::registerDefaults();
+        CmsMediaUpload::ensureTemporaryDirectory();
 
         foreach ($this->auditedModels() as $model) {
             $model::observe(AdminAuditObserver::class);

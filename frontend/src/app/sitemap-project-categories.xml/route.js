@@ -2,11 +2,12 @@ import {
   categorySitemapResponse,
   isIndexableProject,
 } from "@/lib/sitemap";
+import { styleSitemapResponse } from "@/lib/sitemap-style";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return categorySitemapResponse({
+  const response = await categorySitemapResponse({
     endpoint: "/project-categories",
     pathPrefix: "/projects/category",
     priority: "0.6",
@@ -14,4 +15,6 @@ export async function GET() {
     contentFilter: isIndexableProject,
     categorySlug: (project) => project?.category,
   });
+
+  return styleSitemapResponse(response);
 }

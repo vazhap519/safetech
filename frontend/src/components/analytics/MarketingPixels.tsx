@@ -1,10 +1,5 @@
-import dynamic from "next/dynamic";
-
+import AnalyticsConsentClient from "@/components/analytics/AnalyticsConsentClient";
 import type { AnalyticsConsent } from "@/lib/consent";
-
-const MarketingPixelsClient = dynamic(
-    () => import("@/components/analytics/MarketingPixelsClient"),
-);
 
 export default function MarketingPixels({
     enabled,
@@ -22,7 +17,7 @@ export default function MarketingPixels({
     if (!enabled) return null;
 
     return (
-        <MarketingPixelsClient
+        <AnalyticsConsentClient
             googleAnalyticsId={googleAnalyticsId}
             googleTagManagerId={googleTagManagerId}
             initialConsent={initialConsent}

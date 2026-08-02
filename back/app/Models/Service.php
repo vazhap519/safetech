@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
+use App\Support\CmsMedia;
 use App\Support\PublicMediaUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -148,6 +149,7 @@ class Service extends Model implements HasMedia
     {
         $this->addMediaCollection('services')
             ->useDisk('public')
+            ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
             ->singleFile();
     }
 

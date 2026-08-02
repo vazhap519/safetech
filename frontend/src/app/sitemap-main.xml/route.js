@@ -5,6 +5,7 @@ import {
   urlset,
   xmlResponse,
 } from "@/lib/sitemap";
+import { addSitemapStylesheet } from "@/lib/sitemap-style";
 
 export const dynamic = "force-dynamic";
 
@@ -20,19 +21,19 @@ export async function GET() {
     { key: "contact", path: "/contact", changefreq: "monthly", priority: "0.5" },
   ];
 
-  return xmlResponse(
-    urlset(
-      pages
-        .filter((page) => seoByKey.get(page.key)?.noindex !== true)
-        .flatMap((page) => {
-          const seoPage = seoByKey.get(page.key);
+  const xml = urlset(
+    pages
+      .filter((page) => seoByKey.get(page.key)?.noindex !== true)
+      .flatMap((page) => {
+        const seoPage = seoByKey.get(page.key);
 
-          return localizedUrlEntries(page.path, {
-            ...(seoPage?.updated_at ? { lastmod: seoPage.updated_at } : {}),
-            changefreq: page.changefreq,
-            priority: page.priority,
-          });
-        }),
-    ),
+        return localizedUrlEntries(page.path, {
+          ...(seoPage?.updated_at ? { lastmod: seoPage.updated_at } : {}),
+          changefreq: page.changefreq,
+          priority: page.priority,
+        });
+      }),
   );
+
+  return xmlResponse(addSitemapStylesheet(xml));
 }

@@ -5,6 +5,7 @@ import {
   urlset,
   xmlResponse,
 } from "@/lib/sitemap";
+import { addSitemapStylesheet } from "@/lib/sitemap-style";
 
 export const dynamic = "force-dynamic";
 
@@ -20,5 +21,5 @@ export async function GET() {
       priority: "0.7",
     }));
 
-  return xmlResponse(urlset(urls));
+  return xmlResponse(addSitemapStylesheet(urlset(urls)));
 }

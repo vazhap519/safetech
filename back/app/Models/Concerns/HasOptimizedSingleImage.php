@@ -2,6 +2,7 @@
 
 namespace App\Models\Concerns;
 
+use App\Support\CmsMedia;
 use App\Support\PublicMediaUrl;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -14,6 +15,7 @@ trait HasOptimizedSingleImage
     {
         $this->addMediaCollection($this->imageCollectionName())
             ->useDisk('public')
+            ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
             ->singleFile();
     }
 
