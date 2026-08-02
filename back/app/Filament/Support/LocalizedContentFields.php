@@ -36,7 +36,13 @@ final class LocalizedContentFields
                     ? Textarea::make("translations.fields.{$field}.{$locale}")->rows($rows)
                     : TextInput::make("translations.fields.{$field}.{$locale}");
 
-                $component->label("{$label} ({$localeLabel})");
+                $component->label(self::labelFor($field, $label, $localeLabel));
+
+                if ($helperText = self::helperTextFor($field)) {
+                    $component
+                        ->helperText($helperText)
+                        ->placeholder('ცარიელი დატოვებისას ავტომატურად შეივსება');
+                }
 
                 if ($maxLength !== null) {
                     $component->maxLength($maxLength);
@@ -69,5 +75,25 @@ final class LocalizedContentFields
             ->default([])
             ->collapsible()
             ->reorderable();
+    }
+
+    private static function labelFor(string $field, string $fallback, string $localeLabel): string
+    {
+        $label = match ($field) {
+            'card.title' => 'სერვისების სიის ბარათის სათაური',
+            'card.description' => 'სერვისების სიის ბარათის მოკლე აღწერა',
+            default => $fallback,
+        };
+
+        return "{$label} ({$localeLabel})";
+    }
+
+    private static function helperTextFor(string $field): ?string
+    {
+        return match ($field) {
+            'card.title' => 'ეს ტექსტი ჩანს /services გვერდზე სერვისის პატარა ბარათზე. ცარიელი დატოვებისას ავტომატურად გამოიყენება შესაბამისი ენის სერვისის სახელი.',
+            'card.description' => 'ეს მოკლე ტექსტი ჩანს /services გვერდის ბარათზე სათაურის ქვემოთ. ცარიელი დატოვებისას ავტომატურად გამოიყენება შესაბამისი ენის მოკლე აღწერა.',
+            default => null,
+        };
     }
 }
