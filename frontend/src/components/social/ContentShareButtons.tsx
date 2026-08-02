@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 import SocialIcon, {
     type SocialIconName,
@@ -15,7 +15,7 @@ type ContentShareButtonsProps = {
     buttons: SiteShareButton[];
 };
 
-function defaultLabel(type: SiteShareButton["type"], locale: Locale) {
+function defaultLabel(type: SiteShareButton["type"], locale: Locale): string {
     if (type === "copy") {
         return locale === "ka"
             ? "ბმულის კოპირება"
@@ -32,7 +32,10 @@ function defaultLabel(type: SiteShareButton["type"], locale: Locale) {
               : "Share";
     }
 
-    return {
+    const labels: Record<
+        Exclude<SiteShareButton["type"], "native" | "copy">,
+        string
+    > = {
         facebook: "Facebook",
         whatsapp: "WhatsApp",
         telegram: "Telegram",
@@ -41,10 +44,12 @@ function defaultLabel(type: SiteShareButton["type"], locale: Locale) {
         pinterest: "Pinterest",
         viber: "Viber",
         email: "Email",
-    }[type];
+    };
+
+    return labels[type];
 }
 
-function statusText(locale: Locale) {
+function statusText(locale: Locale): string {
     return locale === "ka"
         ? "ბმული დაკოპირდა"
         : locale === "ru"
@@ -58,7 +63,7 @@ function iconName(type: SiteShareButton["type"]): SocialIconName {
     return type;
 }
 
-function currentPageUrl() {
+function currentPageUrl(): string {
     return `${window.location.origin}${window.location.pathname}`;
 }
 
@@ -66,7 +71,7 @@ function externalShareUrl(
     type: Exclude<SiteShareButton["type"], "native" | "copy">,
     pageTitle: string,
     pageUrl: string,
-) {
+): string {
     const title = encodeURIComponent(pageTitle);
     const url = encodeURIComponent(pageUrl);
 
@@ -90,7 +95,7 @@ function externalShareUrl(
     }
 }
 
-async function copyToClipboard(value: string) {
+async function copyToClipboard(value: string): Promise<void> {
     if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(value);
         return;
@@ -113,20 +118,25 @@ export default function ContentShareButtons({
     pageTitle,
     buttons,
 }: ContentShareButtonsProps) {
+    const headingId = useId();
     const [message, setMessage] = useState("");
     const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     if (!buttons.length) return null;
+
+    function showCopiedStatus() {
+        setMessage(statusText(locale));
+
+        if (resetTimer.current) clearTimeout(resetTimer.current);
+        resetTimer.current = setTimeout(() => setMessage(""), 2500);
+    }
 
     async function handleShare(button: SiteShareButton) {
         const pageUrl = currentPageUrl();
 
         if (button.type === "copy") {
             await copyToClipboard(pageUrl);
-            setMessage(statusText(locale));
-
-            if (resetTimer.current) clearTimeout(resetTimer.current);
-            resetTimer.current = setTimeout(() => setMessage(""), 2500);
+            showCopiedStatus();
             return;
         }
 
@@ -143,7 +153,7 @@ export default function ContentShareButtons({
             }
 
             await copyToClipboard(pageUrl);
-            setMessage(statusText(locale));
+            showCopiedStatus();
             return;
         }
 
@@ -163,13 +173,13 @@ export default function ContentShareButtons({
 
     return (
         <section
-            aria-labelledby="content-share-heading"
+            aria-labelledby={headingId}
             className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
         >
             <div className="flex flex-col gap-5 rounded-3xl border border-white/10 bg-surface-container/70 p-5 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <h2
                     className="font-headline-md text-xl font-semibold text-on-surface"
-                    id="content-share-heading"
+                    id={headingId}
                 >
                     {heading}
                 </h2>
