@@ -14,9 +14,10 @@ export default function ConsultationFormSlot() {
     const [Form, setForm] = useState<ConsultationFormComponent | null>(null);
 
     useEffect(() => {
-        const popover = document.getElementById(CONSULTATION_POPOVER_ID);
-        if (!popover) return;
+        const element = document.getElementById(CONSULTATION_POPOVER_ID);
+        if (!element) return;
 
+        const popover = element;
         let cancelled = false;
         let loading = false;
 
