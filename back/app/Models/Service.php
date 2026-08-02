@@ -59,6 +59,10 @@ class Service extends Model implements HasMedia
 
             $service->slug = $candidate;
         });
+
+        static::saving(function (Service $service): void {
+            $service->fillMissingCardTranslations();
+        });
     }
 
     public function category(): BelongsTo
@@ -180,5 +184,44 @@ class Service extends Model implements HasMedia
     public function getHeroImageUrlAttribute(): ?string
     {
         return $this->image;
+    }
+
+    private function fillMissingCardTranslations(): void
+    {
+        $translations = is_array($this->translations) ? $this->translations : [];
+
+        foreach (['ka', 'en', 'ru'] as $locale) {
+            $localizedName = trim((string) data_get($translations, "fields.name.{$locale}", ''));
+            $localizedTitle = trim((string) data_get($translations, "fields.title.{$locale}", ''));
+            $localizedDescription = trim((string) data_get($translations, "fields.description.{$locale}", ''));
+
+            $titleFallback = $localizedName !== '' ? $localizedName : $localizedTitle;
+            $descriptionFallback = $localizedDescription;
+
+            if ($locale === 'ka') {
+                $titleFallback = $titleFallback !== ''
+                    ? $titleFallback
+                    : trim((string) ($this->name ?: $this->title));
+                $descriptionFallback = $descriptionFallback !== ''
+                    ? $descriptionFallback
+                    : trim((string) ($this->description ?: $this->short_description));
+            }
+
+            if (
+                blank(data_get($translations, "fields.card.title.{$locale}"))
+                && $titleFallback !== ''
+            ) {
+                data_set($translations, "fields.card.title.{$locale}", $titleFallback);
+            }
+
+            if (
+                blank(data_get($translations, "fields.card.description.{$locale}"))
+                && $descriptionFallback !== ''
+            ) {
+                data_set($translations, "fields.card.description.{$locale}", $descriptionFallback);
+            }
+        }
+
+        $this->translations = $translations;
     }
 }
