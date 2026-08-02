@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
+use App\Support\CmsMedia;
 use App\Support\SiteSettingValueNormalizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -43,7 +44,10 @@ class SiteSetting extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         foreach (['logo', 'footer_logo', 'favicon', 'default_image'] as $collection) {
-            $this->addMediaCollection($collection)->useDisk('public')->singleFile();
+            $this->addMediaCollection($collection)
+                ->useDisk('public')
+                ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
+                ->singleFile();
         }
     }
 
