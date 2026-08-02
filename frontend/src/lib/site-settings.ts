@@ -29,6 +29,32 @@ export type SiteSocialLink = {
     network: SocialNetwork;
     label: string;
     href: string;
+    openInNewTab: boolean;
+};
+
+export type ShareButtonType =
+    | "facebook"
+    | "whatsapp"
+    | "telegram"
+    | "linkedin"
+    | "x"
+    | "pinterest"
+    | "viber"
+    | "email"
+    | "native"
+    | "copy";
+
+export type SiteShareButton = {
+    type: ShareButtonType;
+    label: string;
+};
+
+export type SiteSocialSharing = {
+    enabled: boolean;
+    showOnServices: boolean;
+    showOnProjects: boolean;
+    title: string;
+    buttons: SiteShareButton[];
 };
 
 type SiteBranding = {
@@ -68,6 +94,8 @@ function isSocialNetwork(value: string): value is SocialNetwork {
         "instagram",
         "tiktok",
         "whatsapp",
+        "viber",
+        "pinterest",
         "email",
         "x",
         "youtube",
@@ -83,6 +111,29 @@ function normalizeSocialNetwork(value: string): SocialNetwork | null {
     return isSocialNetwork(normalized) ? normalized : null;
 }
 
+function normalizeShareButtonType(value: string): ShareButtonType | null {
+    const normalized = value.trim().toLowerCase();
+
+    if (normalized === "twitter") return "x";
+    if (normalized === "link") return "copy";
+    if (normalized === "share") return "native";
+
+    return [
+        "facebook",
+        "whatsapp",
+        "telegram",
+        "linkedin",
+        "x",
+        "pinterest",
+        "viber",
+        "email",
+        "native",
+        "copy",
+    ].includes(normalized)
+        ? (normalized as ShareButtonType)
+        : null;
+}
+
 function fallbackLabel(network: SocialNetwork) {
     switch (network) {
         case "x":
@@ -93,11 +144,38 @@ function fallbackLabel(network: SocialNetwork) {
             return "Telegram";
         case "whatsapp":
             return "WhatsApp";
+        case "viber":
+            return "Viber";
+        case "pinterest":
+            return "Pinterest";
         case "email":
             return "Email";
         default:
             return network.charAt(0).toUpperCase() + network.slice(1);
     }
+}
+
+function fallbackShareTitle(locale: Locale) {
+    switch (locale) {
+        case "en":
+            return "Share";
+        case "ru":
+            return "Поделиться";
+        default:
+            return "გაზიარება";
+    }
+}
+
+function normalizeBoolean(value: unknown, fallback: boolean) {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value === 1;
+    if (typeof value === "string") {
+        const normalized = value.trim().toLowerCase();
+        if (["1", "true", "yes", "on"].includes(normalized)) return true;
+        if (["0", "false", "no", "off", ""].includes(normalized)) return false;
+    }
+
+    return fallback;
 }
 
 function normalizeSocialHref(network: SocialNetwork, href: string) {
@@ -112,6 +190,13 @@ function normalizeSocialHref(network: SocialNetwork, href: string) {
         const digits = trimmed.replace(/[^\d]/g, "");
         return digits ? `https://wa.me/${digits}` : "";
     }
+    if (network === "viber") {
+        if (trimmed.startsWith("http") || trimmed.startsWith("viber:")) {
+            return trimmed;
+        }
+        const digits = trimmed.replace(/[^\d]/g, "");
+        return digits ? `viber://chat?number=%2B${digits}` : "";
+    }
     if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
         return trimmed;
     }
@@ -122,15 +207,20 @@ function normalizeSocialHref(network: SocialNetwork, href: string) {
 function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
     if (isRecord(value) && Array.isArray(value.links)) {
         const links = value.links
-            .map((item) => {
-                if (!isRecord(item) || typeof item.network !== "string") {
+            .map((item): SiteSocialLink | null => {
+                if (
+                    !isRecord(item) ||
+                    typeof item.network !== "string" ||
+                    !normalizeBoolean(item.enabled, true)
+                ) {
                     return null;
                 }
                 const network = normalizeSocialNetwork(item.network);
                 if (!network) return null;
-                const href = typeof item.href === "string"
-                    ? normalizeSocialHref(network, item.href)
-                    : "";
+                const href =
+                    typeof item.href === "string"
+                        ? normalizeSocialHref(network, item.href)
+                        : "";
                 if (!href) return null;
 
                 return {
@@ -140,7 +230,8 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
                             ? item.label.trim()
                             : fallbackLabel(network),
                     href,
-                } satisfies SiteSocialLink;
+                    openInNewTab: normalizeBoolean(item.open_in_new_tab, true),
+                };
             })
             .filter((item): item is SiteSocialLink => Boolean(item));
 
@@ -149,7 +240,7 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
 
     if (isRecord(value)) {
         const legacyLinks = Object.entries(value)
-            .map(([network, href]) => {
+            .map(([network, href]): SiteSocialLink | null => {
                 const normalizedNetwork = normalizeSocialNetwork(network);
                 if (!normalizedNetwork || typeof href !== "string") return null;
                 const normalizedHref = normalizeSocialHref(normalizedNetwork, href);
@@ -159,7 +250,8 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
                     network: normalizedNetwork,
                     label: fallbackLabel(normalizedNetwork),
                     href: normalizedHref,
-                } satisfies SiteSocialLink;
+                    openInNewTab: true,
+                };
             })
             .filter((item): item is SiteSocialLink => Boolean(item));
 
@@ -167,6 +259,53 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
     }
 
     return fallbackLinks;
+}
+
+function parseSocialSharing(value: unknown, locale: Locale): SiteSocialSharing {
+    const configured = isRecord(value) ? value : {};
+    const configuredButtons = Array.isArray(configured.share_buttons)
+        ? configured.share_buttons
+        : [];
+    const seenTypes = new Set<ShareButtonType>();
+    const buttons = configuredButtons
+        .map((item) => {
+            const record = isRecord(item) ? item : null;
+            const rawType =
+                typeof item === "string"
+                    ? item
+                    : typeof record?.type === "string"
+                      ? record.type
+                      : typeof record?.name === "string"
+                        ? record.name
+                        : "";
+            const type = normalizeShareButtonType(rawType);
+
+            if (!type || !normalizeBoolean(record?.enabled, true) || seenTypes.has(type)) {
+                return null;
+            }
+
+            seenTypes.add(type);
+
+            return {
+                type,
+                label:
+                    typeof record?.label === "string" ? record.label.trim() : "",
+            } satisfies SiteShareButton;
+        })
+        .filter((item): item is SiteShareButton => Boolean(item));
+    const localizedTitle = configured[`share_title_${locale}`];
+    const legacyTitle = configured.share_title;
+
+    return {
+        enabled: normalizeBoolean(configured.share_enabled, true),
+        showOnServices: normalizeBoolean(configured.share_on_services, true),
+        showOnProjects: normalizeBoolean(configured.share_on_projects, true),
+        title:
+            (typeof localizedTitle === "string" && localizedTitle.trim()) ||
+            (typeof legacyTitle === "string" && legacyTitle.trim()) ||
+            fallbackShareTitle(locale),
+        buttons,
+    };
 }
 
 function pickString(
@@ -239,6 +378,7 @@ export const getSiteSettings = cache(async () => {
         : {};
     const translations = buildTranslationMap(settings.translations);
     const socialLinks = parseSocialLinks(settings.socials, defaultSiteSocialLinks);
+    const socialSharing = parseSocialSharing(settings.socials, locale);
     const configuredPhones = normalizeStringList(configuredContact.phones);
     const phoneCandidates = [
         pickString(configuredContact.phone, defaultSiteContact.phone),
@@ -325,6 +465,7 @@ export const getSiteSettings = cache(async () => {
     return {
         contact,
         socialLinks,
+        socialSharing,
         branding,
         seo,
         integrations,

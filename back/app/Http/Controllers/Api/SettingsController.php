@@ -39,8 +39,16 @@ class SettingsController extends Controller
             'copy' => null,
 
             'share' => [
+                'enabled' => $settings->share_enabled ?? true,
+                'show_on_services' => $settings->share_on_services ?? true,
+                'show_on_projects' => $settings->share_on_projects ?? true,
                 'share_title' => $socials['share_title'] ?? null,
                 'title' => $socials['share_title'] ?? null,
+                'titles' => [
+                    'ka' => $settings->share_title_ka ?? null,
+                    'en' => $settings->share_title_en ?? null,
+                    'ru' => $settings->share_title_ru ?? null,
+                ],
                 'share_buttons' => $shareButtons,
                 'buttons' => $shareButtons,
             ],

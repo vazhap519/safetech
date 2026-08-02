@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import ProjectDetailSchema from "@/components/seo/ProjectDetailSchema";
+import ContentShareButtons from "@/components/social/ContentShareButtons";
 import { getBackendProject } from "@/lib/backend";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -65,7 +66,10 @@ export async function generateMetadata({
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     const { slug } = await params;
-    const project = await getBackendProject(slug);
+    const [{ locale, socialSharing }, project] = await Promise.all([
+        getSiteSettings(),
+        getBackendProject(slug),
+    ]);
 
     if (!project) notFound();
 
@@ -109,6 +113,16 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             <ProjectDetailSchema project={project} />
             <ProjectHeroSection project={project} />
             <ProjectOverviewSection project={project} />
+            {socialSharing.enabled &&
+            socialSharing.showOnProjects &&
+            socialSharing.buttons.length ? (
+                <ContentShareButtons
+                    buttons={socialSharing.buttons}
+                    heading={socialSharing.title}
+                    locale={locale}
+                    pageTitle={project.title || project.name}
+                />
+            ) : null}
             <ChallengesSection project={project} />
             <SolutionsSection project={project} />
             <ProcessSection project={project} />

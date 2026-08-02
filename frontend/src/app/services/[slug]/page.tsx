@@ -60,14 +60,21 @@ export async function generateMetadata({
 
 export default async function ServicePage({ params }: ServicePageProps) {
     const { slug } = await params;
-    const service = await getBackendService(slug);
+    const [{ locale, socialSharing }, service] = await Promise.all([
+        getSiteSettings(),
+        getBackendService(slug),
+    ]);
 
     if (!service) notFound();
 
     return (
         <>
             <ServiceStructuredData service={service} />
-            <ServiceDetailView service={service} />
+            <ServiceDetailView
+                locale={locale}
+                service={service}
+                sharing={socialSharing}
+            />
         </>
     );
 }

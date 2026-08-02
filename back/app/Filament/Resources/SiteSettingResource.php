@@ -29,11 +29,11 @@ class SiteSettingResource extends Resource
 {
     protected static ?string $model = SiteSetting::class;
 
-    protected static ?string $navigationLabel = 'Settings';
+    protected static ?string $navigationLabel = 'Site settings';
 
     protected static ?string $modelLabel = 'Setting';
 
-    protected static ?string $pluralModelLabel = 'Settings';
+    protected static ?string $pluralModelLabel = 'Site settings';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::System;
 
@@ -44,7 +44,7 @@ class SiteSettingResource extends Resource
                 ->label('Key')
                 ->options([
                     'contact' => 'Contact',
-                    'socials' => 'Social links',
+                    'socials' => 'Social media',
                     'branding' => 'Branding',
                     'seo' => 'SEO',
                     'integrations' => 'Analytics and verification',
@@ -52,7 +52,7 @@ class SiteSettingResource extends Resource
                 ])
                 ->required()
                 ->unique(ignoreRecord: true)
-                ->helperText('Contact, socials, branding and translations are used directly on the frontend.'),
+                ->helperText('Contact, social media, branding and translations are used directly on the frontend.'),
             Select::make('group')
                 ->label('Group')
                 ->options(['general' => 'General'])
@@ -96,45 +96,86 @@ class SiteSettingResource extends Resource
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'contact'),
 
-            Section::make('Footer social networks')
+            Section::make('Your social media profiles')
+                ->description('These links and matching icons appear in the footer and are also used in Organization structured data for search engines.')
                 ->schema([
                     Repeater::make('value.links')
-                        ->label('Social links')
+                        ->label('Profile links')
                         ->schema([
                             Select::make('network')
-                                ->label('Network')
+                                ->label('Network / icon')
                                 ->options(AdminIconOptions::socials())
                                 ->searchable()
                                 ->preload()
                                 ->required()
-                                ->helperText('The matching social icon is rendered automatically on the frontend.'),
+                                ->helperText('Selecting a network automatically selects its official icon.'),
                             TextInput::make('label')
-                                ->label('Label')
-                                ->helperText('Optional custom label for the footer tooltip.'),
+                                ->label('Visible label')
+                                ->helperText('Optional. The network name is used when left empty.'),
                             TextInput::make('href')
-                                ->label('URL or value')
+                                ->label('Profile URL or value')
                                 ->required()
-                                ->helperText('Use an email address for Email, a phone number for WhatsApp, or a full URL/domain for the rest.'),
+                                ->helperText('Use an email address for Email, a phone number for WhatsApp/Viber, or a full profile URL for the rest.'),
+                            Toggle::make('enabled')
+                                ->label('Show')
+                                ->default(true),
+                            Toggle::make('open_in_new_tab')
+                                ->label('New tab')
+                                ->default(true),
+                        ])
+                        ->columns(5)
+                        ->default([])
+                        ->collapsible()
+                        ->reorderable()
+                        ->itemLabel(fn (array $state): ?string => AdminIconOptions::socials()[$state['network'] ?? ''] ?? 'Social profile'),
+                ])
+                ->visible(fn (Get $get): bool => $get('key') === 'socials'),
+
+            Section::make('Service and project sharing')
+                ->description('Configure which sharing buttons appear on service and project detail pages. Reorder the rows to control button order.')
+                ->schema([
+                    Toggle::make('value.share_enabled')
+                        ->label('Enable sharing buttons')
+                        ->default(true),
+                    Toggle::make('value.share_on_services')
+                        ->label('Show on service pages')
+                        ->default(true),
+                    Toggle::make('value.share_on_projects')
+                        ->label('Show on project pages')
+                        ->default(true),
+                    TextInput::make('value.share_title_ka')
+                        ->label('Share heading — Georgian')
+                        ->default('გაზიარება'),
+                    TextInput::make('value.share_title_en')
+                        ->label('Share heading — English')
+                        ->default('Share'),
+                    TextInput::make('value.share_title_ru')
+                        ->label('Share heading — Russian')
+                        ->default('Поделиться'),
+                    Repeater::make('value.share_buttons')
+                        ->label('Sharing buttons')
+                        ->schema([
+                            Select::make('type')
+                                ->label('Network / icon')
+                                ->options(AdminIconOptions::shareNetworks())
+                                ->searchable()
+                                ->preload()
+                                ->required()
+                                ->helperText('The matching icon and share action are generated automatically.'),
+                            TextInput::make('label')
+                                ->label('Custom label')
+                                ->helperText('Optional. Leave empty to use the network name.'),
+                            Toggle::make('enabled')
+                                ->label('Show')
+                                ->default(true),
                         ])
                         ->columns(3)
+                        ->default([])
                         ->collapsible()
-                        ->reorderable(),
-                    TextInput::make('value.share_title')
-                        ->label('Share title'),
-                    Repeater::make('value.share_buttons')
-                        ->label('Share buttons')
-                        ->simple(
-                            Select::make('type')->options([
-                                'facebook' => 'Facebook',
-                                'whatsapp' => 'WhatsApp',
-                                'telegram' => 'Telegram',
-                                'linkedin' => 'LinkedIn',
-                                'pinterest' => 'Pinterest',
-                                'twitter' => 'X',
-                                'link' => 'Copy link',
-                            ]),
-                        ),
+                        ->reorderable()
+                        ->itemLabel(fn (array $state): ?string => AdminIconOptions::shareNetworks()[$state['type'] ?? ''] ?? 'Share button'),
                 ])
+                ->columns(3)
                 ->visible(fn (Get $get): bool => $get('key') === 'socials'),
 
             Section::make('Branding')

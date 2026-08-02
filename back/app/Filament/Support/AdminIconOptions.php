@@ -49,14 +49,33 @@ final class AdminIconOptions
     {
         return [
             'facebook' => 'Facebook',
-            'linkedin' => 'LinkedIn',
             'instagram' => 'Instagram',
+            'linkedin' => 'LinkedIn',
             'tiktok' => 'TikTok',
             'x' => 'X',
             'youtube' => 'YouTube',
             'telegram' => 'Telegram',
             'whatsapp' => 'WhatsApp',
+            'viber' => 'Viber',
+            'pinterest' => 'Pinterest',
             'email' => 'Email',
+        ];
+    }
+
+    /** @return array<string, string> */
+    public static function shareNetworks(): array
+    {
+        return [
+            'facebook' => 'Facebook',
+            'whatsapp' => 'WhatsApp',
+            'telegram' => 'Telegram',
+            'linkedin' => 'LinkedIn',
+            'x' => 'X',
+            'pinterest' => 'Pinterest',
+            'viber' => 'Viber',
+            'email' => 'Email',
+            'native' => 'Device share menu',
+            'copy' => 'Copy link',
         ];
     }
 }

@@ -98,7 +98,13 @@ final class SiteSettings
             'instagram' => $socialUrls['instagram'] ?? null,
             'linkedin' => $socialUrls['linkedin'] ?? null,
             'social_links' => $socialUrls,
+            'share_enabled' => (bool) ($socials['share_enabled'] ?? true),
+            'share_on_services' => (bool) ($socials['share_on_services'] ?? true),
+            'share_on_projects' => (bool) ($socials['share_on_projects'] ?? true),
             'share_title' => $socials['share_title'] ?? null,
+            'share_title_ka' => $socials['share_title_ka'] ?? null,
+            'share_title_en' => $socials['share_title_en'] ?? null,
+            'share_title_ru' => $socials['share_title_ru'] ?? null,
             'share_buttons' => is_array($socials['share_buttons'] ?? null)
                 ? $socials['share_buttons']
                 : [],

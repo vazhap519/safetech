@@ -1,3 +1,7 @@
+import ContentShareButtons from "@/components/social/ContentShareButtons";
+import type { Locale } from "@/lib/locales";
+import type { SiteSocialSharing } from "@/lib/site-settings";
+
 import type { ServiceDetail } from "./model/types";
 import ServiceViewTracker from "./components/ServiceViewTracker";
 import BenefitsSection from "./sections/BenefitsSection";
@@ -11,12 +15,30 @@ import ServiceHero from "./sections/ServiceHero";
 import ServiceOverview from "./sections/ServiceOverview";
 import SolutionsSection from "./sections/SolutionsSection";
 
-export default function ServiceDetailView({ service }: { service: ServiceDetail }) {
+export default function ServiceDetailView({
+    service,
+    locale,
+    sharing,
+}: {
+    service: ServiceDetail;
+    locale: Locale;
+    sharing: SiteSocialSharing;
+}) {
     return (
         <article className="pt-[76px]">
             <ServiceViewTracker serviceSlug={service.slug} />
             <ServiceHero service={service} />
             <ServiceOverview service={service} />
+            {sharing.enabled &&
+            sharing.showOnServices &&
+            sharing.buttons.length ? (
+                <ContentShareButtons
+                    buttons={sharing.buttons}
+                    heading={sharing.title}
+                    locale={locale}
+                    pageTitle={service.title || service.name}
+                />
+            ) : null}
             <BenefitsSection service={service} />
             <SolutionsSection service={service} />
             <IndustriesSection service={service} />
