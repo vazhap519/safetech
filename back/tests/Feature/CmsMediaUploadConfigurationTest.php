@@ -87,12 +87,8 @@ class CmsMediaUploadConfigurationTest extends TestCase
         $this->assertSame([], Storage::disk('public')->allFiles());
     }
 
-    public function test_health_endpoint_only_returns_a_signed_upload_url_for_an_authenticated_probe(): void
+    public function test_health_endpoint_remains_stateless_and_never_returns_upload_credentials(): void
     {
-        $this->getJson('/api/health')
-            ->assertOk()
-            ->assertJsonMissingPath('livewire_upload_url');
-
         $nonce = Str::uuid()->toString();
         $signature = hash_hmac('sha256', $nonce, (string) config('app.key'));
 
@@ -101,11 +97,37 @@ class CmsMediaUploadConfigurationTest extends TestCase
             'X-SafeTech-Upload-Probe-Signature' => $signature,
         ])->getJson('/api/health')
             ->assertOk()
-            ->assertJsonPath('request_root', 'http://localhost:8000')
-            ->assertJsonStructure(['livewire_upload_url']);
+            ->assertJsonMissingPath('request_root')
+            ->assertJsonMissingPath('csrf_token')
+            ->assertJsonMissingPath('livewire_upload_url');
     }
 
-    public function test_upload_smoke_command_checks_the_public_deployment_and_browser_generated_livewire_endpoint(): void
+    public function test_web_upload_probe_requires_hmac_and_establishes_a_csrf_session(): void
+    {
+        $this->getJson('/_safetech/upload-probe')->assertNotFound();
+
+        $nonce = Str::uuid()->toString();
+        $signature = hash_hmac('sha256', $nonce, (string) config('app.key'));
+
+        $response = $this->withHeaders([
+            'X-SafeTech-Upload-Probe-Nonce' => $nonce,
+            'X-SafeTech-Upload-Probe-Signature' => $signature,
+        ])->getJson('/_safetech/upload-probe');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('request_root', 'http://localhost:8000')
+            ->assertJsonStructure(['csrf_token', 'livewire_upload_url'])
+            ->assertCookie((string) config('session.cookie'));
+
+        $this->assertNotEmpty($response->json('csrf_token'));
+        $this->assertStringContainsString(
+            '/livewire/upload-file',
+            (string) $response->json('livewire_upload_url'),
+        );
+    }
+
+    public function test_upload_smoke_command_checks_the_public_browser_session_csrf_and_livewire_endpoint(): void
     {
         Storage::fake('local');
         Storage::fake('public');
@@ -114,11 +136,12 @@ class CmsMediaUploadConfigurationTest extends TestCase
         DeploymentInfo::writeCommit($commit);
 
         Http::fake(function (Request $request) use ($commit) {
-            if (str_contains($request->url(), '/api/health')) {
+            if (str_contains($request->url(), '/_safetech/upload-probe')) {
                 return Http::response([
                     'status' => 'ok',
                     'commit' => $commit,
                     'request_root' => 'https://api.example.test',
+                    'csrf_token' => 'csrf-token',
                     'livewire_upload_url' => 'https://api.example.test/livewire/upload-file?expires=1&signature=test',
                 ]);
             }
@@ -138,13 +161,14 @@ class CmsMediaUploadConfigurationTest extends TestCase
 
         Http::assertSentCount(2);
         Http::assertSent(
-            fn (Request $request): bool => str_contains($request->url(), '/api/health')
+            fn (Request $request): bool => str_contains($request->url(), '/_safetech/upload-probe')
                 && filled($request->header('X-SafeTech-Upload-Probe-Nonce'))
                 && filled($request->header('X-SafeTech-Upload-Probe-Signature')),
         );
         Http::assertSent(
             fn (Request $request): bool => str_contains($request->url(), '/livewire/upload-file')
-                && $request->method() === 'POST',
+                && $request->method() === 'POST'
+                && in_array('csrf-token', $request->header('X-CSRF-TOKEN'), true),
         );
     }
 
@@ -157,10 +181,11 @@ class CmsMediaUploadConfigurationTest extends TestCase
         DeploymentInfo::writeCommit($commit);
 
         Http::fake([
-            'https://api.example.test/api/health*' => Http::response([
+            'https://api.example.test/_safetech/upload-probe*' => Http::response([
                 'status' => 'ok',
                 'commit' => $commit,
                 'request_root' => 'https://api.example.test',
+                'csrf_token' => 'csrf-token',
                 'livewire_upload_url' => 'http://api.example.test/livewire/upload-file?signature=test',
             ]),
         ]);
@@ -180,7 +205,7 @@ class CmsMediaUploadConfigurationTest extends TestCase
         DeploymentInfo::writeCommit(str_repeat('a', 40));
 
         Http::fake([
-            'https://api.example.test/api/health*' => Http::response([
+            'https://api.example.test/_safetech/upload-probe*' => Http::response([
                 'status' => 'ok',
                 'commit' => str_repeat('b', 40),
             ]),
