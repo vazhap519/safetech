@@ -27,8 +27,12 @@ const contentSecurityPolicy = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  experimental: {
+    inlineCss: true,
+  },
   images: {
     formats: ["image/avif", "image/webp"],
+    qualities: [68, 75, 82],
     minimumCacheTTL: 2678400,
     remotePatterns: apiOrigin ? [new URL(`${apiOrigin}/storage/**`)] : [],
   },

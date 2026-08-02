@@ -38,17 +38,13 @@ const siteFont = localFont({
         },
         {
             path: "../assets/fonts/firago-600.woff2",
-            weight: "600",
-            style: "normal",
-        },
-        {
-            path: "../assets/fonts/firago-700.woff2",
-            weight: "700",
+            weight: "600 900",
             style: "normal",
         },
     ],
-    display: "swap",
+    display: "optional",
     fallback: ["Segoe UI", "Arial", "sans-serif"],
+    adjustFontFallback: "Arial",
     preload: true,
     variable: "--font-site",
 });
@@ -328,14 +324,7 @@ export default async function RootLayout({
                         metaPixelId={metaPixelId}
                     />
                     <ConsultationProvider>
-                        <div
-                            className="
-                                relative
-                                flex
-                                min-h-screen
-                                flex-col
-                            "
-                        >
+                        <div className="relative flex min-h-screen flex-col">
                             <a
                                 href="#main-content"
                                 className="sr-only z-[100] rounded-lg bg-primary-container px-4 py-3 text-on-primary-container focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
