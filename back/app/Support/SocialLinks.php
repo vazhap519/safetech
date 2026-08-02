@@ -48,20 +48,41 @@ class SocialLinks
             'pinterest' => [
                 'type' => 'pinterest',
                 'name' => 'Pinterest',
-                'url' => 'https://pinterest.com/pin/create/button/?url={url}',
+                'url' => 'https://pinterest.com/pin/create/button/?url={url}&description={title}',
                 'color' => 'bg-red-600',
                 'icon' => 'FaPinterest',
             ],
-            'twitter' => [
-                'type' => 'twitter',
+            'x' => [
+                'type' => 'x',
                 'name' => 'X',
                 'url' => 'https://twitter.com/intent/tweet?url={url}&text={title}',
                 'color' => 'bg-black',
                 'icon' => 'FaTwitter',
             ],
-            'link' => [
-                'type' => 'link',
-                'name' => 'Copy Link',
+            'viber' => [
+                'type' => 'viber',
+                'name' => 'Viber',
+                'url' => 'viber://forward?text={title}%20{url}',
+                'color' => 'bg-purple-600',
+                'icon' => 'FaViber',
+            ],
+            'email' => [
+                'type' => 'email',
+                'name' => 'Email',
+                'url' => 'mailto:?subject={title}&body={title}%0A{url}',
+                'color' => 'bg-gray-600',
+                'icon' => 'FaEnvelope',
+            ],
+            'native' => [
+                'type' => 'native',
+                'name' => 'Share',
+                'url' => '{url}',
+                'color' => 'bg-teal-600',
+                'icon' => 'FaShareAlt',
+            ],
+            'copy' => [
+                'type' => 'copy',
+                'name' => 'Copy link',
                 'url' => '{url}',
                 'color' => 'bg-gray-600',
                 'icon' => 'FaLink',
@@ -78,12 +99,28 @@ class SocialLinks
                 $type = is_array($button)
                     ? Arr::get($button, 'type', Arr::get($button, 'name'))
                     : $button;
+                $enabled = ! is_array($button) || Arr::get($button, 'enabled', true) !== false;
 
-                $type = strtolower((string) $type);
+                if (! $enabled) {
+                    return null;
+                }
+
+                $type = match (strtolower((string) $type)) {
+                    'twitter' => 'x',
+                    'link' => 'copy',
+                    'share' => 'native',
+                    default => strtolower((string) $type),
+                };
                 $definition = $definitions[$type] ?? null;
 
                 if (! $definition) {
                     return null;
+                }
+
+                $customLabel = is_array($button) ? trim((string) Arr::get($button, 'label', '')) : '';
+
+                if ($customLabel !== '') {
+                    $definition['name'] = $customLabel;
                 }
 
                 if ($url) {
@@ -121,6 +158,8 @@ class SocialLinks
             'youtube' => 'FaYoutube',
             'telegram' => 'FaTelegram',
             'whatsapp' => 'FaWhatsapp',
+            'viber' => 'FaViber',
+            'pinterest' => 'FaPinterest',
             'email' => 'FaEnvelope',
         ] as $field => $icon) {
             $url = self::normalizeNetworkUrl(
@@ -135,7 +174,7 @@ class SocialLinks
             $socials->push([
                 'icon' => $icon,
                 'url' => $url,
-                'text' => ucfirst($field),
+                'text' => self::networkLabel($field),
                 'bg_color' => 'rgba(255,255,255,0.1)',
                 'hover_color' => '#00C2A8',
             ]);
@@ -151,7 +190,7 @@ class SocialLinks
             : [];
 
         return collect($configuredLinks)
-            ->except(['email', 'whatsapp'])
+            ->except(['email', 'whatsapp', 'viber'])
             ->map(fn ($url): ?string => self::normalizeUrl(is_string($url) ? $url : null))
             ->filter()
             ->values()
@@ -195,6 +234,12 @@ class SocialLinks
             return $digits !== '' ? 'https://wa.me/'.$digits : null;
         }
 
+        if ($network === 'viber' && ! preg_match('#^(https?|viber):#i', $url)) {
+            $digits = preg_replace('/\D+/', '', $url) ?? '';
+
+            return $digits !== '' ? 'viber://chat?number=%2B'.$digits : null;
+        }
+
         return self::normalizeUrl($url);
     }
 
@@ -217,5 +262,19 @@ class SocialLinks
             'bg_color' => Arr::get($item, 'bg_color'),
             'hover_color' => Arr::get($item, 'hover_color'),
         ];
+    }
+
+    private static function networkLabel(string $network): string
+    {
+        return match ($network) {
+            'linkedin' => 'LinkedIn',
+            'tiktok' => 'TikTok',
+            'whatsapp' => 'WhatsApp',
+            'youtube' => 'YouTube',
+            'pinterest' => 'Pinterest',
+            'viber' => 'Viber',
+            'x' => 'X',
+            default => ucfirst($network),
+        };
     }
 }
