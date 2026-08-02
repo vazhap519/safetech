@@ -83,6 +83,20 @@ class ContentSeeder extends Seeder
             ],
             'socials' => [
                 'links' => [],
+                'share_enabled' => true,
+                'share_on_services' => true,
+                'share_on_projects' => true,
+                'share_title_ka' => 'გაზიარება',
+                'share_title_en' => 'Share',
+                'share_title_ru' => 'Поделиться',
+                'share_buttons' => [
+                    ['type' => 'facebook', 'label' => '', 'enabled' => true],
+                    ['type' => 'whatsapp', 'label' => '', 'enabled' => true],
+                    ['type' => 'telegram', 'label' => '', 'enabled' => true],
+                    ['type' => 'linkedin', 'label' => '', 'enabled' => true],
+                    ['type' => 'x', 'label' => '', 'enabled' => true],
+                    ['type' => 'copy', 'label' => '', 'enabled' => true],
+                ],
             ],
             'seo' => [
                 'site_name' => 'SafeTech',
