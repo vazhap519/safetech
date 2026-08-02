@@ -207,7 +207,7 @@ function normalizeSocialHref(network: SocialNetwork, href: string) {
 function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
     if (isRecord(value) && Array.isArray(value.links)) {
         const links = value.links
-            .map((item) => {
+            .map((item): SiteSocialLink | null => {
                 if (
                     !isRecord(item) ||
                     typeof item.network !== "string" ||
@@ -231,7 +231,7 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
                             : fallbackLabel(network),
                     href,
                     openInNewTab: normalizeBoolean(item.open_in_new_tab, true),
-                } satisfies SiteSocialLink;
+                };
             })
             .filter((item): item is SiteSocialLink => Boolean(item));
 
@@ -240,7 +240,7 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
 
     if (isRecord(value)) {
         const legacyLinks = Object.entries(value)
-            .map(([network, href]) => {
+            .map(([network, href]): SiteSocialLink | null => {
                 const normalizedNetwork = normalizeSocialNetwork(network);
                 if (!normalizedNetwork || typeof href !== "string") return null;
                 const normalizedHref = normalizeSocialHref(normalizedNetwork, href);
@@ -251,7 +251,7 @@ function parseSocialLinks(value: unknown, fallbackLinks: SiteSocialLink[]) {
                     label: fallbackLabel(normalizedNetwork),
                     href: normalizedHref,
                     openInNewTab: true,
-                } satisfies SiteSocialLink;
+                };
             })
             .filter((item): item is SiteSocialLink => Boolean(item));
 
