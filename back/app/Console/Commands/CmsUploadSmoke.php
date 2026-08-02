@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Filament\Support\CmsMediaUpload;
 use App\Support\CmsMedia;
+use App\Support\DeploymentInfo;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\UploadedFile;
@@ -175,6 +176,8 @@ class CmsUploadSmoke extends Command
             throw new RuntimeException('The HTTP upload smoke-test base URL is invalid.');
         }
 
+        $this->assertPublicDeploymentIdentity($baseUrl);
+
         URL::forceRootUrl($baseUrl);
         URL::forceScheme($scheme);
 
@@ -195,6 +198,44 @@ class CmsUploadSmoke extends Command
             ->post($signedUrl);
 
         $this->assertSuccessfulUploadResponse($response, $signedUrl);
+    }
+
+    private function assertPublicDeploymentIdentity(string $baseUrl): void
+    {
+        $localCommit = DeploymentInfo::commit();
+
+        if ($localCommit === null) {
+            throw new RuntimeException('Unable to determine the local Git commit for the HTTP upload smoke test.');
+        }
+
+        $response = Http::acceptJson()
+            ->timeout(20)
+            ->connectTimeout(10)
+            ->get($baseUrl.'/api/health', [
+                'deployment_check' => Str::uuid()->toString(),
+            ]);
+
+        if (! $response->successful()) {
+            throw new RuntimeException(
+                "The public API health check failed with HTTP {$response->status()}.",
+            );
+        }
+
+        $publicCommit = $response->json('commit');
+
+        if (! is_string($publicCommit) || $publicCommit === '') {
+            throw new RuntimeException(
+                'The public API is not serving the deployed backend. Check that the api.safetech.ge Nginx root points to '
+                .public_path().'.',
+            );
+        }
+
+        if (! hash_equals($localCommit, strtolower($publicCommit))) {
+            throw new RuntimeException(
+                "The public API is serving commit {$publicCommit}, but the deployed checkout is {$localCommit}. "
+                .'Check the api.safetech.ge Nginx document root and PHP-FPM opcache.',
+            );
+        }
     }
 
     private function assertSuccessfulUploadResponse(Response $response, string $signedUrl): void
