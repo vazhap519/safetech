@@ -29,7 +29,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
     inlineCss: true,
-    useLightningcss: true,
   },
   images: {
     formats: ["image/avif", "image/webp"],
