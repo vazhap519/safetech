@@ -57,7 +57,7 @@ final class SiteSettingValueNormalizer
     {
         $links = collect(is_array($value['links'] ?? null) ? $value['links'] : [])
             ->map(fn (mixed $item): ?array => self::normalizeSocialLinkItem($item))
-            ->filter()
+            ->filter(fn (?array $item): bool => is_array($item) && $item['enabled'] === true)
             ->values();
 
         foreach ($value as $network => $href) {
@@ -71,21 +71,15 @@ final class SiteSettingValueNormalizer
                 'network' => $normalizedNetwork,
                 'label' => self::socialLabel($normalizedNetwork),
                 'href' => trim($href),
+                'enabled' => true,
+                'open_in_new_tab' => true,
             ]);
         }
 
         $shareButtons = collect(is_array($value['share_buttons'] ?? null) ? $value['share_buttons'] : [])
-            ->map(function (mixed $button): ?string {
-                if (is_array($button)) {
-                    $button = $button['type'] ?? $button['name'] ?? null;
-                }
-
-                return is_string($button) && trim($button) !== ''
-                    ? strtolower(trim($button))
-                    : null;
-            })
-            ->filter()
-            ->unique()
+            ->map(fn (mixed $button): ?array => self::normalizeShareButtonItem($button))
+            ->filter(fn (?array $button): bool => is_array($button) && $button['enabled'] === true)
+            ->unique('type')
             ->values()
             ->all();
 
@@ -94,7 +88,13 @@ final class SiteSettingValueNormalizer
                 ->unique(fn (array $item): string => "{$item['network']}|{$item['href']}")
                 ->values()
                 ->all(),
+            'share_enabled' => self::booleanValue($value['share_enabled'] ?? true, true),
+            'share_on_services' => self::booleanValue($value['share_on_services'] ?? true, true),
+            'share_on_projects' => self::booleanValue($value['share_on_projects'] ?? true, true),
             'share_title' => self::stringValue($value['share_title'] ?? ''),
+            'share_title_ka' => self::trimmedString($value['share_title_ka'] ?? ''),
+            'share_title_en' => self::trimmedString($value['share_title_en'] ?? ''),
+            'share_title_ru' => self::trimmedString($value['share_title_ru'] ?? ''),
             'share_buttons' => $shareButtons,
         ]);
     }
@@ -118,7 +118,7 @@ final class SiteSettingValueNormalizer
             ->filter();
     }
 
-    /** @return array{network: string, label: string, href: string}|null */
+    /** @return array{network: string, label: string, href: string, enabled: bool, open_in_new_tab: bool}|null */
     private static function normalizeSocialLinkItem(mixed $item): ?array
     {
         if (! is_array($item)) {
@@ -142,6 +142,36 @@ final class SiteSettingValueNormalizer
             'network' => $network,
             'label' => $label,
             'href' => $href,
+            'enabled' => self::booleanValue($item['enabled'] ?? true, true),
+            'open_in_new_tab' => self::booleanValue($item['open_in_new_tab'] ?? true, true),
+        ];
+    }
+
+    /** @return array{type: string, label: string, enabled: bool}|null */
+    private static function normalizeShareButtonItem(mixed $item): ?array
+    {
+        if (is_string($item)) {
+            $item = ['type' => $item];
+        }
+
+        if (! is_array($item)) {
+            return null;
+        }
+
+        $type = self::normalizeShareType(
+            is_string($item['type'] ?? null)
+                ? $item['type']
+                : (is_string($item['name'] ?? null) ? $item['name'] : null),
+        );
+
+        if ($type === null) {
+            return null;
+        }
+
+        return [
+            'type' => $type,
+            'label' => self::trimmedString($item['label'] ?? ''),
+            'enabled' => self::booleanValue($item['enabled'] ?? true, true),
         ];
     }
 
@@ -150,8 +180,21 @@ final class SiteSettingValueNormalizer
         $normalized = strtolower(trim((string) $network));
 
         return match ($normalized) {
-            'facebook', 'linkedin', 'instagram', 'tiktok', 'whatsapp', 'email', 'x', 'youtube', 'telegram' => $normalized,
+            'facebook', 'linkedin', 'instagram', 'tiktok', 'whatsapp', 'viber', 'pinterest', 'email', 'x', 'youtube', 'telegram' => $normalized,
             'twitter' => 'x',
+            default => null,
+        };
+    }
+
+    private static function normalizeShareType(?string $type): ?string
+    {
+        $normalized = strtolower(trim((string) $type));
+
+        return match ($normalized) {
+            'facebook', 'whatsapp', 'telegram', 'linkedin', 'x', 'pinterest', 'viber', 'email', 'native', 'copy' => $normalized,
+            'twitter' => 'x',
+            'link' => 'copy',
+            'share' => 'native',
             default => null,
         };
     }
@@ -163,9 +206,32 @@ final class SiteSettingValueNormalizer
             'tiktok' => 'TikTok',
             'whatsapp' => 'WhatsApp',
             'youtube' => 'YouTube',
+            'pinterest' => 'Pinterest',
+            'viber' => 'Viber',
             'x' => 'X',
             default => ucfirst($network),
         };
+    }
+
+    private static function booleanValue(mixed $value, bool $fallback = false): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return $value === 1;
+        }
+
+        if (is_string($value)) {
+            return match (strtolower(trim($value))) {
+                '1', 'true', 'yes', 'on' => true,
+                '0', 'false', 'no', 'off', '' => false,
+                default => $fallback,
+            };
+        }
+
+        return $fallback;
     }
 
     private static function stringValue(mixed $value, string $fallback = ''): string
