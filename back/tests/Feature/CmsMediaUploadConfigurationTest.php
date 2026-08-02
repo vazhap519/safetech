@@ -15,6 +15,7 @@ use App\Support\DeploymentInfo;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class CmsMediaUploadConfigurationTest extends TestCase
@@ -86,7 +87,25 @@ class CmsMediaUploadConfigurationTest extends TestCase
         $this->assertSame([], Storage::disk('public')->allFiles());
     }
 
-    public function test_upload_smoke_command_checks_the_public_deployment_and_livewire_endpoint(): void
+    public function test_health_endpoint_only_returns_a_signed_upload_url_for_an_authenticated_probe(): void
+    {
+        $this->getJson('/api/health')
+            ->assertOk()
+            ->assertJsonMissingPath('livewire_upload_url');
+
+        $nonce = Str::uuid()->toString();
+        $signature = hash_hmac('sha256', $nonce, (string) config('app.key'));
+
+        $this->withHeaders([
+            'X-SafeTech-Upload-Probe-Nonce' => $nonce,
+            'X-SafeTech-Upload-Probe-Signature' => $signature,
+        ])->getJson('/api/health')
+            ->assertOk()
+            ->assertJsonPath('request_root', 'http://localhost:8000')
+            ->assertJsonStructure(['livewire_upload_url']);
+    }
+
+    public function test_upload_smoke_command_checks_the_public_deployment_and_browser_generated_livewire_endpoint(): void
     {
         Storage::fake('local');
         Storage::fake('public');
@@ -96,7 +115,12 @@ class CmsMediaUploadConfigurationTest extends TestCase
 
         Http::fake(function (Request $request) use ($commit) {
             if (str_contains($request->url(), '/api/health')) {
-                return Http::response(['status' => 'ok', 'commit' => $commit]);
+                return Http::response([
+                    'status' => 'ok',
+                    'commit' => $commit,
+                    'request_root' => 'https://api.example.test',
+                    'livewire_upload_url' => 'https://api.example.test/livewire/upload-file?expires=1&signature=test',
+                ]);
             }
 
             if (str_contains($request->url(), '/livewire/upload-file')) {
@@ -114,9 +138,38 @@ class CmsMediaUploadConfigurationTest extends TestCase
 
         Http::assertSentCount(2);
         Http::assertSent(
+            fn (Request $request): bool => str_contains($request->url(), '/api/health')
+                && filled($request->header('X-SafeTech-Upload-Probe-Nonce'))
+                && filled($request->header('X-SafeTech-Upload-Probe-Signature')),
+        );
+        Http::assertSent(
             fn (Request $request): bool => str_contains($request->url(), '/livewire/upload-file')
                 && $request->method() === 'POST',
         );
+    }
+
+    public function test_upload_smoke_command_rejects_a_livewire_url_with_the_wrong_origin(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $commit = str_repeat('a', 40);
+        DeploymentInfo::writeCommit($commit);
+
+        Http::fake([
+            'https://api.example.test/api/health*' => Http::response([
+                'status' => 'ok',
+                'commit' => $commit,
+                'request_root' => 'https://api.example.test',
+                'livewire_upload_url' => 'http://api.example.test/livewire/upload-file?signature=test',
+            ]),
+        ]);
+
+        $this->artisan('cms:upload-smoke', [
+            '--http-base-url' => 'https://api.example.test',
+        ])
+            ->expectsOutputToContain('Livewire generated the upload URL')
+            ->assertFailed();
     }
 
     public function test_upload_smoke_command_rejects_a_stale_public_backend(): void
