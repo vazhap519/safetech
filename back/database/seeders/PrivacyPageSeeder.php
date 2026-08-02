@@ -67,6 +67,7 @@ class PrivacyPageSeeder extends Seeder
         foreach ($defaults as $field => $default) {
             if ($field === 'noindex') {
                 $record->noindex = true;
+
                 continue;
             }
 
@@ -76,6 +77,7 @@ class PrivacyPageSeeder extends Seeder
                 if (is_array($current) === false || $current === []) {
                     $record->setAttribute($field, $default);
                 }
+
                 continue;
             }
 
