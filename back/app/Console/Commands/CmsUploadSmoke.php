@@ -11,7 +11,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -176,15 +175,7 @@ class CmsUploadSmoke extends Command
             throw new RuntimeException('The HTTP upload smoke-test base URL is invalid.');
         }
 
-        $this->assertPublicDeploymentIdentity($baseUrl);
-
-        URL::forceRootUrl($baseUrl);
-        URL::forceScheme($scheme);
-
-        $signedUrl = URL::temporarySignedRoute(
-            'livewire.upload-file',
-            now()->addMinutes(5),
-        );
+        $signedUrl = $this->publicLivewireUploadUrl($baseUrl);
 
         $response = Http::acceptJson()
             ->timeout(60)
@@ -200,7 +191,7 @@ class CmsUploadSmoke extends Command
         $this->assertSuccessfulUploadResponse($response, $signedUrl);
     }
 
-    private function assertPublicDeploymentIdentity(string $baseUrl): void
+    private function publicLivewireUploadUrl(string $baseUrl): string
     {
         $localCommit = DeploymentInfo::commit();
 
@@ -208,7 +199,20 @@ class CmsUploadSmoke extends Command
             throw new RuntimeException('Unable to determine the local Git commit for the HTTP upload smoke test.');
         }
 
+        $appKey = (string) config('app.key');
+
+        if ($appKey === '') {
+            throw new RuntimeException('APP_KEY is unavailable for the HTTP upload probe.');
+        }
+
+        $nonce = Str::uuid()->toString();
+        $probeSignature = hash_hmac('sha256', $nonce, $appKey);
+
         $response = Http::acceptJson()
+            ->withHeaders([
+                'X-SafeTech-Upload-Probe-Nonce' => $nonce,
+                'X-SafeTech-Upload-Probe-Signature' => $probeSignature,
+            ])
             ->timeout(20)
             ->connectTimeout(10)
             ->get($baseUrl.'/api/health', [
@@ -236,6 +240,53 @@ class CmsUploadSmoke extends Command
                 .'Check the api.safetech.ge Nginx document root and PHP-FPM opcache.',
             );
         }
+
+        $requestRoot = rtrim((string) $response->json('request_root'), '/');
+
+        if ($requestRoot === '' || ! hash_equals(strtolower($baseUrl), strtolower($requestRoot))) {
+            throw new RuntimeException(
+                "The public backend sees request root '{$requestRoot}', expected '{$baseUrl}'. "
+                .'Check trusted proxies and X-Forwarded-Host/X-Forwarded-Proto.',
+            );
+        }
+
+        $signedUrl = (string) $response->json('livewire_upload_url');
+
+        if ($signedUrl === '') {
+            throw new RuntimeException(
+                'The public backend did not return a Livewire signed upload URL. '
+                .'Check APP_KEY, route registration, and production URL generation.',
+            );
+        }
+
+        $signedScheme = parse_url($signedUrl, PHP_URL_SCHEME);
+        $signedHost = parse_url($signedUrl, PHP_URL_HOST);
+        $signedPort = parse_url($signedUrl, PHP_URL_PORT);
+        $signedPath = parse_url($signedUrl, PHP_URL_PATH);
+        $baseScheme = parse_url($baseUrl, PHP_URL_SCHEME);
+        $baseHost = parse_url($baseUrl, PHP_URL_HOST);
+        $basePort = parse_url($baseUrl, PHP_URL_PORT);
+
+        if (
+            ! is_string($signedScheme)
+            || ! is_string($signedHost)
+            || strtolower($signedScheme) !== strtolower((string) $baseScheme)
+            || strtolower($signedHost) !== strtolower((string) $baseHost)
+            || $signedPort !== $basePort
+        ) {
+            throw new RuntimeException(
+                "Livewire generated the upload URL '{$signedUrl}', expected origin '{$baseUrl}'. "
+                .'Check APP_URL and reverse-proxy HTTPS headers.',
+            );
+        }
+
+        if (! is_string($signedPath) || ! str_contains($signedPath, '/livewire/upload-file')) {
+            throw new RuntimeException(
+                "Livewire generated an unexpected upload path: '{$signedUrl}'.",
+            );
+        }
+
+        return $signedUrl;
     }
 
     private function assertSuccessfulUploadResponse(Response $response, string $signedUrl): void
