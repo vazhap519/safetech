@@ -11,37 +11,12 @@ use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Support\DeploymentInfo;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\URL;
 
-Route::get('/health', function (Request $request): array {
-    $payload = [
-        'status' => 'ok',
-        'commit' => DeploymentInfo::commit(),
-    ];
-
-    $nonce = trim((string) $request->header('X-SafeTech-Upload-Probe-Nonce'));
-    $providedSignature = trim((string) $request->header('X-SafeTech-Upload-Probe-Signature'));
-    $appKey = (string) config('app.key');
-    $expectedSignature = $nonce !== '' && $appKey !== ''
-        ? hash_hmac('sha256', $nonce, $appKey)
-        : '';
-
-    if (
-        $expectedSignature !== ''
-        && $providedSignature !== ''
-        && hash_equals($expectedSignature, $providedSignature)
-    ) {
-        $payload['request_root'] = $request->root();
-        $payload['livewire_upload_url'] = URL::temporarySignedRoute(
-            'livewire.upload-file',
-            now()->addMinutes(5),
-        );
-    }
-
-    return $payload;
-});
+Route::get('/health', fn (): array => [
+    'status' => 'ok',
+    'commit' => DeploymentInfo::commit(),
+]);
 
 Route::post('/contact-leads', ContactLeadController::class)
     ->middleware('throttle:contact-leads')
