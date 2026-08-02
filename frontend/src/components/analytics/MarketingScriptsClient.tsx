@@ -9,7 +9,6 @@ declare global {
         dataLayer?: unknown[];
         fbq?: (...args: unknown[]) => void;
         _fbq?: (...args: unknown[]) => void;
-        gtag?: (...args: unknown[]) => void;
     }
 }
 
