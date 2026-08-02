@@ -57,7 +57,7 @@ export default async function Hero() {
     }
 
     return (
-        <section className="relative mx-auto flex min-h-[calc(100svh-2rem)] max-w-container-max items-center overflow-hidden px-5 pb-12 pt-28 sm:px-6 md:pb-14 lg:px-14 lg:pb-12 lg:pt-28">
+        <section className="relative mx-auto flex min-h-[calc(100svh-76px)] max-w-container-max items-center overflow-hidden px-5 pb-12 pt-28 sm:px-6 md:pb-14 lg:min-h-[calc(100svh-2rem)] lg:px-14 lg:pb-12 lg:pt-28">
             <div className="relative z-10 grid w-full grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
                 <div className="order-1 space-y-5 text-center lg:text-left">
                     {eyebrow ? (
@@ -114,16 +114,15 @@ export default async function Hero() {
                 </div>
 
                 {branding.defaultImage ? (
-                    <div className="order-2 relative mx-auto w-full max-w-[650px]">
+                    <div className="order-2 relative mx-auto hidden w-full max-w-[650px] lg:block">
                         <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl">
                             <Image
                                 alt={imageAlt || branding.siteName}
                                 className="h-full w-full object-contain"
-                                fetchPriority="high"
                                 height={410}
-                                loading="eager"
+                                loading="lazy"
                                 quality={68}
-                                sizes="(max-width: 639px) 92vw, (max-width: 1023px) 560px, (max-width: 1280px) 46vw, 610px"
+                                sizes="(max-width: 1023px) 1px, (max-width: 1280px) 46vw, 610px"
                                 src={branding.defaultImage}
                                 variant="home-hero"
                                 width={610}
