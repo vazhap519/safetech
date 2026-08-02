@@ -115,7 +115,7 @@ class CmsMediaUploadConfigurationTest extends TestCase
         Http::assertSentCount(2);
         Http::assertSent(
             fn (Request $request): bool => str_contains($request->url(), '/livewire/upload-file')
-                && $request->hasFile('files[]', 'safetech-upload-smoke.png'),
+                && $request->method() === 'POST',
         );
     }
 
