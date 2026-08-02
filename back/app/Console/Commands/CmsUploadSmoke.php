@@ -4,10 +4,14 @@ namespace App\Console\Commands;
 
 use App\Filament\Support\CmsMediaUpload;
 use App\Support\CmsMedia;
+use App\Support\DeploymentInfo;
 use Illuminate\Console\Command;
+use Illuminate\Http\Client\Response;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -15,9 +19,11 @@ use Throwable;
 
 class CmsUploadSmoke extends Command
 {
-    protected $signature = 'cms:upload-smoke {--check-nginx-runtime : Require the installed Nginx configuration to match the repository copy}';
+    protected $signature = 'cms:upload-smoke
+        {--check-nginx-runtime : Require the installed Nginx configuration to match the repository copy}
+        {--http-base-url= : Upload a real 2 MB image through the public Livewire HTTP endpoint}';
 
-    protected $description = 'Run end-to-end configuration and storage checks for Filament/Livewire image uploads';
+    protected $description = 'Run end-to-end configuration, storage, and optional public HTTP checks for Filament/Livewire uploads';
 
     public function handle(): int
     {
@@ -29,6 +35,12 @@ class CmsUploadSmoke extends Command
 
             if ($this->option('check-nginx-runtime')) {
                 $this->assertInstalledNginxConfiguration();
+            }
+
+            $httpBaseUrl = trim((string) $this->option('http-base-url'));
+
+            if ($httpBaseUrl !== '') {
+                $this->assertPublicHttpUpload($httpBaseUrl);
             }
         } catch (Throwable $exception) {
             report($exception);
@@ -44,13 +56,10 @@ class CmsUploadSmoke extends Command
 
     private function assertLivewireUploadRouteExists(): void
     {
-        $routeExists = collect(Route::getRoutes())->contains(
-            fn ($route): bool => in_array('POST', $route->methods(), true)
-                && str_contains($route->uri(), 'livewire/upload-file'),
-        );
+        $route = Route::getRoutes()->getByName('livewire.upload-file');
 
-        if (! $routeExists) {
-            throw new RuntimeException('The Livewire temporary upload route is not registered.');
+        if ($route === null || ! in_array('POST', $route->methods(), true)) {
+            throw new RuntimeException('The named Livewire temporary upload route is not registered.');
         }
     }
 
@@ -154,6 +163,107 @@ class CmsUploadSmoke extends Command
 
         if (hash_file('sha256', $source) !== hash_file('sha256', $target)) {
             throw new RuntimeException('The installed Nginx upload configuration is stale.');
+        }
+    }
+
+    private function assertPublicHttpUpload(string $baseUrl): void
+    {
+        $baseUrl = rtrim($baseUrl, '/');
+        $scheme = parse_url($baseUrl, PHP_URL_SCHEME);
+        $host = parse_url($baseUrl, PHP_URL_HOST);
+
+        if (! is_string($scheme) || ! in_array($scheme, ['http', 'https'], true) || ! is_string($host)) {
+            throw new RuntimeException('The HTTP upload smoke-test base URL is invalid.');
+        }
+
+        $this->assertPublicDeploymentIdentity($baseUrl);
+
+        URL::forceRootUrl($baseUrl);
+        URL::forceScheme($scheme);
+
+        $signedUrl = URL::temporarySignedRoute(
+            'livewire.upload-file',
+            now()->addMinutes(5),
+        );
+
+        $response = Http::acceptJson()
+            ->timeout(60)
+            ->connectTimeout(10)
+            ->attach(
+                'files[]',
+                $this->pngPayload(),
+                'safetech-upload-smoke.png',
+                ['Content-Type' => 'image/png'],
+            )
+            ->post($signedUrl);
+
+        $this->assertSuccessfulUploadResponse($response, $signedUrl);
+    }
+
+    private function assertPublicDeploymentIdentity(string $baseUrl): void
+    {
+        $localCommit = DeploymentInfo::commit();
+
+        if ($localCommit === null) {
+            throw new RuntimeException('Unable to determine the local Git commit for the HTTP upload smoke test.');
+        }
+
+        $response = Http::acceptJson()
+            ->timeout(20)
+            ->connectTimeout(10)
+            ->get($baseUrl.'/api/health', [
+                'deployment_check' => Str::uuid()->toString(),
+            ]);
+
+        if (! $response->successful()) {
+            throw new RuntimeException(
+                "The public API health check failed with HTTP {$response->status()}.",
+            );
+        }
+
+        $publicCommit = $response->json('commit');
+
+        if (! is_string($publicCommit) || $publicCommit === '') {
+            throw new RuntimeException(
+                'The public API is not serving the deployed backend. Check that the api.safetech.ge Nginx root points to '
+                .public_path().'.',
+            );
+        }
+
+        if (! hash_equals($localCommit, strtolower($publicCommit))) {
+            throw new RuntimeException(
+                "The public API is serving commit {$publicCommit}, but the deployed checkout is {$localCommit}. "
+                .'Check the api.safetech.ge Nginx document root and PHP-FPM opcache.',
+            );
+        }
+    }
+
+    private function assertSuccessfulUploadResponse(Response $response, string $signedUrl): void
+    {
+        if (! $response->successful()) {
+            $body = Str::limit(trim($response->body()), 1000, '…');
+            $path = parse_url($signedUrl, PHP_URL_PATH) ?: '/livewire/upload-file';
+
+            throw new RuntimeException(
+                "Public Livewire upload failed with HTTP {$response->status()} at {$path}. Response: {$body}",
+            );
+        }
+
+        $paths = $response->json('paths');
+
+        if (! is_array($paths) || $paths === []) {
+            throw new RuntimeException(
+                'Public Livewire upload returned success without a temporary file path. Response: '
+                .Str::limit(trim($response->body()), 1000, '…'),
+            );
+        }
+
+        $temporaryDisk = Storage::disk(CmsMediaUpload::temporaryDisk());
+
+        foreach ($paths as $path) {
+            if (is_string($path) && $path !== '') {
+                $temporaryDisk->delete($path);
+            }
         }
     }
 

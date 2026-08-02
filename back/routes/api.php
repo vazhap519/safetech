@@ -10,9 +10,13 @@ use App\Http\Controllers\Api\ServiceCalculatorProfileController;
 use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\SettingsController;
+use App\Support\DeploymentInfo;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => ['status' => 'ok']);
+Route::get('/health', fn () => [
+    'status' => 'ok',
+    'commit' => DeploymentInfo::commit(),
+]);
 
 Route::post('/contact-leads', ContactLeadController::class)
     ->middleware('throttle:contact-leads')
