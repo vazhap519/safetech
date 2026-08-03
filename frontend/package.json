@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "icons:check": "node scripts/icon-catalog-check.mjs",
+    "prelint": "npm run icons:check",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "seo:smoke": "node scripts/seo-smoke.mjs",
