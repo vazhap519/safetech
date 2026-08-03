@@ -1,15 +1,17 @@
 [Unit]
 Description=SafeTech Laravel queue worker
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
 User=www-data
 Group=www-data
-WorkingDirectory=/var/www/safetech-api
+WorkingDirectory=/var/www/safetech/back
 ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=3 --backoff=10 --timeout=120 --max-time=3600
 Restart=always
 RestartSec=5
+KillMode=control-group
 TimeoutStopSec=130
 KillSignal=SIGTERM
 
