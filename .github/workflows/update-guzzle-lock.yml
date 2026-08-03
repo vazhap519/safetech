@@ -1,0 +1,51 @@
+name: Update Guzzle lockfile
+
+on:
+  push:
+    branches:
+      - diagnose/production-frontend-500
+    paths:
+      - ".github/workflows/update-guzzle-lock.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-lock:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: diagnose/production-frontend-500
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+          coverage: none
+
+      - name: Update Guzzle to the patched release
+        run: composer update guzzlehttp/guzzle --with-all-dependencies --no-interaction --no-progress --no-audit
+
+      - name: Verify the dependency audit
+        run: composer audit --locked --no-interaction
+
+      - name: Commit updated lockfile
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add back/composer.lock
+          if git diff --cached --quiet; then
+            echo "No lockfile update was necessary."
+            exit 0
+          fi
+          git commit -m "Update Guzzle to patched release"
+          git push origin HEAD:diagnose/production-frontend-500
