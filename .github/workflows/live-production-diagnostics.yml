@@ -1,0 +1,44 @@
+name: Live production diagnostics
+
+on:
+  push:
+    branches:
+      - fix/atomic-production-deploy
+    paths:
+      - ".github/workflows/live-production-diagnostics.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe DNS, TLS, frontend and API
+        shell: bash
+        run: |
+          set -u
+          for host in safetech.ge api.safetech.ge; do
+            echo "=== DNS: ${host} ==="
+            getent ahosts "${host}" || true
+          done
+
+          for url in \
+            https://safetech.ge/ \
+            https://safetech.ge/about \
+            https://api.safetech.ge/api/health \
+            https://api.safetech.ge/api/services \
+            https://api.safetech.ge/api/projects; do
+            echo
+            echo "=== ${url} ==="
+            curl --silent --show-error --location \
+              --connect-timeout 10 --max-time 30 \
+              --dump-header /tmp/headers.txt \
+              --output /tmp/body.txt \
+              --write-out 'HTTP=%{http_code} TYPE=%{content_type} IP=%{remote_ip} TIME=%{time_total}\n' \
+              "${url}" || true
+            cat /tmp/headers.txt || true
+            echo "--- body (first 5000 bytes) ---"
+            head -c 5000 /tmp/body.txt || true
+            echo
+          done
