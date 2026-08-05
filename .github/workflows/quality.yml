@@ -139,7 +139,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check shell syntax
-        run: bash -n deploy.sh
+        run: |
+          bash -n deploy.sh
+          bash -n scripts/deploy-production.sh
 
       - name: Run ShellCheck
-        run: shellcheck deploy.sh
+        run: shellcheck deploy.sh scripts/deploy-production.sh
+
+      - name: Verify atomic frontend deployment safeguards
+        run: |
+          grep -q 'FRONTEND_STAGE_DIR' scripts/deploy-production.sh
+          grep -q 'FRONTEND_ROLLBACK_DIR' scripts/deploy-production.sh
+          grep -q 'restore_frontend' scripts/deploy-production.sh
+          grep -q 'install_systemd_units' scripts/deploy-production.sh
+          grep -q 'install_nginx_config' scripts/deploy-production.sh
+          grep -q 'Atomically activating the staged frontend' scripts/deploy-production.sh
