@@ -26,6 +26,8 @@ NGINX_CACHE_DIR="${SAFETECH_NGINX_CACHE_DIR:-/var/cache/nginx/safetech}"
 NGINX_CONFIG_SOURCE="${SAFETECH_NGINX_CONFIG_SOURCE:-${FRONTEND_DIR}/deploy/nginx/safetech.example.conf}"
 NGINX_CONFIG_TARGET="${SAFETECH_NGINX_CONFIG_TARGET:-/etc/nginx/sites-available/safetech.conf}"
 NGINX_CONFIG_LINK="${SAFETECH_NGINX_CONFIG_LINK:-/etc/nginx/sites-enabled/safetech.conf}"
+TLS_CERTIFICATE="${SAFETECH_TLS_CERTIFICATE:-/etc/letsencrypt/live/safetech.ge/fullchain.pem}"
+TLS_CERTIFICATE_KEY="${SAFETECH_TLS_CERTIFICATE_KEY:-/etc/letsencrypt/live/safetech.ge/privkey.pem}"
 FRONTEND_UNIT_SOURCE="${SAFETECH_FRONTEND_UNIT_SOURCE:-${FRONTEND_DIR}/deploy/systemd/safetech-frontend.service}"
 QUEUE_UNIT_SOURCE="${SAFETECH_QUEUE_UNIT_SOURCE:-${FRONTEND_DIR}/deploy/systemd/safetech-queue.service}"
 SYSTEMD_DIR="${SAFETECH_SYSTEMD_DIR:-/etc/systemd/system}"
@@ -185,7 +187,32 @@ render_path_file() {
         -e "s|/var/www/safetech/back|${BACKEND_DIR}|g" \
         -e "s|/var/www/safetech-api|${BACKEND_DIR}|g" \
         -e "s|/var/www/safetech-static|${STATIC_DIR}|g" \
+        -e "s|/etc/letsencrypt/live/safetech.ge/fullchain.pem|${TLS_CERTIFICATE}|g" \
+        -e "s|/etc/letsencrypt/live/safetech.ge/privkey.pem|${TLS_CERTIFICATE_KEY}|g" \
         "${source_file}" > "${destination_file}"
+}
+
+resolve_tls_certificate_paths() {
+    local configured_certificate
+    local configured_key
+
+    if [[ -f "${TLS_CERTIFICATE}" && -f "${TLS_CERTIFICATE_KEY}" ]]; then
+        return 0
+    fi
+
+    [[ -f "${NGINX_CONFIG_TARGET}" ]] || fail \
+        "TLS certificate files are missing and no existing Nginx site config is available to recover their paths"
+
+    configured_certificate="$(awk '$1 == "ssl_certificate" { gsub(/;/, "", $2); print $2; exit }' "${NGINX_CONFIG_TARGET}")"
+    configured_key="$(awk '$1 == "ssl_certificate_key" { gsub(/;/, "", $2); print $2; exit }' "${NGINX_CONFIG_TARGET}")"
+
+    if [[ ! -f "${configured_certificate}" || ! -f "${configured_key}" ]]; then
+        fail "TLS certificate files are unavailable. Set SAFETECH_TLS_CERTIFICATE and SAFETECH_TLS_CERTIFICATE_KEY to valid certificate paths."
+    fi
+
+    TLS_CERTIFICATE="${configured_certificate}"
+    TLS_CERTIFICATE_KEY="${configured_key}"
+    log "Reusing TLS certificate paths from the active Nginx site configuration"
 }
 
 install_systemd_units() {
@@ -219,6 +246,8 @@ install_nginx_config() {
 
     command -v nginx >/dev/null 2>&1 || return 0
     [[ -f "${NGINX_CONFIG_SOURCE}" ]] || fail "missing Nginx config: ${NGINX_CONFIG_SOURCE}"
+
+    resolve_tls_certificate_paths
 
     rendered_config="$(mktemp)"
     render_path_file "${NGINX_CONFIG_SOURCE}" "${rendered_config}"
