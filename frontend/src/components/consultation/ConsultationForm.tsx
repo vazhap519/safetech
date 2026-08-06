@@ -8,26 +8,51 @@ import { useLeadForm } from "@/hooks/useLeadForm";
 export default function ConsultationForm() {
     const { status, message, submit } = useLeadForm("consultation-popup");
     const { t } = useLocalization();
-    const firstNameLabel = t("forms.firstName", null);
-    const lastNameLabel = t("forms.lastName", null);
-    const phoneLabel = t("forms.phone", null);
-    const emailLabel = t("forms.email", null);
-    const detailsLabel = t("forms.details", null);
-    const cancelLabel = t("common.cancel", null);
-    const submittingLabel = t("forms.submitting", null);
-    const submitLabel = t("forms.submitRequest", null);
-    const privacyLabel = t("forms.privacy", null);
-
-    if (
-        !firstNameLabel ||
-        !lastNameLabel ||
-        !phoneLabel ||
-        !cancelLabel ||
-        !submitLabel ||
-        !privacyLabel
-    ) {
-        return null;
-    }
+    const firstNameLabel = t("forms.firstName", {
+        ka: "სახელი",
+        en: "First name",
+        ru: "Имя",
+    });
+    const lastNameLabel = t("forms.lastName", {
+        ka: "გვარი",
+        en: "Last name",
+        ru: "Фамилия",
+    });
+    const phoneLabel = t("forms.phone", {
+        ka: "ტელეფონის ნომერი",
+        en: "Phone number",
+        ru: "Номер телефона",
+    });
+    const emailLabel = t("forms.email", {
+        ka: "ელფოსტა",
+        en: "Email",
+        ru: "Электронная почта",
+    });
+    const detailsLabel = t("forms.details", {
+        ka: "მოთხოვნის დეტალები",
+        en: "Project details",
+        ru: "Детали задачи",
+    });
+    const cancelLabel = t("common.cancel", {
+        ka: "გაუქმება",
+        en: "Cancel",
+        ru: "Отмена",
+    });
+    const submittingLabel = t("forms.submitting", {
+        ka: "იგზავნება…",
+        en: "Sending…",
+        ru: "Отправка…",
+    });
+    const submitLabel = t("forms.submitRequest", {
+        ka: "მოთხოვნის გაგზავნა",
+        en: "Send request",
+        ru: "Отправить запрос",
+    });
+    const privacyLabel = t("forms.privacy", {
+        ka: "ვეთანხმები ჩემი საკონტაქტო მონაცემების გამოყენებას მოთხოვნაზე პასუხისთვის.",
+        en: "I agree to the use of my contact details to respond to this request.",
+        ru: "Я согласен на использование контактных данных для ответа на запрос.",
+    });
 
     return (
         <form className="space-y-unit-md" onSubmit={submit}>

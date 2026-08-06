@@ -1,4 +1,5 @@
 import FeaturedProjectCard from "@/components/Projects/FeaturedProjectCard";
+import LocalizedLink from "@/components/ui/LocalizedLink";
 import Typography from "@/components/ui/Typography";
 import { getBackendFeaturedProjects } from "@/lib/backend";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -24,6 +25,16 @@ export default async function Projects() {
         "home.projects.description",
         locale,
         null,
+    );
+    const action = translateText(
+        translations,
+        "home.projects.action",
+        locale,
+        {
+            ka: "ყველა პროექტის ნახვა",
+            en: "View all projects",
+            ru: "Посмотреть все проекты",
+        },
     );
 
     return (
@@ -55,6 +66,17 @@ export default async function Projects() {
                     <FeaturedProjectCard key={project.slug} project={project} />
                 ))}
             </div>
+
+            {action ? (
+                <div className="mt-8 text-center">
+                    <LocalizedLink
+                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-outline-variant/40 px-5 py-2.5 font-medium text-on-surface transition hover:border-primary/60 hover:bg-primary/10"
+                        href="/projects"
+                    >
+                        {action}
+                    </LocalizedLink>
+                </div>
+            ) : null}
 
         </section>
     );

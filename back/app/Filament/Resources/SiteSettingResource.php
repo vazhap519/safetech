@@ -263,6 +263,10 @@ class SiteSettingResource extends Resource
                         ->placeholder('123456789012345'),
                     TextInput::make('value.google_site_verification')
                         ->label('Google Search Console verification'),
+                    TextInput::make('value.google_review_url')
+                        ->label('Google Business reviews URL')
+                        ->url()
+                        ->helperText('Optional public Google Business Profile reviews link, shown next to verified client feedback.'),
                     TextInput::make('value.bing_site_verification')
                         ->label('Bing Webmaster Tools verification'),
                     TextInput::make('value.yandex_site_verification')

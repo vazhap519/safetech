@@ -165,6 +165,7 @@ class ContentSeeder extends Seeder
                 'google_analytics_id' => '',
                 'meta_pixel_id' => '',
                 'google_site_verification' => '',
+                'google_review_url' => '',
                 'bing_site_verification' => '',
                 'yandex_site_verification' => '',
                 'indexnow_key' => '',

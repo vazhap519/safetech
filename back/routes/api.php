@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\ProjectCategoryController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\PublicContentController;
+use App\Http\Controllers\Api\ReviewInvitationController;
 use App\Http\Controllers\Api\SeoController;
 use App\Http\Controllers\Api\ServiceCalculatorProfileController;
 use App\Http\Controllers\Api\ServiceCategoryController;
@@ -22,6 +23,12 @@ Route::get('/health', fn (): array => [
 Route::post('/contact-leads', ContactLeadController::class)
     ->middleware('throttle:contact-leads')
     ->name('api.contact-leads.store');
+
+Route::get('/review-invitations/{token}', [ReviewInvitationController::class, 'show'])
+    ->name('api.review-invitations.show');
+Route::post('/review-invitations/{token}/submit', [ReviewInvitationController::class, 'submit'])
+    ->middleware('throttle:review-invitations')
+    ->name('api.review-invitations.submit');
 
 Route::post('/analytics/events', AnalyticsEventController::class)
     ->middleware('throttle:analytics-events')

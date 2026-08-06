@@ -18,6 +18,7 @@ use App\Models\Faq;
 use App\Models\Partner;
 use App\Models\Project;
 use App\Models\ProjectCategory;
+use App\Models\ReviewInvitation;
 use App\Models\SeoPage;
 use App\Models\Service;
 use App\Models\SiteSetting;
@@ -66,6 +67,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
+        RateLimiter::for('review-invitations', function (Request $request): Limit {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+
         RateLimiter::for('analytics-events', function (Request $request): array {
             $ip = $request->ip() ?: 'unknown';
             $visitor = mb_substr($request->string('visitor_id')->value(), 0, 100) ?: $ip;
@@ -93,6 +98,7 @@ class AppServiceProvider extends ServiceProvider
             Partner::class,
             Project::class,
             ProjectCategory::class,
+            ReviewInvitation::class,
             SeoPage::class,
             Service::class,
             SiteSetting::class,

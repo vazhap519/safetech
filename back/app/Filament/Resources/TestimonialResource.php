@@ -26,8 +26,6 @@ class TestimonialResource extends Resource
 {
     protected static ?string $model = Testimonial::class;
 
-    protected static bool $shouldRegisterNavigation = false;
-
     protected static ?string $navigationLabel = 'შეფასებები';
 
     protected static ?string $modelLabel = 'კლიენტის შეფასება';
@@ -35,26 +33,6 @@ class TestimonialResource extends Resource
     protected static ?string $pluralModelLabel = 'კლიენტების შეფასებები';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Content;
-
-    public static function canViewAny(): bool
-    {
-        return false;
-    }
-
-    public static function canCreate(): bool
-    {
-        return false;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        return false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        return false;
-    }
 
     public static function form(Schema $schema): Schema
     {

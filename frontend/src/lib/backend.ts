@@ -40,6 +40,14 @@ export type BackendContent = {
         url?: string;
         category?: string;
     }>;
+    testimonials?: Array<{
+        id: number;
+        quote: string;
+        author: string;
+        role?: string | null;
+        company?: string | null;
+        image?: string | null;
+    }>;
     faqs?: Array<{
         id?: number;
         question: string;
@@ -106,6 +114,9 @@ function normalizeBackendContent(value: unknown): BackendContent {
         partners: normalizeContentList<
             NonNullable<BackendContent["partners"]>[number]
         >(value.partners),
+        testimonials: normalizeContentList<
+            NonNullable<BackendContent["testimonials"]>[number]
+        >(value.testimonials),
         faqs: normalizeContentList<
             NonNullable<BackendContent["faqs"]>[number]
         >(value.faqs),
@@ -718,6 +729,21 @@ export const getBackendContent = cache(async (): Promise<BackendContent> => {
                 ...faq,
                 question: key ? t(`${key}.question`, faq.question) : faq.question,
                 answer: key ? t(`${key}.answer`, faq.answer) : faq.answer,
+            };
+        }),
+        testimonials: (content.testimonials ?? []).map((testimonial) => {
+            const key = `testimonial.${testimonial.id}`;
+
+            return {
+                ...testimonial,
+                quote: t(`${key}.quote`, testimonial.quote),
+                author: t(`${key}.author`, testimonial.author),
+                role: testimonial.role
+                    ? t(`${key}.role`, testimonial.role)
+                    : testimonial.role,
+                company: testimonial.company
+                    ? t(`${key}.company`, testimonial.company)
+                    : testimonial.company,
             };
         }),
     };

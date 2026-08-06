@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Models\TeamMember;
+use App\Models\Testimonial;
 use App\Support\MultilingualContent;
 use App\Support\PublicContentCache;
 use App\Support\SiteSettingValueNormalizer;
@@ -40,6 +41,15 @@ final class PublicContentService
                     'url',
                     'category',
                 ])->values()->all(),
+                'testimonials' => Testimonial::query()->active()->get()
+                    ->map(fn (Testimonial $testimonial): array => [
+                        'id' => $testimonial->id,
+                        'quote' => $testimonial->quote,
+                        'author' => $testimonial->author,
+                        'role' => $testimonial->role,
+                        'company' => $testimonial->company,
+                        'image' => $testimonial->image,
+                    ])->values()->all(),
                 'faqs' => Faq::query()->active()->whereNull('service_id')->get()->map->only([
                     'id',
                     'question',
@@ -137,14 +147,33 @@ final class PublicContentService
                 'bio' => 'bio',
             ]));
 
+        Testimonial::query()
+            ->active()
+            ->get()
+            ->each(function (Testimonial $testimonial) use (&$map): void {
+                MultilingualContent::mergeModelFields(
+                    $map,
+                    "testimonial.{$testimonial->id}",
+                    $testimonial,
+                    [
+                        'quote' => 'quote',
+                        'author' => 'author',
+                        'role' => 'role',
+                        'company' => 'company',
+                    ],
+                );
+            });
+
         Faq::query()
             ->active()
             ->whereNull('service_id')
             ->get()
-            ->each(fn (Faq $faq) => MultilingualContent::mergeModelFields($map, "faq.{$faq->id}", $faq, [
-                'question' => 'question',
-                'answer' => 'answer',
-            ]));
+            ->each(function (Faq $faq) use (&$map): void {
+                MultilingualContent::mergeModelFields($map, "faq.{$faq->id}", $faq, [
+                    'question' => 'question',
+                    'answer' => 'answer',
+                ]);
+            });
 
         return ['entries' => MultilingualContent::entriesFromMap($map)];
     }

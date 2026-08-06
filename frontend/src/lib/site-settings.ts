@@ -78,6 +78,7 @@ type SiteIntegrations = {
     googleAnalyticsId: string;
     metaPixelId: string;
     googleSiteVerification: string;
+    googleReviewUrl: string;
     bingSiteVerification: string;
     yandexSiteVerification: string;
     indexNowKey: string;
@@ -317,6 +318,21 @@ function pickString(
     return trim ? value.trim() : value;
 }
 
+function pickHttpUrl(value: unknown): string {
+    const candidate = pickString(value);
+    if (!candidate) return "";
+
+    try {
+        const url = new URL(candidate);
+
+        return url.protocol === "https:" || url.protocol === "http:"
+            ? url.toString()
+            : "";
+    } catch {
+        return "";
+    }
+}
+
 function normalizeStringList(value: unknown) {
     const values = Array.isArray(value)
         ? value
@@ -437,6 +453,7 @@ export const getSiteSettings = cache(async () => {
         googleSiteVerification: pickString(
             configuredIntegrations.google_site_verification,
         ),
+        googleReviewUrl: pickHttpUrl(configuredIntegrations.google_review_url),
         bingSiteVerification: pickString(
             configuredIntegrations.bing_site_verification,
         ),

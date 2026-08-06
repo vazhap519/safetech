@@ -9,6 +9,7 @@ import Industries from "@/sections/Home/Industries";
 import Infrastructure from "@/sections/Home/Infrastructure";
 import Projects from "@/sections/Home/Projects";
 import Services from "@/sections/Home/Services";
+import Testimonials from "@/sections/Home/Testimonials";
 import Trust from "@/sections/Home/Trust";
 import Why from "@/sections/Home/Why";
 
@@ -27,6 +28,7 @@ export default function HomePage() {
                 <Services />
                 <Infrastructure />
                 <Projects />
+                <Testimonials />
                 <Why />
                 <Industries />
                 <DeferredCta />
