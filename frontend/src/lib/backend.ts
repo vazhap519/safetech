@@ -40,7 +40,12 @@ export type BackendContent = {
         url?: string;
         category?: string;
     }>;
-    faqs?: Array<{ question: string; answer: string; context?: string }>;
+    faqs?: Array<{
+        id?: number;
+        question: string;
+        answer: string;
+        context?: string;
+    }>;
     settings?: Record<string, unknown>;
 };
 
@@ -146,7 +151,7 @@ export function maybeBackendAsset(path?: string | null) {
 
 const getTranslationContext = cache(async () => {
     const [content, locale] = await Promise.all([
-        getBackendContent(),
+        getRawBackendContent(),
         getCurrentLocale(),
     ]);
     const settings = isRecord(content.settings) ? content.settings : {};
@@ -404,7 +409,7 @@ export async function getBackendServices(category?: string) {
                     icon?: string;
                 }
             >
-        >(buildApiPath("/services", { category })),
+        >(buildApiPath("/services", { category, locale: (await getCurrentLocale()) })),
     ]);
     const t = createContentTranslator(translations, locale);
 
@@ -505,7 +510,9 @@ export async function getBackendService(
 ): Promise<ServiceDetail | undefined> {
     const [{ locale, translations }, remote] = await Promise.all([
         getTranslationContext(),
-        fetchData<ServiceDetail>(`/services/${encodeURIComponent(slug)}`),
+        fetchData<ServiceDetail>(
+            buildApiPath(`/services/${encodeURIComponent(slug)}`, { locale: await getCurrentLocale() }),
+        ),
     ]);
 
     if (!remote) return undefined;
@@ -685,7 +692,33 @@ export async function getBackendTeam(): Promise<TeamMember[]> {
     }));
 }
 
-export const getBackendContent = cache(
+const getRawBackendContent = cache(
     async (): Promise<BackendContent> =>
         normalizeBackendContent(await fetchData<unknown>("/content")),
 );
+
+/**
+ * The public content endpoint intentionally remains locale-neutral so that it
+ * can be cached once. Localize entries here, alongside the other CMS content,
+ * before they are rendered by a locale route.
+ */
+export const getBackendContent = cache(async (): Promise<BackendContent> => {
+    const [content, { locale, translations }] = await Promise.all([
+        getRawBackendContent(),
+        getTranslationContext(),
+    ]);
+    const t = createContentTranslator(translations, locale);
+
+    return {
+        ...content,
+        faqs: (content.faqs ?? []).map((faq) => {
+            const key = faq.id ? `faq.${faq.id}` : "";
+
+            return {
+                ...faq,
+                question: key ? t(`${key}.question`, faq.question) : faq.question,
+                answer: key ? t(`${key}.answer`, faq.answer) : faq.answer,
+            };
+        }),
+    };
+});

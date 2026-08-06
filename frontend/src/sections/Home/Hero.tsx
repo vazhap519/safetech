@@ -57,7 +57,7 @@ export default async function Hero() {
     }
 
     return (
-        <section className="relative mx-auto flex min-h-[calc(100svh-76px)] max-w-container-max items-center overflow-hidden px-5 pb-12 pt-28 sm:px-6 md:pb-14 lg:min-h-[calc(100svh-2rem)] lg:px-14 lg:pb-12 lg:pt-28">
+        <section className="relative mx-auto flex min-h-[clamp(32rem,72svh,44rem)] max-w-container-max items-center overflow-hidden px-5 pb-12 pt-28 sm:px-6 md:pb-14 lg:px-14 lg:pb-12 lg:pt-28">
             <div className="relative z-10 grid w-full grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
                 <div className="order-1 space-y-5 text-center lg:text-left">
                     {eyebrow ? (

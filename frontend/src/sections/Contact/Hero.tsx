@@ -22,7 +22,7 @@ export default async function Hero() {
     if (!title && !description && !buttonLabel) return null;
 
     return (
-        <section className="hero-mesh topology-grid relative flex min-h-[64svh] items-center justify-center overflow-hidden px-5 pt-20 md:min-h-[68svh] md:pt-24">
+        <section className="hero-mesh topology-grid relative flex min-h-[clamp(30rem,58svh,38rem)] items-center justify-center overflow-hidden px-5 pt-20 md:pt-24">
             <div className="pointer-events-none absolute inset-0">
                 <div className="animated-glow absolute left-1/4 top-1/4 h-48 w-48 rounded-full bg-primary/10 blur-[80px] md:h-96 md:w-96 md:blur-[120px]" />
                 <div

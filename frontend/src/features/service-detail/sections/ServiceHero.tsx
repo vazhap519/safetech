@@ -47,7 +47,7 @@ export default async function ServiceHero({
     );
 
     return (
-        <section className="relative flex min-h-[calc(100svh-7rem)] flex-col justify-center overflow-hidden px-5 py-12 md:px-8 md:py-16 xl:px-14">
+        <section className="relative flex min-h-[clamp(34rem,72svh,46rem)] flex-col justify-center overflow-hidden px-5 py-12 md:px-8 md:py-16 xl:px-14">
             <div aria-hidden="true" className="ambient-glow -left-20 -top-20" />
             <ServiceBreadcrumb current={service.name} />
             <div className="grid items-center gap-unit-xl lg:grid-cols-2">

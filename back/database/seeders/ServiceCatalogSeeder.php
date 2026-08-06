@@ -257,8 +257,19 @@ class ServiceCatalogSeeder extends Seeder
             $map[$key] ??= ['ka' => '', 'en' => '', 'ru' => ''];
 
             foreach (self::LOCALES as $locale) {
-                if (blank($map[$key][$locale] ?? null) && filled($entry[$locale] ?? null)) {
-                    $map[$key][$locale] = trim((string) $entry[$locale]);
+                $configured = trim((string) ($map[$key][$locale] ?? ''));
+                $replacement = trim((string) ($entry[$locale] ?? ''));
+                $georgianSource = trim((string) ($entry['ka'] ?? ''));
+
+                // Older releases copied Georgian list items into EN/RU. Keep
+                // editorial overrides, but replace this known placeholder when
+                // the seed now has a distinct localized value.
+                if ($replacement !== '' && ($configured === '' || (
+                    $locale !== 'ka'
+                    && $configured === $georgianSource
+                    && $replacement !== $georgianSource
+                ))) {
+                    $map[$key][$locale] = $replacement;
                 }
             }
         }
@@ -714,12 +725,179 @@ class ServiceCatalogSeeder extends Seeder
                 'We work to an agreed plan, use compatible equipment, and fully verify the result before handover.',
                 'Работаем по согласованному плану, используем совместимое оборудование и полностью проверяем результат перед сдачей.',
             ),
-            'highlights' => array_map(fn (string $value): array => self::t($value, $value, $value), $highlights),
-            'scope' => array_map(fn (string $value): array => self::t($value, $value, $value), $scope),
+            'highlights' => $this->localizedServiceItems($slug, 'highlights', $highlights),
+            'scope' => $this->localizedServiceItems($slug, 'scope', $scope),
             'keywords' => array_map(fn (string $value): array => self::t($value, $value, $value), $keywords),
             'faqs' => $faqs,
         ];
     }
+
+    /**
+     * Highlights and scope items are visible service copy, not just internal
+     * tags.  They must therefore carry their own KA/EN/RU values instead of
+     * duplicating the Georgian fallback into every locale.
+     */
+    private function localizedServiceItems(string $slug, string $field, array $values): array
+    {
+        $translations = self::SERVICE_ITEM_TRANSLATIONS[$slug][$field] ?? [];
+
+        return array_map(function (string $value, int $index) use ($translations): array {
+            $translation = $translations[$index] ?? [];
+
+            return self::t(
+                $value,
+                $translation['en'] ?? $value,
+                $translation['ru'] ?? $value,
+            );
+        }, $values, array_keys($values));
+    }
+
+    /** @var array<string, array<string, array<int, array{en: string, ru: string}>>> */
+    private const SERVICE_ITEM_TRANSLATIONS = [
+        'operating-system-installation' => [
+            'highlights' => [
+                ['en' => 'Windows 10/11', 'ru' => 'Windows 10/11'],
+                ['en' => 'Drivers and updates', 'ru' => 'Драйверы и обновления'],
+                ['en' => 'Safe data migration', 'ru' => 'Безопасный перенос данных'],
+            ],
+            'scope' => [
+                ['en' => 'Clean system installation', 'ru' => 'Чистая установка системы'],
+                ['en' => 'Driver and software setup', 'ru' => 'Настройка драйверов и программ'],
+                ['en' => 'Optimization and testing', 'ru' => 'Оптимизация и тестирование'],
+            ],
+        ],
+        'custom-computer-build' => [
+            'highlights' => [
+                ['en' => 'Compatible components', 'ru' => 'Совместимые компоненты'],
+                ['en' => 'Clean cable management', 'ru' => 'Аккуратный кабель-менеджмент'],
+                ['en' => 'Stress test and temperatures', 'ru' => 'Стресс-тест и температуры'],
+            ],
+            'scope' => [
+                ['en' => 'Configuration selection', 'ru' => 'Подбор конфигурации'],
+                ['en' => 'Professional assembly', 'ru' => 'Профессиональная сборка'],
+                ['en' => 'BIOS and system testing', 'ru' => 'Тестирование BIOS и системы'],
+            ],
+        ],
+        'computer-cleaning-maintenance' => [
+            'highlights' => [
+                ['en' => 'Full dust cleaning', 'ru' => 'Полная очистка от пыли'],
+                ['en' => 'Thermal paste replacement', 'ru' => 'Замена термопасты'],
+                ['en' => 'Temperature testing', 'ru' => 'Тестирование температур'],
+            ],
+            'scope' => [
+                ['en' => 'Diagnostics and disassembly', 'ru' => 'Диагностика и разборка'],
+                ['en' => 'Cooling system maintenance', 'ru' => 'Обслуживание системы охлаждения'],
+                ['en' => 'Reassembly and load testing', 'ru' => 'Сборка и нагрузочный тест'],
+            ],
+        ],
+        'rack-assembly-cable-management' => [
+            'highlights' => [
+                ['en' => 'Correct U-space allocation', 'ru' => 'Правильное распределение U-мест'],
+                ['en' => 'Labeled cables', 'ru' => 'Маркированные кабели'],
+                ['en' => 'Space for cooling and service', 'ru' => 'Пространство для охлаждения и обслуживания'],
+            ],
+            'scope' => [
+                ['en' => 'Rack size and load planning', 'ru' => 'Планирование размера и нагрузки стойки'],
+                ['en' => 'Equipment installation', 'ru' => 'Монтаж оборудования'],
+                ['en' => 'Cable organization and documentation', 'ru' => 'Организация кабелей и документация'],
+            ],
+        ],
+        'pos-system-installation' => [
+            'highlights' => [
+                ['en' => 'Full equipment integration', 'ru' => 'Полная интеграция оборудования'],
+                ['en' => 'POS software setup', 'ru' => 'Настройка кассовой программы'],
+                ['en' => 'Testing and staff training', 'ru' => 'Тестирование и обучение персонала'],
+            ],
+            'scope' => [
+                ['en' => 'Requirements and software selection', 'ru' => 'Выбор требований и программы'],
+                ['en' => 'POS equipment connection', 'ru' => 'Подключение POS-оборудования'],
+                ['en' => 'Testing and workflow handover', 'ru' => 'Тестирование и передача рабочего процесса'],
+            ],
+        ],
+        'business-it-support' => [
+            'highlights' => [
+                ['en' => 'Remote assistance', 'ru' => 'Удаленная помощь'],
+                ['en' => 'On-site technical visits', 'ru' => 'Выезд технического специалиста'],
+                ['en' => 'Maintenance and documentation', 'ru' => 'Профилактика и документация'],
+            ],
+            'scope' => [
+                ['en' => 'Infrastructure assessment', 'ru' => 'Оценка инфраструктуры'],
+                ['en' => 'Incident and request management', 'ru' => 'Управление инцидентами и запросами'],
+                ['en' => 'Scheduled maintenance and improvement', 'ru' => 'Периодическое обслуживание и улучшение'],
+            ],
+        ],
+        'security-camera-installation' => [
+            'highlights' => [
+                ['en' => 'Correct camera placement', 'ru' => 'Правильное размещение камер'],
+                ['en' => '24/7 recording setup', 'ru' => 'Настройка записи 24/7'],
+                ['en' => 'Secure phone access', 'ru' => 'Безопасный доступ с телефона'],
+            ],
+            'scope' => [
+                ['en' => 'Site assessment and design', 'ru' => 'Оценка объекта и проектирование'],
+                ['en' => 'Cabling and equipment installation', 'ru' => 'Кабелирование и монтаж оборудования'],
+                ['en' => 'NVR/DVR, detection, and remote viewing', 'ru' => 'NVR/DVR, детекция и удаленный просмотр'],
+            ],
+        ],
+        'intercom-access-control-installation' => [
+            'highlights' => [
+                ['en' => 'Secure lock configuration', 'ru' => 'Безопасная схема замка'],
+                ['en' => 'Card, PIN, and biometrics', 'ru' => 'Карта, PIN и биометрия'],
+                ['en' => 'Backup power and mobile app', 'ru' => 'Резервное питание и приложение'],
+            ],
+            'scope' => [
+                ['en' => 'Door and gate assessment', 'ru' => 'Оценка двери и ворот'],
+                ['en' => 'Intercom and lock installation', 'ru' => 'Монтаж домофона и замка'],
+                ['en' => 'Access, app, and security testing', 'ru' => 'Тестирование доступа, приложения и безопасности'],
+            ],
+        ],
+        'router-wifi-configuration' => [
+            'highlights' => [
+                ['en' => 'Stable Wi-Fi coverage', 'ru' => 'Стабильное покрытие Wi-Fi'],
+                ['en' => 'Secure network settings', 'ru' => 'Защищенные настройки сети'],
+            ],
+            'scope' => [
+                ['en' => 'Coverage and requirements assessment', 'ru' => 'Оценка покрытия и требований'],
+                ['en' => 'Router and network configuration', 'ru' => 'Настройка роутера и сети'],
+                ['en' => 'Speed, roaming, and security testing', 'ru' => 'Тест скорости, роуминга и безопасности'],
+            ],
+        ],
+        'network-cable-installation' => [
+            'highlights' => [
+                ['en' => 'Correct routes and separation', 'ru' => 'Правильные маршруты и расстояния'],
+                ['en' => 'Labels at both ends', 'ru' => 'Маркировка с обеих сторон'],
+                ['en' => 'Network testing', 'ru' => 'Тестирование сети'],
+            ],
+            'scope' => [
+                ['en' => 'Plan and length calculation', 'ru' => 'Расчет плана и метража'],
+                ['en' => 'Safe cable routing', 'ru' => 'Безопасная прокладка кабеля'],
+                ['en' => 'Termination, labeling, and testing', 'ru' => 'Оконцевание, маркировка и тестирование'],
+            ],
+        ],
+        'patch-panel-network-outlet-installation' => [
+            'highlights' => [
+                ['en' => 'Standard T568A/T568B termination', 'ru' => 'Стандартная разделка T568A/T568B'],
+                ['en' => 'Port and outlet labeling', 'ru' => 'Маркировка портов и розеток'],
+                ['en' => 'Testing every line', 'ru' => 'Тестирование всех линий'],
+            ],
+            'scope' => [
+                ['en' => 'Port layout plan', 'ru' => 'План портов'],
+                ['en' => 'Patch panel and outlet termination', 'ru' => 'Оконцевание патч-панели и розеток'],
+                ['en' => 'Labeling and test report', 'ru' => 'Маркировка и отчет по тестированию'],
+            ],
+        ],
+        'barrier-gate-installation' => [
+            'highlights' => [
+                ['en' => 'Safety photo sensors', 'ru' => 'Фотоэлементы безопасности'],
+                ['en' => 'Remote, GSM, or card access', 'ru' => 'Пульт, GSM или карта'],
+                ['en' => 'Intercom and access integration', 'ru' => 'Интеграция с домофоном и доступом'],
+            ],
+            'scope' => [
+                ['en' => 'Entrance and traffic assessment', 'ru' => 'Оценка проезда и интенсивности'],
+                ['en' => 'Foundation, power, and mechanism installation', 'ru' => 'Фундамент, питание и монтаж механики'],
+                ['en' => 'Sensors, control, and safety testing', 'ru' => 'Датчики, управление и тест безопасности'],
+            ],
+        ],
+    ];
 
     private function faq(string $key, array $question, array $answer): array
     {

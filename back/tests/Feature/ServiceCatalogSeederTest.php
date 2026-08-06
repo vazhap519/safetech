@@ -46,6 +46,14 @@ class ServiceCatalogSeederTest extends TestCase
             'CCTV Camera Installation in Georgia | SafeTech',
             $translationMap['service.security-camera-installation.seoTitle']['en'] ?? null,
         );
+        $this->assertSame(
+            'Drivers and updates',
+            $translationMap['service.operating-system-installation.highlight.1']['en'] ?? null,
+        );
+        $this->assertSame(
+            'Настройка драйверов и программ',
+            $translationMap['service.operating-system-installation.solution.1.title']['ru'] ?? null,
+        );
         $this->assertNotEmpty(
             $translationMap['service.router-wifi-configuration.seoDescription']['ru'] ?? null,
         );
