@@ -1,4 +1,4 @@
-import ServiceCalculator from "@/components/calculator/ServiceCalculator";
+import ServiceCalculatorSlot from "@/components/calculator/ServiceCalculatorSlot";
 import ServiceTypographyComponent from "@/components/Service/ServiceTypography/ServiceTypographyComponent";
 import ContentFilterGrid from "@/components/filters/ContentFilterGrid";
 import {
@@ -64,7 +64,7 @@ export default async function ServiceSection({
             ) : null}
 
             {profiles.length ? (
-                <ServiceCalculator
+                <ServiceCalculatorSlot
                     initialService={initialService || services[0]?.slug}
                     profiles={profiles}
                 />

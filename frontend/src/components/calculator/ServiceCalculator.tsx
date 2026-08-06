@@ -161,15 +161,25 @@ function DynamicField({
 function SummaryRow({
     label,
     value,
+    bordered = false,
 }: {
     label: string;
     value: string;
+    bordered?: boolean;
 }) {
     return (
-        <div className="flex items-center justify-between gap-4">
-            <dt className="text-on-surface-variant">{label}</dt>
-            <dd className="font-medium text-on-surface">{value}</dd>
-        </div>
+        <>
+            <dt
+                className={`${bordered ? "border-t border-outline-variant/20 pt-3" : ""} text-on-surface-variant`}
+            >
+                {label}
+            </dt>
+            <dd
+                className={`${bordered ? "border-t border-outline-variant/20 pt-3" : ""} text-right font-medium text-on-surface`}
+            >
+                {value}
+            </dd>
+        </>
     );
 }
 
@@ -716,7 +726,7 @@ export default function ServiceCalculator({
                             {money(totals.total, profile.currency, locale)}
                         </p>
 
-                        <dl className="mt-6 space-y-3 border-t border-outline-variant/20 pt-5 text-sm">
+                        <dl className="mt-6 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 border-t border-outline-variant/20 pt-5 text-sm">
                             <SummaryRow
                                 label={copy.servicePrice}
                                 value={money(
@@ -743,16 +753,15 @@ export default function ServiceCalculator({
                                     )}
                                 />
                             ) : null}
-                            <div className="border-t border-outline-variant/20 pt-3">
-                                <SummaryRow
-                                    label={copy.subtotal}
-                                    value={money(
-                                        totals.subtotalBeforeDiscount,
-                                        profile.currency,
-                                        locale,
-                                    )}
-                                />
-                            </div>
+                            <SummaryRow
+                                bordered
+                                label={copy.subtotal}
+                                value={money(
+                                    totals.subtotalBeforeDiscount,
+                                    profile.currency,
+                                    locale,
+                                )}
+                            />
                             {totals.discountAmount > 0 ? (
                                 <div className="flex items-center justify-between gap-4 rounded-xl bg-success/10 px-3 py-2 text-success">
                                     <dt>
