@@ -289,6 +289,18 @@ require_supported_node() {
     fi
 }
 
+verify_frontend_runtime_versions() {
+    local expected_next
+    local installed_next
+
+    expected_next="$(node -p "require('${FRONTEND_STAGE_DIR}/package.json').dependencies.next")"
+    installed_next="$(node -p "require('${FRONTEND_STAGE_DIR}/node_modules/next/package.json').version")"
+
+    if [[ "${expected_next}" != "${installed_next}" ]]; then
+        fail "staged Next.js version mismatch: package.json requires ${expected_next}, but npm installed ${installed_next}"
+    fi
+}
+
 [[ "${EUID}" -eq 0 ]] || fail "run this script with sudo/root privileges"
 
 required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown chmod timeout nice flock ss fuser sleep journalctl runuser sed mktemp cp mv rm head nginx)
@@ -386,6 +398,8 @@ nice -n 10 npm --prefix "${FRONTEND_STAGE_DIR}" run build -- --webpack
 
 npm --prefix "${FRONTEND_STAGE_DIR}" prune \
     --omit=dev --no-package-lock --no-audit --no-fund
+
+verify_frontend_runtime_versions
 
 [[ -s "${FRONTEND_STAGE_DIR}/.next/BUILD_ID" ]] \
     || fail "staged Next.js build did not create .next/BUILD_ID"
