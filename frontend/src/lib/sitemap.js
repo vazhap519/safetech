@@ -206,6 +206,15 @@ export function isIndexableCategory(category) {
   );
 }
 
+export function isIndexablePage(page) {
+  return Boolean(
+    hasValidSitemapSlug(page?.slug)
+    && !page?.seo?.noindex
+    && hasMeaningfulContent(page?.title)
+    && hasMeaningfulContent(page?.content)
+  );
+}
+
 export async function fetchPaginatedPages(path, params = {}) {
   let page = 1;
   let lastPage = 1;
@@ -319,17 +328,20 @@ export async function getSitemapIndexPaths() {
   const [
     services,
     projects,
+    pages,
     serviceCategoriesResponse,
     projectCategoriesResponse,
   ] = await Promise.all([
     fetchAllPaginated("/services"),
     fetchAllPaginated("/projects"),
+    fetchAllPaginated("/pages"),
     safeFetchJson(buildSitemapApiUrl("/service-categories")),
     safeFetchJson(buildSitemapApiUrl("/project-categories")),
   ]);
 
   const indexableServices = services.filter(isIndexableService);
   const indexableProjects = projects.filter(isIndexableProject);
+  const indexablePages = pages.filter(isIndexablePage);
   const paths = ["/sitemap-main.xml"];
 
   if (indexableServices.length) paths.push("/sitemap-services.xml");
@@ -342,6 +354,7 @@ export async function getSitemapIndexPaths() {
   }
 
   if (indexableProjects.length) paths.push("/sitemap-projects.xml");
+  if (indexablePages.length) paths.push("/sitemap-pages.xml");
   if (hasEligibleCategory(
     projectCategoriesResponse,
     indexableProjects,

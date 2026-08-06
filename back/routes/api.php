@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AnalyticsEventController;
 use App\Http\Controllers\Api\ContactLeadController;
+use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\ProjectCategoryController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\PublicContentController;
@@ -41,3 +42,5 @@ Route::get('/service-calculator/profiles', ServiceCalculatorProfileController::c
     ->name('api.service-calculator.profiles');
 Route::get('/projects', [ProjectController::class, 'index'])->name('api.projects.index');
 Route::get('/projects/{slug}', [ProjectController::class, 'show'])->name('api.projects.show');
+Route::get('/pages', [PageController::class, 'index'])->name('api.pages.index');
+Route::get('/pages/{slug}', [PageController::class, 'show'])->name('api.pages.show');

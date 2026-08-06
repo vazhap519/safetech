@@ -60,6 +60,23 @@ export type BackendSeoPage = {
     schemaOverride?: Record<string, unknown> | Array<Record<string, unknown>>;
 };
 
+export type BackendPage = {
+    id: number;
+    slug: string;
+    title: string;
+    excerpt?: string | null;
+    content: string;
+    coverImage?: string | null;
+    updated_at?: string;
+    seo?: {
+        title?: string;
+        description?: string;
+        keywords?: string[];
+        image?: string | null;
+        noindex?: boolean;
+    };
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -459,6 +476,28 @@ export async function getBackendSeoPage(
             locale: resolvedLocale,
         }),
     );
+}
+
+export async function getBackendPage(
+    slug: string,
+): Promise<BackendPage | undefined> {
+    const locale = await getCurrentLocale();
+    const page = await fetchData<BackendPage>(
+        buildApiPath(`/pages/${encodeURIComponent(slug)}`, { locale }),
+    );
+
+    if (!page) return undefined;
+
+    return {
+        ...page,
+        coverImage: maybeBackendAsset(page.coverImage),
+        seo: page.seo
+            ? {
+                  ...page.seo,
+                  image: maybeBackendAsset(page.seo.image),
+              }
+            : undefined,
+    };
 }
 
 export async function getBackendService(
