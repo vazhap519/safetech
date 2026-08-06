@@ -102,9 +102,13 @@ release_frontend_port() {
 
     printf 'Port %s is still occupied after stopping %s; terminating the stale listener.\n' \
         "${FRONTEND_PORT}" "${FRONTEND_SERVICE}"
-    fuser -k "${FRONTEND_PORT}/tcp" >/dev/null 2>&1 || true
 
     for ((attempt = 1; attempt <= 15; attempt++)); do
+        # A stopped systemd unit can leave an orphaned Next.js child behind.
+        # Retry the kill because the listener may be in the middle of a restart
+        # or still be releasing its socket after the first signal.
+        fuser -k "${FRONTEND_PORT}/tcp" >/dev/null 2>&1 || true
+
         if ! frontend_port_is_listening; then
             return 0
         fi
@@ -122,7 +126,10 @@ restore_frontend() {
 
     printf '%s\n' 'Restoring the previous frontend release...' >&2
     systemctl stop "${FRONTEND_SERVICE}" >/dev/null 2>&1 || true
-    fuser -k "${FRONTEND_PORT}/tcp" >/dev/null 2>&1 || true
+    release_frontend_port || {
+        printf 'Unable to release frontend port %s during rollback.\n' "${FRONTEND_PORT}" >&2
+        return 1
+    }
 
     rm -rf "${FRONTEND_DIR}/.next" "${FRONTEND_DIR}/node_modules"
 
