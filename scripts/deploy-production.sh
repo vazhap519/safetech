@@ -270,6 +270,25 @@ restart_service_if_present() {
     fi
 }
 
+require_supported_node() {
+    local version
+    local major
+    local minor
+
+    version="$(node --version)"
+
+    if [[ ! "${version}" =~ ^v([0-9]+)\.([0-9]+)\. ]]; then
+        fail "unable to determine the installed Node.js version: ${version}"
+    fi
+
+    major="${BASH_REMATCH[1]}"
+    minor="${BASH_REMATCH[2]}"
+
+    if (( major < 20 || (major == 20 && minor < 9) )); then
+        fail "Next.js 16 requires Node.js 20.9.0 or newer; found ${version}. Install Node.js 22 LTS and rerun deploy.sh."
+    fi
+}
+
 [[ "${EUID}" -eq 0 ]] || fail "run this script with sudo/root privileges"
 
 required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown chmod timeout nice flock ss fuser sleep journalctl runuser sed mktemp cp mv rm head nginx)
@@ -277,6 +296,8 @@ for command_name in "${required_commands[@]}"; do
     command -v "${command_name}" >/dev/null 2>&1 \
         || fail "missing required command: ${command_name}"
 done
+
+require_supported_node
 
 [[ "${FRONTEND_PORT}" =~ ^[0-9]+$ ]] || fail "SAFETECH_FRONTEND_PORT must be numeric"
 [[ "${FRONTEND_READY_ATTEMPTS}" =~ ^[1-9][0-9]*$ ]] || fail "readiness attempts must be positive"
