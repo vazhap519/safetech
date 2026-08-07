@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Domain\Leads\Data\LeadData;
+use App\Models\Service;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class StoreContactLeadRequest extends FormRequest
 {
@@ -15,11 +17,20 @@ final class StoreContactLeadRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $details = $this->input('details');
+        $serviceSlug = $this->input('service_slug', $this->input('serviceSlug'));
+        $normalizedServiceSlug = is_string($serviceSlug) ? trim($serviceSlug) : null;
+        $publishedServiceName = $normalizedServiceSlug
+            ? Service::query()
+                ->where('slug', $normalizedServiceSlug)
+                ->where('is_published', true)
+                ->value('name')
+            : null;
 
         $this->merge([
             'first_name' => $this->input('first_name', $this->input('firstName')),
             'last_name' => $this->input('last_name', $this->input('lastName')),
-            'service_slug' => $this->input('service_slug', $this->input('serviceSlug')),
+            'service' => $publishedServiceName ?: $this->input('service'),
+            'service_slug' => $normalizedServiceSlug,
             'project_size' => $this->input(
                 'project_size',
                 $this->input('project-size', $this->input('projectSize')),
@@ -48,7 +59,15 @@ final class StoreContactLeadRequest extends FormRequest
             'email' => ['required', 'email:rfc', 'max:160'],
             'address' => ['required', 'string', 'max:255'],
             'service' => ['nullable', 'required_if:source,home-cta,consultation-popup', 'string', 'max:120'],
-            'service_slug' => ['nullable', 'required_if:source,contact-page', 'string', 'max:120', 'exists:services,slug'],
+            'service_slug' => [
+                'nullable',
+                'required_if:source,contact-page,consultation-popup',
+                'string',
+                'max:120',
+                Rule::exists('services', 'slug')->where(
+                    fn ($query) => $query->where('is_published', true),
+                ),
+            ],
             'project_size' => ['nullable', 'string', 'max:80'],
             'property_type' => ['nullable', 'string', 'max:100'],
             'details' => ['nullable', 'array', 'max:50'],
@@ -121,9 +140,9 @@ final class StoreContactLeadRequest extends FormRequest
                 'email.required' => 'Enter your email address.',
                 'email.email' => 'Enter a valid email address.',
                 'address.required' => 'Enter the city or service address.',
-                'service.required_if' => 'Enter the service you need.',
+                'service.required_if' => 'Select the service you need.',
                 'service_slug.required_if' => 'Select a service.',
-                'service_slug.exists' => 'The selected service could not be found.',
+                'service_slug.exists' => 'The selected service is unavailable.',
                 'message.required' => 'Describe what service you need.',
                 'privacy.accepted' => 'Consent to data processing is required.',
                 'details.array' => 'The additional field format is invalid.',
@@ -139,9 +158,9 @@ final class StoreContactLeadRequest extends FormRequest
                 'email.required' => 'Укажите электронную почту.',
                 'email.email' => 'Введите корректный адрес электронной почты.',
                 'address.required' => 'Укажите город или адрес оказания услуги.',
-                'service.required_if' => 'Укажите необходимую услугу.',
+                'service.required_if' => 'Выберите необходимую услугу.',
                 'service_slug.required_if' => 'Выберите услугу.',
-                'service_slug.exists' => 'Выбранная услуга не найдена.',
+                'service_slug.exists' => 'Выбранная услуга недоступна.',
                 'message.required' => 'Опишите, какая услуга вам нужна.',
                 'privacy.accepted' => 'Необходимо согласие на обработку данных.',
                 'details.array' => 'Неверный формат дополнительных полей.',
@@ -157,9 +176,9 @@ final class StoreContactLeadRequest extends FormRequest
                 'email.required' => 'მიუთითეთ ელფოსტა.',
                 'email.email' => 'ელფოსტის ფორმატი არასწორია.',
                 'address.required' => 'მიუთითეთ ქალაქი ან მომსახურების მისამართი.',
-                'service.required_if' => 'მიუთითეთ რომელი მომსახურება გჭირდებათ.',
+                'service.required_if' => 'აირჩიეთ რომელი მომსახურება გჭირდებათ.',
                 'service_slug.required_if' => 'აირჩიეთ სერვისი.',
-                'service_slug.exists' => 'არჩეული სერვისი ვერ მოიძებნა.',
+                'service_slug.exists' => 'არჩეული სერვისი მიუწვდომელია.',
                 'message.required' => 'აღწერეთ რა მომსახურება გჭირდებათ.',
                 'privacy.accepted' => 'მონაცემების დამუშავებაზე თანხმობა აუცილებელია.',
                 'details.array' => 'დამატებითი ველების ფორმატი არასწორია.',
