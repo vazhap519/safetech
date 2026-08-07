@@ -9,6 +9,20 @@ use Tests\TestCase;
 class SiteSettingValueNormalizerTest extends TestCase
 {
     #[Test]
+    public function it_normalizes_whatsapp_contact_settings(): void
+    {
+        $normalized = SiteSettingValueNormalizer::normalize('contact', [
+            'whatsapp' => ' +995 599 12 34 56 ',
+            'whatsapp_enabled' => 'false',
+            'whatsapp_message' => 'Hello from SafeTech',
+        ]);
+
+        $this->assertSame('+995 599 12 34 56', $normalized['whatsapp']);
+        $this->assertFalse($normalized['whatsapp_enabled']);
+        $this->assertSame('Hello from SafeTech', $normalized['whatsapp_message']);
+    }
+
+    #[Test]
     public function it_normalizes_enabled_social_profiles_and_dynamic_share_buttons(): void
     {
         $normalized = SiteSettingValueNormalizer::normalize('socials', [

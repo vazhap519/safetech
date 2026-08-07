@@ -78,6 +78,9 @@ class PageContentSeeder extends Seeder
         $value['whatsapp_message'] = filled($value['whatsapp_message'] ?? null)
             ? (string) $value['whatsapp_message']
             : 'გამარჯობა, მსურს SafeTech-ის სერვისზე კონსულტაცია.';
+        $value['whatsapp_enabled'] = array_key_exists('whatsapp_enabled', $value)
+            ? $value['whatsapp_enabled']
+            : true;
 
         $setting->forceFill([
             'group' => 'general',

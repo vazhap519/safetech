@@ -9,16 +9,39 @@ use Filament\Schemas\Components\Section;
 final class AboutPageTranslationFields
 {
     /** @return array<int, Section> */
-    public static function sections(): array
+    public static function sections(?string $section = null): array
+    {
+        $definition = self::definitionFor($section);
+
+        return [
+            Section::make($definition['label'])
+                ->description($definition['description'] ?? null)
+                ->schema(self::componentsFor($definition['fields']))
+                ->columns(3),
+        ];
+    }
+
+    /** @return array<int, array{id: string, label: string}> */
+    public static function navigation(): array
     {
         return array_map(
-            fn (array $section): Section => Section::make($section['label'])
-                ->description($section['description'] ?? null)
-                ->schema(self::componentsFor($section['fields']))
-                ->columns(3)
-                ->collapsible(),
+            fn (array $section): array => [
+                'id' => $section['id'],
+                'label' => $section['navigation_label'],
+            ],
             self::definitions(),
         );
+    }
+
+    public static function normalizeSection(?string $section): string
+    {
+        foreach (self::definitions() as $definition) {
+            if ($definition['id'] === $section) {
+                return $definition['id'];
+            }
+        }
+
+        return self::definitions()[0]['id'];
     }
 
     /** @param array<string, mixed> $data
@@ -30,7 +53,7 @@ final class AboutPageTranslationFields
         $entryMap = [];
 
         foreach ($entries as $entry) {
-            if (!is_array($entry) || blank($entry['key'] ?? null)) {
+            if (! is_array($entry) || blank($entry['key'] ?? null)) {
                 continue;
             }
 
@@ -53,18 +76,22 @@ final class AboutPageTranslationFields
     }
 
     /** @param array<string, mixed> $formData
-     * @param array<string, mixed> $existingValue
+     * @param  array<string, mixed>  $existingValue
      * @return array<string, mixed>
      */
-    public static function mergeIntoValue(array $formData, array $existingValue): array
-    {
+    public static function mergeIntoValue(
+        array $formData,
+        array $existingValue,
+        ?string $section = null,
+    ): array {
+        $fields = self::fieldIndex($section);
         $existingEntries = collect(data_get($existingValue, 'entries', []))
             ->filter(fn ($entry): bool => is_array($entry) && filled($entry['key'] ?? null))
-            ->reject(fn (array $entry): bool => in_array((string) $entry['key'], self::managedKeys(), true))
+            ->reject(fn (array $entry): bool => in_array((string) $entry['key'], self::managedKeys($section), true))
             ->values()
             ->all();
 
-        $managedEntries = collect(self::fieldIndex())
+        $managedEntries = collect($fields)
             ->map(function (array $field, string $id) use ($formData): ?array {
                 $values = data_get($formData, "about_page_translations.{$id}", []);
 
@@ -89,11 +116,11 @@ final class AboutPageTranslationFields
     }
 
     /** @return array<int, string> */
-    private static function managedKeys(): array
+    private static function managedKeys(?string $section = null): array
     {
         return array_values(array_map(
             fn (array $field): string => $field['key'],
-            self::flatFields(),
+            self::flatFields($section),
         ));
     }
 
@@ -123,11 +150,11 @@ final class AboutPageTranslationFields
     }
 
     /** @return array<string, array<string, mixed>> */
-    private static function fieldIndex(): array
+    private static function fieldIndex(?string $section = null): array
     {
         $index = [];
 
-        foreach (self::flatFields() as $field) {
+        foreach (self::flatFields($section) as $field) {
             $index[$field['id']] = $field;
         }
 
@@ -135,12 +162,30 @@ final class AboutPageTranslationFields
     }
 
     /** @return array<int, array<string, mixed>> */
-    private static function flatFields(): array
+    private static function flatFields(?string $section = null): array
     {
+        $definitions = $section === null
+            ? self::definitions()
+            : [self::definitionFor($section)];
+
         return array_merge(...array_map(
             fn (array $section): array => $section['fields'],
-            self::definitions(),
+            $definitions,
         ));
+    }
+
+    /** @return array<string, mixed> */
+    private static function definitionFor(?string $section): array
+    {
+        $section = self::normalizeSection($section);
+
+        foreach (self::definitions() as $definition) {
+            if ($definition['id'] === $section) {
+                return $definition;
+            }
+        }
+
+        return self::definitions()[0];
     }
 
     /** @return array<int, array{label: string, description?: string, fields: array<int, array<string, mixed>>}> */
@@ -148,6 +193,8 @@ final class AboutPageTranslationFields
     {
         return [
             [
+                'id' => 'hero-story',
+                'navigation_label' => 'მთავარი და ისტორია',
                 'label' => 'ჩვენს შესახებ — მთავარი ბლოკი და ისტორია',
                 'description' => 'გვერდის მთავარი სათაური, აღწერა, ღილაკები და კომპანიის ისტორიის ტექსტები.',
                 'fields' => [
@@ -162,6 +209,8 @@ final class AboutPageTranslationFields
                 ],
             ],
             [
+                'id' => 'identity',
+                'navigation_label' => 'ვინ ვართ და რატომ ჩვენ',
                 'label' => 'ჩვენს შესახებ — ვინ ვართ და რატომ SafeTech',
                 'description' => 'კომპანიის პოზიციონირება, უპირატესობები და მათი აღწერები.',
                 'fields' => [
@@ -186,6 +235,8 @@ final class AboutPageTranslationFields
                 ],
             ],
             [
+                'id' => 'process',
+                'navigation_label' => 'რას ვაკეთებთ და პროცესი',
                 'label' => 'ჩვენს შესახებ — რას ვაკეთებთ და როგორ ვმუშაობთ',
                 'description' => 'სამუშაო მიმართულებები და პროცესის ეტაპები.',
                 'fields' => [
@@ -210,6 +261,8 @@ final class AboutPageTranslationFields
                 ],
             ],
             [
+                'id' => 'team-cta',
+                'navigation_label' => 'ციფრები, გუნდი და CTA',
                 'label' => 'ჩვენს შესახებ — ციფრები, გუნდი და ბოლო მოწოდება',
                 'description' => 'სტატისტიკა, გუნდის ბლოკი და გვერდის ბოლო CTA.',
                 'fields' => [

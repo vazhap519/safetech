@@ -3,13 +3,29 @@ import Image from "@/components/ui/Image";
 import TranslatedText from "@/components/i18n/TranslatedText";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 import { getSiteSettings } from "@/lib/site-settings";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 export default async function FooterDescription() {
-    const { branding, socialLinks } = await getSiteSettings();
+    const { branding, contact, socialLinks } = await getSiteSettings();
     const siteName = branding.siteName;
     const logo = branding.footerLogo || branding.logo;
+    const footerSocialLinks = socialLinks.filter(
+        (item) => item.network !== "whatsapp",
+    );
+    const whatsappHref = contact.whatsappEnabled
+        ? buildWhatsAppUrl(contact.whatsapp, contact.whatsappMessage)
+        : "";
 
-    if (!logo && !siteName && !branding.tagline && !socialLinks.length) {
+    if (whatsappHref) {
+        footerSocialLinks.push({
+            network: "whatsapp",
+            label: "WhatsApp",
+            href: whatsappHref,
+            openInNewTab: true,
+        });
+    }
+
+    if (!logo && !siteName && !branding.tagline && !footerSocialLinks.length) {
         return null;
     }
 
@@ -48,9 +64,9 @@ export default async function FooterDescription() {
                     </p>
                 ) : null}
             </div>
-            {socialLinks.length ? (
+            {footerSocialLinks.length ? (
                 <div aria-label={siteName} className="flex flex-wrap items-center gap-3">
-                    {socialLinks.map(
+                    {footerSocialLinks.map(
                         ({ network, label, href, openInNewTab }, index) => (
                             <a
                                 aria-label={[siteName, label]

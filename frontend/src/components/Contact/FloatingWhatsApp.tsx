@@ -6,6 +6,7 @@ import {
     getCurrentPagePath,
     trackWhatsAppClick,
 } from "@/lib/analytics-events";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const DEFAULT_MESSAGE =
     "გამარჯობა, მაინტერესებს თქვენი მომსახურება.";
@@ -15,20 +16,15 @@ type FloatingWhatsAppProps = {
     message?: string;
 };
 
-function normalizePhone(phone?: string) {
-    return phone?.replace(/[^\d]/g, "") || "";
-}
-
 export default function FloatingWhatsApp({
     phone,
     message = DEFAULT_MESSAGE,
 }: FloatingWhatsAppProps) {
-    const normalizedPhone = normalizePhone(phone);
     const { t } = useLocalization();
+    const href = buildWhatsAppUrl(phone, message);
 
-    if (!normalizedPhone) return null;
+    if (!href) return null;
 
-    const href = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
     const ariaLabel = t("floating.whatsapp.aria", {
         ka: "WhatsApp-ით დაკავშირება",
         en: "Contact us on WhatsApp",

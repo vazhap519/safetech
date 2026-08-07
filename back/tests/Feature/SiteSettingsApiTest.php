@@ -22,6 +22,9 @@ class SiteSettingsApiTest extends TestCase
                 'email' => 'info@example.com',
                 'address' => 'Tbilisi',
                 'lead_email' => 'private@example.com',
+                'whatsapp' => '+995 599 12 34 56',
+                'whatsapp_enabled' => false,
+                'whatsapp_message' => 'Hello from SafeTech',
             ],
             'branding' => ['site_name' => 'SafeTech', 'tagline' => 'Secure infrastructure'],
             'seo' => ['city' => 'Tbilisi', 'country' => 'GE', 'open_time' => '09:00', 'close_time' => '18:00'],
@@ -46,12 +49,16 @@ class SiteSettingsApiTest extends TestCase
             ->assertJsonPath('contact.phone', '+995 555 00 00 00')
             ->assertJsonPath('contact.phones.0', '+995 555 00 00 00')
             ->assertJsonPath('contact.phones.1', '+995 577 11 22 33')
+            ->assertJsonPath('contact.whatsapp_enabled', false)
+            ->assertJsonPath('contact.whatsapp_message', 'Hello from SafeTech')
             ->assertJsonPath('seo.local_business.city', 'Tbilisi')
             ->assertJsonPath('seo.local_business.phones.1', '+995 577 11 22 33')
             ->assertJsonPath('seo.same_as.0', 'https://facebook.com/safetech')
             ->assertJsonPath('socials.0.url', 'https://facebook.com/safetech')
             ->assertJsonPath('socials.1.url', 'mailto:info@example.com')
             ->assertJsonPath('share.buttons.0.type', 'facebook')
+            ->assertJsonPath('contact_page.whatsapp_enabled', false)
+            ->assertJsonPath('contact_page.whatsapp_message', 'Hello from SafeTech')
             ->assertJsonMissingPath('contact.lead_email');
     }
 }

@@ -60,6 +60,7 @@ class SiteSettingResource extends Resource
                 ->required(),
 
             Section::make('Contact details')
+                ->description('WhatsApp settings control the floating contact button and the WhatsApp link in the footer.')
                 ->schema([
                     TextInput::make('value.phone')
                         ->label('Primary phone')
@@ -81,11 +82,21 @@ class SiteSettingResource extends Resource
                         ->email()
                         ->helperText('Lead form submissions are delivered here unless a production override is configured.')
                         ->default('safetechgeorgia@gmail.com'),
+                    Toggle::make('value.whatsapp_enabled')
+                        ->label('Show WhatsApp contact links')
+                        ->helperText('Controls both the floating WhatsApp button and the footer WhatsApp icon.')
+                        ->default(true)
+                        ->columnSpanFull(),
                     TextInput::make('value.whatsapp')
                         ->label('WhatsApp number')
-                        ->helperText('Use the international number format, for example 995599123456.'),
-                    TextInput::make('value.whatsapp_message')
-                        ->label('WhatsApp default message'),
+                        ->tel()
+                        ->placeholder('+995 599 123 456')
+                        ->helperText('Use an international number. Spaces and the + sign are accepted.'),
+                    Textarea::make('value.whatsapp_message')
+                        ->label('Pre-filled WhatsApp message')
+                        ->rows(3)
+                        ->columnSpanFull()
+                        ->helperText('Visitors can edit this message before sending it.'),
                     TextInput::make('value.hours')
                         ->label('Working hours'),
                     Textarea::make('value.address')
@@ -97,7 +108,7 @@ class SiteSettingResource extends Resource
                 ->visible(fn (Get $get): bool => $get('key') === 'contact'),
 
             Section::make('Your social media profiles')
-                ->description('These links and matching icons appear in the footer and are also used in Organization structured data for search engines.')
+                ->description('These public profile links appear in the footer and Organization structured data. WhatsApp is managed in Contact details so every contact CTA uses one number and message; existing WhatsApp profile rows can be removed.')
                 ->schema([
                     Repeater::make('value.links')
                         ->label('Profile links')
@@ -108,14 +119,14 @@ class SiteSettingResource extends Resource
                                 ->searchable()
                                 ->preload()
                                 ->required()
-                                ->helperText('Selecting a network automatically selects its official icon.'),
+                                ->helperText('WhatsApp contact links always use Contact details. Selecting a network automatically selects its official icon.'),
                             TextInput::make('label')
                                 ->label('Visible label')
                                 ->helperText('Optional. The network name is used when left empty.'),
                             TextInput::make('href')
                                 ->label('Profile URL or value')
                                 ->required()
-                                ->helperText('Use an email address for Email, a phone number for WhatsApp/Viber, or a full profile URL for the rest.'),
+                                ->helperText('Use an email address for Email, a phone number for WhatsApp/Viber, or a full profile URL for the rest. WhatsApp contact CTAs use the Contact details configuration.'),
                             Toggle::make('enabled')
                                 ->label('Show')
                                 ->default(true),

@@ -133,6 +133,7 @@ class ContentSeeder extends Seeder
                 'email' => '',
                 'address' => '',
                 'whatsapp' => '',
+                'whatsapp_enabled' => true,
                 'whatsapp_message' => '',
                 'hours' => '',
             ],

@@ -73,6 +73,8 @@ class SettingsController extends Controller
                 'phone' => $contact['phone'] ?? null,
                 'phones' => $contact['phones'] ?? [],
                 'whatsapp' => $contact['whatsapp'] ?? null,
+                'whatsapp_enabled' => $contact['whatsapp_enabled'] ?? false,
+                'whatsapp_message' => $contact['whatsapp_message'] ?? null,
                 'viber' => null,
                 'email' => $contact['email'] ?? null,
                 'address' => $contact['address'] ?? null,

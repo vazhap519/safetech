@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AboutPageResource\Pages;
 
 use App\Filament\Resources\AboutPageResource;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListAboutPageSettings extends ListRecords
@@ -11,6 +12,9 @@ class ListAboutPageSettings extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [];
+        return [
+            CreateAction::make()
+                ->label('About გვერდის კონტენტის დამატება'),
+        ];
     }
 }

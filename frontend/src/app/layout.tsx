@@ -25,7 +25,10 @@ import {
     SITE_URL,
 } from "@/lib/seo";
 import { buildOrganizationEntity } from "@/lib/organization-schema";
-import { getSiteSettings } from "@/lib/site-settings";
+import {
+    getSiteSettings,
+    isOrganizationSocialLink,
+} from "@/lib/site-settings";
 import { createTranslator } from "@/lib/translations";
 import { ANALYTICS_CONSENT_COOKIE } from "@/lib/consent-config";
 
@@ -250,7 +253,9 @@ export default async function RootLayout({
             contact,
             contactType: "customer support",
             siteName,
-            socialUrls: socialLinks.map((item) => item.href),
+            socialUrls: socialLinks
+                .filter((item) => isOrganizationSocialLink(item.network))
+                .map((item) => item.href),
             url: absoluteSiteUrl("/"),
         }),
     };
@@ -340,7 +345,9 @@ export default async function RootLayout({
                             <Footer marketingEnabled={marketingEnabled} />
                         </div>
                         <FloatingWhatsAppSlot
-                            phone={contact.whatsapp}
+                            phone={
+                                contact.whatsappEnabled ? contact.whatsapp : ""
+                            }
                             message={contact.whatsappMessage}
                         />
                     </ConsultationProvider>

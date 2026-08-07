@@ -41,6 +41,7 @@ final class SiteSettingValueNormalizer
             'email' => self::trimmedString($value['email'] ?? ''),
             'address' => self::trimmedString($value['address'] ?? ''),
             'whatsapp' => self::trimmedString($value['whatsapp'] ?? ''),
+            'whatsapp_enabled' => self::booleanValue($value['whatsapp_enabled'] ?? true, true),
             'whatsapp_message' => self::stringValue($value['whatsapp_message'] ?? ''),
             'hours' => self::stringValue($value['hours'] ?? ''),
             'lead_email' => self::trimmedString(

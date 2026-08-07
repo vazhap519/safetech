@@ -56,14 +56,17 @@ class AboutPageResource extends Resource
 
     public static function canCreate(): bool
     {
-        return false;
+        return SiteSetting::query()
+            ->where('key', 'translations')
+            ->doesntExist();
     }
 
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListAboutPageSettings::route('/'),
-            'edit' => Pages\EditAboutPageSetting::route('/{record}/edit'),
+            'create' => Pages\CreateAboutPageSetting::route('/create'),
+            'edit' => Pages\EditAboutPageSetting::route('/{record}/edit/{section?}'),
         ];
     }
 }

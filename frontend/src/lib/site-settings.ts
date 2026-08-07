@@ -20,6 +20,7 @@ type SiteContact = {
     email: string;
     address: string;
     whatsapp: string;
+    whatsappEnabled: boolean;
     whatsappMessage: string;
     hours: string;
     leadEmail: string;
@@ -31,6 +32,10 @@ export type SiteSocialLink = {
     href: string;
     openInNewTab: boolean;
 };
+
+export function isOrganizationSocialLink(network: SocialNetwork): boolean {
+    return !["email", "viber", "whatsapp"].includes(network);
+}
 
 export type ShareButtonType =
     | "facebook"
@@ -356,6 +361,7 @@ const defaultSiteContact: SiteContact = {
     email: "",
     address: "",
     whatsapp: "",
+    whatsappEnabled: false,
     whatsappMessage: "",
     hours: "",
     leadEmail: "safetechgeorgia@gmail.com",
@@ -393,7 +399,6 @@ export const getSiteSettings = cache(async () => {
         ? settings.integrations
         : {};
     const translations = buildTranslationMap(settings.translations);
-    const socialLinks = parseSocialLinks(settings.socials, defaultSiteSocialLinks);
     const socialSharing = parseSocialSharing(settings.socials, locale);
     const configuredPhones = normalizeStringList(configuredContact.phones);
     const phoneCandidates = [
@@ -402,12 +407,19 @@ export const getSiteSettings = cache(async () => {
     ].filter(Boolean);
     const phones = [...new Set(phoneCandidates)];
 
+    const whatsapp = pickString(
+        configuredContact.whatsapp,
+        defaultSiteContact.whatsapp,
+    );
     const contact = {
         phone: phones[0] ?? defaultSiteContact.phone,
         phones,
         email: pickString(configuredContact.email, defaultSiteContact.email),
         address: pickString(configuredContact.address, defaultSiteContact.address),
-        whatsapp: pickString(configuredContact.whatsapp, defaultSiteContact.whatsapp),
+        whatsapp,
+        whatsappEnabled: whatsapp
+            ? normalizeBoolean(configuredContact.whatsapp_enabled, true)
+            : false,
         whatsappMessage: pickString(
             configuredContact.whatsapp_message,
             defaultSiteContact.whatsappMessage,
@@ -418,6 +430,7 @@ export const getSiteSettings = cache(async () => {
             pickString(configuredContact.lead_email, defaultSiteContact.leadEmail) ||
             defaultSiteContact.leadEmail,
     } satisfies SiteContact;
+    const socialLinks = parseSocialLinks(settings.socials, defaultSiteSocialLinks);
 
     const branding = {
         siteName:

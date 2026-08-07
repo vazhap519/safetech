@@ -34,6 +34,7 @@ class FilamentResourceSmokeTest extends TestCase
             '/admin/project-categories',
             '/admin/testimonials',
             '/admin/review-invitations',
+            '/admin/about-pages',
             '/admin/site-settings',
             '/admin/seo-pages',
         ] as $url) {
@@ -141,6 +142,7 @@ class FilamentResourceSmokeTest extends TestCase
             '/admin/project-categories',
             '/admin/testimonials',
             '/admin/review-invitations',
+            '/admin/about-pages',
             '/admin/seo-pages',
             '/admin/site-settings',
         ] as $url) {

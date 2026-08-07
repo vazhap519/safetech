@@ -5,7 +5,10 @@ import {
     DEFAULT_SOCIAL_IMAGE,
     SITE_NAME,
 } from "@/lib/seo";
-import { getSiteSettings } from "@/lib/site-settings";
+import {
+    getSiteSettings,
+    isOrganizationSocialLink,
+} from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function HomeSchema() {
@@ -18,6 +21,9 @@ export default async function HomeSchema() {
         locale,
         null,
     );
+    const organizationSocialLinks = socialLinks.filter((item) =>
+        isOrganizationSocialLink(item.network),
+    );
     const publisher: Record<string, unknown> = {
         "@type": "Organization",
         name: siteName,
@@ -28,8 +34,8 @@ export default async function HomeSchema() {
                 branding.defaultImage ||
                 DEFAULT_SOCIAL_IMAGE,
         ),
-        ...(socialLinks.length
-            ? { sameAs: socialLinks.map((item) => item.href) }
+        ...(organizationSocialLinks.length
+            ? { sameAs: organizationSocialLinks.map((item) => item.href) }
             : {}),
     };
     const schema = {
