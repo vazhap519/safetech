@@ -44,6 +44,7 @@ Route::get('/project-categories', ProjectCategoryController::class)
     ->name('api.project-categories.index');
 
 Route::get('/services', [ServiceController::class, 'index'])->name('api.services.index');
+Route::get('/services/options', [ServiceController::class, 'options'])->name('api.services.options');
 Route::get('/services/{slug}', [ServiceController::class, 'show'])->name('api.services.show');
 Route::get('/service-calculator/profiles', ServiceCalculatorProfileController::class)
     ->name('api.service-calculator.profiles');
