@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 final class FrontendRevalidator
 {
@@ -16,13 +17,27 @@ final class FrontendRevalidator
         }
 
         try {
-            Http::timeout(3)
+            $response = Http::timeout(3)
                 ->withHeaders(['x-secret' => $secret])
                 ->post("{$frontendUrl}/api/revalidate", array_filter([
                     'tag' => $tag,
                     'path' => $path,
                 ], fn ($value) => $value !== null && $value !== ''));
-        } catch (\Throwable) {
+
+            if (! $response->successful()) {
+                Log::warning('Frontend cache revalidation request failed.', [
+                    'status' => $response->status(),
+                    'tag' => $tag,
+                    'path' => $path,
+                ]);
+            }
+        } catch (\Throwable $exception) {
+            Log::warning('Frontend cache revalidation could not be delivered.', [
+                'tag' => $tag,
+                'path' => $path,
+                'exception' => $exception::class,
+            ]);
+
             // Revalidation should never break the CMS/API write request.
         }
     }
