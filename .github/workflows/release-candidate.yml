@@ -73,7 +73,13 @@ jobs:
           rm -f /tmp/safetech-e2e.sqlite
           touch /tmp/safetech-e2e.sqlite
           php artisan migrate:fresh --seed --force
-          php artisan tinker --execute="App\\Models\\ReviewInvitation::query()->updateOrCreate(['token' => 'qa-review-desktop'], ['recipient_name' => 'Desktop QA', 'is_active' => true]); App\\Models\\ReviewInvitation::query()->updateOrCreate(['token' => 'qa-review-mobile'], ['recipient_name' => 'Mobile QA', 'is_active' => true]);"
+          php artisan tinker --execute="\
+          \$category = App\\Models\\ProjectCategory::query()->updateOrCreate(['slug' => 'qa-project-category'], ['name' => 'QA Project Category', 'sort_order' => 999]); \
+          App\\Models\\Project::query()->updateOrCreate(['slug' => 'qa-release-project'], ['title' => 'QA Release Project', 'excerpt' => 'Release candidate project route probe.', 'content' => 'Release candidate project route probe content.', 'category_id' => \$category->id, 'is_published' => true, 'published_at' => now(), 'sort_order' => 999]); \
+          App\\Models\\Page::query()->updateOrCreate(['slug' => 'qa-dynamic-page'], ['title' => 'QA Dynamic Page', 'excerpt' => 'Release candidate dynamic page route probe.', 'content' => 'Release candidate dynamic page route probe content.', 'is_published' => true, 'noindex' => true, 'published_at' => now(), 'sort_order' => 999]); \
+          App\\Models\\ReviewInvitation::query()->updateOrCreate(['token' => 'qa-review-desktop'], ['recipient_name' => 'Desktop QA', 'is_active' => true]); \
+          App\\Models\\ReviewInvitation::query()->updateOrCreate(['token' => 'qa-review-mobile'], ['recipient_name' => 'Mobile QA', 'is_active' => true]); \
+          App\\Models\\ReviewInvitation::query()->updateOrCreate(['token' => 'qa-review-route'], ['recipient_name' => 'Localized Route QA', 'is_active' => true]);"
 
       - name: Verify CMS upload pipeline
         working-directory: back
@@ -106,8 +112,10 @@ jobs:
       - name: Add CI-only runtime error probe
         working-directory: frontend
         run: |
-          mkdir -p src/app/__qa-error
-          cat > src/app/__qa-error/page.tsx <<'EOF'
+          mkdir -p src/app/qa-runtime-error
+          cat > src/app/qa-runtime-error/page.tsx <<'EOF'
+          export const dynamic = "force-dynamic";
+
           export default function QaRuntimeErrorProbe() {
               throw new Error("Intentional release-candidate runtime error probe.");
           }
