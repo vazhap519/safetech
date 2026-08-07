@@ -18,6 +18,7 @@ class ContactLead extends Model
         'company',
         'phone',
         'email',
+        'address',
         'service',
         'service_slug',
         'project_size',
