@@ -2,19 +2,46 @@ import type { ReactNode } from "react";
 
 import { CONSULTATION_POPOVER_ID } from "@/components/consultation/constants";
 import ConsultationFormSlot from "@/components/consultation/ConsultationFormSlot";
-import { getBackendContactServices } from "@/lib/backend";
+import { buildServerApiUrl } from "@/lib/backend-api";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
+
+type ServiceOption = {
+    slug: string;
+    label: string;
+};
+
+async function getServiceOptions(locale: string): Promise<ServiceOption[]> {
+    try {
+        const response = await fetch(
+            buildServerApiUrl(
+                `/services/options?locale=${encodeURIComponent(locale)}`,
+            ),
+            {
+                next: { revalidate: 300, tags: ["cms"] },
+                signal: AbortSignal.timeout(3000),
+            },
+        );
+
+        if (!response.ok) return [];
+
+        const payload = (await response.json()) as { data?: ServiceOption[] };
+
+        return (payload.data ?? []).filter(
+            (service) => service.slug && service.label,
+        );
+    } catch {
+        return [];
+    }
+}
 
 export default async function ConsultationProvider({
     children,
 }: {
     children: ReactNode;
 }) {
-    const [{ locale, translations }, services] = await Promise.all([
-        getSiteSettings(),
-        getBackendContactServices(),
-    ]);
+    const { locale, translations } = await getSiteSettings();
+    const serviceOptions = await getServiceOptions(locale);
     const eyebrow = translateText(
         translations,
         "consultation.modal.eyebrow",
@@ -39,12 +66,6 @@ export default async function ConsultationProvider({
         locale,
         null,
     );
-    const serviceOptions = services
-        .filter((service) => service.slug && service.label)
-        .map((service) => ({
-            slug: service.slug,
-            label: service.label,
-        }));
 
     return (
         <>
