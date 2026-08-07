@@ -1,9 +1,13 @@
 import Image from "@/components/ui/Image";
+import { getPageImages } from "@/lib/page-images";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function ProjectsHeroSection() {
-    const { branding, locale, translations } = await getSiteSettings();
+    const [{ branding, locale, translations }, { projectsHero }] = await Promise.all([
+        getSiteSettings(),
+        getPageImages(),
+    ]);
 
     const eyebrow = translateText(
         translations,
@@ -30,15 +34,15 @@ export default async function ProjectsHeroSection() {
     return (
         <section className="relative flex min-h-[70svh] items-center justify-center overflow-hidden px-5 pb-14 pt-28 md:px-8 md:pb-16 xl:px-14">
             <div className="absolute inset-0 z-0">
-                {branding.defaultImage ? (
+                {projectsHero ? (
                     <Image
                         alt={imageAlt || title || branding.siteName}
                         className="object-cover opacity-10 md:opacity-60"
                         fill
                         priority
                         sizes="100vw"
-                        src={branding.defaultImage}
-                        unoptimized={branding.defaultImage.endsWith(".svg")}
+                        src={projectsHero}
+                        unoptimized={projectsHero.endsWith(".svg")}
                     />
                 ) : null}
                 <div className="hero-gradient absolute inset-0 z-10" />
