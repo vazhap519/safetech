@@ -52,6 +52,11 @@ export default function ConsultationForm({
         en: "Select a service",
         ru: "Выберите услугу",
     });
+    const servicesUnavailableLabel = t("forms.servicesUnavailable", {
+        ka: "სერვისების სია დროებით მიუწვდომელია",
+        en: "The service list is temporarily unavailable",
+        ru: "Список услуг временно недоступен",
+    });
     const detailsLabel = t("forms.details", {
         ka: "ამოცანის დეტალები",
         en: "Project details",
@@ -84,6 +89,7 @@ export default function ConsultationForm({
     });
     const inputClassName =
         "w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+    const hasServices = serviceOptions.length > 0;
 
     return (
         <form className="space-y-unit-md" onSubmit={submit}>
@@ -162,16 +168,17 @@ export default function ConsultationForm({
             <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
                 <span>{serviceLabel} *</span>
                 <select
-                    className={`${inputClassName} cursor-pointer`}
+                    className={`${inputClassName} cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
                     defaultValue=""
-                    name="service"
+                    disabled={!hasServices}
+                    name="serviceSlug"
                     required
                 >
                     <option disabled value="">
-                        {chooseServiceLabel}
+                        {hasServices ? chooseServiceLabel : servicesUnavailableLabel}
                     </option>
                     {serviceOptions.map((service) => (
-                        <option key={service.slug} value={service.label}>
+                        <option key={service.slug} value={service.slug}>
                             {service.label}
                         </option>
                     ))}
@@ -207,7 +214,7 @@ export default function ConsultationForm({
                 </button>
                 <button
                     className="rounded-xl bg-primary-container px-6 py-3 font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
-                    disabled={status === "submitting"}
+                    disabled={status === "submitting" || !hasServices}
                     type="submit"
                 >
                     {status === "submitting"
