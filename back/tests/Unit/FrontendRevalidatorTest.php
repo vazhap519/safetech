@@ -40,10 +40,10 @@ class FrontendRevalidatorTest extends TestCase
 
         Log::shouldHaveReceived('warning')
             ->once()
-            ->withArgs(fn (string $message, array $context): bool =>
-                $message === 'Frontend cache revalidation request failed.'
-                && $context['status'] === 401
-                && $context['tag'] === 'cms'
-            );
+            ->withArgs(function (string $message, array $context): bool {
+                return $message === 'Frontend cache revalidation request failed.'
+                    && $context['status'] === 401
+                    && $context['tag'] === 'cms';
+            });
     }
 }
