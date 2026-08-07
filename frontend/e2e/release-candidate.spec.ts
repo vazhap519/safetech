@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const apiBase = process.env.E2E_API_BASE || "http://127.0.0.1:8000/api";
 
@@ -15,6 +15,35 @@ const publicRoutes = ["/", "/about", "/services", "/projects", "/contact", "/pri
 function localizedPath(prefix: string, path: string) {
     if (path === "/") return prefix || "/";
     return `${prefix}${path}`;
+}
+
+async function revealConsultationTriggers(page: Page): Promise<Locator> {
+    const triggers = page.locator(
+        '[popovertarget="consultation-popover"]:visible',
+    );
+
+    if ((await triggers.count()) === 0) {
+        const mobileMenu = page.locator("nav details:visible").first();
+        const summary = mobileMenu.locator("summary");
+
+        await expect(summary).toBeVisible();
+        await summary.click();
+        await expect(mobileMenu).toHaveAttribute("open", "");
+    }
+
+    await expect(triggers.first()).toBeVisible();
+
+    return triggers;
+}
+
+async function openConsultation(page: Page) {
+    const triggers = await revealConsultationTriggers(page);
+    await triggers.first().click();
+
+    const dialog = page.locator("#consultation-popover");
+    await expect(dialog).toBeVisible();
+
+    return dialog;
 }
 
 async function closeConsultation(page: Page) {
@@ -81,9 +110,7 @@ test.describe("release candidate public matrix", () => {
                     waitUntil: "domcontentloaded",
                 });
 
-                const triggers = page.locator(
-                    '[popovertarget="consultation-popover"]:visible',
-                );
+                const triggers = await revealConsultationTriggers(page);
                 const count = await triggers.count();
                 expect(count).toBeGreaterThan(0);
 
@@ -102,20 +129,17 @@ test.describe("release candidate public matrix", () => {
                 waitUntil: "domcontentloaded",
             });
 
-            await page
-                .locator('[popovertarget="consultation-popover"]:visible')
-                .first()
-                .click();
-
-            const form = page.locator("#consultation-popover form");
+            const dialog = await openConsultation(page);
+            const form = dialog.locator("form");
             const serviceSelect = form.locator('select[name="serviceSlug"]');
-            const serviceValues = await serviceSelect
-                .locator("option:not([disabled])")
-                .evaluateAll((options) =>
-                    options
-                        .map((option) => (option as HTMLOptionElement).value)
-                        .filter(Boolean),
-                );
+            await expect(serviceSelect).toBeEnabled();
+            const serviceOptions = serviceSelect.locator("option:not([disabled])");
+            expect(await serviceOptions.count()).toBeGreaterThan(0);
+            const serviceValues = await serviceOptions.evaluateAll((options) =>
+                options
+                    .map((option) => (option as HTMLOptionElement).value)
+                    .filter(Boolean),
+            );
 
             expect(serviceValues.length).toBeGreaterThan(0);
             await serviceSelect.selectOption(serviceValues[0]);
@@ -198,13 +222,21 @@ test.describe("release candidate public matrix", () => {
         expect(robotsText).toContain("Disallow: /api");
         expect(robotsText).toContain("sitemap.xml");
 
-        const sitemap = await request.get(`${baseURL}/sitemap.xml`);
-        expect(sitemap.status()).toBe(200);
-        const sitemapText = await sitemap.text();
-        expect(sitemapText).toContain("<urlset");
-        expect(sitemapText).toContain("/en");
-        expect(sitemapText).toContain("/ru");
-        expect(sitemapText).toContain("/services");
+        const sitemapIndex = await request.get(`${baseURL}/sitemap.xml`);
+        expect(sitemapIndex.status()).toBe(200);
+        const sitemapIndexText = await sitemapIndex.text();
+        expect(sitemapIndexText).toContain("<sitemapindex");
+        expect(sitemapIndexText).toContain("/sitemap-main.xml");
+        expect(sitemapIndexText).toContain("/sitemap-services.xml");
+        expect(sitemapIndexText).toContain("/sitemap-projects.xml");
+
+        const mainSitemap = await request.get(`${baseURL}/sitemap-main.xml`);
+        expect(mainSitemap.status()).toBe(200);
+        const mainSitemapText = await mainSitemap.text();
+        expect(mainSitemapText).toContain("<urlset");
+        expect(mainSitemapText).toContain("/en");
+        expect(mainSitemapText).toContain("/ru");
+        expect(mainSitemapText).toContain("/services");
     });
 
     test("review invitation can be submitted once", async ({ page }, testInfo) => {
@@ -254,18 +286,17 @@ test.describe("release candidate public matrix", () => {
         });
 
         await page.goto("/services", { waitUntil: "domcontentloaded" });
-        await page
-            .locator('[popovertarget="consultation-popover"]:visible')
-            .first()
-            .click();
-
-        const form = page.locator("#consultation-popover form");
-        const values = await form
-            .locator('select[name="serviceSlug"] option:not([disabled])')
+        const dialog = await openConsultation(page);
+        const form = dialog.locator("form");
+        const serviceSelect = form.locator('select[name="serviceSlug"]');
+        await expect(serviceSelect).toBeEnabled();
+        const values = await serviceSelect
+            .locator("option:not([disabled])")
             .evaluateAll((options) =>
                 options.map((option) => (option as HTMLOptionElement).value).filter(Boolean),
             );
-        await form.locator('select[name="serviceSlug"]').selectOption(values[0]);
+        expect(values.length).toBeGreaterThan(0);
+        await serviceSelect.selectOption(values[0]);
         await form.locator('input[name="firstName"]').fill("QA");
         await form.locator('input[name="lastName"]').fill("Failure Test");
         await form.locator('input[name="phone"]').fill("+995555000222");
