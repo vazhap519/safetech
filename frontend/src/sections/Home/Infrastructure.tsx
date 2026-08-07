@@ -1,6 +1,7 @@
 import Infrastructurecomponent from "@/components/Home/Infrastructurecomponent";
 import Image from "@/components/ui/Image";
 import Typography from "@/components/ui/Typography";
+import { getPageImages } from "@/lib/page-images";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateKeyedItems, translateText } from "@/lib/translations";
 
@@ -11,7 +12,8 @@ const infrastructureItems = [
 ];
 
 export default async function Infrastructure() {
-    const { branding, locale, translations } = await getSiteSettings();
+    const [{ branding, locale, translations }, { homeInfrastructure }] =
+        await Promise.all([getSiteSettings(), getPageImages()]);
     const eyebrow = translateText(
         translations,
         "home.infrastructure.eyebrow",
@@ -46,23 +48,31 @@ export default async function Infrastructure() {
 
     return (
         <section className="relative overflow-hidden bg-surface-container-lowest/30 py-16 md:py-20 lg:py-24">
-            <div className="mx-auto grid max-w-container-max grid-cols-1 items-center gap-10 px-5 md:px-8 lg:grid-cols-2 lg:gap-14 xl:px-14">
-                {branding.defaultImage ? (
+            <div
+                className={`mx-auto grid max-w-container-max grid-cols-1 items-center gap-10 px-5 md:px-8 xl:px-14 ${
+                    homeInfrastructure ? "lg:grid-cols-2 lg:gap-14" : "lg:grid-cols-1"
+                }`}
+            >
+                {homeInfrastructure ? (
                     <div className="group relative order-2 mx-auto w-full max-w-[650px] lg:order-1">
                         <Image
                             alt={imageAlt || branding.siteName}
                             height={410}
                             sizes="(max-width: 768px) 100vw, 50vw"
-                            src={branding.defaultImage}
+                            src={homeInfrastructure}
                             variant="home-infrastructure"
                             width={600}
                         />
                     </div>
                 ) : null}
 
-                <div className="order-1 space-y-6 text-center lg:order-2 lg:text-left">
+                <div
+                    className={`order-1 space-y-6 text-center ${
+                        homeInfrastructure ? "lg:order-2 lg:text-left" : "mx-auto max-w-4xl"
+                    }`}
+                >
                     {eyebrow ? (
-                        <div className="glass-card mx-auto inline-flex items-center gap-2 rounded-full px-4 py-2 lg:mx-0">
+                        <div className={`glass-card mx-auto inline-flex items-center gap-2 rounded-full px-4 py-2 ${homeInfrastructure ? "lg:mx-0" : ""}`}>
                             <span className="status-dot" />
                             <span className="font-mono-sm text-mono-sm font-semibold uppercase text-secondary">
                                 {eyebrow}
@@ -79,7 +89,7 @@ export default async function Infrastructure() {
                     {description ? (
                         <Typography
                             as="p"
-                            className="mx-auto max-w-[620px] lg:mx-0"
+                            className={`mx-auto max-w-[620px] ${homeInfrastructure ? "lg:mx-0" : ""}`}
                             variant="description"
                         >
                             {description}
