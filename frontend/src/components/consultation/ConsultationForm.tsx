@@ -28,6 +28,16 @@ export default function ConsultationForm() {
         en: "Email",
         ru: "Электронная почта",
     });
+    const addressLabel = t("forms.address", {
+        ka: "ქალაქი / მომსახურების მისამართი",
+        en: "City / service address",
+        ru: "Город / адрес оказания услуги",
+    });
+    const serviceLabel = t("forms.service", {
+        ka: "რომელი მომსახურება გჭირდებათ",
+        en: "Service you need",
+        ru: "Необходимая услуга",
+    });
     const detailsLabel = t("forms.details", {
         ka: "მოთხოვნის დეტალები",
         en: "Project details",
@@ -53,6 +63,8 @@ export default function ConsultationForm() {
         en: "I agree to the use of my contact details to respond to this request.",
         ru: "Я согласен на использование контактных данных для ответа на запрос.",
     });
+    const inputClassName =
+        "w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
     return (
         <form className="space-y-unit-md" onSubmit={submit}>
@@ -66,21 +78,21 @@ export default function ConsultationForm() {
             />
             <div className="grid gap-unit-md sm:grid-cols-2">
                 <label className="space-y-2 font-label-md text-label-md text-on-surface-variant">
-                    <span>{firstNameLabel}</span>
+                    <span>{firstNameLabel} *</span>
                     <input
                         autoComplete="given-name"
                         autoFocus
-                        className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        className={inputClassName}
                         name="firstName"
                         required
                         type="text"
                     />
                 </label>
                 <label className="space-y-2 font-label-md text-label-md text-on-surface-variant">
-                    <span>{lastNameLabel}</span>
+                    <span>{lastNameLabel} *</span>
                     <input
                         autoComplete="family-name"
-                        className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        className={inputClassName}
                         name="lastName"
                         required
                         type="text"
@@ -88,37 +100,54 @@ export default function ConsultationForm() {
                 </label>
             </div>
             <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
-                <span>{phoneLabel}</span>
+                <span>{phoneLabel} *</span>
                 <input
                     autoComplete="tel"
-                    className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className={inputClassName}
                     inputMode="tel"
                     name="phone"
                     required
                     type="tel"
                 />
             </label>
-            {emailLabel ? (
-                <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
-                    <span>{emailLabel}</span>
-                    <input
-                        autoComplete="email"
-                        className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        name="email"
-                        type="email"
-                    />
-                </label>
-            ) : null}
-            {detailsLabel ? (
-                <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
-                    <span>{detailsLabel}</span>
-                    <textarea
-                        className="min-h-32 w-full resize-y rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        name="details"
-                        rows={5}
-                    />
-                </label>
-            ) : null}
+            <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
+                <span>{emailLabel} *</span>
+                <input
+                    autoComplete="email"
+                    className={inputClassName}
+                    name="email"
+                    required
+                    type="email"
+                />
+            </label>
+            <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
+                <span>{addressLabel} *</span>
+                <input
+                    autoComplete="street-address"
+                    className={inputClassName}
+                    name="address"
+                    required
+                    type="text"
+                />
+            </label>
+            <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
+                <span>{serviceLabel} *</span>
+                <input
+                    className={inputClassName}
+                    name="service"
+                    required
+                    type="text"
+                />
+            </label>
+            <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
+                <span>{detailsLabel} *</span>
+                <textarea
+                    className={`${inputClassName} min-h-32 resize-y`}
+                    name="details"
+                    required
+                    rows={5}
+                />
+            </label>
             <PrivacyConsent label={privacyLabel} />
             <p
                 aria-live="polite"
