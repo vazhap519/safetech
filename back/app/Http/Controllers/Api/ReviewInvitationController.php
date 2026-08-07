@@ -56,9 +56,13 @@ class ReviewInvitationController extends Controller
             ])->save();
         });
 
-        return response()->json([
-            'message' => 'Thank you. Your review was submitted for approval.',
-        ], 201);
+        $message = match ($request->input('locale')) {
+            'en' => 'Thank you. Your review was submitted for approval.',
+            'ru' => 'Спасибо. Ваш отзыв отправлен на проверку.',
+            default => 'გმადლობთ. თქვენი შეფასება გადაგზავნილია დასამტკიცებლად.',
+        };
+
+        return response()->json(['message' => $message], 201);
     }
 
     private function ensureAvailable(?ReviewInvitation $invitation): void
