@@ -142,11 +142,12 @@ jobs:
         run: |
           bash -n deploy.sh
           bash -n scripts/deploy-production.sh
+          bash -n scripts/repair-backend-runtime.sh
 
       - name: Run ShellCheck
-        run: shellcheck deploy.sh scripts/deploy-production.sh
+        run: shellcheck deploy.sh scripts/deploy-production.sh scripts/repair-backend-runtime.sh
 
-      - name: Verify atomic frontend deployment safeguards
+      - name: Verify deployment safeguards
         run: |
           grep -q 'FRONTEND_STAGE_DIR' scripts/deploy-production.sh
           grep -q 'FRONTEND_ROLLBACK_DIR' scripts/deploy-production.sh
@@ -154,3 +155,5 @@ jobs:
           grep -q 'install_systemd_units' scripts/deploy-production.sh
           grep -q 'install_nginx_config' scripts/deploy-production.sh
           grep -q 'Atomically activating the staged frontend' scripts/deploy-production.sh
+          grep -q 'storage/framework/sessions' scripts/repair-backend-runtime.sh
+          grep -q 'Filament admin login smoke test passed' deploy.sh
