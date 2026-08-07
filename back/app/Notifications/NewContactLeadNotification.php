@@ -21,16 +21,23 @@ final class NewContactLeadNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $fullName = $this->lead->name ?: trim($this->lead->first_name.' '.$this->lead->last_name);
+        $source = match ($this->lead->source) {
+            'contact-page' => 'საკონტაქტო გვერდი',
+            'home-cta' => 'მთავარი გვერდის მოთხოვნა',
+            'consultation-popup' => 'კონსულტაციის ფორმა',
+            default => $this->lead->source,
+        };
+
         $mailMessage = (new MailMessage)
             ->subject('ახალი მოთხოვნა SafeTech-ის საიტიდან')
             ->greeting('ახალი მოთხოვნა')
-            ->line('წყარო: '.$this->lead->source)
+            ->line('წყარო: '.$source)
             ->line('სახელი: '.($fullName ?: '—'))
             ->line('კომპანია: '.($this->lead->company ?: '—'))
             ->line('ტელეფონი: '.($this->lead->phone ?: '—'))
             ->line('ელფოსტა: '.($this->lead->email ?: '—'))
+            ->line('ქალაქი / მისამართი: '.($this->lead->address ?: '—'))
             ->line('სერვისი: '.($this->lead->service ?: '—'))
-            ->line('სერვისის კოდი: '.($this->lead->service_slug ?: '—'))
             ->line('პროექტის ზომა: '.($this->lead->project_size ?: '—'))
             ->line('ობიექტის ტიპი: '.($this->lead->property_type ?: '—'))
             ->line('შეტყობინება: '.($this->lead->message ?: '—'));
@@ -44,9 +51,9 @@ final class NewContactLeadNotification extends Notification
             }
         }
 
-        $mailMessage->line(
-            'შექმნის დრო: '.$this->lead->created_at?->timezone('Asia/Tbilisi')->format('Y-m-d H:i:s'),
-        );
+        $mailMessage
+            ->line('შექმნის დრო: '.$this->lead->created_at?->timezone('Asia/Tbilisi')->format('Y-m-d H:i:s'))
+            ->salutation('პატივისცემით, SafeTech');
 
         if ($this->lead->email) {
             $mailMessage->replyTo($this->lead->email, $fullName ?: null);
