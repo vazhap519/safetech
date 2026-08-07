@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Support\NavigationGroup;
+use Filament\Forms\Components\Repeater;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -35,6 +36,13 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->collapsedSidebarWidth('5.5rem')
             ->maxContentWidth(Width::Full)
+            ->bootUsing(function (): void {
+                Repeater::configureUsing(
+                    fn (Repeater $repeater): Repeater => $repeater
+                        ->collapsible()
+                        ->collapsed(),
+                );
+            })
             ->databaseTransactions()
             ->unsavedChangesAlerts()
             ->broadcasting(false)
