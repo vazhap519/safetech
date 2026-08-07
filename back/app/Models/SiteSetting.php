@@ -43,7 +43,19 @@ class SiteSetting extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        foreach (['logo', 'footer_logo', 'favicon', 'default_image'] as $collection) {
+        foreach ([
+            'logo',
+            'footer_logo',
+            'favicon',
+            'default_image',
+            'home_hero',
+            'home_infrastructure',
+            'services_hero',
+            'projects_hero',
+            'about_story',
+            'contact_intro',
+            'contact_support',
+        ] as $collection) {
             $this->addMediaCollection($collection)
                 ->useDisk('public')
                 ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
@@ -57,7 +69,19 @@ class SiteSetting extends Model implements HasMedia
             ->fit(Fit::Max, 1600, 1600)
             ->format('webp')
             ->quality(82)
-            ->performOnCollections('logo', 'footer_logo', 'favicon', 'default_image')
+            ->performOnCollections(
+                'logo',
+                'footer_logo',
+                'favicon',
+                'default_image',
+                'home_hero',
+                'home_infrastructure',
+                'services_hero',
+                'projects_hero',
+                'about_story',
+                'contact_intro',
+                'contact_support',
+            )
             ->nonQueued();
     }
 
