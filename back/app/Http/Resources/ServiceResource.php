@@ -35,6 +35,10 @@ class ServiceResource extends JsonResource
             $this->seo_description ?: data_get($this->seo, 'description', $description),
             $locale,
         );
+        $configuredSeoImage = trim((string) data_get($this->seo, 'image', ''));
+        $socialImage = $configuredSeoImage !== ''
+            ? $configuredSeoImage
+            : $this->social_image_url;
         $faqs = $this->relationLoaded('faqs')
             ? $this->faqs->map(fn ($faq) => [
                 'question' => $this->translatedModel($faq, 'question', $faq->question, $locale),
@@ -58,6 +62,7 @@ class ServiceResource extends JsonResource
             'longDescription' => $this->long_description ?: $description,
             'seoDescription' => $seoDescription,
             'heroImage' => $this->image,
+            'socialImage' => $socialImage,
             'image' => $this->image,
             'keywords' => $this->keywords ?? [],
             'highlights' => $this->highlights ?? [],
@@ -86,7 +91,7 @@ class ServiceResource extends JsonResource
                 'title' => $seoTitle ?: $title,
                 'description' => $seoDescription ?: $description,
                 'keywords' => data_get($this->seo, 'keywords', $this->keywords ?? []),
-                'image' => data_get($this->seo, 'image', $this->image),
+                'image' => $socialImage,
                 'noindex' => (bool) data_get($this->seo, 'noindex', false),
                 'schema' => data_get($this->seo, 'schema'),
             ],
