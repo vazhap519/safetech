@@ -239,6 +239,22 @@ test.describe("release candidate public matrix", () => {
         expect(mainSitemapText).toContain("/services");
     });
 
+    test("runtime 500 renders the branded error boundary", async ({ page }) => {
+        const response = await page.goto("/__qa-error", {
+            waitUntil: "domcontentloaded",
+        });
+
+        expect(response?.status()).toBe(500);
+        await expect(page.locator("main")).toHaveCount(1);
+        await expect(page.locator("body")).toContainText(/SafeTech/);
+        await expect(page.locator("body")).toContainText(
+            /ჩატვირთვა ვერ მოხერხდა|could not load|не удалось загрузить/i,
+        );
+        await expect(page.locator("body")).not.toContainText(
+            /Intentional release-candidate runtime error probe/i,
+        );
+    });
+
     test("review invitation can be submitted once", async ({ page }, testInfo) => {
         const token = testInfo.project.name === "mobile" ? "qa-review-mobile" : "qa-review-desktop";
         const response = await page.goto(`/review/${token}`, {
