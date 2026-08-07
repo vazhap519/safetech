@@ -45,6 +45,18 @@ async function revealConsultationTriggers(page: Page): Promise<Locator> {
     return triggers;
 }
 
+async function revealMobileNavigation(page: Page) {
+    const mobileMenu = page.locator("nav details:visible").first();
+
+    if ((await mobileMenu.count()) === 0) return;
+    if ((await mobileMenu.getAttribute("open")) !== null) return;
+
+    const summary = mobileMenu.locator("summary");
+    await expect(summary).toBeVisible();
+    await summary.click();
+    await expect(mobileMenu).toHaveAttribute("open", "");
+}
+
 async function openConsultation(page: Page) {
     const triggers = await revealConsultationTriggers(page);
     await triggers.first().click();
@@ -254,12 +266,14 @@ test.describe("release candidate public matrix", () => {
     test("language switcher changes route and document locale", async ({ page }) => {
         await page.goto("/services", { waitUntil: "domcontentloaded" });
 
+        await revealMobileNavigation(page);
         const english = page.locator('a[href="/en/services"]:visible').first();
         await expect(english).toBeVisible();
         await english.click();
         await expect(page).toHaveURL(/\/en\/services$/);
         await expect(page.locator("html")).toHaveAttribute("lang", "en-GE");
 
+        await revealMobileNavigation(page);
         const russian = page.locator('a[href="/ru/services"]:visible').first();
         await expect(russian).toBeVisible();
         await russian.click();
