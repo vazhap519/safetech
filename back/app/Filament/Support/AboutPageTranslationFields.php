@@ -12,7 +12,7 @@ final class AboutPageTranslationFields
     public static function sections(): array
     {
         return array_map(
-            fn (array $section): Section => Section::make($section['label'])
+            fn(array $section): Section => Section::make($section['label'])
                 ->description($section['description'] ?? null)
                 ->schema(self::componentsFor($section['fields']))
                 ->columns(3)
@@ -59,8 +59,8 @@ final class AboutPageTranslationFields
     public static function mergeIntoValue(array $formData, array $existingValue): array
     {
         $existingEntries = collect(data_get($existingValue, 'entries', []))
-            ->filter(fn ($entry): bool => is_array($entry) && filled($entry['key'] ?? null))
-            ->reject(fn (array $entry): bool => in_array((string) $entry['key'], self::managedKeys(), true))
+            ->filter(fn($entry): bool => is_array($entry) && filled($entry['key'] ?? null))
+            ->reject(fn(array $entry): bool => in_array((string) $entry['key'], self::managedKeys(), true))
             ->values()
             ->all();
 
@@ -92,7 +92,7 @@ final class AboutPageTranslationFields
     private static function managedKeys(): array
     {
         return array_values(array_map(
-            fn (array $field): string => $field['key'],
+            fn(array $field): string => $field['key'],
             self::flatFields(),
         ));
     }
@@ -138,7 +138,7 @@ final class AboutPageTranslationFields
     private static function flatFields(): array
     {
         return array_merge(...array_map(
-            fn (array $section): array => $section['fields'],
+            fn(array $section): array => $section['fields'],
             self::definitions(),
         ));
     }
