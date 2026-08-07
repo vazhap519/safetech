@@ -159,6 +159,8 @@ export function createMetadata({
             images: [
                 {
                     url: socialImage,
+                    width: 1200,
+                    height: 630,
                     alt: resolvedTitle,
                 },
             ],
