@@ -162,6 +162,13 @@ class Service extends Model implements HasMedia
             ->performOnCollections('services')
             ->nonQueued();
 
+        $this->addMediaConversion('social')
+            ->fit(Fit::Crop, 1200, 630)
+            ->format('webp')
+            ->quality(85)
+            ->performOnCollections('services')
+            ->nonQueued();
+
         $this->addMediaConversion('thumb')
             ->fit(Fit::Crop, 720, 480)
             ->format('webp')
@@ -185,6 +192,17 @@ class Service extends Model implements HasMedia
 
     public function getHeroImageUrlAttribute(): ?string
     {
+        return $this->image;
+    }
+
+    public function getSocialImageUrlAttribute(): ?string
+    {
+        $media = $this->getFirstMedia('services');
+
+        if ($media?->hasGeneratedConversion('social')) {
+            return $media->getUrl('social');
+        }
+
         return $this->image;
     }
 
