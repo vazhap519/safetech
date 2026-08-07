@@ -99,6 +99,66 @@ class ContactLeadApiTest extends TestCase
         $this->assertSame('4', $lead->details[0]['value']);
     }
 
+    public function test_consultation_popup_uses_a_published_service_slug_and_derives_the_service_name(): void
+    {
+        Event::fake([LeadCreated::class]);
+
+        Service::query()->create([
+            'slug' => 'operating-system-installation',
+            'name' => 'ოპერაციული სისტემების ინსტალაცია',
+            'title' => 'ოპერაციული სისტემების ინსტალაცია',
+            'description' => 'ტესტური აღწერა',
+            'seo_description' => 'ტესტური SEO აღწერა',
+            'is_published' => true,
+        ]);
+
+        $this->postJson('/api/contact-leads', [
+            'firstName' => 'ვაჟა',
+            'lastName' => 'ტესტი',
+            'phone' => '+995555123456',
+            'email' => 'consultation@example.com',
+            'address' => 'თბილისი',
+            'serviceSlug' => 'operating-system-installation',
+            'details' => 'Windows 11-ის ინსტალაცია და გამართვა მჭირდება.',
+            'source' => 'consultation-popup',
+            'privacy' => true,
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('contact_leads', [
+            'email' => 'consultation@example.com',
+            'service' => 'ოპერაციული სისტემების ინსტალაცია',
+            'service_slug' => 'operating-system-installation',
+            'source' => 'consultation-popup',
+        ]);
+    }
+
+    public function test_consultation_popup_rejects_an_unpublished_or_unknown_service(): void
+    {
+        Service::query()->create([
+            'slug' => 'draft-service',
+            'name' => 'Draft service',
+            'title' => 'Draft service',
+            'description' => 'Draft description',
+            'seo_description' => 'Draft SEO description',
+            'is_published' => false,
+        ]);
+
+        foreach (['draft-service', 'missing-service'] as $slug) {
+            $this->postJson('/api/contact-leads', [
+                'firstName' => 'Test',
+                'lastName' => 'Customer',
+                'phone' => '+995555123456',
+                'email' => "{$slug}@example.com",
+                'address' => 'Tbilisi',
+                'serviceSlug' => $slug,
+                'details' => 'I need a consultation for this service.',
+                'source' => 'consultation-popup',
+                'privacy' => true,
+            ])->assertUnprocessable()
+                ->assertJsonValidationErrors(['service_slug']);
+        }
+    }
+
     public function test_it_rejects_an_incomplete_request(): void
     {
         $this->postJson('/api/contact-leads', [
