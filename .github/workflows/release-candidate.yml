@@ -1,0 +1,176 @@
+name: Release Candidate QA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-candidate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-stack-e2e:
+    name: Full-stack browser QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      APP_ENV: testing
+      APP_KEY: "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      APP_DEBUG: "false"
+      APP_URL: http://127.0.0.1:8000
+      FRONTEND_URL: http://127.0.0.1:3000
+      FRONTEND_URLS: http://127.0.0.1:3000
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /tmp/safetech-e2e.sqlite
+      CACHE_STORE: array
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      FILESYSTEM_DISK: local
+      SEED_DEMO_CONTENT: "false"
+      ADMIN_NAME: QA Admin
+      ADMIN_EMAIL: qa-admin@safetech.test
+      ADMIN_PASSWORD: SafeTechQaPass123!
+      BACKEND_API_URL: http://127.0.0.1:8000/api
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:8000/api
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      REVALIDATE_SECRET: qa-release-candidate-revalidate-secret
+      E2E_BASE_URL: http://127.0.0.1:3000
+      E2E_API_BASE: http://127.0.0.1:8000/api
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_OPTIONS: "--max-old-space-size=4096"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, pdo_sqlite, sqlite3, gd, exif
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: back
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare seeded QA database
+        working-directory: back
+        run: |
+          rm -f /tmp/safetech-e2e.sqlite
+          touch /tmp/safetech-e2e.sqlite
+          php artisan migrate:fresh --seed --force
+          php artisan tinker --execute="App\\Models\\ReviewInvitation::query()->updateOrCreate(['token' => 'qa-review-desktop'], ['recipient_name' => 'Desktop QA', 'is_active' => true]); App\\Models\\ReviewInvitation::query()->updateOrCreate(['token' => 'qa-review-mobile'], ['recipient_name' => 'Mobile QA', 'is_active' => true]);"
+
+      - name: Verify CMS upload pipeline
+        working-directory: back
+        run: php artisan cms:upload-smoke
+
+      - name: Start Laravel API
+        working-directory: back
+        run: |
+          php artisan serve --host=127.0.0.1 --port=8000 > /tmp/safetech-laravel.log 2>&1 &
+          echo $! > /tmp/safetech-laravel.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/api/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/safetech-laravel.log
+          exit 1
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright test runner
+        working-directory: frontend
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Build frontend against seeded API
+        working-directory: frontend
+        run: npm run build -- --webpack
+
+      - name: Start Next.js
+        working-directory: frontend
+        run: |
+          npm run start -- -p 3000 > /tmp/safetech-next.log 2>&1 &
+          echo $! > /tmp/safetech-next.pid
+          for attempt in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:3000/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/safetech-next.log
+          exit 1
+
+      - name: Run desktop mobile multilingual browser matrix
+        working-directory: frontend
+        run: npx playwright test
+
+      - name: Verify CMS cache invalidation end to end
+        run: |
+          curl --fail --silent http://127.0.0.1:3000/services > /tmp/services-before.html
+          if grep -q 'qa-cache-service' /tmp/services-before.html; then
+            echo 'QA cache probe unexpectedly existed before mutation.' >&2
+            exit 1
+          fi
+
+          (
+            cd back
+            php artisan tinker --execute="App\\Models\\Service::query()->updateOrCreate(['slug' => 'qa-cache-service'], ['name' => 'QA Cache Service', 'title' => 'QA Cache Service', 'description' => 'QA cache invalidation probe.', 'seo_description' => 'QA cache invalidation probe.', 'is_published' => true, 'sort_order' => 9999]);"
+          )
+
+          curl --fail --silent \
+            -H 'Content-Type: application/json' \
+            -H 'x-secret: qa-release-candidate-revalidate-secret' \
+            -d '{"tag":"cms","path":"/services"}' \
+            http://127.0.0.1:3000/api/revalidate > /tmp/revalidate.json
+
+          grep -q '"success":true' /tmp/revalidate.json
+
+          for attempt in $(seq 1 20); do
+            curl --fail --silent "http://127.0.0.1:3000/services?qa_cache_probe=${attempt}" > /tmp/services-after.html
+            if grep -q 'qa-cache-service' /tmp/services-after.html; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          cat /tmp/revalidate.json
+          echo 'CMS cache invalidation did not expose the newly published service.' >&2
+          exit 1
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-playwright-report
+          path: frontend/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Show server logs on failure
+        if: failure()
+        run: |
+          echo '--- Laravel ---'
+          tail -n 300 /tmp/safetech-laravel.log || true
+          echo '--- Next.js ---'
+          tail -n 300 /tmp/safetech-next.log || true
