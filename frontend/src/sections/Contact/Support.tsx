@@ -1,6 +1,7 @@
 import Items from "@/components/Contact/support/Items";
 import Image from "@/components/ui/Image";
 import Typography from "@/components/ui/Typography";
+import { getPageImages } from "@/lib/page-images";
 import { getSiteSettings } from "@/lib/site-settings";
 import { hasTranslatedText, translateText } from "@/lib/translations";
 
@@ -17,7 +18,10 @@ const supportKeys = [
 ];
 
 export default async function Support() {
-    const { branding, locale, translations } = await getSiteSettings();
+    const [{ locale, translations }, { contactSupport }] = await Promise.all([
+        getSiteSettings(),
+        getPageImages(),
+    ]);
 
     if (!hasTranslatedText(translations, supportKeys, locale)) {
         return null;
@@ -40,13 +44,17 @@ export default async function Support() {
 
     return (
         <section className="relative overflow-hidden py-unit-xl">
-            <div className="mx-auto grid max-w-container-max grid-cols-1 items-center gap-unit-lg px-margin-desktop lg:grid-cols-2 lg:gap-unit-xl">
-                {branding.defaultImage ? (
+            <div
+                className={`mx-auto grid max-w-container-max grid-cols-1 items-center gap-unit-lg px-margin-desktop lg:gap-unit-xl ${
+                    contactSupport ? "lg:grid-cols-2" : ""
+                }`}
+            >
+                {contactSupport ? (
                     <div className="relative order-1">
                         <Image
                             alt={imageAlt || title}
                             sizes="(max-width: 768px) 100vw, 50vw"
-                            src={branding.defaultImage}
+                            src={contactSupport}
                             variant="contact-support"
                         />
 
@@ -63,7 +71,7 @@ export default async function Support() {
                     </div>
                 ) : null}
 
-                <div className="order-2">
+                <div className={`order-2 ${contactSupport ? "" : "mx-auto max-w-4xl text-center"}`}>
                     {title ? (
                         <Typography as="h2" variant="contact-support-title">
                             {title}
