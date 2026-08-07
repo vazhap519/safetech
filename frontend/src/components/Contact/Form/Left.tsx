@@ -109,17 +109,26 @@ export default function Left({ services }: LeftProps) {
 
     const title = t("contact.form.title", null);
     const chooseText = t("forms.choose", null);
-    const contactHint = t("forms.contactHint", null);
     const fullNameLabel = t("forms.fullName", null);
     const companyLabel = t("forms.company", null);
     const phoneLabel = t("forms.phoneNumber", null);
     const emailLabel = t("forms.email", null);
+    const addressLabel = t("forms.address", {
+        ka: "ქალაქი / მომსახურების მისამართი",
+        en: "City / service address",
+        ru: "Город / адрес оказания услуги",
+    });
     const serviceLabel = t("forms.service", null);
     const messageLabel = t("forms.message", null);
     const generalInquiry = t("forms.generalInquiry", null);
     const submittingLabel = t("forms.submitting", null);
     const sendLabel = t("forms.send", null);
     const privacyLabel = t("forms.privacy", null);
+    const requiredHint = t("forms.requiredHint", {
+        ka: "* ნიშნით მონიშნული ველები სავალდებულოა.",
+        en: "Fields marked with * are required.",
+        ru: "Поля, отмеченные *, обязательны.",
+    });
 
     if (
         !fullNameLabel ||
@@ -156,11 +165,13 @@ export default function Left({ services }: LeftProps) {
                     type="text"
                 />
 
+                <p className="text-sm text-on-surface-variant">{requiredHint}</p>
+
                 <div className="grid gap-unit-md md:grid-cols-2">
                     <Input
                         autoComplete="name"
                         id="name"
-                        label={fullNameLabel}
+                        label={`${fullNameLabel} *`}
                         name="name"
                         required
                         type="text"
@@ -178,32 +189,37 @@ export default function Left({ services }: LeftProps) {
                     <Input
                         autoComplete="tel"
                         id="phone"
-                        label={phoneLabel}
+                        label={`${phoneLabel} *`}
                         name="phone"
+                        required
                         type="tel"
                     />
 
                     <Input
                         autoComplete="email"
                         id="email"
-                        label={emailLabel}
+                        label={`${emailLabel} *`}
                         name="email"
+                        required
                         type="email"
                     />
                 </div>
 
-                {contactHint ? (
-                    <p className="text-sm text-on-surface-variant">
-                        {contactHint}
-                    </p>
-                ) : null}
+                <Input
+                    autoComplete="street-address"
+                    id="address"
+                    label={`${addressLabel} *`}
+                    name="address"
+                    required
+                    type="text"
+                />
 
                 <div className="space-y-unit-md">
                     {services.length ? (
                         <>
                             <Select
                                 id="service"
-                                label={serviceLabel}
+                                label={`${serviceLabel} *`}
                                 name="service_slug"
                                 onChange={(event) =>
                                     setSelectedServiceSlug(event.target.value)
@@ -239,7 +255,7 @@ export default function Left({ services }: LeftProps) {
                         {selectedService.leadForm.projectSizeOptions.length ? (
                             <Select
                                 id="project-size"
-                                label={selectedService.leadForm.projectSizeLabel}
+                                label={`${selectedService.leadForm.projectSizeLabel} *`}
                                 name="project-size"
                                 options={selectedService.leadForm.projectSizeOptions.map(
                                     (option) => ({
@@ -248,13 +264,14 @@ export default function Left({ services }: LeftProps) {
                                     }),
                                 )}
                                 placeholder={chooseText}
+                                required
                             />
                         ) : null}
 
                         {selectedService.leadForm.propertyTypeOptions.length ? (
                             <Select
                                 id="property-type"
-                                label={selectedService.leadForm.propertyTypeLabel}
+                                label={`${selectedService.leadForm.propertyTypeLabel} *`}
                                 name="property-type"
                                 options={selectedService.leadForm.propertyTypeOptions.map(
                                     (option) => ({
@@ -263,6 +280,7 @@ export default function Left({ services }: LeftProps) {
                                     }),
                                 )}
                                 placeholder={chooseText}
+                                required
                             />
                         ) : null}
 
@@ -274,8 +292,9 @@ export default function Left({ services }: LeftProps) {
 
                 <Textarea
                     id="message"
-                    label={messageLabel}
+                    label={`${messageLabel} *`}
                     name="message"
+                    required
                     rows={5}
                 />
 
