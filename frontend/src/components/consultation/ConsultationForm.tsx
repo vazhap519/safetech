@@ -5,7 +5,16 @@ import PrivacyConsent from "@/components/forms/PrivacyConsent";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import { useLeadForm } from "@/hooks/useLeadForm";
 
-export default function ConsultationForm() {
+type ServiceOption = {
+    slug: string;
+    label: string;
+};
+
+export default function ConsultationForm({
+    serviceOptions,
+}: {
+    serviceOptions: ServiceOption[];
+}) {
     const { status, message, submit } = useLeadForm("consultation-popup");
     const { t } = useLocalization();
     const firstNameLabel = t("forms.firstName", {
@@ -34,9 +43,14 @@ export default function ConsultationForm() {
         ru: "Город / адрес оказания услуги",
     });
     const serviceLabel = t("forms.service", {
-        ka: "რომელი მომსახურება გჭირდებათ",
-        en: "Service you need",
-        ru: "Необходимая услуга",
+        ka: "სერვისი",
+        en: "Service",
+        ru: "Услуга",
+    });
+    const chooseServiceLabel = t("forms.chooseService", {
+        ka: "აირჩიეთ სერვისი",
+        en: "Select a service",
+        ru: "Выберите услугу",
     });
     const detailsLabel = t("forms.details", {
         ka: "ამოცანის დეტალები",
@@ -147,14 +161,21 @@ export default function ConsultationForm() {
             </label>
             <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
                 <span>{serviceLabel} *</span>
-                <input
-                    className={inputClassName}
-                    maxLength={120}
-                    minLength={2}
+                <select
+                    className={`${inputClassName} cursor-pointer`}
+                    defaultValue=""
                     name="service"
                     required
-                    type="text"
-                />
+                >
+                    <option disabled value="">
+                        {chooseServiceLabel}
+                    </option>
+                    {serviceOptions.map((service) => (
+                        <option key={service.slug} value={service.label}>
+                            {service.label}
+                        </option>
+                    ))}
+                </select>
             </label>
             <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
                 <span>{detailsLabel} *</span>
