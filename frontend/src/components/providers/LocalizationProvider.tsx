@@ -46,11 +46,6 @@ export default function LocalizationProvider({
         locale: Locale;
         pathname: string | null;
     } | null>(null);
-
-    if (selection && selection.pathname !== pathname) {
-        setSelection(null);
-    }
-
     const activeLocale =
         selection?.pathname === pathname ? selection.locale : pathLocale;
     const selectLocale = useCallback(
