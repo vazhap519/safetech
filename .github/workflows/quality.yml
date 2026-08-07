@@ -78,7 +78,8 @@ jobs:
       run:
         working-directory: frontend
     env:
-      BACKEND_API_URL: https://api.safetech.ge/api
+      # Builds must be deterministic and must not depend on the currently deployed API.
+      BACKEND_API_URL: http://127.0.0.1:9/api
       NEXT_PUBLIC_API_URL: https://api.safetech.ge/api
       NEXT_PUBLIC_SITE_URL: https://safetech.ge
       REVALIDATE_SECRET: ci-only-revalidate-secret-not-used-in-production
@@ -107,7 +108,7 @@ jobs:
 
       - name: Google SEO smoke test with unavailable CMS
         run: |
-          BACKEND_API_URL=http://127.0.0.1:9/api npm run start -- -p 3000 > /tmp/safetech-next.log 2>&1 &
+          npm run start -- -p 3000 > /tmp/safetech-next.log 2>&1 &
           server_pid=$!
           trap 'kill "${server_pid}" 2>/dev/null || true' EXIT
 
