@@ -2,8 +2,8 @@ import Image from "next/image";
 
 import JsonLd from "@/components/seo/JsonLd";
 import type { BackendPage } from "@/lib/backend";
-import { absoluteLocalizedUrl } from "@/lib/seo";
 import type { Locale } from "@/lib/locales";
+import { absoluteLocalizedUrl } from "@/lib/seo";
 
 export default function DynamicPage({
     page,
@@ -13,7 +13,10 @@ export default function DynamicPage({
     locale: Locale;
 }) {
     const url = absoluteLocalizedUrl(`/${page.slug}`, locale);
-    const paragraphs = page.content.split(/\n\s*\n/).map((item) => item.trim()).filter(Boolean);
+    const paragraphs = page.content
+        .split(/\n\s*\n/)
+        .map((item) => item.trim())
+        .filter(Boolean);
 
     return (
         <>
@@ -22,12 +25,15 @@ export default function DynamicPage({
                     "@context": "https://schema.org",
                     "@type": "WebPage",
                     name: page.seo?.title || page.title,
-                    description: page.seo?.description || page.excerpt || page.content,
+                    description:
+                        page.seo?.description || page.excerpt || page.content,
                     url,
-                    ...(page.coverImage ? { primaryImageOfPage: page.coverImage } : {}),
+                    ...(page.coverImage
+                        ? { primaryImageOfPage: page.coverImage }
+                        : {}),
                 }}
             />
-            <main className="bg-surface pb-16 pt-28 sm:pt-32">
+            <div className="bg-surface pb-16 pt-28 sm:pt-32">
                 <article className="mx-auto w-full max-w-4xl px-5 sm:px-6 lg:px-8">
                     <header className="rounded-3xl border border-white/10 bg-surface-container/70 p-6 shadow-sm sm:p-10">
                         <h1 className="font-headline-md text-3xl font-bold tracking-tight text-on-surface sm:text-5xl">
@@ -53,13 +59,16 @@ export default function DynamicPage({
                     ) : null}
                     <div className="mt-8 rounded-3xl border border-white/10 bg-surface-container/50 p-6 text-base leading-8 text-on-surface-variant sm:p-10 sm:text-lg">
                         {paragraphs.map((paragraph, index) => (
-                            <p className={index === 0 ? "" : "mt-6"} key={`${index}-${paragraph.slice(0, 30)}`}>
+                            <p
+                                className={index === 0 ? "" : "mt-6"}
+                                key={`${index}-${paragraph.slice(0, 30)}`}
+                            >
                                 {paragraph}
                             </p>
                         ))}
                     </div>
                 </article>
-            </main>
+            </div>
         </>
     );
 }
