@@ -1,9 +1,13 @@
 import Image from "@/components/ui/Image";
+import { getPageImages } from "@/lib/page-images";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function StoryComponentsImage() {
-    const { branding, locale, translations } = await getSiteSettings();
+    const [{ locale, translations }, { aboutStory }] = await Promise.all([
+        getSiteSettings(),
+        getPageImages(),
+    ]);
     const imageAlt = translateText(
         translations,
         "about.story.imageAlt",
@@ -11,7 +15,7 @@ export default async function StoryComponentsImage() {
         null,
     );
 
-    if (!branding.defaultImage) return null;
+    if (!aboutStory) return null;
 
     return (
         <div className="group relative">
@@ -20,7 +24,7 @@ export default async function StoryComponentsImage() {
                 alt={imageAlt}
                 className="h-[320px] grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0 sm:h-[420px] lg:h-[500px]"
                 sizes="(max-width: 768px) 100vw, 50vw"
-                src={branding.defaultImage}
+                src={aboutStory}
                 variant="contact-support"
             />
         </div>
