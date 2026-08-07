@@ -12,13 +12,56 @@ export default function Cta() {
     const eyebrow = t("home.cta.eyebrow", null);
     const title = t("home.cta.title", null);
     const description = t("home.cta.description", null);
-    const emailLabel = t("home.cta.emailLabel", null);
-    const emailPlaceholder = t("home.cta.emailPlaceholder", null);
-    const submitLabel = t("home.cta.submit", null);
+    const nameLabel = t("forms.fullName", {
+        ka: "სახელი და გვარი",
+        en: "Full name",
+        ru: "Имя и фамилия",
+    });
+    const phoneLabel = t("forms.phoneNumber", {
+        ka: "ტელეფონის ნომერი",
+        en: "Phone number",
+        ru: "Номер телефона",
+    });
+    const emailLabel = t("home.cta.emailLabel", {
+        ka: "ელფოსტა",
+        en: "Email",
+        ru: "Электронная почта",
+    });
+    const emailPlaceholder = t("home.cta.emailPlaceholder", {
+        ka: "name@example.com",
+        en: "name@example.com",
+        ru: "name@example.com",
+    });
+    const addressLabel = t("forms.address", {
+        ka: "ქალაქი / მომსახურების მისამართი",
+        en: "City / service address",
+        ru: "Город / адрес оказания услуги",
+    });
+    const serviceLabel = t("forms.service", {
+        ka: "რომელი მომსახურება გჭირდებათ",
+        en: "Service you need",
+        ru: "Необходимая услуга",
+    });
+    const messageLabel = t("forms.message", {
+        ka: "მოთხოვნის მოკლე აღწერა",
+        en: "Request details",
+        ru: "Описание запроса",
+    });
+    const submitLabel = t("home.cta.submit", {
+        ka: "მოთხოვნის გაგზავნა",
+        en: "Send request",
+        ru: "Отправить запрос",
+    });
     const submittingLabel = t("forms.submitting", null);
-    const privacyLabel = t("forms.privacy", null);
+    const privacyLabel = t("forms.privacy", {
+        ka: "ვეთანხმები ჩემი საკონტაქტო მონაცემების გამოყენებას მოთხოვნაზე პასუხისთვის.",
+        en: "I agree to the use of my contact details to respond to this request.",
+        ru: "Я согласен на использование контактных данных для ответа на запрос.",
+    });
     const note = t("home.cta.note", null);
-    const canRenderForm = Boolean(emailLabel && submitLabel && privacyLabel);
+    const canRenderForm = Boolean(submitLabel && privacyLabel);
+    const inputClassName =
+        "w-full rounded-xl border border-outline-variant/30 bg-surface-container-highest/50 px-5 py-4 font-body-md text-on-surface outline-none backdrop-blur-xl transition-all duration-300 placeholder:text-on-surface-variant/60 focus:border-transparent focus:ring-2 focus:ring-primary";
 
     if (
         !eyebrow &&
@@ -60,7 +103,7 @@ export default function Cta() {
 
                     {canRenderForm ? (
                         <form
-                            className="mx-auto w-full max-w-2xl space-y-4 pt-2"
+                            className="mx-auto w-full max-w-3xl space-y-4 pt-2 text-left"
                             onSubmit={submit}
                         >
                             <input
@@ -72,20 +115,74 @@ export default function Cta() {
                                 type="text"
                             />
 
-                            <div className="flex flex-col items-center justify-center gap-4 md:flex-row">
-                                <label className="sr-only" htmlFor="home-cta-email">
-                                    {emailLabel}
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <label className="space-y-2 text-sm font-medium text-on-surface-variant">
+                                    <span>{nameLabel} *</span>
+                                    <input
+                                        autoComplete="name"
+                                        className={inputClassName}
+                                        name="name"
+                                        required
+                                        type="text"
+                                    />
                                 </label>
-                                <input
-                                    id="home-cta-email"
-                                    autoComplete="email"
-                                    className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-highest/50 px-6 py-4 font-body-md text-on-surface outline-none backdrop-blur-xl transition-all duration-300 focus:border-transparent focus:ring-2 focus:ring-primary md:flex-1"
-                                    name="email"
-                                    placeholder={emailPlaceholder}
-                                    required
-                                    type="email"
-                                />
+                                <label className="space-y-2 text-sm font-medium text-on-surface-variant">
+                                    <span>{phoneLabel} *</span>
+                                    <input
+                                        autoComplete="tel"
+                                        className={inputClassName}
+                                        inputMode="tel"
+                                        name="phone"
+                                        required
+                                        type="tel"
+                                    />
+                                </label>
+                                <label className="space-y-2 text-sm font-medium text-on-surface-variant">
+                                    <span>{emailLabel} *</span>
+                                    <input
+                                        autoComplete="email"
+                                        className={inputClassName}
+                                        name="email"
+                                        placeholder={emailPlaceholder}
+                                        required
+                                        type="email"
+                                    />
+                                </label>
+                                <label className="space-y-2 text-sm font-medium text-on-surface-variant">
+                                    <span>{addressLabel} *</span>
+                                    <input
+                                        autoComplete="street-address"
+                                        className={inputClassName}
+                                        name="address"
+                                        required
+                                        type="text"
+                                    />
+                                </label>
+                            </div>
 
+                            <label className="block space-y-2 text-sm font-medium text-on-surface-variant">
+                                <span>{serviceLabel} *</span>
+                                <input
+                                    className={inputClassName}
+                                    name="service"
+                                    required
+                                    type="text"
+                                />
+                            </label>
+
+                            <label className="block space-y-2 text-sm font-medium text-on-surface-variant">
+                                <span>{messageLabel} *</span>
+                                <textarea
+                                    className={`${inputClassName} min-h-32 resize-y`}
+                                    name="message"
+                                    required
+                                    rows={4}
+                                />
+                            </label>
+
+                            <PrivacyConsent label={privacyLabel} />
+
+                            <div className="flex justify-center pt-2">
                                 <Button
                                     disabled={status === "submitting"}
                                     size="lg"
@@ -97,7 +194,6 @@ export default function Cta() {
                                         : submitLabel}
                                 </Button>
                             </div>
-                            <PrivacyConsent label={privacyLabel} />
                         </form>
                     ) : null}
                     <p
@@ -115,7 +211,6 @@ export default function Cta() {
                     ) : null}
                 </div>
             </div>
-
         </section>
     );
 }
