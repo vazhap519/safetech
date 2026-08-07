@@ -11,6 +11,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -30,6 +31,9 @@ class AdminPanelProvider extends PanelProvider
             ->revealablePasswords(false)
             ->brandName('SafeTech CMS')
             ->colors(['primary' => Color::Blue])
+            ->sidebarWidth('18rem')
+            ->sidebarFullyCollapsibleOnDesktop()
+            ->maxContentWidth(Width::Full)
             ->databaseTransactions()
             ->unsavedChangesAlerts()
             ->broadcasting(false)
