@@ -51,6 +51,7 @@ class ContactLeadResource extends Resource
             TextInput::make('company')->label('კომპანია')->disabled(),
             TextInput::make('phone')->label('ტელეფონი')->disabled(),
             TextInput::make('email')->label('ელფოსტა')->disabled(),
+            TextInput::make('address')->label('ქალაქი / მისამართი')->disabled(),
             TextInput::make('service')->label('სერვისი')->disabled(),
             TextInput::make('service_slug')->label('სერვისის კოდი')->disabled(),
             TextInput::make('project_size')->label('პროექტის ზომა')->disabled(),
@@ -99,7 +100,8 @@ class ContactLeadResource extends Resource
                     )
                     ->searchable(['name', 'first_name', 'last_name']),
                 TextColumn::make('phone')->label('ტელეფონი')->searchable(),
-                TextColumn::make('email')->label('ელფოსტა')->searchable(),
+                TextColumn::make('address')->label('მისამართი')->searchable()->toggleable(),
+                TextColumn::make('email')->label('ელფოსტა')->searchable()->toggleable(),
                 TextColumn::make('service')->label('სერვისი'),
                 TextColumn::make('status')
                     ->label('სტატუსი')
