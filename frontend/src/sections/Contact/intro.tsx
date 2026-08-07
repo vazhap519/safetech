@@ -1,5 +1,6 @@
 import Image from "@/components/ui/Image";
 import Typography from "@/components/ui/Typography";
+import { getPageImages } from "@/lib/page-images";
 import { getSiteSettings } from "@/lib/site-settings";
 import { hasTranslatedText, translateText } from "@/lib/translations";
 
@@ -12,7 +13,10 @@ const introKeys = [
 ];
 
 export default async function Intro() {
-    const { branding, locale, translations } = await getSiteSettings();
+    const [{ locale, translations }, { contactIntro }] = await Promise.all([
+        getSiteSettings(),
+        getPageImages(),
+    ]);
 
     if (!hasTranslatedText(translations, introKeys, locale)) {
         return null;
@@ -54,8 +58,12 @@ export default async function Intro() {
 
     return (
         <section className="bg-background py-unit-xl">
-            <div className="container mx-auto grid max-w-container-max grid-cols-1 items-center gap-unit-lg px-margin-desktop md:grid-cols-2 lg:gap-unit-xl">
-                <div className="order-2 md:order-1">
+            <div
+                className={`container mx-auto grid max-w-container-max grid-cols-1 items-center gap-unit-lg px-margin-desktop lg:gap-unit-xl ${
+                    contactIntro ? "md:grid-cols-2" : ""
+                }`}
+            >
+                <div className={`order-2 md:order-1 ${contactIntro ? "" : "mx-auto max-w-4xl text-center"}`}>
                     {title ? (
                         <Typography
                             as="h2"
@@ -75,7 +83,7 @@ export default async function Intro() {
                     ) : null}
 
                     {badges.length ? (
-                        <div className="mt-unit-lg flex flex-col gap-unit-md sm:flex-row">
+                        <div className={`mt-unit-lg flex flex-col gap-unit-md sm:flex-row ${contactIntro ? "" : "justify-center"}`}>
                             {badges.map((badge) => (
                                 <div
                                     className="flex items-center gap-unit-xs"
@@ -95,14 +103,14 @@ export default async function Intro() {
                     ) : null}
                 </div>
 
-                {branding.defaultImage ? (
+                {contactIntro ? (
                     <div className="order-1 md:order-2">
                         <div className="glass-panel group overflow-hidden rounded-xl p-2">
                             <Image
                                 alt={imageAlt || title}
                                 height={410}
                                 sizes="(max-width: 768px) 100vw, 50vw"
-                                src={branding.defaultImage}
+                                src={contactIntro}
                                 variant="contact-intro"
                                 width={610}
                             />
