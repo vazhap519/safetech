@@ -62,6 +62,9 @@ export function useLeadForm(source: string) {
                     !key.startsWith("details_type__"),
             ),
         );
+        const leadMessage = String(
+            cleanedPayload.message ?? cleanedPayload.details ?? "",
+        ).trim();
 
         const email = String(cleanedPayload.email ?? "");
         const phone = String(cleanedPayload.phone ?? "");
@@ -80,6 +83,7 @@ export function useLeadForm(source: string) {
                     ...cleanedPayload,
                     email,
                     phone,
+                    ...(leadMessage ? { message: leadMessage } : {}),
                     details,
                     locale,
                     source,
