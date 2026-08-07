@@ -68,7 +68,19 @@ final class PublicContentService
             : $setting->value;
 
         if ($setting->key === 'branding' && is_array($value)) {
-            foreach (['logo', 'footer_logo', 'favicon', 'default_image'] as $collection) {
+            foreach ([
+                'logo',
+                'footer_logo',
+                'favicon',
+                'default_image',
+                'home_hero',
+                'home_infrastructure',
+                'services_hero',
+                'projects_hero',
+                'about_story',
+                'contact_intro',
+                'contact_support',
+            ] as $collection) {
                 $value[$collection] = $setting->brandingMediaUrl($collection)
                     ?: ($value[$collection] ?? null);
             }
