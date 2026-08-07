@@ -39,9 +39,14 @@ export default function ConsultationForm() {
         ru: "Необходимая услуга",
     });
     const detailsLabel = t("forms.details", {
-        ka: "მოთხოვნის დეტალები",
+        ka: "ამოცანის დეტალები",
         en: "Project details",
         ru: "Детали задачи",
+    });
+    const requiredHint = t("forms.requiredHint", {
+        ka: "* ყველა ველი სავალდებულოა.",
+        en: "* All fields are required.",
+        ru: "* Все поля обязательны.",
     });
     const cancelLabel = t("common.cancel", {
         ka: "გაუქმება",
@@ -54,14 +59,14 @@ export default function ConsultationForm() {
         ru: "Отправка…",
     });
     const submitLabel = t("forms.submitRequest", {
-        ka: "მოთხოვნის გაგზავნა",
-        en: "Send request",
-        ru: "Отправить запрос",
+        ka: "კონსულტაციის მოთხოვნა",
+        en: "Request consultation",
+        ru: "Запросить консультацию",
     });
     const privacyLabel = t("forms.privacy", {
-        ka: "ვეთანხმები ჩემი საკონტაქტო მონაცემების გამოყენებას მოთხოვნაზე პასუხისთვის.",
-        en: "I agree to the use of my contact details to respond to this request.",
-        ru: "Я согласен на использование контактных данных для ответа на запрос.",
+        ka: "ვეთანხმები ჩემი საკონტაქტო მონაცემების გამოყენებას კონსულტაციასთან დაკავშირებით დასაკავშირებლად.",
+        en: "I agree to the use of my contact details so SafeTech can contact me about this consultation.",
+        ru: "Я согласен на использование контактных данных, чтобы SafeTech мог связаться со мной по поводу консультации.",
     });
     const inputClassName =
         "w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
@@ -76,6 +81,7 @@ export default function ConsultationForm() {
                 tabIndex={-1}
                 type="text"
             />
+            <p className="text-sm text-on-surface-variant">{requiredHint}</p>
             <div className="grid gap-unit-md sm:grid-cols-2">
                 <label className="space-y-2 font-label-md text-label-md text-on-surface-variant">
                     <span>{firstNameLabel} *</span>
@@ -83,6 +89,8 @@ export default function ConsultationForm() {
                         autoComplete="given-name"
                         autoFocus
                         className={inputClassName}
+                        maxLength={60}
+                        minLength={2}
                         name="firstName"
                         required
                         type="text"
@@ -93,6 +101,8 @@ export default function ConsultationForm() {
                     <input
                         autoComplete="family-name"
                         className={inputClassName}
+                        maxLength={60}
+                        minLength={2}
                         name="lastName"
                         required
                         type="text"
@@ -105,6 +115,8 @@ export default function ConsultationForm() {
                     autoComplete="tel"
                     className={inputClassName}
                     inputMode="tel"
+                    maxLength={24}
+                    minLength={7}
                     name="phone"
                     required
                     type="tel"
@@ -115,6 +127,7 @@ export default function ConsultationForm() {
                 <input
                     autoComplete="email"
                     className={inputClassName}
+                    maxLength={160}
                     name="email"
                     required
                     type="email"
@@ -125,6 +138,8 @@ export default function ConsultationForm() {
                 <input
                     autoComplete="street-address"
                     className={inputClassName}
+                    maxLength={255}
+                    minLength={2}
                     name="address"
                     required
                     type="text"
@@ -134,6 +149,8 @@ export default function ConsultationForm() {
                 <span>{serviceLabel} *</span>
                 <input
                     className={inputClassName}
+                    maxLength={120}
+                    minLength={2}
                     name="service"
                     required
                     type="text"
@@ -143,6 +160,8 @@ export default function ConsultationForm() {
                 <span>{detailsLabel} *</span>
                 <textarea
                     className={`${inputClassName} min-h-32 resize-y`}
+                    maxLength={3000}
+                    minLength={10}
                     name="details"
                     required
                     rows={5}

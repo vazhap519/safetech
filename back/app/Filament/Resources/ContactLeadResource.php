@@ -7,6 +7,8 @@ use App\Filament\Support\NavigationGroup;
 use App\Models\ContactLead;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -112,7 +114,10 @@ class ContactLeadResource extends Resource
             ->filters([
                 SelectFilter::make('status')->options(self::statusOptions()),
             ])
-            ->recordActions([EditAction::make()])
+            ->recordActions([
+                EditAction::make()->label('ნახვა / სტატუსი'),
+                DeleteAction::make()->label('წაშლა'),
+            ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('markContacted')
@@ -122,6 +127,7 @@ class ContactLeadResource extends Resource
                                 'status' => 'contacted',
                             ]),
                         ),
+                    DeleteBulkAction::make()->label('არჩეული მოთხოვნების წაშლა'),
                 ]),
             ]);
     }

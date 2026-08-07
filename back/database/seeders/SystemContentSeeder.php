@@ -8,6 +8,7 @@ final class SystemContentSeeder extends ContentSeeder
     {
         $this->seedSystemContent();
         $this->call(PageContentSeeder::class);
+        $this->call(ConsultationCopySeeder::class);
         $this->call(PrivacyPageSeeder::class);
         $this->call(ServiceCatalogSeeder::class);
     }

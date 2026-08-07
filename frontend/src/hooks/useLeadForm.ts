@@ -60,7 +60,7 @@ export function useLeadForm(source: string) {
         const email = String(cleanedPayload.email ?? "");
         const phone = String(cleanedPayload.phone ?? "");
 
-        if (!email && !phone) {
+        if (!email || !phone) {
             setStatus("error");
             setMessage(t("forms.validation.contact", null));
             return;

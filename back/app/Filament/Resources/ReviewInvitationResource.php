@@ -5,7 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ReviewInvitationResource\Pages;
 use App\Filament\Support\NavigationGroup;
 use App\Models\ReviewInvitation;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -23,53 +25,56 @@ class ReviewInvitationResource extends Resource
 {
     protected static ?string $model = ReviewInvitation::class;
 
-    protected static ?string $navigationLabel = 'Review invitations';
+    protected static ?string $navigationLabel = 'შეფასების მოწვევები';
 
-    protected static ?string $modelLabel = 'Review invitation';
+    protected static ?string $modelLabel = 'შეფასების მოწვევა';
 
-    protected static ?string $pluralModelLabel = 'Review invitations';
+    protected static ?string $pluralModelLabel = 'შეფასების მოწვევები';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Sales;
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Invitation')
+            Section::make('მოწვევის ინფორმაცია')
+                ->description('შექმენით ერთჯერადი პერსონალური ბმული, რომელსაც მომხმარებელს გაუგზავნით შეფასების დასატოვებლად.')
                 ->schema([
                     Select::make('project_id')
-                        ->label('Project')
+                        ->label('პროექტი')
                         ->relationship('project', 'name')
                         ->searchable()
-                        ->preload(),
+                        ->preload()
+                        ->helperText('სურვილისამებრ — აირჩიეთ პროექტი, თუ შეფასება კონკრეტულ შესრულებულ სამუშაოს ეხება.'),
                     TextInput::make('recipient_name')
-                        ->label('Recipient name')
+                        ->label('მომხმარებლის სახელი')
+                        ->required()
                         ->maxLength(255),
                     DateTimePicker::make('expires_at')
-                        ->label('Expires at')
-                        ->helperText('Leave blank when the link should not expire automatically.'),
+                        ->label('ბმულის ვადა')
+                        ->helperText('თუ ცარიელს დატოვებთ, ბმულს ავტომატური ვადა არ ექნება.'),
                     Toggle::make('is_active')
-                        ->label('Active')
+                        ->label('აქტიური')
                         ->default(true),
                 ])
                 ->columns(2),
-            Section::make('Public review link')
+            Section::make('საჯარო შეფასების ბმული')
                 ->schema([
                     TextInput::make('token')
-                        ->label('Token')
+                        ->label('უსაფრთხო კოდი')
                         ->default(fn (): string => ReviewInvitation::generateToken())
                         ->required()
                         ->unique(ignoreRecord: true)
                         ->readOnly()
-                        ->helperText('Generated automatically and kept stable so a sent link cannot change.'),
+                        ->helperText('კოდი გენერირდება ავტომატურად. შენახვის შემდეგ სრული ბმული გამოჩნდება სიის გვერდზე და შეძლებთ მის დაკოპირებას.'),
                 ]),
-            Section::make('Submission')
+            Section::make('მიღებული შეფასება')
                 ->schema([
                     TextInput::make('submitted_at')
-                        ->label('Submitted at')
+                        ->label('გამოგზავნის დრო')
                         ->disabled()
                         ->dehydrated(false),
                     TextInput::make('testimonial.author')
-                        ->label('Submitted by')
+                        ->label('ავტორი')
                         ->disabled()
                         ->dehydrated(false),
                 ])
@@ -83,37 +88,47 @@ class ReviewInvitationResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('recipient_name')
-                    ->label('Recipient')
+                    ->label('მომხმარებელი')
                     ->searchable(),
                 TextColumn::make('project.name')
-                    ->label('Project')
-                    ->searchable(),
+                    ->label('პროექტი')
+                    ->searchable()
+                    ->placeholder('—'),
                 TextColumn::make('public_url')
-                    ->label('Public review link')
+                    ->label('საჯარო შეფასების ბმული')
                     ->getStateUsing(fn (ReviewInvitation $record): string => $record->public_url)
                     ->url(fn (ReviewInvitation $record): string => $record->public_url)
                     ->openUrlInNewTab()
                     ->copyable()
-                    ->copyMessage('Public review link copied')
+                    ->copyMessage('ბმული დაკოპირდა')
                     ->wrap(),
                 IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('აქტიური')
                     ->boolean(),
                 TextColumn::make('expires_at')
-                    ->label('Expires')
+                    ->label('ვადა')
                     ->dateTime()
-                    ->placeholder('Never')
+                    ->placeholder('უვადო')
                     ->sortable(),
                 TextColumn::make('submitted_at')
-                    ->label('Submitted')
+                    ->label('შეფასება მიღებულია')
                     ->dateTime()
-                    ->placeholder('Not yet')
+                    ->placeholder('ჯერ არა')
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->recordActions([EditAction::make()])
+            ->recordActions([
+                Action::make('openPublicLink')
+                    ->label('ბმულის გახსნა')
+                    ->url(fn (ReviewInvitation $record): string => $record->public_url)
+                    ->openUrlInNewTab(),
+                EditAction::make()->label('რედაქტირება'),
+                DeleteAction::make()->label('წაშლა'),
+            ])
             ->toolbarActions([
-                BulkActionGroup::make([DeleteBulkAction::make()]),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()->label('არჩეული მოწვევების წაშლა'),
+                ]),
             ]);
     }
 

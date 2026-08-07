@@ -1,10 +1,7 @@
 import Left from "@/components/Contact/Form/Left";
 import Right from "@/components/Contact/Form/Right";
-import { getBackendContactServices } from "@/lib/backend";
 
-export default async function Form() {
-    const services = await getBackendContactServices();
-
+export default function Form() {
     return (
         <section
             id="contact-form"
@@ -30,7 +27,7 @@ export default async function Form() {
                         lg:gap-unit-xl
                     "
                 >
-                    <Left services={services} />
+                    <Left />
                     <Right />
                 </div>
             </div>

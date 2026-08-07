@@ -1,146 +1,31 @@
 "use client";
 
-import { useState } from "react";
-
-import PrivacyConsent from "@/components/forms/PrivacyConsent";
+import ConsultationTrigger from "@/components/consultation/ConsultationTrigger";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
-import Button from "@/components/ui/Button";
-import { Input, Select, Textarea } from "@/components/ui/Input";
 import Typography from "@/components/ui/Typography";
-import { useLeadForm } from "@/hooks/useLeadForm";
-import type { ContactServiceOption, LeadFormField } from "@/lib/lead-form";
 
-type LeftProps = {
-    services: ContactServiceOption[];
-};
-
-type DynamicFieldProps = {
-    field: LeadFormField;
-};
-
-function DynamicField({ field }: DynamicFieldProps) {
-    const inputName = `details__${field.key}`;
-    const inputId = `details-${field.key}`;
-
-    return (
-        <div className={field.type === "textarea" ? "md:col-span-2" : undefined}>
-            <input
-                name={`details_label__${field.key}`}
-                readOnly
-                type="hidden"
-                value={field.label}
-            />
-            <input
-                name={`details_type__${field.key}`}
-                readOnly
-                type="hidden"
-                value={field.type}
-            />
-
-            {field.type === "select" ? (
-                <Select
-                    id={inputId}
-                    label={field.label}
-                    name={inputName}
-                    options={field.options}
-                    placeholder={field.placeholder}
-                    required={field.required}
-                />
-            ) : field.type === "textarea" ? (
-                <Textarea
-                    id={inputId}
-                    label={field.label}
-                    name={inputName}
-                    required={field.required}
-                    rows={4}
-                />
-            ) : field.type === "checkbox" ? (
-                <label
-                    className="flex min-h-12 items-center gap-3 rounded-xl border border-outline-variant/30 bg-surface-container-low/40 px-4 py-3 text-sm text-on-surface"
-                    htmlFor={inputId}
-                >
-                    <input
-                        className="size-5 accent-primary"
-                        defaultChecked={Boolean(field.defaultValue)}
-                        id={inputId}
-                        name={inputName}
-                        required={field.required}
-                        type="checkbox"
-                        value="yes"
-                    />
-                    <span>{field.label}</span>
-                </label>
-            ) : (
-                <Input
-                    defaultValue={
-                        typeof field.defaultValue === "boolean"
-                            ? undefined
-                            : field.defaultValue
-                    }
-                    id={inputId}
-                    label={field.label}
-                    max={field.max}
-                    min={field.min}
-                    name={inputName}
-                    required={field.required}
-                    step={field.step}
-                    type={field.type === "number" ? "number" : "text"}
-                />
-            )}
-            {field.help ? (
-                <p className="mt-2 text-xs text-on-surface-variant">
-                    {field.help}
-                </p>
-            ) : null}
-        </div>
-    );
-}
-
-export default function Left({ services }: LeftProps) {
-    const { status, message, submit } = useLeadForm("contact-page");
+export default function Left() {
     const { t } = useLocalization();
-    const [selectedServiceSlug, setSelectedServiceSlug] = useState(
-        services[0]?.slug ?? "",
-    );
-    const selectedService =
-        services.find((service) => service.slug === selectedServiceSlug) ??
-        services[0] ??
-        null;
-
-    const title = t("contact.form.title", null);
-    const chooseText = t("forms.choose", null);
-    const fullNameLabel = t("forms.fullName", null);
-    const companyLabel = t("forms.company", null);
-    const phoneLabel = t("forms.phoneNumber", null);
-    const emailLabel = t("forms.email", null);
-    const addressLabel = t("forms.address", {
-        ka: "ქალაქი / მომსახურების მისამართი",
-        en: "City / service address",
-        ru: "Город / адрес оказания услуги",
+    const title = t("contact.form.title", {
+        ka: "მიიღეთ ტექნიკური კონსულტაცია",
+        en: "Get a technical consultation",
+        ru: "Получите техническую консультацию",
     });
-    const serviceLabel = t("forms.service", null);
-    const messageLabel = t("forms.message", null);
-    const generalInquiry = t("forms.generalInquiry", null);
-    const submittingLabel = t("forms.submitting", null);
-    const sendLabel = t("forms.send", null);
-    const privacyLabel = t("forms.privacy", null);
-    const requiredHint = t("forms.requiredHint", {
-        ka: "* ნიშნით მონიშნული ველები სავალდებულოა.",
-        en: "Fields marked with * are required.",
-        ru: "Поля, отмеченные *, обязательны.",
+    const description = t("contact.intro.paragraph.0", {
+        ka: "მოკლედ აღწერეთ ობიექტი, პრობლემა ან სასურველი სისტემა. საჭიროების შემთხვევაში დაგისვამთ დამაზუსტებელ კითხვებს.",
+        en: "Briefly describe the property, issue, or desired system. We will ask follow-up questions when needed.",
+        ru: "Кратко опишите объект, проблему или желаемую систему. При необходимости зададим уточняющие вопросы.",
     });
-
-    if (
-        !fullNameLabel ||
-        !phoneLabel ||
-        !emailLabel ||
-        !messageLabel ||
-        !sendLabel ||
-        !privacyLabel ||
-        (services.length > 0 && !serviceLabel)
-    ) {
-        return null;
-    }
+    const note = t("consultation.cta.note", {
+        ka: "კონსულტაციის ფორმა ერთ ფანჯარაში გაიხსნება. შეავსეთ ყველა სავალდებულო ველი და ჩვენ დაგიკავშირდებით.",
+        en: "The consultation form opens in one window. Complete all required fields and we will contact you.",
+        ru: "Форма консультации откроется в одном окне. Заполните все обязательные поля, и мы свяжемся с вами.",
+    });
+    const ctaLabel = t("home.cta.submit", {
+        ka: "კონსულტაციის მიღება",
+        en: "Get consultation",
+        ru: "Получить консультацию",
+    });
 
     return (
         <div className="glass-panel relative overflow-hidden rounded-2xl p-unit-md sm:p-unit-lg lg:col-span-7">
@@ -150,173 +35,28 @@ export default function Left({ services }: LeftProps) {
             />
 
             {title ? (
-                <Typography as="h3" className="mb-unit-lg" variant="section-title">
+                <Typography as="h3" className="mb-unit-md" variant="section-title">
                     {title}
                 </Typography>
             ) : null}
 
-            <form className="space-y-unit-lg" onSubmit={submit}>
-                <input
-                    aria-hidden="true"
-                    autoComplete="off"
-                    className="sr-only"
-                    name="website"
-                    tabIndex={-1}
-                    type="text"
-                />
-
-                <p className="text-sm text-on-surface-variant">{requiredHint}</p>
-
-                <div className="grid gap-unit-md md:grid-cols-2">
-                    <Input
-                        autoComplete="name"
-                        id="name"
-                        label={`${fullNameLabel} *`}
-                        name="name"
-                        required
-                        type="text"
-                    />
-
-                    <Input
-                        id="company"
-                        label={companyLabel}
-                        name="company"
-                        type="text"
-                    />
-                </div>
-
-                <div className="grid gap-unit-md md:grid-cols-2">
-                    <Input
-                        autoComplete="tel"
-                        id="phone"
-                        label={`${phoneLabel} *`}
-                        name="phone"
-                        required
-                        type="tel"
-                    />
-
-                    <Input
-                        autoComplete="email"
-                        id="email"
-                        label={`${emailLabel} *`}
-                        name="email"
-                        required
-                        type="email"
-                    />
-                </div>
-
-                <Input
-                    autoComplete="street-address"
-                    id="address"
-                    label={`${addressLabel} *`}
-                    name="address"
-                    required
-                    type="text"
-                />
-
-                <div className="space-y-unit-md">
-                    {services.length ? (
-                        <>
-                            <Select
-                                id="service"
-                                label={`${serviceLabel} *`}
-                                name="service_slug"
-                                onChange={(event) =>
-                                    setSelectedServiceSlug(event.target.value)
-                                }
-                                options={services.map((service) => ({
-                                    value: service.slug,
-                                    label: service.label,
-                                }))}
-                                required
-                                value={selectedService?.slug ?? ""}
-                            />
-                            {selectedService ? (
-                                <input
-                                    name="service"
-                                    readOnly
-                                    type="hidden"
-                                    value={selectedService.label}
-                                />
-                            ) : null}
-                        </>
-                    ) : generalInquiry ? (
-                        <p className="rounded-2xl border border-dashed border-outline-variant/30 bg-surface-container-low/30 px-4 py-3 text-sm text-on-surface-variant">
-                            {generalInquiry}
-                        </p>
-                    ) : null}
-                </div>
-
-                {selectedService ? (
-                    <div
-                        className="grid gap-unit-md md:grid-cols-2"
-                        key={selectedService.slug}
-                    >
-                        {selectedService.leadForm.projectSizeOptions.length ? (
-                            <Select
-                                id="project-size"
-                                label={`${selectedService.leadForm.projectSizeLabel} *`}
-                                name="project-size"
-                                options={selectedService.leadForm.projectSizeOptions.map(
-                                    (option) => ({
-                                        value: option.label,
-                                        label: option.label,
-                                    }),
-                                )}
-                                placeholder={chooseText}
-                                required
-                            />
-                        ) : null}
-
-                        {selectedService.leadForm.propertyTypeOptions.length ? (
-                            <Select
-                                id="property-type"
-                                label={`${selectedService.leadForm.propertyTypeLabel} *`}
-                                name="property-type"
-                                options={selectedService.leadForm.propertyTypeOptions.map(
-                                    (option) => ({
-                                        value: option.label,
-                                        label: option.label,
-                                    }),
-                                )}
-                                placeholder={chooseText}
-                                required
-                            />
-                        ) : null}
-
-                        {selectedService.leadForm.extraFields.map((field) => (
-                            <DynamicField field={field} key={field.key} />
-                        ))}
-                    </div>
-                ) : null}
-
-                <Textarea
-                    id="message"
-                    label={`${messageLabel} *`}
-                    name="message"
-                    required
-                    rows={5}
-                />
-
-                <PrivacyConsent label={privacyLabel} />
-
-                <Button
-                    disabled={status === "submitting"}
-                    fullWidth
-                    size="lg"
-                    type="submit"
-                    variant="primary"
-                >
-                    {status === "submitting" ? submittingLabel || sendLabel : sendLabel}
-                </Button>
-                <p
-                    aria-live="polite"
-                    className={status === "error" ? "text-error" : "text-success"}
-                    role="status"
-                >
-                    {message}
+            {description ? (
+                <p className="max-w-2xl leading-relaxed text-on-surface-variant">
+                    {description}
                 </p>
-            </form>
+            ) : null}
+
+            {note ? (
+                <p className="mt-unit-md rounded-2xl border border-outline-variant/30 bg-surface-container-low/40 px-4 py-3 text-sm leading-relaxed text-on-surface-variant">
+                    {note}
+                </p>
+            ) : null}
+
+            {ctaLabel ? (
+                <ConsultationTrigger className="mt-unit-lg inline-flex min-h-12 items-center justify-center rounded-xl bg-primary-container px-6 py-3 font-semibold text-on-primary-container shadow-lg shadow-blue-500/20 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface">
+                    {ctaLabel}
+                </ConsultationTrigger>
+            ) : null}
         </div>
     );
 }
