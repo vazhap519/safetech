@@ -1,0 +1,48 @@
+name: Temporary CommonMark security update
+
+on:
+  push:
+    branches:
+      - fix/filament-admin-500
+    paths:
+      - ".github/workflows/update-commonmark-temp.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/filament-admin-500
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, pdo_sqlite, sqlite3, gd, exif
+          coverage: none
+          tools: composer:v2
+
+      - name: Update CommonMark to a patched release
+        run: composer update league/commonmark --with-all-dependencies --no-interaction --prefer-dist --no-progress
+
+      - name: Verify security audit
+        run: composer audit --locked --no-interaction
+
+      - name: Commit updated lockfile
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add back/composer.lock
+          git diff --cached --quiet && exit 0
+          git commit -m "Update CommonMark to patched release"
+          git push origin HEAD:fix/filament-admin-500
