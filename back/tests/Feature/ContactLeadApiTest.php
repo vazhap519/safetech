@@ -28,19 +28,21 @@ class ContactLeadApiTest extends TestCase
         Event::fake([LeadCreated::class]);
 
         $response = $this->postJson('/api/contact-leads', [
-            'firstName' => 'გიორგი',
-            'lastName' => 'მაისურაძე',
+            'name' => 'გიორგი მაისურაძე',
             'phone' => '+995599123456',
             'email' => 'giorgi@example.com',
+            'address' => 'თბილისი, საბურთალო',
+            'service' => 'ქსელის მოწყობა',
             'message' => 'მაინტერესებს ქსელის მოწყობა.',
-            'source' => 'contact-page',
+            'source' => 'home-cta',
             'privacy' => '1',
         ]);
 
         $response->assertCreated()->assertJsonPath('data.status', 'new');
         $this->assertDatabaseHas('contact_leads', [
             'email' => 'giorgi@example.com',
-            'source' => 'contact-page',
+            'address' => 'თბილისი, საბურთალო',
+            'source' => 'home-cta',
         ]);
         Event::assertDispatched(LeadCreated::class);
     }
@@ -61,10 +63,13 @@ class ContactLeadApiTest extends TestCase
         $response = $this->postJson('/api/contact-leads', [
             'name' => 'ნიკა ჯაფარიძე',
             'phone' => '+995555123456',
+            'email' => 'nika@example.com',
+            'address' => 'თბილისი, ვაკე',
             'service' => 'ქსელური ინფრასტრუქტურა',
             'service_slug' => 'networking',
             'project_size' => 'საშუალო ობიექტი',
             'property_type' => 'სასტუმრო',
+            'message' => 'საჭიროა ქსელის სრული მოწყობა.',
             'details' => [
                 [
                     'key' => 'router_count',
@@ -88,19 +93,28 @@ class ContactLeadApiTest extends TestCase
         $lead = ContactLead::query()->latest('id')->firstOrFail();
 
         $this->assertSame('networking', $lead->service_slug);
+        $this->assertSame('თბილისი, ვაკე', $lead->address);
         $this->assertCount(2, $lead->details ?? []);
         $this->assertSame('როუტერების რაოდენობა', $lead->details[0]['label']);
         $this->assertSame('4', $lead->details[0]['value']);
     }
 
-    public function test_it_rejects_an_invalid_request(): void
+    public function test_it_rejects_an_incomplete_request(): void
     {
         $this->postJson('/api/contact-leads', [
             'email' => 'invalid',
-            'source' => 'contact-page',
+            'source' => 'home-cta',
         ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['email', 'privacy']);
+            ->assertJsonValidationErrors([
+                'name',
+                'phone',
+                'email',
+                'address',
+                'service',
+                'message',
+                'privacy',
+            ]);
     }
 
     public function test_it_localizes_responses_and_limits_dynamic_details(): void
@@ -108,7 +122,12 @@ class ContactLeadApiTest extends TestCase
         Event::fake([LeadCreated::class]);
 
         $this->postJson('/api/contact-leads', [
+            'name' => 'English Customer',
+            'phone' => '+995555111222',
             'email' => 'english@example.com',
+            'address' => 'Tbilisi',
+            'service' => 'IT support',
+            'message' => 'I need on-site IT support.',
             'locale' => 'en',
             'source' => 'home-cta',
             'privacy' => true,
@@ -123,10 +142,15 @@ class ContactLeadApiTest extends TestCase
         ])->all();
 
         $this->postJson('/api/contact-leads', [
+            'name' => 'Русский клиент',
+            'phone' => '+995555333444',
             'email' => 'russian@example.com',
+            'address' => 'Тбилиси',
+            'service' => 'ИТ поддержка',
+            'message' => 'Нужна помощь специалиста.',
             'locale' => 'ru',
             'details' => $details,
-            'source' => 'contact-page',
+            'source' => 'home-cta',
             'privacy' => true,
         ])->assertUnprocessable()
             ->assertJsonPath('errors.details.0', 'Отправлено слишком много дополнительных полей.');
