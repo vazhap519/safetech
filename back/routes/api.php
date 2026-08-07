@@ -13,12 +13,27 @@ use App\Http\Controllers\Api\ServiceCategoryController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Support\DeploymentInfo;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn (): array => [
-    'status' => 'ok',
-    'commit' => DeploymentInfo::commit(),
-]);
+Route::get('/health', function (): JsonResponse {
+    try {
+        DB::connection()->getPdo();
+    } catch (Throwable) {
+        return response()->json([
+            'status' => 'unavailable',
+            'commit' => DeploymentInfo::commit(),
+            'database' => 'unavailable',
+        ], 503);
+    }
+
+    return response()->json([
+        'status' => 'ok',
+        'commit' => DeploymentInfo::commit(),
+        'database' => 'ok',
+    ]);
+});
 
 Route::post('/contact-leads', ContactLeadController::class)
     ->middleware('throttle:contact-leads')
