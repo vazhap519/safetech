@@ -103,6 +103,16 @@ jobs:
           npm install --no-save --package-lock=false @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
+      - name: Add CI-only runtime error probe
+        working-directory: frontend
+        run: |
+          mkdir -p src/app/__qa-error
+          cat > src/app/__qa-error/page.tsx <<'EOF'
+          export default function QaRuntimeErrorProbe() {
+              throw new Error("Intentional release-candidate runtime error probe.");
+          }
+          EOF
+
       - name: Build frontend against seeded API
         working-directory: frontend
         run: npm run build -- --webpack
@@ -126,6 +136,7 @@ jobs:
         run: npx playwright test
 
       - name: Verify CMS cache invalidation end to end
+        if: always()
         run: |
           curl --fail --silent http://127.0.0.1:3000/services > /tmp/services-before.html
           if grep -q 'qa-cache-service' /tmp/services-before.html; then
