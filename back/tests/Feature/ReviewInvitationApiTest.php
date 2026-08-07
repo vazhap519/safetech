@@ -53,6 +53,7 @@ class ReviewInvitationApiTest extends TestCase
             'role' => 'Operations manager',
             'quote' => 'The installation was organised, clear, and completed on schedule.',
             'consent' => true,
+            'locale' => 'en',
             'website' => '',
         ];
 
@@ -115,13 +116,29 @@ class ReviewInvitationApiTest extends TestCase
             'author' => '',
             'quote' => '',
             'consent' => false,
+            'locale' => 'ka',
         ])->assertUnprocessable()
-            ->assertJsonValidationErrors(['author', 'quote', 'consent']);
+            ->assertJsonValidationErrors(['author', 'quote', 'consent'])
+            ->assertJsonPath('errors.author.0', 'მიუთითეთ თქვენი სახელი.')
+            ->assertJsonPath('errors.quote.0', 'დაწერეთ თქვენი შეფასება.')
+            ->assertJsonPath('errors.consent.0', 'შეფასების გაგზავნამდე თანხმობა აუცილებელია.');
 
         $this->assertSame(0, Testimonial::query()->count());
         $this->assertNull(
             ReviewInvitation::query()->where('token', 'validation-review-token')->value('submitted_at'),
         );
+    }
+
+    public function test_submission_success_message_is_localized(): void
+    {
+        ReviewInvitation::query()->create(['token' => 'russian-review-token']);
+
+        $payload = $this->validPayload();
+        $payload['locale'] = 'ru';
+
+        $this->postJson('/api/review-invitations/russian-review-token/submit', $payload)
+            ->assertCreated()
+            ->assertJsonPath('message', 'Спасибо. Ваш отзыв отправлен на проверку.');
     }
 
     /** @return array<string, mixed> */
