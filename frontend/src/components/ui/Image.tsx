@@ -10,8 +10,7 @@ type ImageProps = {
         | "contact-intro"
         | "avatar"
         | "full"
-        | "contact-support"
-        | "Service-showCase";
+        | "contact-support";
     fallbackSrc?: string;
     className?: string;
 } & NextImageProps;
@@ -68,8 +67,6 @@ export default function Image({
                 variant === "full" && "w-full h-full",
                 variant === "contact-support" &&
                     "w-full h-full object-cover rounded-2xl shadow-2xl border border-outline-variant/20",
-                variant === "Service-showCase" &&
-                    "w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105",
                 className,
             )}
             fetchPriority={
