@@ -8,9 +8,20 @@ import {
 
 import { CONSULTATION_POPOVER_ID } from "@/components/consultation/constants";
 
-type ConsultationFormComponent = ComponentType;
+type ServiceOption = {
+    slug: string;
+    label: string;
+};
 
-export default function ConsultationFormSlot() {
+type ConsultationFormComponent = ComponentType<{
+    serviceOptions: ServiceOption[];
+}>;
+
+export default function ConsultationFormSlot({
+    serviceOptions,
+}: {
+    serviceOptions: ServiceOption[];
+}) {
     const [Form, setForm] = useState<ConsultationFormComponent | null>(null);
 
     useEffect(() => {
@@ -53,7 +64,7 @@ export default function ConsultationFormSlot() {
     }, [Form]);
 
     return Form ? (
-        <Form />
+        <Form serviceOptions={serviceOptions} />
     ) : (
         <div
             aria-hidden="true"
