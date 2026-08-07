@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Domain\Content\Contracts\ServiceRepository;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ServiceOptionResource;
 use App\Http\Resources\ServiceResource;
+use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -16,6 +18,15 @@ final class ServiceController extends Controller
         $category = $request->string('category')->toString() ?: null;
 
         return ServiceResource::collection($repository->allPublished($category));
+    }
+
+    public function options(): AnonymousResourceCollection
+    {
+        $services = Service::query()
+            ->publiclyVisible()
+            ->get(['id', 'slug', 'name', 'title', 'translations', 'sort_order']);
+
+        return ServiceOptionResource::collection($services);
     }
 
     public function show(string $slug, ServiceRepository $repository): ServiceResource|JsonResponse
