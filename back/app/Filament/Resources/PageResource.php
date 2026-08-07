@@ -27,11 +27,11 @@ class PageResource extends Resource
 {
     protected static ?string $model = Page::class;
 
-    protected static ?string $navigationLabel = 'Dynamic pages';
+    protected static ?string $navigationLabel = 'დამატებითი გვერდები';
 
-    protected static ?string $modelLabel = 'Page';
+    protected static ?string $modelLabel = 'დამატებითი გვერდი';
 
-    protected static ?string $pluralModelLabel = 'Dynamic pages';
+    protected static ?string $pluralModelLabel = 'დამატებითი გვერდები';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Pages;
 
