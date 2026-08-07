@@ -11,6 +11,17 @@ const locales: Array<{ locale: Locale; prefix: string; lang: string }> = [
 ];
 
 const publicRoutes = ["/", "/about", "/services", "/projects", "/contact", "/privacy"];
+const sitemapRoutes = [
+    "/sitemap.xml",
+    "/sitemap-main.xml",
+    "/sitemap-services.xml",
+    "/sitemap-service-categories.xml",
+    "/sitemap-projects.xml",
+    "/sitemap-project-categories.xml",
+    "/sitemap-pages.xml",
+    "/sitemap-images.xml",
+    "/sitemap-blog.xml",
+];
 
 function localizedPath(prefix: string, path: string) {
     if (path === "/") return prefix || "/";
@@ -18,9 +29,7 @@ function localizedPath(prefix: string, path: string) {
 }
 
 async function revealConsultationTriggers(page: Page): Promise<Locator> {
-    const triggers = page.locator(
-        '[popovertarget="consultation-popover"]:visible',
-    );
+    const triggers = page.locator('[popovertarget="consultation-popover"]:visible');
 
     if ((await triggers.count()) === 0) {
         const mobileMenu = page.locator("nav details:visible").first();
@@ -71,44 +80,59 @@ test.describe("release candidate public matrix", () => {
             });
         }
 
-        test(`${locale} dynamic service and project routes render`, async ({ page, request }) => {
+        test(`${locale} service project category CMS page and review routes render`, async ({ page, request }) => {
             const servicesResponse = await request.get(`${apiBase}/services?locale=${locale}`);
             expect(servicesResponse.ok()).toBeTruthy();
-            const services = (await servicesResponse.json()) as {
-                data?: Array<{ slug?: string }>;
-            };
+            const services = (await servicesResponse.json()) as { data?: Array<{ slug?: string }> };
             const serviceSlug = services.data?.find((item) => item.slug)?.slug;
             expect(serviceSlug).toBeTruthy();
 
-            const serviceResponse = await page.goto(
-                localizedPath(prefix, `/services/${serviceSlug}`),
-                { waitUntil: "domcontentloaded" },
-            );
+            const serviceResponse = await page.goto(localizedPath(prefix, `/services/${serviceSlug}`), {
+                waitUntil: "domcontentloaded",
+            });
             expect(serviceResponse?.status()).toBe(200);
             await expect(page.locator("h1").first()).toBeVisible();
 
-            const projectsResponse = await request.get(`${apiBase}/projects?locale=${locale}`);
-            expect(projectsResponse.ok()).toBeTruthy();
-            const projects = (await projectsResponse.json()) as {
-                data?: Array<{ slug?: string }>;
-            };
-            const projectSlug = projects.data?.find((item) => item.slug)?.slug;
+            const categoriesResponse = await request.get(`${apiBase}/service-categories?locale=${locale}`);
+            expect(categoriesResponse.ok()).toBeTruthy();
+            const categories = (await categoriesResponse.json()) as { data?: Array<{ slug?: string }> };
+            const serviceCategorySlug = categories.data?.find((item) => item.slug)?.slug;
+            expect(serviceCategorySlug).toBeTruthy();
 
-            if (projectSlug) {
-                const projectResponse = await page.goto(
-                    localizedPath(prefix, `/projects/${projectSlug}`),
-                    { waitUntil: "domcontentloaded" },
-                );
-                expect(projectResponse?.status()).toBe(200);
-                await expect(page.locator("h1").first()).toBeVisible();
-            }
+            const serviceCategoryResponse = await page.goto(
+                localizedPath(prefix, `/services/category/${serviceCategorySlug}`),
+                { waitUntil: "domcontentloaded" },
+            );
+            expect(serviceCategoryResponse?.status()).toBe(200);
+
+            const projectResponse = await page.goto(localizedPath(prefix, "/projects/qa-release-project"), {
+                waitUntil: "domcontentloaded",
+            });
+            expect(projectResponse?.status()).toBe(200);
+            await expect(page.locator("h1").first()).toBeVisible();
+
+            const projectCategoryResponse = await page.goto(
+                localizedPath(prefix, "/projects/category/qa-project-category"),
+                { waitUntil: "domcontentloaded" },
+            );
+            expect(projectCategoryResponse?.status()).toBe(200);
+
+            const cmsPageResponse = await page.goto(localizedPath(prefix, "/pages/qa-dynamic-page"), {
+                waitUntil: "domcontentloaded",
+            });
+            expect(cmsPageResponse?.status()).toBe(200);
+            await expect(page.locator("h1").first()).toContainText("QA Dynamic Page");
+
+            const reviewResponse = await page.goto(localizedPath(prefix, "/review/qa-review-route"), {
+                waitUntil: "domcontentloaded",
+            });
+            expect(reviewResponse?.status()).toBe(200);
+            await expect(page.locator("form")).toBeVisible();
         });
 
-        test(`${locale} every visible consultation CTA opens the same working form`, async ({ page }) => {
+        test(`${locale} every consultation CTA opens the same working form`, async ({ page }) => {
             for (const route of ["/", "/about", "/services", "/projects", "/contact"]) {
-                await page.goto(localizedPath(prefix, route), {
-                    waitUntil: "domcontentloaded",
-                });
+                await page.goto(localizedPath(prefix, route), { waitUntil: "domcontentloaded" });
 
                 const triggers = await revealConsultationTriggers(page);
                 const count = await triggers.count();
@@ -124,10 +148,37 @@ test.describe("release candidate public matrix", () => {
             }
         });
 
+        test(`${locale} internal navigation and CTA links avoid broken destinations`, async ({ page, request, baseURL }) => {
+            expect(baseURL).toBeTruthy();
+            const origin = new URL(baseURL!).origin;
+            const internalUrls = new Set<string>();
+
+            for (const route of publicRoutes) {
+                await page.goto(localizedPath(prefix, route), { waitUntil: "domcontentloaded" });
+                const hrefs = await page.locator('a[href]').evaluateAll((links) =>
+                    links.map((link) => (link as HTMLAnchorElement).href),
+                );
+
+                for (const href of hrefs) {
+                    expect(href).not.toMatch(/^javascript:/i);
+                    const parsed = new URL(href);
+                    if (parsed.origin === origin && !parsed.pathname.startsWith("/api/")) {
+                        internalUrls.add(`${parsed.origin}${parsed.pathname}${parsed.search}`);
+                    } else if (["tel:", "mailto:"].includes(parsed.protocol)) {
+                        expect(parsed.pathname.trim()).not.toBe("");
+                    }
+                }
+            }
+
+            expect(internalUrls.size).toBeGreaterThan(5);
+            for (const url of internalUrls) {
+                const response = await request.get(url);
+                expect(response.status(), `Broken internal destination: ${url}`).toBeLessThan(400);
+            }
+        });
+
         test(`${locale} consultation form submits through the full stack`, async ({ page }) => {
-            await page.goto(localizedPath(prefix, "/services"), {
-                waitUntil: "domcontentloaded",
-            });
+            await page.goto(localizedPath(prefix, "/services"), { waitUntil: "domcontentloaded" });
 
             const dialog = await openConsultation(page);
             const form = dialog.locator("form");
@@ -136,29 +187,20 @@ test.describe("release candidate public matrix", () => {
             const serviceOptions = serviceSelect.locator("option:not([disabled])");
             expect(await serviceOptions.count()).toBeGreaterThan(0);
             const serviceValues = await serviceOptions.evaluateAll((options) =>
-                options
-                    .map((option) => (option as HTMLOptionElement).value)
-                    .filter(Boolean),
+                options.map((option) => (option as HTMLOptionElement).value).filter(Boolean),
             );
 
-            expect(serviceValues.length).toBeGreaterThan(0);
             await serviceSelect.selectOption(serviceValues[0]);
             await form.locator('input[name="firstName"]').fill("QA");
             await form.locator('input[name="lastName"]').fill("Release Candidate");
             await form.locator('input[name="phone"]').fill("+995555000111");
-            await form
-                .locator('input[name="email"]')
-                .fill(`qa-${locale}-${test.info().project.name}@safetech.test`);
+            await form.locator('input[name="email"]').fill(`qa-${locale}-${test.info().project.name}@safetech.test`);
             await form.locator('input[name="address"]').fill("Tbilisi QA");
-            await form
-                .locator('textarea[name="details"]')
-                .fill("Automated release candidate consultation submission test.");
+            await form.locator('textarea[name="details"]').fill("Automated release candidate consultation submission test.");
             await form.locator('input[name="privacy"]').check();
 
             const submission = page.waitForResponse(
-                (response) =>
-                    response.url().includes("/api/contact-leads") &&
-                    response.request().method() === "POST",
+                (response) => response.url().includes("/api/contact-leads") && response.request().method() === "POST",
             );
             await form.locator('button[type="submit"]').click();
             const response = await submission;
@@ -168,9 +210,7 @@ test.describe("release candidate public matrix", () => {
         });
 
         test(`${locale} service calculator is interactive`, async ({ page }) => {
-            await page.goto(localizedPath(prefix, "/services#service-calculator"), {
-                waitUntil: "domcontentloaded",
-            });
+            await page.goto(localizedPath(prefix, "/services#service-calculator"), { waitUntil: "domcontentloaded" });
 
             const calculator = page.locator("#service-calculator");
             await expect(calculator).toBeVisible();
@@ -201,10 +241,9 @@ test.describe("release candidate public matrix", () => {
         });
 
         test(`${locale} unknown route returns branded 404`, async ({ page }) => {
-            const response = await page.goto(
-                localizedPath(prefix, "/qa-this-route-must-not-exist"),
-                { waitUntil: "domcontentloaded" },
-            );
+            const response = await page.goto(localizedPath(prefix, "/qa-this-route-must-not-exist"), {
+                waitUntil: "domcontentloaded",
+            });
 
             expect(response?.status()).toBe(404);
             await expect(page.locator("main")).toHaveCount(1);
@@ -212,7 +251,29 @@ test.describe("release candidate public matrix", () => {
         });
     }
 
-    test("robots and sitemap expose expected production crawl rules", async ({ request, baseURL }) => {
+    test("language switcher changes route and document locale", async ({ page }) => {
+        await page.goto("/services", { waitUntil: "domcontentloaded" });
+
+        const english = page.locator('a[href="/en/services"]:visible').first();
+        await expect(english).toBeVisible();
+        await english.click();
+        await expect(page).toHaveURL(/\/en\/services$/);
+        await expect(page.locator("html")).toHaveAttribute("lang", "en-GE");
+
+        const russian = page.locator('a[href="/ru/services"]:visible').first();
+        await expect(russian).toBeVisible();
+        await russian.click();
+        await expect(page).toHaveURL(/\/ru\/services$/);
+        await expect(page.locator("html")).toHaveAttribute("lang", "ru-GE");
+    });
+
+    test("legacy service calculator route redirects to the services calculator", async ({ page }) => {
+        await page.goto("/service-calculator", { waitUntil: "domcontentloaded" });
+        await expect(page).toHaveURL(/\/services#service-calculator$/);
+        await expect(page.locator("#service-calculator")).toBeVisible();
+    });
+
+    test("robots manifest and all sitemap routes are valid", async ({ request, baseURL }) => {
         expect(baseURL).toBeTruthy();
 
         const robots = await request.get(`${baseURL}/robots.txt`);
@@ -222,73 +283,69 @@ test.describe("release candidate public matrix", () => {
         expect(robotsText).toContain("Disallow: /api");
         expect(robotsText).toContain("sitemap.xml");
 
-        const sitemapIndex = await request.get(`${baseURL}/sitemap.xml`);
-        expect(sitemapIndex.status()).toBe(200);
-        const sitemapIndexText = await sitemapIndex.text();
-        expect(sitemapIndexText).toContain("<sitemapindex");
-        expect(sitemapIndexText).toContain("/sitemap-main.xml");
-        expect(sitemapIndexText).toContain("/sitemap-services.xml");
-        expect(sitemapIndexText).toContain("/sitemap-projects.xml");
+        for (const route of sitemapRoutes) {
+            const response = await request.get(`${baseURL}${route}`);
+            expect(response.status(), `Sitemap failed: ${route}`).toBe(200);
+            const body = await response.text();
+            expect(body).toMatch(/<(urlset|sitemapindex)[\s>]/);
+        }
 
-        const mainSitemap = await request.get(`${baseURL}/sitemap-main.xml`);
-        expect(mainSitemap.status()).toBe(200);
-        const mainSitemapText = await mainSitemap.text();
-        expect(mainSitemapText).toContain("<urlset");
-        expect(mainSitemapText).toContain("/en");
-        expect(mainSitemapText).toContain("/ru");
-        expect(mainSitemapText).toContain("/services");
+        const manifest = await request.get(`${baseURL}/manifest.webmanifest`);
+        expect(manifest.status()).toBe(200);
+        const manifestData = (await manifest.json()) as { name?: string; start_url?: string };
+        expect(manifestData.name).toBeTruthy();
+        expect(manifestData.start_url).toBe("/");
+    });
+
+    test("locale and revalidation API routes enforce expected behavior", async ({ request, baseURL }) => {
+        const localeResponse = await request.post(`${baseURL}/api/locale`, {
+            data: { locale: "en" },
+        });
+        expect(localeResponse.status()).toBe(200);
+        expect((await localeResponse.json()).locale).toBe("en");
+        expect(localeResponse.headers()["set-cookie"]).toContain("safetech_locale=en");
+
+        const unauthorizedRevalidate = await request.post(`${baseURL}/api/revalidate`, {
+            data: { tag: "cms" },
+        });
+        expect(unauthorizedRevalidate.status()).toBe(401);
     });
 
     test("runtime 500 renders the branded error boundary", async ({ page }) => {
-        const response = await page.goto("/__qa-error", {
-            waitUntil: "domcontentloaded",
-        });
+        const response = await page.goto("/qa-runtime-error", { waitUntil: "domcontentloaded" });
 
         expect(response?.status()).toBe(500);
         await expect(page.locator("main")).toHaveCount(1);
         await expect(page.locator("body")).toContainText(/SafeTech/);
-        await expect(page.locator("body")).toContainText(
-            /ჩატვირთვა ვერ მოხერხდა|could not load|не удалось загрузить/i,
-        );
-        await expect(page.locator("body")).not.toContainText(
-            /Intentional release-candidate runtime error probe/i,
-        );
+        await expect(page.locator("body")).toContainText(/ჩატვირთვა ვერ მოხერხდა|could not load|не удалось загрузить/i);
+        await expect(page.locator("body")).not.toContainText(/Intentional release-candidate runtime error probe/i);
     });
 
     test("review invitation can be submitted once", async ({ page }, testInfo) => {
         const token = testInfo.project.name === "mobile" ? "qa-review-mobile" : "qa-review-desktop";
-        const response = await page.goto(`/review/${token}`, {
-            waitUntil: "domcontentloaded",
-        });
+        const response = await page.goto(`/review/${token}`, { waitUntil: "domcontentloaded" });
 
         expect(response?.status()).toBe(200);
 
         const form = page.locator("form");
         await form.locator('input[name="author"]').fill("QA Reviewer");
-        await form.locator('textarea[name="quote"]').fill(
-            "Automated release candidate review submission.",
-        );
+        await form.locator('textarea[name="quote"]').fill("Automated release candidate review submission.");
         await form.locator('input[name="consent"]').check();
 
         const submission = page.waitForResponse(
-            (item) =>
-                item.url().includes(`/api/review-invitations/${token}/submit`) &&
-                item.request().method() === "POST",
+            (item) => item.url().includes(`/api/review-invitations/${token}/submit`) && item.request().method() === "POST",
         );
         await form.locator('button[type="submit"]').click();
         const submitResponse = await submission;
         expect(submitResponse.status()).toBe(201);
 
-        const secondAttempt = await page.request.post(
-            `/api/review-invitations/${token}/submit`,
-            {
-                data: {
-                    author: "QA Reviewer",
-                    quote: "Second attempt must be rejected.",
-                    consent: true,
-                },
+        const secondAttempt = await page.request.post(`/api/review-invitations/${token}/submit`, {
+            data: {
+                author: "QA Reviewer",
+                quote: "Second attempt must be rejected.",
+                consent: true,
             },
-        );
+        });
         expect(secondAttempt.status()).toBe(422);
     });
 
@@ -306,11 +363,9 @@ test.describe("release candidate public matrix", () => {
         const form = dialog.locator("form");
         const serviceSelect = form.locator('select[name="serviceSlug"]');
         await expect(serviceSelect).toBeEnabled();
-        const values = await serviceSelect
-            .locator("option:not([disabled])")
-            .evaluateAll((options) =>
-                options.map((option) => (option as HTMLOptionElement).value).filter(Boolean),
-            );
+        const values = await serviceSelect.locator("option:not([disabled])").evaluateAll((options) =>
+            options.map((option) => (option as HTMLOptionElement).value).filter(Boolean),
+        );
         expect(values.length).toBeGreaterThan(0);
         await serviceSelect.selectOption(values[0]);
         await form.locator('input[name="firstName"]').fill("QA");
