@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { CONSULTATION_POPOVER_ID } from "@/components/consultation/constants";
 import ConsultationFormSlot from "@/components/consultation/ConsultationFormSlot";
+import { getBackendContactServices } from "@/lib/backend";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -10,7 +11,10 @@ export default async function ConsultationProvider({
 }: {
     children: ReactNode;
 }) {
-    const { locale, translations } = await getSiteSettings();
+    const [{ locale, translations }, services] = await Promise.all([
+        getSiteSettings(),
+        getBackendContactServices(),
+    ]);
     const eyebrow = translateText(
         translations,
         "consultation.modal.eyebrow",
@@ -35,6 +39,12 @@ export default async function ConsultationProvider({
         locale,
         null,
     );
+    const serviceOptions = services
+        .filter((service) => service.slug && service.label)
+        .map((service) => ({
+            slug: service.slug,
+            label: service.label,
+        }));
 
     return (
         <>
@@ -80,7 +90,7 @@ export default async function ConsultationProvider({
                             ) : null}
                         </header>
                     ) : null}
-                    <ConsultationFormSlot />
+                    <ConsultationFormSlot serviceOptions={serviceOptions} />
                 </div>
             </div>
         </>
