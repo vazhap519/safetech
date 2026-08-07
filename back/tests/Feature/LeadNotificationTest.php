@@ -19,9 +19,12 @@ class LeadNotificationTest extends TestCase
 
         $this->postJson('/api/contact-leads', [
             'name' => 'Test Customer',
+            'phone' => '+995555123456',
             'email' => 'customer@example.com',
+            'address' => 'Tbilisi',
+            'service' => 'IT support',
             'message' => 'Test request',
-            'source' => 'contact-page',
+            'source' => 'home-cta',
             'privacy' => true,
         ])->assertCreated();
 
