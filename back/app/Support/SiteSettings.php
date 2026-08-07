@@ -35,7 +35,19 @@ final class SiteSettings
 
     public static function brandingMediaUrl(string $collection): ?string
     {
-        if (! in_array($collection, ['logo', 'footer_logo', 'favicon', 'default_image'], true)) {
+        if (! in_array($collection, [
+            'logo',
+            'footer_logo',
+            'favicon',
+            'default_image',
+            'home_hero',
+            'home_infrastructure',
+            'services_hero',
+            'projects_hero',
+            'about_story',
+            'contact_intro',
+            'contact_support',
+        ], true)) {
             return null;
         }
 
