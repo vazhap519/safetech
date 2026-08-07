@@ -7,6 +7,11 @@ import { trackEvent } from "@/lib/analytics";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
+type LeadResponse = {
+    message?: string;
+    errors?: Record<string, string[]>;
+};
+
 export function useLeadForm(source: string) {
     const [status, setStatus] = useState<FormStatus>("idle");
     const [message, setMessage] = useState("");
@@ -43,7 +48,8 @@ export function useLeadForm(source: string) {
                         normalizedPayload[`details_type__${detailKey}`] ??
                             "text",
                     ),
-                    value: typeof value === "string" ? value.trim() : String(value),
+                    value:
+                        typeof value === "string" ? value.trim() : String(value),
                 };
             })
             .filter((detail) => detail.value !== "");
@@ -80,34 +86,40 @@ export function useLeadForm(source: string) {
                 }),
                 signal: AbortSignal.timeout(15000),
             });
-            const result = (await response.json()) as {
-                message?: string;
-                errors?: Record<string, string[]>;
-            };
-
-            const validationMessage = result.errors
+            const result = (await response
+                .json()
+                .catch(() => null)) as LeadResponse | null;
+            const validationMessage = result?.errors
                 ? Object.values(result.errors).flat()[0]
                 : undefined;
 
             if (!response.ok) {
                 throw new Error(
                     validationMessage ||
-                        result.message ||
+                        result?.message ||
                         t("forms.error.submit", null),
                 );
             }
 
             form.reset();
             setStatus("success");
-            setMessage(result.message || t("forms.success.submit", null));
+            setMessage(result?.message || t("forms.success.submit", null));
             trackEvent("generate_lead", { form_source: source });
         } catch (error) {
             setStatus("error");
-            setMessage(
-                error instanceof Error && error.message !== "Failed to fetch"
+
+            const safeApiMessage =
+                error instanceof Error &&
+                ![
+                    "AbortError",
+                    "TimeoutError",
+                    "TypeError",
+                ].includes(error.name) &&
+                error.message !== "Failed to fetch"
                     ? error.message
-                    : t("forms.error.network", null),
-            );
+                    : "";
+
+            setMessage(safeApiMessage || t("forms.error.network", null));
         }
     }
 
