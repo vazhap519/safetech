@@ -72,7 +72,6 @@ export default async function ConsultationProvider({
             {children}
             <div
                 aria-labelledby={title ? "consultation-title" : undefined}
-                aria-modal="true"
                 className="m-auto max-h-[90dvh] w-[min(92vw,42rem)] overflow-y-auto rounded-3xl border border-outline-variant/30 bg-surface-container p-0 text-on-surface shadow-2xl backdrop:bg-black/75 backdrop:backdrop-blur-sm"
                 id={CONSULTATION_POPOVER_ID}
                 popover="auto"
