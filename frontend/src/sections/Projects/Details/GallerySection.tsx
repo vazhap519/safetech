@@ -10,7 +10,7 @@ export default function GallerySection({
     const embedUrl = getYouTubeEmbedUrl(project.videoUrl);
     const gallery = project.gallery;
     const [primary, ...secondary] = gallery;
-    const sideGallery = embedUrl ? gallery : secondary;
+    const galleryImages = embedUrl ? gallery : secondary;
 
     if (!embedUrl && !primary) {
         return null;
@@ -19,10 +19,10 @@ export default function GallerySection({
     return (
         <section
             aria-label={project.title || project.name}
-            className="mx-auto max-w-container-max px-margin-desktop py-unit-xl"
+            className="mx-auto max-w-container-max px-4 py-10 sm:px-6 sm:py-unit-xl lg:px-margin-desktop"
         >
-            <div className="grid grid-cols-1 gap-gutter lg:grid-cols-12">
-                <div className="relative min-h-72 overflow-hidden rounded-2xl border border-outline-variant/10 shadow-xl sm:min-h-[500px] lg:col-span-8">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
+                <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-outline-variant/10 bg-black/20 shadow-xl lg:col-span-8 lg:aspect-[16/10]">
                     {embedUrl ? (
                         <iframe
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -44,22 +44,30 @@ export default function GallerySection({
                         />
                     ) : null}
                 </div>
-                {sideGallery.length ? (
-                    <div className="grid gap-gutter min-[480px]:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
-                        {sideGallery.map((image) => (
-                            <div
-                                className="relative min-h-56 overflow-hidden rounded-2xl border border-outline-variant/10"
+
+                {galleryImages.length ? (
+                    <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 sm:gap-6 lg:col-span-4 lg:grid-cols-1">
+                        {galleryImages.map((image, index) => (
+                            <figure
+                                className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-low shadow-sm"
                                 key={`${image.src}-${image.alt}`}
                             >
                                 <Image
                                     alt={image.alt}
-                                    className="object-cover"
+                                    className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                                     fill
-                                    sizes="(max-width: 1024px) 50vw, 33vw"
+                                    sizes="(max-width: 519px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                     src={image.src}
                                     unoptimized={image.src.endsWith(".svg")}
                                 />
-                            </div>
+                                <span
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent"
+                                />
+                                <span className="sr-only">
+                                    {image.alt || `${project.title || project.name} ${index + 1}`}
+                                </span>
+                            </figure>
                         ))}
                     </div>
                 ) : null}
