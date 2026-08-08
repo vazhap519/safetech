@@ -8,19 +8,19 @@ export default function NumbersComponent({
     value: string;
 }) {
     return (
-        <div className="glass-card group relative overflow-hidden rounded-2xl p-unit-md text-center sm:p-unit-lg">
+        <div className="glass-card group relative min-w-0 overflow-hidden rounded-2xl p-5 text-center sm:p-unit-lg">
             <div className="absolute inset-0 bg-primary/5 opacity-0 transition-opacity group-hover:opacity-100" />
             {value ? (
-                <div className="mb-2 text-headline-xl font-display-lg text-primary">
+                <div className="relative mb-2 break-words text-[28px] font-display-lg leading-tight text-primary [overflow-wrap:anywhere] sm:text-headline-xl">
                     {value}
                 </div>
             ) : null}
             {label ? (
-                <div className="text-label-md uppercase tracking-widest text-on-surface-variant">
+                <div className="relative break-words text-sm font-label-md uppercase leading-relaxed tracking-wide text-on-surface-variant [overflow-wrap:anywhere] sm:text-label-md sm:tracking-widest">
                     {label}
                 </div>
             ) : null}
-            <div className="mt-4 flex justify-center">
+            <div className="relative mt-4 flex justify-center">
                 <div className="h-1 w-12 overflow-hidden rounded-full bg-primary/20">
                     <div className={`h-full bg-primary ${progressClassName}`} />
                 </div>
