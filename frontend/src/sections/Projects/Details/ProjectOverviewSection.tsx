@@ -31,25 +31,25 @@ export default async function ProjectOverviewSection({
     return (
         <section
             aria-labelledby={specsTitle ? "technical-specs-title" : undefined}
-            className="bg-surface-container-lowest/50 px-margin-desktop py-unit-xl"
+            className="bg-surface-container-lowest/50 py-10 sm:py-unit-xl"
         >
-            <div className="mx-auto grid max-w-container-max gap-unit-xl lg:grid-cols-2">
+            <div className="mx-auto grid max-w-container-max gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:gap-unit-xl lg:px-margin-desktop">
                 {project.image || scope.length ? (
-                    <div className="grid h-fit grid-cols-1 gap-unit-sm min-[420px]:grid-cols-2">
+                    <div className="grid h-fit grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-unit-sm">
                         {project.image ? (
-                            <div className="relative aspect-square overflow-hidden rounded-xl border border-outline-variant/10">
+                            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-outline-variant/10 sm:aspect-square">
                                 <Image
                                     alt={project.imageAlt || project.title || project.name}
                                     className="object-cover"
                                     fill
-                                    sizes="(max-width: 1024px) 50vw, 25vw"
+                                    sizes="(max-width: 639px) 100vw, (max-width: 1024px) 50vw, 25vw"
                                     src={project.image}
                                     unoptimized={isSvgImage}
                                 />
                             </div>
                         ) : null}
                         {scope.length ? (
-                            <div className="glass-card flex flex-col justify-center rounded-xl p-unit-md">
+                            <div className="glass-card flex flex-col justify-center rounded-2xl p-5 sm:p-unit-md">
                                 {scopeTitle ? (
                                     <h2 className="mb-4 font-mono-sm text-mono-sm uppercase text-outline">
                                         {scopeTitle}
@@ -57,14 +57,14 @@ export default async function ProjectOverviewSection({
                                 ) : null}
                                 <dl className="space-y-4">
                                     {scope.map((item) => (
-                                        <div key={`${item.label}-${item.value}`}>
+                                        <div className="min-w-0" key={`${item.label}-${item.value}`}>
                                             {item.label ? (
-                                                <dt className="order-2 font-label-md text-label-md text-on-surface-variant">
+                                                <dt className="break-words font-label-md text-label-md text-on-surface-variant">
                                                     {item.label}
                                                 </dt>
                                             ) : null}
                                             {item.value ? (
-                                                <dd className="font-headline-md text-headline-md text-primary-fixed-dim">
+                                                <dd className="mt-1 break-words font-headline-md text-headline-md text-primary-fixed-dim">
                                                     {item.value}
                                                 </dd>
                                             ) : null}
@@ -76,16 +76,16 @@ export default async function ProjectOverviewSection({
                     </div>
                 ) : null}
                 {specs.length ? (
-                    <div className="flex flex-col justify-center">
+                    <div className="flex min-w-0 flex-col justify-center">
                         {specsTitle ? (
                             <h2
-                                className="mb-8 font-headline-xl text-headline-xl"
+                                className="mb-6 text-[30px] font-semibold leading-tight sm:mb-8 sm:font-headline-xl sm:text-headline-xl"
                                 id="technical-specs-title"
                             >
                                 {specsTitle}
                             </h2>
                         ) : null}
-                        <div className="grid grid-cols-2 gap-unit-md sm:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 sm:gap-unit-md">
                             {specs.map((stat) => (
                                 <ProjectStat
                                     key={`${stat.label}-${stat.value}`}

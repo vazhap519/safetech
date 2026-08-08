@@ -28,18 +28,18 @@ export default async function ProcessSection({
     return (
         <section
             aria-labelledby={title ? "implementation-title" : undefined}
-            className="overflow-hidden py-unit-xl"
+            className="overflow-hidden py-12 sm:py-unit-xl"
         >
-            <div className="mx-auto max-w-container-max px-margin-desktop">
+            <div className="mx-auto max-w-container-max px-4 sm:px-6 lg:px-margin-desktop">
                 {title ? (
                     <h2
-                        className="mb-12 font-headline-xl text-headline-xl"
+                        className="mb-7 text-[30px] font-semibold leading-tight sm:mb-12 sm:font-headline-xl sm:text-headline-xl"
                         id="implementation-title"
                     >
                         {title}
                     </h2>
                 ) : null}
-                <ol className="scrollbar-hide flex snap-x gap-unit-md overflow-x-auto pb-8">
+                <ol className="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-5 sm:-mx-6 sm:gap-unit-md sm:px-6 lg:mx-0 lg:px-0">
                     {steps.map((step, index) => (
                         <ProcessStep
                             description={step.description}
