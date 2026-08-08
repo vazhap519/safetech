@@ -14,7 +14,21 @@ function normalizeBaseUrl(value?: string | null) {
     }
 
     try {
-        return new URL(trimmed).toString().replace(/\/$/, "");
+        const url = new URL(trimmed);
+        const normalizedPath = url.pathname.replace(/\/+$/, "");
+
+        // Laravel's routes/api.php is mounted under /api. In production it is
+        // easy to configure only the API origin (https://api.safetech.ge),
+        // which would otherwise make every request hit /projects, /services,
+        // etc. and return 404. Keep explicit custom paths untouched, but add
+        // /api when the configured value is only an origin.
+        if (!normalizedPath || normalizedPath === "/") {
+            url.pathname = "/api";
+        } else {
+            url.pathname = normalizedPath;
+        }
+
+        return url.toString().replace(/\/$/, "");
     } catch {
         return null;
     }
