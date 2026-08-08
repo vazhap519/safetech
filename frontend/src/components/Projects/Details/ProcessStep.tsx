@@ -15,7 +15,7 @@ export default function ProcessStep({
 
     return (
         <li
-            className={`glass-card min-w-[min(280px,80vw)] snap-start rounded-xl border-t-4 p-unit-lg ${index === 0 || last ? "border-t-primary-container" : "border-t-outline-variant/30"}`}
+            className={`glass-card w-[86vw] min-w-[86vw] max-w-[360px] shrink-0 snap-start rounded-2xl border-t-4 p-5 sm:w-[340px] sm:min-w-[340px] sm:p-unit-lg ${index === 0 || last ? "border-t-primary-container" : "border-t-outline-variant/30"}`}
         >
             {stepLabel ? (
                 <p className="mb-2 font-mono-sm text-mono-sm text-primary">
@@ -23,12 +23,12 @@ export default function ProcessStep({
                 </p>
             ) : null}
             {title ? (
-                <h3 className="mb-4 font-headline-md text-headline-md text-white">
+                <h3 className="mb-3 break-words font-headline-md text-[22px] font-semibold leading-snug text-white sm:mb-4 sm:text-headline-md">
                     {title}
                 </h3>
             ) : null}
             {description ? (
-                <p className="font-body-md text-body-md leading-relaxed text-on-surface-variant">
+                <p className="break-words text-[16px] leading-7 text-on-surface-variant sm:font-body-md sm:text-body-md sm:leading-relaxed">
                     {description}
                 </p>
             ) : null}
