@@ -21,23 +21,23 @@ export default function Servicecomponent({ service }: { service: ServiceCard }) 
     });
 
     return (
-        <div className="glass-card flex h-full flex-col gap-4 rounded-lg p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <div className="glass-card flex h-full min-w-0 flex-col gap-4 rounded-lg p-5 sm:p-6">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Icon className="!text-[30px]" name={service.icon} />
             </div>
             {service.title ? (
-                <h3 className="font-headline-md text-headline-md text-white">
+                <h3 className="min-w-0 break-words font-headline-md text-xl leading-snug text-white [overflow-wrap:anywhere] sm:text-headline-md">
                     {service.title}
                 </h3>
             ) : null}
             {service.description ? (
-                <p className="font-body-md text-on-surface-variant">
+                <p className="min-w-0 break-words font-body-md leading-relaxed text-on-surface-variant [overflow-wrap:anywhere]">
                     {service.description}
                 </p>
             ) : null}
             {service.slug && readMoreLabel ? (
                 <LocalizedLink
-                    className={`${CARD_ACTION_CLASS} mt-auto`}
+                    className={`${CARD_ACTION_CLASS} mt-auto max-w-full break-words`}
                     href={`/services/${service.slug}`}
                     prefetch={false}
                 >
