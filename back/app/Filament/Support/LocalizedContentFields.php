@@ -14,6 +14,11 @@ final class LocalizedContentFields
         'ru' => 'რუსული',
     ];
 
+    private const SECONDARY_LOCALE_LABELS = [
+        'en' => 'ინგლისური',
+        'ru' => 'რუსული',
+    ];
+
     /** @return array<int, TextInput|Textarea> */
     public static function inputs(
         string $field,
@@ -58,10 +63,51 @@ final class LocalizedContentFields
             ->all();
     }
 
+    /**
+     * Translation inputs intended to live inside a JSON repeater item.
+     * Georgian remains the repeater's base/fallback value; EN/RU are stored
+     * alongside it under translations.{locale}.{field}.
+     *
+     * @return array<int, TextInput|Textarea>
+     */
+    public static function itemInputs(
+        string $field,
+        string $label,
+        bool $textarea = false,
+        int $rows = 3,
+        ?int $maxLength = null,
+    ): array {
+        return collect(self::SECONDARY_LOCALE_LABELS)
+            ->map(function (string $localeLabel, string $locale) use (
+                $field,
+                $label,
+                $textarea,
+                $rows,
+                $maxLength,
+            ): TextInput|Textarea {
+                $component = $textarea
+                    ? Textarea::make("translations.{$locale}.{$field}")->rows($rows)
+                    : TextInput::make("translations.{$locale}.{$field}");
+
+                $component
+                    ->label("{$label} ({$localeLabel})")
+                    ->placeholder('ცარიელი დატოვებისას გამოყენებული იქნება ქართული ტექსტი');
+
+                if ($maxLength !== null) {
+                    $component->maxLength($maxLength);
+                }
+
+                return $component;
+            })
+            ->values()
+            ->all();
+    }
+
     public static function customEntries(string $helperText): Repeater
     {
         return Repeater::make('translations.entries')
-            ->label('დამატებითი თარგმნის გასაღებები')
+            ->label('Advanced / legacy translation keys')
+            ->helperText('ძველი პროექტების ხელით დამატებული გასაღებები თავსებადობისთვის შენარჩუნებულია. ახალი პროექტის სექციებისთვის გამოიყენეთ EN/RU ველები უშუალოდ შესაბამის ბლოკში.')
             ->schema([
                 TextInput::make('key')
                     ->label('გასაღები')
@@ -74,6 +120,7 @@ final class LocalizedContentFields
             ->columns(2)
             ->default([])
             ->collapsible()
+            ->collapsed()
             ->reorderable();
     }
 

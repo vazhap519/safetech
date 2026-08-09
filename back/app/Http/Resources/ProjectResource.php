@@ -87,16 +87,16 @@ class ProjectResource extends JsonResource
             ->values()
             ->map(fn (array $item, int $index): array => [
                 ...$item,
-                'value' => $this->translatedEntry(
-                    $this->resource,
+                'value' => $this->localizedItemValue(
+                    $item,
+                    'value',
                     "{$prefix}.{$index}.value",
-                    $item['value'] ?? '',
                     $locale,
                 ),
-                'label' => $this->translatedEntry(
-                    $this->resource,
+                'label' => $this->localizedItemValue(
+                    $item,
+                    'label',
                     "{$prefix}.{$index}.label",
-                    $item['label'] ?? '',
                     $locale,
                 ),
             ])
@@ -110,16 +110,16 @@ class ProjectResource extends JsonResource
             ->values()
             ->map(fn (array $item, int $index): array => [
                 ...$item,
-                'title' => $this->translatedEntry(
-                    $this->resource,
+                'title' => $this->localizedItemValue(
+                    $item,
+                    'title',
                     "{$prefix}.{$index}.title",
-                    $item['title'] ?? '',
                     $locale,
                 ),
-                'description' => $this->translatedEntry(
-                    $this->resource,
+                'description' => $this->localizedItemValue(
+                    $item,
+                    'description',
                     "{$prefix}.{$index}.description",
-                    $item['description'] ?? '',
                     $locale,
                 ),
             ])
@@ -133,16 +133,16 @@ class ProjectResource extends JsonResource
             ->values()
             ->map(fn (array $item, int $index): array => [
                 ...$item,
-                'title' => $this->translatedEntry(
-                    $this->resource,
+                'title' => $this->localizedItemValue(
+                    $item,
+                    'title',
                     "process.{$index}.title",
-                    $item['title'] ?? '',
                     $locale,
                 ),
-                'description' => $this->translatedEntry(
-                    $this->resource,
+                'description' => $this->localizedItemValue(
+                    $item,
+                    'description',
                     "process.{$index}.description",
-                    $item['description'] ?? '',
                     $locale,
                 ),
             ])
@@ -173,26 +173,55 @@ class ProjectResource extends JsonResource
             ->values()
             ->map(fn (array $item, int $index): array => [
                 ...$item,
-                'value' => $this->translatedEntry(
-                    $this->resource,
+                'value' => $this->localizedItemValue(
+                    $item,
+                    'value',
                     "result.{$index}.value",
-                    $item['value'] ?? '',
                     $locale,
                 ),
-                'title' => $this->translatedEntry(
-                    $this->resource,
+                'title' => $this->localizedItemValue(
+                    $item,
+                    'title',
                     "result.{$index}.title",
-                    $item['title'] ?? '',
                     $locale,
                 ),
-                'description' => $this->translatedEntry(
-                    $this->resource,
+                'description' => $this->localizedItemValue(
+                    $item,
+                    'description',
                     "result.{$index}.description",
-                    $item['description'] ?? '',
                     $locale,
                 ),
             ])
             ->all();
+    }
+
+    private function localizedItemValue(
+        array $item,
+        string $field,
+        string $legacyKey,
+        string $locale,
+        mixed $fallback = null,
+    ): mixed {
+        $baseValue = $fallback ?? ($item[$field] ?? '');
+
+        if ($locale !== 'ka') {
+            $nestedTranslation = data_get($item, "translations.{$locale}.{$field}");
+
+            if (is_string($nestedTranslation) && trim($nestedTranslation) !== '') {
+                return $nestedTranslation;
+            }
+
+            if (! is_string($nestedTranslation) && $nestedTranslation !== null && $nestedTranslation !== '') {
+                return $nestedTranslation;
+            }
+        }
+
+        return $this->translatedEntry(
+            $this->resource,
+            $legacyKey,
+            $baseValue,
+            $locale,
+        );
     }
 
     private function relatedProjects(Request $request, string $locale): array
@@ -242,26 +271,29 @@ class ProjectResource extends JsonResource
                 return [
                     'translationIndex' => $index,
                     'slug' => $project->slug,
-                    'title' => $this->translatedEntry(
-                        $this->resource,
+                    'title' => $this->localizedItemValue(
+                        $item,
+                        'title',
                         "related.{$index}.title",
+                        $locale,
                         filled($item['title'] ?? null) ? $item['title'] : $title,
-                        $locale,
                     ),
-                    'category' => $this->translatedEntry(
-                        $this->resource,
+                    'category' => $this->localizedItemValue(
+                        $item,
+                        'category',
                         "related.{$index}.category",
-                        filled($item['category'] ?? null) ? $item['category'] : $categoryName,
                         $locale,
+                        filled($item['category'] ?? null) ? $item['category'] : $categoryName,
                     ),
                     'image' => $project->thumb_url,
-                    'imageAlt' => $this->translatedEntry(
-                        $this->resource,
+                    'imageAlt' => $this->localizedItemValue(
+                        $item,
+                        'imageAlt',
                         "related.{$index}.imageAlt",
+                        $locale,
                         filled($item['imageAlt'] ?? null)
                             ? $item['imageAlt']
                             : ($project->image_alt ?: $title),
-                        $locale,
                     ),
                 ];
             })
