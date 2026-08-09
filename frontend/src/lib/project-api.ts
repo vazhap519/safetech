@@ -2,6 +2,7 @@ import "server-only";
 
 import { getPublicApiOrigin, getServerApiBase } from "@/lib/backend-api";
 import { getCurrentLocale } from "@/lib/locale-server";
+import { normalizeLocale } from "@/lib/locales";
 import type { ProjectDetail } from "@/lib/projectDetails";
 import type { FeaturedProject, Project } from "@/lib/projects";
 
@@ -63,8 +64,19 @@ function apiPath(
     return suffix ? `${path}?${suffix}` : path;
 }
 
-export async function getLocalizedProjects(category?: string): Promise<ApiProject[]> {
-    const locale = await getCurrentLocale();
+async function resolveProjectLocale(locale?: string) {
+    if (locale) {
+        return normalizeLocale(locale);
+    }
+
+    return getCurrentLocale();
+}
+
+export async function getLocalizedProjects(
+    category?: string,
+    localeOverride?: string,
+): Promise<ApiProject[]> {
+    const locale = await resolveProjectLocale(localeOverride);
 
     return (
         (await fetchProjectData<ApiProject[]>(
@@ -73,8 +85,11 @@ export async function getLocalizedProjects(category?: string): Promise<ApiProjec
     );
 }
 
-export async function getLocalizedProjectCards(category?: string): Promise<Project[]> {
-    const projects = await getLocalizedProjects(category);
+export async function getLocalizedProjectCards(
+    category?: string,
+    localeOverride?: string,
+): Promise<Project[]> {
+    const projects = await getLocalizedProjects(category, localeOverride);
 
     return projects.map((project) => ({
         slug: project.slug,
@@ -88,8 +103,10 @@ export async function getLocalizedProjectCards(category?: string): Promise<Proje
     }));
 }
 
-export async function getLocalizedFeaturedProjects(): Promise<FeaturedProject[]> {
-    const locale = await getCurrentLocale();
+export async function getLocalizedFeaturedProjects(
+    localeOverride?: string,
+): Promise<FeaturedProject[]> {
+    const locale = await resolveProjectLocale(localeOverride);
     const projects =
         (await fetchProjectData<ApiProject[]>(
             apiPath("/projects", { locale, featured: 1 }),
@@ -113,8 +130,9 @@ export async function getLocalizedFeaturedProjects(): Promise<FeaturedProject[]>
 
 export async function getLocalizedProject(
     slug: string,
+    localeOverride?: string,
 ): Promise<ProjectDetail | undefined> {
-    const locale = await getCurrentLocale();
+    const locale = await resolveProjectLocale(localeOverride);
     const project = await fetchProjectData<ApiProject>(
         apiPath(`/projects/${encodeURIComponent(slug)}`, { locale }),
     );
