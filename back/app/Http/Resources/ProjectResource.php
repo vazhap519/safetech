@@ -40,9 +40,12 @@ class ProjectResource extends JsonResource
         $image = $this->cover_url ?: $this->image;
 
         return [
-            'id' => $this->id, 'slug' => $this->slug, 'name' => $name,
+            'id' => $this->id,
+            'slug' => $this->slug,
+            'name' => $name,
             'updated_at' => $this->updated_at?->toAtomString(),
-            'title' => $title ?: $name, 'description' => $description,
+            'title' => $title ?: $name,
+            'description' => $description,
             'seoDescription' => $seoDescription,
             'image' => $image,
             'imageAlt' => $imageAlt,
@@ -53,12 +56,19 @@ class ProjectResource extends JsonResource
                 ? $this->translatedModel($category, 'name', $category->name, $locale)
                 : $this->category_name,
             'technology' => $technology,
-            'icon' => $this->icon, 'accent' => $this->accent, 'meta' => $this->meta ?? [], 'scope' => $this->scope ?? [],
-            'specs' => $this->specs ?? [], 'challenges' => $this->challenges ?? [],
-            'solutions' => $this->solutions ?? [], 'process' => $this->process ?? [],
-            'gallery' => $this->gallery_urls ?: ($this->gallery ?? []), 'results' => $this->results ?? [],
+            'icon' => $this->icon,
+            'accent' => $this->accent,
+            'meta' => $this->localizedValueLabelItems($this->meta ?? [], 'meta', $locale),
+            'scope' => $this->localizedValueLabelItems($this->scope ?? [], 'scope', $locale),
+            'specs' => $this->localizedValueLabelItems($this->specs ?? [], 'spec', $locale),
+            'challenges' => $this->localizedDetailCards($this->challenges ?? [], 'challenge', $locale),
+            'solutions' => $this->localizedDetailCards($this->solutions ?? [], 'solution', $locale),
+            'process' => $this->localizedProcess($this->process ?? [], $locale),
+            'gallery' => $this->localizedGallery($this->gallery_urls ?: ($this->gallery ?? []), $locale),
+            'results' => $this->localizedResults($this->results ?? [], $locale),
             'related' => $this->relatedProjects($request, $locale),
-            'featured' => $this->is_featured, 'publishedAt' => $this->published_at?->toAtomString(),
+            'featured' => $this->is_featured,
+            'publishedAt' => $this->published_at?->toAtomString(),
             'seo' => [
                 'title' => $seoTitle ?: $title,
                 'description' => $seoDescription ?: $description,
@@ -68,6 +78,121 @@ class ProjectResource extends JsonResource
                 'schema' => data_get($this->seo, 'schema'),
             ],
         ];
+    }
+
+    private function localizedValueLabelItems(array $items, string $prefix, string $locale): array
+    {
+        return collect($items)
+            ->filter(fn ($item): bool => is_array($item))
+            ->values()
+            ->map(fn (array $item, int $index): array => [
+                ...$item,
+                'value' => $this->translatedEntry(
+                    $this->resource,
+                    "{$prefix}.{$index}.value",
+                    $item['value'] ?? '',
+                    $locale,
+                ),
+                'label' => $this->translatedEntry(
+                    $this->resource,
+                    "{$prefix}.{$index}.label",
+                    $item['label'] ?? '',
+                    $locale,
+                ),
+            ])
+            ->all();
+    }
+
+    private function localizedDetailCards(array $items, string $prefix, string $locale): array
+    {
+        return collect($items)
+            ->filter(fn ($item): bool => is_array($item))
+            ->values()
+            ->map(fn (array $item, int $index): array => [
+                ...$item,
+                'title' => $this->translatedEntry(
+                    $this->resource,
+                    "{$prefix}.{$index}.title",
+                    $item['title'] ?? '',
+                    $locale,
+                ),
+                'description' => $this->translatedEntry(
+                    $this->resource,
+                    "{$prefix}.{$index}.description",
+                    $item['description'] ?? '',
+                    $locale,
+                ),
+            ])
+            ->all();
+    }
+
+    private function localizedProcess(array $items, string $locale): array
+    {
+        return collect($items)
+            ->filter(fn ($item): bool => is_array($item))
+            ->values()
+            ->map(fn (array $item, int $index): array => [
+                ...$item,
+                'title' => $this->translatedEntry(
+                    $this->resource,
+                    "process.{$index}.title",
+                    $item['title'] ?? '',
+                    $locale,
+                ),
+                'description' => $this->translatedEntry(
+                    $this->resource,
+                    "process.{$index}.description",
+                    $item['description'] ?? '',
+                    $locale,
+                ),
+            ])
+            ->all();
+    }
+
+    private function localizedGallery(array $items, string $locale): array
+    {
+        return collect($items)
+            ->filter(fn ($item): bool => is_array($item) && filled($item['src'] ?? null))
+            ->values()
+            ->map(fn (array $item, int $index): array => [
+                ...$item,
+                'alt' => $this->translatedEntry(
+                    $this->resource,
+                    "gallery.{$index}.alt",
+                    $item['alt'] ?? $this->image_alt ?? $this->title ?? $this->name ?? '',
+                    $locale,
+                ),
+            ])
+            ->all();
+    }
+
+    private function localizedResults(array $items, string $locale): array
+    {
+        return collect($items)
+            ->filter(fn ($item): bool => is_array($item))
+            ->values()
+            ->map(fn (array $item, int $index): array => [
+                ...$item,
+                'value' => $this->translatedEntry(
+                    $this->resource,
+                    "result.{$index}.value",
+                    $item['value'] ?? '',
+                    $locale,
+                ),
+                'title' => $this->translatedEntry(
+                    $this->resource,
+                    "result.{$index}.title",
+                    $item['title'] ?? '',
+                    $locale,
+                ),
+                'description' => $this->translatedEntry(
+                    $this->resource,
+                    "result.{$index}.description",
+                    $item['description'] ?? '',
+                    $locale,
+                ),
+            ])
+            ->all();
     }
 
     private function relatedProjects(Request $request, string $locale): array
@@ -117,12 +242,27 @@ class ProjectResource extends JsonResource
                 return [
                     'translationIndex' => $index,
                     'slug' => $project->slug,
-                    'title' => filled($item['title'] ?? null) ? $item['title'] : $title,
-                    'category' => filled($item['category'] ?? null) ? $item['category'] : $categoryName,
+                    'title' => $this->translatedEntry(
+                        $this->resource,
+                        "related.{$index}.title",
+                        filled($item['title'] ?? null) ? $item['title'] : $title,
+                        $locale,
+                    ),
+                    'category' => $this->translatedEntry(
+                        $this->resource,
+                        "related.{$index}.category",
+                        filled($item['category'] ?? null) ? $item['category'] : $categoryName,
+                        $locale,
+                    ),
                     'image' => $project->thumb_url,
-                    'imageAlt' => filled($item['imageAlt'] ?? null)
-                        ? $item['imageAlt']
-                        : ($project->image_alt ?: $title),
+                    'imageAlt' => $this->translatedEntry(
+                        $this->resource,
+                        "related.{$index}.imageAlt",
+                        filled($item['imageAlt'] ?? null)
+                            ? $item['imageAlt']
+                            : ($project->image_alt ?: $title),
+                        $locale,
+                    ),
                 ];
             })
             ->filter()
