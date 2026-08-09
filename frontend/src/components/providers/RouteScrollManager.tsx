@@ -10,15 +10,26 @@ export default function RouteScrollManager() {
 
     useEffect(() => {
         const storageKey = "safetech:last-pathname";
-        const previousPath = window.sessionStorage.getItem(storageKey);
+        let previousPath: string | null = null;
         let frame: number | null = null;
         let timeout: number | null = null;
 
-        if ("scrollRestoration" in window.history) {
-            window.history.scrollRestoration = "manual";
+        // Some privacy/private browser modes can expose sessionStorage but throw
+        // when it is accessed. Route scroll management must never take down the app.
+        try {
+            previousPath = window.sessionStorage.getItem(storageKey);
+            window.sessionStorage.setItem(storageKey, pathname);
+        } catch {
+            previousPath = null;
         }
 
-        window.sessionStorage.setItem(storageKey, pathname);
+        try {
+            if ("scrollRestoration" in window.history) {
+                window.history.scrollRestoration = "manual";
+            }
+        } catch {
+            // Scroll restoration is optional; ignore browsers that restrict it.
+        }
 
         if (
             previousPath &&
