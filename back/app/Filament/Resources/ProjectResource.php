@@ -45,14 +45,18 @@ class ProjectResource extends Resource
                 ->options(AdminIconOptions::content())
                 ->searchable()
                 ->preload(),
-            TextInput::make('title')->label('Title')->required(),
-            Textarea::make('description')->label('Description')->required(),
+            TextInput::make('title')->label('Title (ქართული)')->required(),
+            ...LocalizedContentFields::itemInputs('title', 'Title'),
+            Textarea::make('description')->label('Description (ქართული)')->required(),
+            ...LocalizedContentFields::itemInputs('description', 'Description', textarea: true),
             Toggle::make('featured')->label('Featured'),
         ];
 
         $valueLabel = [
-            TextInput::make('value')->label('Value')->required(),
-            TextInput::make('label')->label('Label')->required(),
+            TextInput::make('value')->label('Value (ქართული)')->required(),
+            ...LocalizedContentFields::itemInputs('value', 'Value'),
+            TextInput::make('label')->label('Label (ქართული)')->required(),
+            ...LocalizedContentFields::itemInputs('label', 'Label'),
         ];
 
         return $schema->components([
@@ -117,7 +121,7 @@ class ProjectResource extends Resource
                 ->columns(2),
 
             Section::make('Translations and SEO (KA/EN/RU)')
-                ->description('The main fields above remain fallback content. These translations are consumed automatically on the frontend.')
+                ->description('The main fields above remain fallback content. Project section translations are entered directly inside each section below.')
                 ->schema([
                     ...LocalizedContentFields::inputs('name', 'Project name'),
                     ...LocalizedContentFields::inputs('title', 'Headline'),
@@ -131,41 +135,44 @@ class ProjectResource extends Resource
                     ...LocalizedContentFields::inputs('featured.title', 'Featured title'),
                     ...LocalizedContentFields::inputs('featured.category', 'Featured category'),
                     ...LocalizedContentFields::inputs('featured.imageAlt', 'Featured image alt'),
-                    LocalizedContentFields::customEntries('Examples: meta.0.label, spec.0.value, challenge.0.title, result.0.description'),
+                    LocalizedContentFields::customEntries('Legacy examples: meta.0.label, spec.0.value, challenge.0.title, result.0.description. Gallery alt may still use gallery.0.alt.'),
                 ])
                 ->columns(3),
 
             Section::make('Project sections')
+                ->description('ქართული ტექსტი არის fallback. თითოეულ ბლოკში შეავსეთ English და Русский ველები, რომ პროექტის დეტალები სრულად ითარგმნოს.')
                 ->schema([
                     Repeater::make('meta')
                         ->label('Meta')
                         ->schema($valueLabel)
-                        ->columns(2),
+                        ->columns(3),
                     Repeater::make('scope')
                         ->label('Scope')
                         ->schema($valueLabel)
-                        ->columns(2),
+                        ->columns(3),
                     Repeater::make('specs')
                         ->label('Specifications')
                         ->schema($valueLabel)
-                        ->columns(2),
+                        ->columns(3),
                     Repeater::make('challenges')
                         ->label('Challenges')
                         ->schema($detailCards)
-                        ->columns(4)
+                        ->columns(3)
                         ->collapsible(),
                     Repeater::make('solutions')
                         ->label('Solutions')
                         ->schema($detailCards)
-                        ->columns(4)
+                        ->columns(3)
                         ->collapsible(),
                     Repeater::make('process')
                         ->label('Process')
                         ->schema([
-                            TextInput::make('title')->label('Step')->required(),
-                            Textarea::make('description')->label('Description')->required(),
+                            TextInput::make('title')->label('Step (ქართული)')->required(),
+                            ...LocalizedContentFields::itemInputs('title', 'Step'),
+                            Textarea::make('description')->label('Description (ქართული)')->required(),
+                            ...LocalizedContentFields::itemInputs('description', 'Description', textarea: true),
                         ])
-                        ->columns(2),
+                        ->columns(3),
                     SpatieMediaLibraryFileUpload::make('media_gallery')
                         ->label('Gallery')
                         ->collection('gallery')
@@ -178,9 +185,12 @@ class ProjectResource extends Resource
                     Repeater::make('results')
                         ->label('Results')
                         ->schema([
-                            TextInput::make('value')->label('Value')->required(),
-                            TextInput::make('title')->label('Title')->required(),
-                            Textarea::make('description')->label('Description')->required(),
+                            TextInput::make('value')->label('Value (ქართული)')->required(),
+                            ...LocalizedContentFields::itemInputs('value', 'Value'),
+                            TextInput::make('title')->label('Title (ქართული)')->required(),
+                            ...LocalizedContentFields::itemInputs('title', 'Title'),
+                            Textarea::make('description')->label('Description (ქართული)')->required(),
+                            ...LocalizedContentFields::itemInputs('description', 'Description', textarea: true),
                             Select::make('accent')
                                 ->label('Accent')
                                 ->options([
@@ -189,7 +199,7 @@ class ProjectResource extends Resource
                                 ])
                                 ->default('primary'),
                         ])
-                        ->columns(4),
+                        ->columns(3),
                     Repeater::make('related')
                         ->label('Related projects')
                         ->schema([
@@ -209,12 +219,15 @@ class ProjectResource extends Resource
                                 ->preload()
                                 ->required(),
                             TextInput::make('title')
-                                ->label('Card title')
+                                ->label('Card title (ქართული)')
                                 ->helperText('Optional override for the related project title.'),
-                            TextInput::make('category')->label('Category'),
-                            TextInput::make('imageAlt')->label('Image alt'),
+                            ...LocalizedContentFields::itemInputs('title', 'Card title'),
+                            TextInput::make('category')->label('Category (ქართული)'),
+                            ...LocalizedContentFields::itemInputs('category', 'Category'),
+                            TextInput::make('imageAlt')->label('Image alt (ქართული)'),
+                            ...LocalizedContentFields::itemInputs('imageAlt', 'Image alt'),
                         ])
-                        ->columns(2),
+                        ->columns(3),
                 ]),
 
             Section::make('Publishing')
