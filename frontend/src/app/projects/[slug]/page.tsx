@@ -17,15 +17,17 @@ import RelatedProjectsSection from "@/sections/Projects/Details/RelatedProjectsS
 import ResultsSection from "@/sections/Projects/Details/ResultsSection";
 import SolutionsSection from "@/sections/Projects/Details/SolutionsSection";
 
-type ProjectPageProps = { params: Promise<{ slug: string }> };
+type ProjectPageProps = {
+    params: Promise<{ slug: string; locale?: string }>;
+};
 
 export async function generateMetadata({
     params,
 }: ProjectPageProps): Promise<Metadata> {
-    const { slug } = await params;
+    const { slug, locale: routeLocale } = await params;
     const [{ branding, locale, translations }, project] = await Promise.all([
         getSiteSettings(),
-        getLocalizedProject(slug),
+        getLocalizedProject(slug, routeLocale),
     ]);
     const siteName = branding.siteName;
 
@@ -65,10 +67,10 @@ export async function generateMetadata({
 }
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
-    const { slug } = await params;
+    const { slug, locale: routeLocale } = await params;
     const [{ locale, socialSharing }, project] = await Promise.all([
         getSiteSettings(),
-        getLocalizedProject(slug),
+        getLocalizedProject(slug, routeLocale),
     ]);
 
     if (!project) notFound();
@@ -85,6 +87,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
                 const resolvedProject = await getLocalizedProject(
                     relatedProject.slug,
+                    routeLocale,
                 );
 
                 if (!resolvedProject) {
