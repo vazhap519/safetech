@@ -1,11 +1,15 @@
 "use client";
 
 export default function GlobalError({
+    error,
     reset,
 }: {
     error: Error & { digest?: string };
     reset: () => void;
 }) {
+    const message = (error?.message || "Unknown client runtime error").slice(0, 500);
+    const digest = error?.digest || "n/a";
+
     return (
         <html lang="ka">
             <body
@@ -49,6 +53,22 @@ export default function GlobalError({
                             დროებითი ტექნიკური პრობლემა დაფიქსირდა. სცადეთ გვერდის
                             ხელახლა ჩატვირთვა.
                         </p>
+                        <pre
+                            style={{
+                                margin: "20px 0 0",
+                                padding: "14px",
+                                borderRadius: "12px",
+                                textAlign: "left",
+                                whiteSpace: "pre-wrap",
+                                overflowWrap: "anywhere",
+                                background: "#0a0f18",
+                                color: "#ffb4ab",
+                                fontSize: "12px",
+                                lineHeight: 1.5,
+                            }}
+                        >
+                            {`Error: ${message}\nDigest: ${digest}`}
+                        </pre>
                         <button
                             onClick={reset}
                             style={{
