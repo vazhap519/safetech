@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import ProjectDetailSchema from "@/components/seo/ProjectDetailSchema";
 import ContentShareButtons from "@/components/social/ContentShareButtons";
-import { getBackendProject } from "@/lib/backend";
+import { getLocalizedProject } from "@/lib/project-api";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
@@ -25,7 +25,7 @@ export async function generateMetadata({
     const { slug } = await params;
     const [{ branding, locale, translations }, project] = await Promise.all([
         getSiteSettings(),
-        getBackendProject(slug),
+        getLocalizedProject(slug),
     ]);
     const siteName = branding.siteName;
 
@@ -68,7 +68,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     const { slug } = await params;
     const [{ locale, socialSharing }, project] = await Promise.all([
         getSiteSettings(),
-        getBackendProject(slug),
+        getLocalizedProject(slug),
     ]);
 
     if (!project) notFound();
@@ -83,7 +83,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                     return null;
                 }
 
-                const resolvedProject = await getBackendProject(
+                const resolvedProject = await getLocalizedProject(
                     relatedProject.slug,
                 );
 
