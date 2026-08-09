@@ -5,6 +5,7 @@ namespace App\Http\Resources\Concerns;
 use App\Support\MultilingualContent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 trait LocalizesResourceContent
 {
@@ -25,5 +26,29 @@ trait LocalizesResourceContent
         $values = MultilingualContent::valuesForField($model, $field, $fallback);
 
         return $values[$locale] ?: (is_string($fallback) ? $fallback : '');
+    }
+
+    private function translatedEntry(Model $model, string $key, mixed $fallback, string $locale): string
+    {
+        $translations = $model->getAttribute('translations');
+        $entries = is_array($translations) ? Arr::get($translations, 'entries', []) : [];
+
+        if (is_array($entries)) {
+            foreach ($entries as $entry) {
+                if (! is_array($entry) || trim((string) ($entry['key'] ?? '')) !== $key) {
+                    continue;
+                }
+
+                $value = trim((string) ($entry[$locale] ?? ''));
+
+                if ($value !== '') {
+                    return $value;
+                }
+
+                break;
+            }
+        }
+
+        return is_string($fallback) ? $fallback : '';
     }
 }

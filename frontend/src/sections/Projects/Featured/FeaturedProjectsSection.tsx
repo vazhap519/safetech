@@ -1,12 +1,12 @@
 import FeaturedProjectCard from "@/components/Projects/FeaturedProjectCard";
 import ProjectsSectionHeader from "@/components/Projects/ProjectsSectionHeader";
-import { getBackendFeaturedProjects } from "@/lib/backend";
+import { getLocalizedFeaturedProjects } from "@/lib/project-api";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function FeaturedProjectsSection() {
     const [featuredProjects, { locale, translations }] = await Promise.all([
-        getBackendFeaturedProjects(),
+        getLocalizedFeaturedProjects(),
         getSiteSettings(),
     ]);
 
