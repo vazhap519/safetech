@@ -1,11 +1,11 @@
 import ProjectMetric from "@/components/Projects/ProjectMetric";
-import { getBackendProjects } from "@/lib/backend";
+import { getLocalizedProjects } from "@/lib/project-api";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function MetricsSection() {
     const [projects, { locale, translations }] = await Promise.all([
-        getBackendProjects(),
+        getLocalizedProjects(),
         getSiteSettings(),
     ]);
 
