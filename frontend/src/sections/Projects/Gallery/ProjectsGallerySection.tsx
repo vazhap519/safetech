@@ -1,7 +1,9 @@
 import ProjectsSectionHeader from "@/components/Projects/ProjectsSectionHeader";
 import ContentFilterGrid from "@/components/filters/ContentFilterGrid";
-import { getBackendFilterCategories } from "@/lib/backend";
-import { getLocalizedProjectCards } from "@/lib/project-api";
+import {
+    getBackendFilterCategories,
+    getBackendProjectCards,
+} from "@/lib/backend";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -11,7 +13,7 @@ export default async function ProjectsGallerySection({
     category?: string;
 }) {
     const [projects, categories, { locale, translations }] = await Promise.all([
-        getLocalizedProjectCards(category),
+        getBackendProjectCards(category),
         getBackendFilterCategories("projects"),
         getSiteSettings(),
     ]);

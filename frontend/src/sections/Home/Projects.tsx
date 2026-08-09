@@ -1,13 +1,13 @@
 import FeaturedProjectCard from "@/components/Projects/FeaturedProjectCard";
 import LocalizedLink from "@/components/ui/LocalizedLink";
 import Typography from "@/components/ui/Typography";
-import { getLocalizedFeaturedProjects } from "@/lib/project-api";
+import { getBackendFeaturedProjects } from "@/lib/backend";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function Projects() {
     const [projects, { locale, translations }] = await Promise.all([
-        getLocalizedFeaturedProjects(),
+        getBackendFeaturedProjects(),
         getSiteSettings(),
     ]);
 
