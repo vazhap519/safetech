@@ -17,6 +17,10 @@ type ConsultationFormComponent = ComponentType<{
     serviceOptions: ServiceOption[];
 }>;
 
+type ToggleEventWithState = Event & {
+    newState?: "open" | "closed";
+};
+
 export default function ConsultationFormSlot({
     serviceOptions,
 }: {
@@ -45,13 +49,33 @@ export default function ConsultationFormSlot({
             }
         }
 
-        function handleToggle() {
-            if (popover.matches(":popover-open")) {
+        function readPopoverOpenState(): boolean | null {
+            try {
+                return popover.matches(":popover-open");
+            } catch {
+                return null;
+            }
+        }
+
+        function handleToggle(event: Event) {
+            const nextState = (event as ToggleEventWithState).newState;
+
+            if (nextState === "open") {
+                void loadForm();
+                return;
+            }
+
+            if (nextState == null && readPopoverOpenState() === true) {
                 void loadForm();
             }
         }
 
-        if (popover.matches(":popover-open")) {
+        const initialOpenState = readPopoverOpenState();
+
+        if (initialOpenState === true || initialOpenState === null) {
+            // Some mobile browsers expose the popover API but reject the
+            // :popover-open selector. In that case, eagerly loading the form
+            // is safer than crashing the entire React tree.
             void loadForm();
         }
 
