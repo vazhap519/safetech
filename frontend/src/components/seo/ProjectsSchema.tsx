@@ -1,7 +1,7 @@
 import {
-    getBackendFeaturedProjects,
-    getBackendProjectCards,
-} from "@/lib/backend";
+    getLocalizedFeaturedProjects,
+    getLocalizedProjectCards,
+} from "@/lib/project-api";
 import { getLanguageTag } from "@/lib/locales";
 import { absoluteLocalizedUrl, absoluteSiteUrl, SITE_NAME } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -17,8 +17,8 @@ export default async function ProjectsSchema() {
     const [{ branding, locale, translations }, featuredProjects, projects] =
         await Promise.all([
             getSiteSettings(),
-            getBackendFeaturedProjects(),
-            getBackendProjectCards(),
+            getLocalizedFeaturedProjects(),
+            getLocalizedProjectCards(),
         ]);
     const siteName = branding.siteName || SITE_NAME;
     const name =
@@ -50,6 +50,7 @@ export default async function ProjectsSchema() {
         seen.add(project.title);
         items.push({
             name: project.title,
+            url: absoluteLocalizedUrl(`/projects/${project.slug}`, locale),
             image: absoluteSiteUrl(project.image),
         });
     }
