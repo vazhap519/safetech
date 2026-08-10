@@ -72,30 +72,32 @@ trait LocalizesResourceContent
      */
     private function directTranslationValue(array $translations, string $key, string $locale): ?string
     {
+        $fields = is_array($translations['fields'] ?? null) ? $translations['fields'] : [];
+        $fieldsKey = is_array($fields[$key] ?? null) ? $fields[$key] : [];
+        $fieldsLocale = is_array($fields[$locale] ?? null) ? $fields[$locale] : [];
+        $keyBucket = is_array($translations[$key] ?? null) ? $translations[$key] : [];
+        $localeBucket = is_array($translations[$locale] ?? null) ? $translations[$locale] : [];
+
         $candidates = [
             data_get($translations, "fields.{$key}.{$locale}"),
             data_get($translations, "fields.{$locale}.{$key}"),
             data_get($translations, "{$key}.{$locale}"),
             data_get($translations, "{$locale}.{$key}"),
-            $translations['fields'][$key][$locale] ?? null,
-            $translations['fields'][$locale][$key] ?? null,
-            $translations[$key][$locale] ?? null,
-            $translations[$locale][$key] ?? null,
+            $fieldsKey[$locale] ?? null,
+            $fieldsLocale[$key] ?? null,
+            $keyBucket[$locale] ?? null,
+            $localeBucket[$key] ?? null,
         ];
 
         foreach ($candidates as $candidate) {
-            if (is_string($candidate)) {
-                $candidate = trim($candidate);
-
-                if ($candidate !== '') {
-                    return $candidate;
-                }
-
+            if (! is_scalar($candidate)) {
                 continue;
             }
 
-            if ($candidate !== null && $candidate !== '') {
-                return (string) $candidate;
+            $value = trim((string) $candidate);
+
+            if ($value !== '') {
+                return $value;
             }
         }
 
