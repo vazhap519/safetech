@@ -64,6 +64,45 @@ final class LocalizedContentFields
     }
 
     /**
+     * EN/RU inputs for a top-level model translation field. The Georgian
+     * value remains in the model's normal fallback column and is not repeated.
+     *
+     * @return array<int, TextInput|Textarea>
+     */
+    public static function secondaryInputs(
+        string $field,
+        string $label,
+        bool $textarea = false,
+        int $rows = 3,
+        ?int $maxLength = null,
+    ): array {
+        return collect(self::SECONDARY_LOCALE_LABELS)
+            ->map(function (string $localeLabel, string $locale) use (
+                $field,
+                $label,
+                $textarea,
+                $rows,
+                $maxLength,
+            ): TextInput|Textarea {
+                $component = $textarea
+                    ? Textarea::make("translations.fields.{$field}.{$locale}")->rows($rows)
+                    : TextInput::make("translations.fields.{$field}.{$locale}");
+
+                $component
+                    ->label("{$label} ({$localeLabel})")
+                    ->placeholder('ცარიელი დატოვებისას გამოყენებული იქნება ქართული ტექსტი');
+
+                if ($maxLength !== null) {
+                    $component->maxLength($maxLength);
+                }
+
+                return $component;
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
      * Translation inputs intended to live inside a JSON repeater item.
      * Georgian remains the repeater's base/fallback value; EN/RU are stored
      * alongside it under translations.{locale}.{field}.
