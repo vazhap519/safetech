@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import ConsultationFormSlot from "@/components/consultation/ConsultationFormSlot";
 import {
+    CONSULTATION_CLOSE_EVENT,
     CONSULTATION_MODAL_ID,
     CONSULTATION_OPEN_EVENT,
 } from "@/components/consultation/constants";
@@ -35,10 +36,16 @@ export default function ConsultationModal({
             setOpen(true);
         }
 
+        function handleClose() {
+            setOpen(false);
+        }
+
         window.addEventListener(CONSULTATION_OPEN_EVENT, handleOpen);
+        window.addEventListener(CONSULTATION_CLOSE_EVENT, handleClose);
 
         return () => {
             window.removeEventListener(CONSULTATION_OPEN_EVENT, handleOpen);
+            window.removeEventListener(CONSULTATION_CLOSE_EVENT, handleClose);
         };
     }, []);
 
@@ -66,7 +73,6 @@ export default function ConsultationModal({
 
     return (
         <div
-            aria-hidden="true"
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) {
