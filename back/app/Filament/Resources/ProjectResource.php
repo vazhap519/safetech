@@ -60,25 +60,51 @@ class ProjectResource extends Resource
         ];
 
         return $schema->components([
-            Section::make('Main project information')
+            Section::make('Main project information (KA / EN / RU)')
+                ->description('ქართული არის ძირითადი fallback. English და Русский ინახება იმავე translation სტრუქტურაში და აღარ მეორდება ცალკე ბლოკში.')
                 ->schema([
                     TextInput::make('name')
-                        ->label('Name')
+                        ->label('Project name (ქართული)')
                         ->required()
                         ->maxLength(255)
                         ->live(onBlur: true)
                         ->afterStateUpdated(StableSlug::syncOnCreate()),
+                    ...LocalizedContentFields::secondaryInputs('name', 'Project name', maxLength: 255),
+
+                    TextInput::make('title')
+                        ->label('Headline (ქართული)')
+                        ->required(),
+                    ...LocalizedContentFields::secondaryInputs('title', 'Headline'),
+
+                    Textarea::make('description')
+                        ->label('Description (ქართული)')
+                        ->required(),
+                    ...LocalizedContentFields::secondaryInputs('description', 'Description', textarea: true),
+
+                    Textarea::make('seo_description')
+                        ->label('SEO description (ქართული)')
+                        ->required()
+                        ->maxLength(320),
+                    ...LocalizedContentFields::secondaryInputs(
+                        'seoDescription',
+                        'SEO description',
+                        textarea: true,
+                        maxLength: 320,
+                    ),
+
+                    TextInput::make('image_alt')
+                        ->label('Image alt (ქართული)')
+                        ->requiredWith('cover'),
+                    ...LocalizedContentFields::secondaryInputs('imageAlt', 'Image alt'),
+
+                    TextInput::make('technology')->label('Technology (ქართული)'),
+                    ...LocalizedContentFields::secondaryInputs('technology', 'Technology'),
+
                     TextInput::make('slug')
                         ->label('Slug')
                         ->required()
                         ->unique(ignoreRecord: true)
-                        ->helperText('Generated automatically from the name, but still editable.'),
-                    TextInput::make('title')->label('Headline')->required(),
-                    Textarea::make('description')->label('Description')->required(),
-                    Textarea::make('seo_description')
-                        ->label('SEO description')
-                        ->required()
-                        ->maxLength(320),
+                        ->helperText('Generated automatically from the Georgian project name, but still editable.'),
                     SpatieMediaLibraryFileUpload::make('cover')
                         ->label('Cover image')
                         ->collection('cover')
@@ -87,9 +113,6 @@ class ProjectResource extends Resource
                         ->imageEditor()
                         ->maxSize(10240)
                         ->imagePreviewHeight('150'),
-                    TextInput::make('image_alt')
-                        ->label('Image alt text')
-                        ->requiredWith('cover'),
                     Select::make('category_id')
                         ->label('Category')
                         ->relationship('projectCategory', 'name')
@@ -101,7 +124,6 @@ class ProjectResource extends Resource
                         ->url()
                         ->maxLength(2048)
                         ->placeholder('https://www.youtube.com/watch?v=...'),
-                    TextInput::make('technology')->label('Technology'),
                     Select::make('icon')
                         ->label('Icon')
                         ->options(AdminIconOptions::content())
@@ -118,18 +140,12 @@ class ProjectResource extends Resource
                         ->default('primary')
                         ->required(),
                 ])
-                ->columns(2),
+                ->columns(3),
 
-            Section::make('Translations and SEO (KA/EN/RU)')
-                ->description('The main fields above remain fallback content. Project section translations are entered directly inside each section below.')
+            Section::make('SEO, cards and featured translations')
+                ->description('აქ დარჩა მხოლოდ ის თარგმანები, რომლებსაც Main project information-ში საკუთარი ძირითადი ველი არ აქვთ.')
                 ->schema([
-                    ...LocalizedContentFields::inputs('name', 'Project name'),
-                    ...LocalizedContentFields::inputs('title', 'Headline'),
-                    ...LocalizedContentFields::inputs('description', 'Description', textarea: true),
                     ...LocalizedContentFields::inputs('seoTitle', 'SEO title'),
-                    ...LocalizedContentFields::inputs('seoDescription', 'SEO description', textarea: true),
-                    ...LocalizedContentFields::inputs('imageAlt', 'Image alt'),
-                    ...LocalizedContentFields::inputs('technology', 'Technology'),
                     ...LocalizedContentFields::inputs('card.title', 'Card title'),
                     ...LocalizedContentFields::inputs('card.description', 'Card description', textarea: true),
                     ...LocalizedContentFields::inputs('featured.title', 'Featured title'),
