@@ -35,8 +35,18 @@ trait LocalizesResourceContent
     private function translatedEntry(Model $model, string $key, mixed $fallback, string $locale): string
     {
         $translations = $model->getAttribute('translations');
-        $entries = is_array($translations) ? Arr::get($translations, 'entries', []) : [];
+        $translations = is_array($translations) ? $translations : [];
         $acceptedKeys = $this->translationEntryKeys($key);
+
+        foreach ($acceptedKeys as $acceptedKey) {
+            $directValue = $this->directTranslationValue($translations, $acceptedKey, $locale);
+
+            if ($directValue !== null) {
+                return $directValue;
+            }
+        }
+
+        $entries = Arr::get($translations, 'entries', []);
 
         if (is_array($entries)) {
             foreach ($entries as $entry) {
@@ -53,6 +63,45 @@ trait LocalizesResourceContent
         }
 
         return is_string($fallback) ? $fallback : '';
+    }
+
+    /**
+     * Resolve historical direct/nested translation layouts in addition to
+     * translations.entries. This keeps content created by earlier admin forms
+     * readable without rewriting or migrating production data.
+     */
+    private function directTranslationValue(array $translations, string $key, string $locale): ?string
+    {
+        $fields = is_array($translations['fields'] ?? null) ? $translations['fields'] : [];
+        $fieldsKey = is_array($fields[$key] ?? null) ? $fields[$key] : [];
+        $fieldsLocale = is_array($fields[$locale] ?? null) ? $fields[$locale] : [];
+        $keyBucket = is_array($translations[$key] ?? null) ? $translations[$key] : [];
+        $localeBucket = is_array($translations[$locale] ?? null) ? $translations[$locale] : [];
+
+        $candidates = [
+            data_get($translations, "fields.{$key}.{$locale}"),
+            data_get($translations, "fields.{$locale}.{$key}"),
+            data_get($translations, "{$key}.{$locale}"),
+            data_get($translations, "{$locale}.{$key}"),
+            $fieldsKey[$locale] ?? null,
+            $fieldsLocale[$key] ?? null,
+            $keyBucket[$locale] ?? null,
+            $localeBucket[$key] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (! is_scalar($candidate)) {
+                continue;
+            }
+
+            $value = trim((string) $candidate);
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     /**

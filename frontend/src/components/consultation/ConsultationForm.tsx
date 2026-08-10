@@ -1,6 +1,6 @@
 "use client";
 
-import { CONSULTATION_POPOVER_ID } from "@/components/consultation/constants";
+import { CONSULTATION_CLOSE_EVENT } from "@/components/consultation/constants";
 import PrivacyConsent from "@/components/forms/PrivacyConsent";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import { useLeadForm } from "@/hooks/useLeadForm";
@@ -206,8 +206,7 @@ export default function ConsultationForm({
             <div className="flex flex-col-reverse gap-unit-sm pt-unit-sm sm:flex-row sm:justify-end">
                 <button
                     className="rounded-xl border border-outline-variant px-6 py-3 font-medium text-on-surface transition-colors hover:bg-surface-container-high"
-                    popoverTarget={CONSULTATION_POPOVER_ID}
-                    popoverTargetAction="hide"
+                    onClick={() => window.dispatchEvent(new Event(CONSULTATION_CLOSE_EVENT))}
                     type="button"
                 >
                     {cancelLabel}
