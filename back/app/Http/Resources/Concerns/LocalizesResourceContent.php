@@ -35,8 +35,18 @@ trait LocalizesResourceContent
     private function translatedEntry(Model $model, string $key, mixed $fallback, string $locale): string
     {
         $translations = $model->getAttribute('translations');
-        $entries = is_array($translations) ? Arr::get($translations, 'entries', []) : [];
+        $translations = is_array($translations) ? $translations : [];
         $acceptedKeys = $this->translationEntryKeys($key);
+
+        foreach ($acceptedKeys as $acceptedKey) {
+            $directValue = $this->directTranslationValue($translations, $acceptedKey, $locale);
+
+            if ($directValue !== null) {
+                return $directValue;
+            }
+        }
+
+        $entries = Arr::get($translations, 'entries', []);
 
         if (is_array($entries)) {
             foreach ($entries as $entry) {
@@ -53,6 +63,43 @@ trait LocalizesResourceContent
         }
 
         return is_string($fallback) ? $fallback : '';
+    }
+
+    /**
+     * Resolve historical direct/nested translation layouts in addition to
+     * translations.entries. This keeps content created by earlier admin forms
+     * readable without rewriting or migrating production data.
+     */
+    private function directTranslationValue(array $translations, string $key, string $locale): ?string
+    {
+        $candidates = [
+            data_get($translations, "fields.{$key}.{$locale}"),
+            data_get($translations, "fields.{$locale}.{$key}"),
+            data_get($translations, "{$key}.{$locale}"),
+            data_get($translations, "{$locale}.{$key}"),
+            $translations['fields'][$key][$locale] ?? null,
+            $translations['fields'][$locale][$key] ?? null,
+            $translations[$key][$locale] ?? null,
+            $translations[$locale][$key] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate)) {
+                $candidate = trim($candidate);
+
+                if ($candidate !== '') {
+                    return $candidate;
+                }
+
+                continue;
+            }
+
+            if ($candidate !== null && $candidate !== '') {
+                return (string) $candidate;
+            }
+        }
+
+        return null;
     }
 
     /**
