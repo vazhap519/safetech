@@ -107,10 +107,15 @@ export async function getLocalizedFeaturedProjects(
     localeOverride?: string,
 ): Promise<FeaturedProject[]> {
     const locale = await resolveProjectLocale(localeOverride);
-    const projects =
+    const featuredProjects =
         (await fetchProjectData<ApiProject[]>(
             apiPath("/projects", { locale, featured: 1 }),
         )) ?? [];
+    const projects = featuredProjects.length
+        ? featuredProjects
+        : ((await fetchProjectData<ApiProject[]>(
+              apiPath("/projects", { locale }),
+          )) ?? []);
 
     return projects.map((project) => ({
         slug: project.slug,

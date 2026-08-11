@@ -50,18 +50,20 @@ final class StoreContactLeadRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
+        $isConsultationPopup = $this->input('source') === 'consultation-popup';
+
         return [
             'name' => ['nullable', 'required_if:source,home-cta,contact-page', 'string', 'max:100'],
             'first_name' => ['nullable', 'required_if:source,consultation-popup', 'string', 'max:60'],
-            'last_name' => ['nullable', 'required_if:source,consultation-popup', 'string', 'max:60'],
+            'last_name' => ['nullable', 'string', 'max:60'],
             'company' => ['nullable', 'string', 'max:120'],
             'phone' => ['required', 'string', 'regex:/^[+()0-9\s-]{7,24}$/'],
-            'email' => ['required', 'email:rfc', 'max:160'],
-            'address' => ['required', 'string', 'max:255'],
-            'service' => ['nullable', 'required_if:source,home-cta,consultation-popup', 'string', 'max:120'],
+            'email' => [$isConsultationPopup ? 'nullable' : 'required', 'email:rfc', 'max:160'],
+            'address' => [$isConsultationPopup ? 'nullable' : 'required', 'string', 'max:255'],
+            'service' => ['nullable', 'required_if:source,home-cta', 'string', 'max:120'],
             'service_slug' => [
                 'nullable',
-                'required_if:source,contact-page,consultation-popup',
+                'required_if:source,contact-page',
                 'string',
                 'max:120',
                 Rule::exists('services', 'slug')->where(
@@ -75,7 +77,7 @@ final class StoreContactLeadRequest extends FormRequest
             'details.*.label' => ['required_with:details', 'string', 'max:160'],
             'details.*.type' => ['nullable', 'string', 'max:40'],
             'details.*.value' => ['nullable', 'string', 'max:500'],
-            'message' => ['required', 'string', 'max:3000'],
+            'message' => [$isConsultationPopup ? 'nullable' : 'required', 'string', 'max:3000'],
             'source' => ['required', 'string', 'max:80'],
             'locale' => ['nullable', 'string', 'in:ka,en,ru'],
             'privacy' => ['accepted'],
