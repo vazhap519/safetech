@@ -24,7 +24,12 @@ export default function ConsultationTrigger({
     }
 
     return (
-        <button type="button" {...props} onClick={handleClick}>
+        <button
+            data-consultation-trigger=""
+            type="button"
+            {...props}
+            onClick={handleClick}
+        >
             {children}
         </button>
     );

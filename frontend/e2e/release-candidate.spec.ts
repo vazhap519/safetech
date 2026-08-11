@@ -29,7 +29,7 @@ function localizedPath(prefix: string, path: string) {
 }
 
 async function revealConsultationTriggers(page: Page): Promise<Locator> {
-    const triggers = page.locator('[popovertarget="consultation-popover"]:visible');
+    const triggers = page.locator("[data-consultation-trigger]:visible");
 
     if ((await triggers.count()) === 0) {
         const mobileMenu = page.locator("nav details:visible").first();
@@ -61,18 +61,17 @@ async function openConsultation(page: Page) {
     const triggers = await revealConsultationTriggers(page);
     await triggers.first().click();
 
-    const dialog = page.locator("#consultation-popover");
+    const dialog = page.locator("#consultation-modal");
     await expect(dialog).toBeVisible();
 
     return dialog;
 }
 
 async function closeConsultation(page: Page) {
-    const dialog = page.locator("#consultation-popover");
-    const close = dialog.locator('[popovertargetaction="hide"]').first();
+    const dialog = page.locator("#consultation-modal");
 
-    if (await close.isVisible()) {
-        await close.click();
+    if (await dialog.isVisible()) {
+        await page.keyboard.press("Escape");
         await expect(dialog).toBeHidden();
     }
 }
@@ -152,7 +151,7 @@ test.describe("release candidate public matrix", () => {
 
                 for (let index = 0; index < count; index += 1) {
                     await triggers.nth(index).click();
-                    const dialog = page.locator("#consultation-popover");
+                    const dialog = page.locator("#consultation-modal");
                     await expect(dialog).toBeVisible();
                     await expect(dialog.locator('select[name="serviceSlug"]')).toBeEnabled();
                     await closeConsultation(page);
@@ -204,10 +203,7 @@ test.describe("release candidate public matrix", () => {
 
             await serviceSelect.selectOption(serviceValues[0]);
             await form.locator('input[name="firstName"]').fill("QA");
-            await form.locator('input[name="lastName"]').fill("Release Candidate");
             await form.locator('input[name="phone"]').fill("+995555000111");
-            await form.locator('input[name="email"]').fill(`qa-${locale}-${test.info().project.name}@safetech.test`);
-            await form.locator('input[name="address"]').fill("Tbilisi QA");
             await form.locator('textarea[name="details"]').fill("Automated release candidate consultation submission test.");
             await form.locator('input[name="privacy"]').check();
 
@@ -383,10 +379,7 @@ test.describe("release candidate public matrix", () => {
         expect(values.length).toBeGreaterThan(0);
         await serviceSelect.selectOption(values[0]);
         await form.locator('input[name="firstName"]').fill("QA");
-        await form.locator('input[name="lastName"]').fill("Failure Test");
         await form.locator('input[name="phone"]').fill("+995555000222");
-        await form.locator('input[name="email"]').fill("qa-failure@safetech.test");
-        await form.locator('input[name="address"]').fill("Tbilisi QA");
         await form.locator('textarea[name="details"]').fill("Simulated gateway failure test.");
         await form.locator('input[name="privacy"]').check();
         await form.locator('button[type="submit"]').click();
