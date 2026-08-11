@@ -3,7 +3,10 @@
 import { FormEvent, useState } from "react";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
-import { trackEvent } from "@/lib/analytics";
+import {
+    getLeadAttributionDetails,
+    trackEvent,
+} from "@/lib/analytics";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
@@ -33,7 +36,7 @@ export function useLeadForm(source: string) {
             ]),
         );
 
-        const details = Object.entries(normalizedPayload)
+        const formDetails = Object.entries(normalizedPayload)
             .filter(([key]) => key.startsWith("details__"))
             .map(([key, value]) => {
                 const detailKey = key.replace("details__", "");
@@ -53,6 +56,10 @@ export function useLeadForm(source: string) {
                 };
             })
             .filter((detail) => detail.value !== "");
+        const details = [
+            ...formDetails,
+            ...getLeadAttributionDetails(),
+        ].slice(0, 50);
 
         const cleanedPayload = Object.fromEntries(
             Object.entries(normalizedPayload).filter(
@@ -121,7 +128,16 @@ export function useLeadForm(source: string) {
             form.reset();
             setStatus("success");
             setMessage(result?.message || t("forms.success.submit", null));
-            trackEvent("generate_lead", { form_source: source });
+            const serviceSlug = String(
+                cleanedPayload.serviceSlug ??
+                    cleanedPayload.service_slug ??
+                    "",
+            ).trim();
+
+            trackEvent("generate_lead", {
+                form_source: source,
+                service_slug: serviceSlug || undefined,
+            });
         } catch (error) {
             setStatus("error");
 

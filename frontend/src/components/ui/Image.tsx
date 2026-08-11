@@ -3,6 +3,7 @@ import clsx from "clsx";
 
 type ImageProps = {
     variant?:
+        | "plain"
         | "home-hero"
         | "home-trust"
         | "home-infrastructure"
@@ -23,7 +24,7 @@ function getSourceKey(src: NextImageProps["src"]) {
 }
 
 export default function Image({
-    variant = "full",
+    variant = "plain",
     fallbackSrc,
     className,
     alt,
@@ -52,7 +53,7 @@ export default function Image({
         <NextImage
             alt={alt}
             className={clsx(
-                "object-cover select-none",
+                "select-none",
                 variant === "home-hero" &&
                     "rounded-[28px] glass-card shadow-2xl !object-contain",
                 variant === "home-trust" &&
@@ -64,7 +65,7 @@ export default function Image({
                 variant === "contact-intro" &&
                     "w-full aspect-video object-cover rounded-lg transition-transform duration-700 group-hover:scale-105",
                 variant === "avatar" && "rounded-full object-cover",
-                variant === "full" && "w-full h-full",
+                variant === "full" && "h-full w-full object-cover",
                 variant === "contact-support" &&
                     "w-full h-full object-cover rounded-2xl shadow-2xl border border-outline-variant/20",
                 className,

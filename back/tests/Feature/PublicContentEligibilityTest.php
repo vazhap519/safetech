@@ -92,4 +92,52 @@ class PublicContentEligibilityTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.slug', 'offices');
     }
+
+    public function test_list_endpoints_offer_lightweight_backward_compatible_views(): void
+    {
+        Service::query()->create([
+            'slug' => 'camera-installation',
+            'name' => 'Camera installation',
+            'title' => 'Camera installation',
+            'description' => 'A complete camera installation service.',
+            'benefits' => [
+                ['title' => 'Remote access', 'description' => 'Secure mobile viewing.'],
+            ],
+            'is_published' => true,
+        ]);
+
+        Project::query()->create([
+            'slug' => 'office-network',
+            'name' => 'Office network',
+            'title' => 'Office network',
+            'description' => 'A complete office network deployment.',
+            'challenges' => [
+                ['title' => 'Coverage', 'description' => 'Multiple floors.'],
+            ],
+            'specs' => [
+                ['label' => 'Cabling', 'value' => 'CAT6'],
+            ],
+            'is_published' => true,
+        ]);
+
+        $serviceCard = $this->getJson('/api/services?view=card&locale=en')
+            ->assertOk()
+            ->assertJsonPath('data.0.slug', 'camera-installation');
+        $projectSummary = $this->getJson('/api/projects?view=summary&locale=en')
+            ->assertOk()
+            ->assertJsonPath('data.0.slug', 'office-network')
+            ->assertJsonPath('data.0.specs.0.value', 'CAT6');
+
+        $this->assertArrayNotHasKey('benefits', $serviceCard->json('data.0'));
+        $this->assertArrayNotHasKey('overview', $serviceCard->json('data.0'));
+        $this->assertArrayNotHasKey('challenges', $projectSummary->json('data.0'));
+        $this->assertArrayNotHasKey('gallery', $projectSummary->json('data.0'));
+
+        $this->getJson('/api/services')
+            ->assertOk()
+            ->assertJsonPath('data.0.benefits.0.title', 'Remote access');
+        $this->getJson('/api/projects')
+            ->assertOk()
+            ->assertJsonPath('data.0.challenges.0.title', 'Coverage');
+    }
 }

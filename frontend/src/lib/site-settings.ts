@@ -11,6 +11,7 @@ import { getCurrentLocale } from "@/lib/locale-server";
 import type { Locale } from "@/lib/locales";
 import {
     buildTranslationMap,
+    selectClientTranslations,
     type TranslationMap,
 } from "@/lib/translations";
 
@@ -399,6 +400,11 @@ export const getSiteSettings = cache(async () => {
         ? settings.integrations
         : {};
     const translations = buildTranslationMap(settings.translations);
+    const clientTranslations = selectClientTranslations(
+        buildTranslationMap(
+            settings.client_translations ?? settings.translations,
+        ),
+    );
     const socialSharing = parseSocialSharing(settings.socials, locale);
     const configuredPhones = normalizeStringList(configuredContact.phones);
     const phoneCandidates = [
@@ -501,5 +507,6 @@ export const getSiteSettings = cache(async () => {
         integrations,
         locale: locale satisfies Locale,
         translations: translations satisfies TranslationMap,
+        clientTranslations: clientTranslations satisfies TranslationMap,
     };
 });

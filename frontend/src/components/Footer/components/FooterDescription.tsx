@@ -42,10 +42,11 @@ export default async function FooterDescription() {
                         {logo ? (
                             <Image
                                 alt={siteName}
-                                className="h-12 w-auto object-contain"
+                                className="h-12 w-auto max-w-[11.25rem] object-contain"
                                 height={48}
                                 src={logo}
                                 unoptimized
+                                variant="plain"
                                 width={180}
                             />
                         ) : (

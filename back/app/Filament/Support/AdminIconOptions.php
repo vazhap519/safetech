@@ -37,6 +37,7 @@ final class AdminIconOptions
             'mail' => 'Mail',
             'history' => 'History',
             'architecture' => 'Architecture',
+            'engineering' => 'Engineering / Tools',
             'schema' => 'Schema / Automation',
             'hub' => 'Hub',
             'dynamic_feed' => 'Feed / Sharing',

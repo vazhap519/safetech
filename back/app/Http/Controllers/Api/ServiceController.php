@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Domain\Content\Contracts\ServiceRepository;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ServiceCardResource;
 use App\Http\Resources\ServiceOptionResource;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
@@ -16,8 +17,13 @@ final class ServiceController extends Controller
     public function index(Request $request, ServiceRepository $repository): AnonymousResourceCollection
     {
         $category = $request->string('category')->toString() ?: null;
+        $services = $repository->allPublished($category);
 
-        return ServiceResource::collection($repository->allPublished($category));
+        if ($request->string('view')->toString() === 'card') {
+            return ServiceCardResource::collection($services);
+        }
+
+        return ServiceResource::collection($services);
     }
 
     public function options(): AnonymousResourceCollection

@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (tag) {
-            revalidateTag(tag, "max");
+            revalidateTag(tag, { expire: 0 });
         }
 
         if (path) {

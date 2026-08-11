@@ -34,11 +34,12 @@ export default async function PartnersSection() {
                         {partner.logo ? (
                             <Image
                                 alt={partner.name}
-                                className="h-8 w-auto object-contain"
+                                className="h-8 w-auto max-w-32 object-contain"
                                 height={32}
                                 src={resolveBackendAsset(partner.logo, "")}
                                 unoptimized
-                                width={120}
+                                variant="plain"
+                                width={128}
                             />
                         ) : (
                             partner.name
