@@ -66,12 +66,25 @@ export function useLeadForm(source: string) {
             cleanedPayload.message ?? cleanedPayload.details ?? "",
         ).trim();
 
+        const firstName = String(cleanedPayload.firstName ?? "");
         const email = String(cleanedPayload.email ?? "");
         const phone = String(cleanedPayload.phone ?? "");
+        const missingRequiredContact =
+            source === "consultation-popup"
+                ? !firstName || !phone
+                : !email || !phone;
 
-        if (!email || !phone) {
+        if (missingRequiredContact) {
             setStatus("error");
-            setMessage(t("forms.validation.contact", null));
+            setMessage(
+                source === "consultation-popup"
+                    ? t("forms.validation.consultationContact", {
+                          ka: "მიუთითეთ სახელი და ტელეფონის ნომერი.",
+                          en: "Enter your name and phone number.",
+                          ru: "Укажите имя и номер телефона.",
+                      })
+                    : t("forms.validation.contact", null),
+            );
             return;
         }
 
@@ -81,7 +94,7 @@ export function useLeadForm(source: string) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...cleanedPayload,
-                    email,
+                    ...(email ? { email } : {}),
                     phone,
                     ...(leadMessage ? { message: leadMessage } : {}),
                     details,

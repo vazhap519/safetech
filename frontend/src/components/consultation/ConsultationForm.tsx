@@ -22,25 +22,10 @@ export default function ConsultationForm({
         en: "First name",
         ru: "Имя",
     });
-    const lastNameLabel = t("forms.lastName", {
-        ka: "გვარი",
-        en: "Last name",
-        ru: "Фамилия",
-    });
     const phoneLabel = t("forms.phone", {
         ka: "ტელეფონის ნომერი",
         en: "Phone number",
         ru: "Номер телефона",
-    });
-    const emailLabel = t("forms.email", {
-        ka: "ელფოსტა",
-        en: "Email",
-        ru: "Электронная почта",
-    });
-    const addressLabel = t("forms.address", {
-        ka: "ქალაქი / მომსახურების მისამართი",
-        en: "City / service address",
-        ru: "Город / адрес оказания услуги",
     });
     const serviceLabel = t("forms.service", {
         ka: "სერვისი",
@@ -62,10 +47,15 @@ export default function ConsultationForm({
         en: "Project details",
         ru: "Детали задачи",
     });
-    const requiredHint = t("forms.requiredHint", {
-        ka: "* ყველა ველი სავალდებულოა.",
-        en: "* All fields are required.",
-        ru: "* Все поля обязательны.",
+    const optionalLabel = t("forms.optional", {
+        ka: "არასავალდებულო",
+        en: "optional",
+        ru: "необязательно",
+    });
+    const requiredHint = t("forms.consultationRequiredHint", {
+        ka: "დასაკავშირებლად მხოლოდ სახელი და ტელეფონია საჭირო.",
+        en: "Only your name and phone number are needed for us to contact you.",
+        ru: "Чтобы мы связались с вами, нужны только имя и номер телефона.",
     });
     const cancelLabel = t("common.cancel", {
         ka: "გაუქმება",
@@ -117,62 +107,28 @@ export default function ConsultationForm({
                     />
                 </label>
                 <label className="space-y-2 font-label-md text-label-md text-on-surface-variant">
-                    <span>{lastNameLabel} *</span>
+                    <span>{phoneLabel} *</span>
                     <input
-                        autoComplete="family-name"
+                        autoComplete="tel"
                         className={inputClassName}
-                        maxLength={60}
-                        minLength={2}
-                        name="lastName"
+                        inputMode="tel"
+                        maxLength={24}
+                        minLength={7}
+                        name="phone"
                         required
-                        type="text"
+                        type="tel"
                     />
                 </label>
             </div>
             <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
-                <span>{phoneLabel} *</span>
-                <input
-                    autoComplete="tel"
-                    className={inputClassName}
-                    inputMode="tel"
-                    maxLength={24}
-                    minLength={7}
-                    name="phone"
-                    required
-                    type="tel"
-                />
-            </label>
-            <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
-                <span>{emailLabel} *</span>
-                <input
-                    autoComplete="email"
-                    className={inputClassName}
-                    maxLength={160}
-                    name="email"
-                    required
-                    type="email"
-                />
-            </label>
-            <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
-                <span>{addressLabel} *</span>
-                <input
-                    autoComplete="street-address"
-                    className={inputClassName}
-                    maxLength={255}
-                    minLength={2}
-                    name="address"
-                    required
-                    type="text"
-                />
-            </label>
-            <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
-                <span>{serviceLabel} *</span>
+                <span>
+                    {serviceLabel} ({optionalLabel})
+                </span>
                 <select
                     className={`${inputClassName} cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
                     defaultValue=""
                     disabled={!hasServices}
                     name="serviceSlug"
-                    required
                 >
                     <option disabled value="">
                         {hasServices ? chooseServiceLabel : servicesUnavailableLabel}
@@ -185,13 +141,14 @@ export default function ConsultationForm({
                 </select>
             </label>
             <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">
-                <span>{detailsLabel} *</span>
+                <span>
+                    {detailsLabel} ({optionalLabel})
+                </span>
                 <textarea
                     className={`${inputClassName} min-h-32 resize-y`}
                     maxLength={3000}
                     minLength={10}
                     name="details"
-                    required
                     rows={5}
                 />
             </label>
@@ -213,7 +170,7 @@ export default function ConsultationForm({
                 </button>
                 <button
                     className="rounded-xl bg-primary-container px-6 py-3 font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
-                    disabled={status === "submitting" || !hasServices}
+                    disabled={status === "submitting"}
                     type="submit"
                 >
                     {status === "submitting"

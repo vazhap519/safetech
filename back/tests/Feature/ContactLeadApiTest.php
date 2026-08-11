@@ -132,6 +132,28 @@ class ContactLeadApiTest extends TestCase
         ]);
     }
 
+    public function test_consultation_popup_accepts_the_minimum_contact_details(): void
+    {
+        Event::fake([LeadCreated::class]);
+
+        $this->postJson('/api/contact-leads', [
+            'firstName' => 'ვაჟა',
+            'phone' => '+995555123456',
+            'source' => 'consultation-popup',
+            'privacy' => true,
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('contact_leads', [
+            'first_name' => 'ვაჟა',
+            'phone' => '+995555123456',
+            'last_name' => null,
+            'email' => null,
+            'address' => null,
+            'source' => 'consultation-popup',
+        ]);
+        Event::assertDispatched(LeadCreated::class);
+    }
+
     public function test_consultation_popup_rejects_an_unpublished_or_unknown_service(): void
     {
         Service::query()->create([
