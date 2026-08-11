@@ -54,26 +54,28 @@ class TestimonialPublicContentTest extends TestCase
 
     public function test_it_can_project_active_locale_and_client_translations_without_changing_content(): void
     {
-        SiteSetting::query()->create([
-            'key' => 'translations',
-            'value' => [
-                'entries' => [
-                    [
-                        'key' => 'nav.home',
-                        'ka' => 'მთავარი',
-                        'en' => 'Home',
-                        'ru' => 'Главная',
-                    ],
-                    [
-                        'key' => 'service.cctv.description',
-                        'ka' => 'კამერების მონტაჟი',
-                        'en' => 'Camera installation',
-                        'ru' => 'Монтаж камер',
+        SiteSetting::query()->updateOrCreate(
+            ['key' => 'translations'],
+            [
+                'value' => [
+                    'entries' => [
+                        [
+                            'key' => 'nav.home',
+                            'ka' => 'მთავარი',
+                            'en' => 'Home',
+                            'ru' => 'Главная',
+                        ],
+                        [
+                            'key' => 'service.cctv.description',
+                            'ka' => 'კამერების მონტაჟი',
+                            'en' => 'Camera installation',
+                            'ru' => 'Монтаж камер',
+                        ],
                     ],
                 ],
+                'is_public' => true,
             ],
-            'is_public' => true,
-        ]);
+        );
 
         $response = $this->getJson(
             '/api/content?translation_locale=en&client_translation_prefixes=nav,forms',
@@ -110,11 +112,13 @@ class TestimonialPublicContentTest extends TestCase
     {
         Storage::fake('public');
 
-        $branding = SiteSetting::query()->create([
-            'key' => 'branding',
-            'value' => ['site_name' => 'SafeTech'],
-            'is_public' => true,
-        ]);
+        $branding = SiteSetting::query()->updateOrCreate(
+            ['key' => 'branding'],
+            [
+                'value' => ['site_name' => 'SafeTech'],
+                'is_public' => true,
+            ],
+        );
 
         $this->getJson('/api/content')
             ->assertOk()
