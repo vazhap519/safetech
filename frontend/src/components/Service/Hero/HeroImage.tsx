@@ -20,12 +20,12 @@ export default async function HeroImage() {
                     locale,
                     branding.siteName,
                 )}
-                className="h-[260px] w-full rounded-xl object-cover sm:h-[340px] md:h-[450px] lg:h-[560px]"
-                height={410}
+                className="aspect-[12/7] h-auto w-full rounded-xl object-cover"
+                height={700}
                 priority
                 sizes="(max-width: 768px) 100vw, 50vw"
                 src={servicesHero}
-                width={610}
+                width={1200}
             />
         </div>
     );

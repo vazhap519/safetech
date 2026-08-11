@@ -108,11 +108,12 @@ export default async function Intro() {
                         <div className="glass-panel group overflow-hidden rounded-xl p-2">
                             <Image
                                 alt={imageAlt || title}
-                                height={410}
+                                className="aspect-[3/2] h-auto w-full object-cover"
+                                height={800}
                                 sizes="(max-width: 768px) 100vw, 50vw"
                                 src={contactIntro}
                                 variant="contact-intro"
-                                width={610}
+                                width={1200}
                             />
                         </div>
                     </div>

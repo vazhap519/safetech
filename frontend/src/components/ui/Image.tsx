@@ -55,19 +55,19 @@ export default function Image({
             className={clsx(
                 "select-none",
                 variant === "home-hero" &&
-                    "rounded-[28px] glass-card shadow-2xl !object-contain",
+                    "rounded-[28px] glass-card shadow-2xl",
                 variant === "home-trust" &&
-                    "relative z-10 w-full rounded-[28px] glass-card shadow-2xl object-cover max-h-[720px]",
+                    "relative z-10 rounded-[28px] glass-card shadow-2xl",
                 variant === "home-infrastructure" &&
-                    "relative z-10 w-full rounded-[28px] glass-card shadow-2xl object-cover max-h-[720px]",
+                    "relative z-10 rounded-[28px] glass-card shadow-2xl",
                 variant === "home-project" &&
-                    "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
+                    "transition-transform duration-700 group-hover:scale-110",
                 variant === "contact-intro" &&
-                    "w-full aspect-video object-cover rounded-lg transition-transform duration-700 group-hover:scale-105",
+                    "rounded-lg transition-transform duration-700 group-hover:scale-105",
                 variant === "avatar" && "rounded-full object-cover",
-                variant === "full" && "h-full w-full object-cover",
+                variant === "full" && "object-cover",
                 variant === "contact-support" &&
-                    "w-full h-full object-cover rounded-2xl shadow-2xl border border-outline-variant/20",
+                    "rounded-2xl border border-outline-variant/20 shadow-2xl",
                 className,
             )}
             fetchPriority={

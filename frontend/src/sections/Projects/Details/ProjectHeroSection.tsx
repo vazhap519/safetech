@@ -108,8 +108,8 @@ export default async function ProjectHeroSection({
                             />
                             <Image
                                 alt={project.imageAlt || project.title || project.name}
-                                className="aspect-[4/3] h-auto w-full rounded-2xl border border-outline-variant/20 object-cover shadow-2xl transition-transform duration-700 group-hover:scale-[1.01]"
-                                height={900}
+                                className="aspect-[16/10] h-auto w-full rounded-2xl border border-outline-variant/20 object-cover shadow-2xl transition-transform duration-700 group-hover:scale-[1.01]"
+                                height={750}
                                 priority
                                 sizes="(max-width: 1024px) 100vw, 50vw"
                                 src={project.image}

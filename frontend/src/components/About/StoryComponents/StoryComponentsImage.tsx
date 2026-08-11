@@ -22,10 +22,12 @@ export default async function StoryComponentsImage() {
             <div className="absolute -inset-4 rounded-3xl bg-primary/20 blur-2xl transition-all duration-500 group-hover:bg-primary/30" />
             <Image
                 alt={imageAlt}
-                className="h-[320px] grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0 sm:h-[420px] lg:h-[500px]"
+                className="aspect-[3/2] h-auto w-full object-cover grayscale-[0.2] transition-all duration-700 group-hover:grayscale-0"
+                height={800}
                 sizes="(max-width: 768px) 100vw, 50vw"
                 src={aboutStory}
                 variant="contact-support"
+                width={1200}
             />
         </div>
     );

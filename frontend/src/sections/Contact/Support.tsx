@@ -53,9 +53,12 @@ export default async function Support() {
                     <div className="relative order-1">
                         <Image
                             alt={imageAlt || title}
+                            className="aspect-[3/2] h-auto w-full object-cover"
+                            height={800}
                             sizes="(max-width: 768px) 100vw, 50vw"
                             src={contactSupport}
                             variant="contact-support"
+                            width={1200}
                         />
 
                         {badge ? (

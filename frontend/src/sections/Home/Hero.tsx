@@ -131,17 +131,17 @@ export default async function Hero() {
 
                 {homeHero ? (
                     <div className="order-2 relative mx-auto hidden w-full max-w-[650px] lg:block">
-                        <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-2xl">
                             <Image
                                 alt={imageAlt || branding.siteName}
                                 className="h-full w-full object-contain"
-                                height={410}
+                                height={900}
                                 loading="lazy"
                                 quality={68}
                                 sizes="(max-width: 1023px) 1px, (max-width: 1280px) 46vw, 610px"
                                 src={homeHero}
                                 variant="home-hero"
-                                width={610}
+                                width={1600}
                             />
                         </div>
                     </div>

@@ -57,11 +57,12 @@ export default async function Infrastructure() {
                     <div className="group relative order-2 mx-auto w-full max-w-[650px] lg:order-1">
                         <Image
                             alt={imageAlt || branding.siteName}
-                            height={410}
+                            className="aspect-[3/2] h-auto w-full object-cover"
+                            height={800}
                             sizes="(max-width: 768px) 100vw, 50vw"
                             src={homeInfrastructure}
                             variant="home-infrastructure"
-                            width={600}
+                            width={1200}
                         />
                     </div>
                 ) : null}
