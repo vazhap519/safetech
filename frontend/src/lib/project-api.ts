@@ -80,7 +80,7 @@ export async function getLocalizedProjects(
 
     return (
         (await fetchProjectData<ApiProject[]>(
-            apiPath("/projects", { locale, category }),
+            apiPath("/projects", { locale, category, view: "summary" }),
         )) ?? []
     );
 }
@@ -109,12 +109,16 @@ export async function getLocalizedFeaturedProjects(
     const locale = await resolveProjectLocale(localeOverride);
     const featuredProjects =
         (await fetchProjectData<ApiProject[]>(
-            apiPath("/projects", { locale, featured: 1 }),
+            apiPath("/projects", {
+                locale,
+                featured: 1,
+                view: "summary",
+            }),
         )) ?? [];
     const projects = featuredProjects.length
         ? featuredProjects
         : ((await fetchProjectData<ApiProject[]>(
-              apiPath("/projects", { locale }),
+              apiPath("/projects", { locale, view: "summary" }),
           )) ?? []);
 
     return projects.map((project) => ({

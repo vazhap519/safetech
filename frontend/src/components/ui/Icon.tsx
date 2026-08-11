@@ -37,6 +37,7 @@ export const CONTENT_ICON_NAMES = [
     "mail",
     "history",
     "architecture",
+    "engineering",
     "schema",
     "hub",
     "dynamic_feed",
@@ -88,6 +89,18 @@ const iconNodes = {
         <>
             <rect x="3" y="7" width="18" height="12" rx="2" />
             <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 11h18M10 11v2h4v-2" />
+        </>
+    ),
+    "box": (
+        <>
+            <path d="m4 7 8-4 8 4-8 4-8-4Z" />
+            <path d="M4 7v10l8 4 8-4V7M12 11v10" />
+        </>
+    ),
+    "calculator": (
+        <>
+            <rect x="5" y="3" width="14" height="18" rx="2" />
+            <path d="M8 7h8M8 11h2M12 11h2M16 11h.01M8 15h2M12 15h2M16 15h.01M8 18h2M12 18h4" />
         </>
     ),
     "building": (
@@ -284,6 +297,12 @@ const iconNodes = {
         </>
     ),
     "phone": <path d="M6.5 4.5h3L11 8l-1.5 2.2a13.5 13.5 0 0 0 4.3 4.3L16 13l3.5 1.5v3a2 2 0 0 1-2 2A15 15 0 0 1 4.5 6.5a2 2 0 0 1 2-2Z" />,
+    "play-circle": (
+        <>
+            <circle cx="12" cy="12" r="9" />
+            <path d="m10 8 6 4-6 4V8Z" />
+        </>
+    ),
     "scan": (
         <>
             <path d="M8 4H5a1 1 0 0 0-1 1v3M16 4h3a1 1 0 0 1 1 1v3M8 20H5a1 1 0 0 1-1-1v-3M16 20h3a1 1 0 0 0 1-1v-3M7 12h10" />
@@ -351,6 +370,12 @@ const iconNodes = {
             <path d="M6 8v3h12V8M12 11v5" />
         </>
     ),
+    "wrench": (
+        <>
+            <path d="M14.5 6.5a4 4 0 0 0-5.2 5.2L4 17l3 3 5.3-5.3a4 4 0 0 0 5.2-5.2l-2.4 2.4-3-3 2.4-2.4Z" />
+            <path d="m5.5 18.5 1-1" />
+        </>
+    ),
 } satisfies Record<string, ReactNode>;
 
 type CanonicalIconName = keyof typeof iconNodes;
@@ -385,6 +410,7 @@ const contentIconAliases: Record<ContentIconName, CanonicalIconName> = {
     mail: "mail",
     history: "history",
     architecture: "draft",
+    engineering: "wrench",
     schema: "workflow",
     hub: "hub",
     dynamic_feed: "feed",
@@ -396,13 +422,26 @@ const legacyIconAliases: Record<string, CanonicalIconName> = {
     arrow_forward: "arrow-right",
     badge: "id-badge",
     battery_charging_full: "battery",
+    build: "wrench",
+    calculate: "calculator",
+    camera_alt: "camera",
+    cable: "network",
     check_circle: "check-circle",
     chevron_left: "chevron-left",
     chevron_right: "chevron-right",
     deployed_code: "brackets-square",
+    desktop_windows: "monitor-pulse",
+    domain: "building",
     expand_more: "chevron-down",
+    handyman: "wrench",
+    inventory_2: "box",
+    lock: "shield-lock",
     memory: "cpu",
     monitor_heart: "monitor-pulse",
+    play_arrow: "play-circle",
+    play_circle: "play-circle",
+    point_of_sale: "calculator",
+    router: "network",
     schedule: "clock",
     settings_ethernet: "network",
     settings_overscan: "scan",

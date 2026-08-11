@@ -4,6 +4,11 @@ import { useEffect, useRef } from "react";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 
+import {
+    captureCampaignAttribution,
+    withAnalyticsContext,
+} from "@/lib/analytics";
+
 declare global {
     interface Window {
         dataLayer?: unknown[];
@@ -37,21 +42,20 @@ function MarketingRouteTracker({
 
         if (previousPath.current === pathname) return;
         previousPath.current = pathname;
+        const pageViewParameters = withAnalyticsContext({
+            page_location: window.location.href,
+            page_path: pathname,
+            page_title: document.title,
+        });
 
         if (googleTagManagerId) {
             window.dataLayer = window.dataLayer || [];
             window.dataLayer.push({
                 event: "virtual_page_view",
-                page_location: window.location.href,
-                page_path: pathname,
-                page_title: document.title,
+                ...pageViewParameters,
             });
         } else if (googleAnalyticsId && window.gtag) {
-            window.gtag("event", "page_view", {
-                page_location: window.location.href,
-                page_path: pathname,
-                page_title: document.title,
-            });
+            window.gtag("event", "page_view", pageViewParameters);
         }
 
         if (metaPixelId && window.fbq) {
@@ -74,6 +78,10 @@ export default function MarketingScriptsClient({
     const gtmId = validId(googleTagManagerId, /^GTM-[A-Z0-9]+$/i);
     const gaId = validId(googleAnalyticsId, /^G-[A-Z0-9]+$/i);
     const pixelId = validId(metaPixelId, /^\d{5,30}$/);
+
+    useEffect(() => {
+        captureCampaignAttribution();
+    }, []);
 
     return (
         <>

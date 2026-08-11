@@ -3,6 +3,25 @@ import type { Locale } from "@/lib/locales";
 type TranslationValues = Partial<Record<Locale, string>>;
 export type TranslationMap = Record<string, TranslationValues>;
 
+export const CLIENT_TRANSLATION_PREFIXES = [
+    "common",
+    "nav",
+    "footer",
+    "forms",
+    "consultation",
+    "floating",
+    "contact",
+    "consent",
+    "calculator",
+    "error",
+    "filters",
+    "services.filters",
+    "projects.filters",
+    "projects.completed",
+    "projects.video",
+    "home.cta",
+] as const;
+
 export type TranslationFallback =
     | string
     | Partial<Record<Locale, string>>
@@ -14,11 +33,33 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function translationValues(entry: Record<string, unknown>): TranslationValues {
-    return {
-        ka: typeof entry.ka === "string" ? entry.ka.trim() : "",
-        en: typeof entry.en === "string" ? entry.en.trim() : "",
-        ru: typeof entry.ru === "string" ? entry.ru.trim() : "",
-    };
+    return (["ka", "en", "ru"] as const).reduce<TranslationValues>(
+        (values, locale) => {
+            const value =
+                typeof entry[locale] === "string" ? entry[locale].trim() : "";
+
+            if (value) values[locale] = value;
+
+            return values;
+        },
+        {},
+    );
+}
+
+function matchesTranslationPrefix(key: string, prefix: string) {
+    return key === prefix || key.startsWith(`${prefix}.`);
+}
+
+export function selectClientTranslations(
+    translations: TranslationMap,
+): TranslationMap {
+    return Object.fromEntries(
+        Object.entries(translations).filter(([key]) =>
+            CLIENT_TRANSLATION_PREFIXES.some((prefix) =>
+                matchesTranslationPrefix(key, prefix),
+            ),
+        ),
+    );
 }
 
 export function buildTranslationMap(value: unknown): TranslationMap {

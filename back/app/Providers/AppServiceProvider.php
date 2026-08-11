@@ -13,6 +13,7 @@ use App\Infrastructure\Persistence\EloquentServiceRepository;
 use App\Listeners\ForwardLeadToCrm;
 use App\Listeners\SendLeadNotification;
 use App\Models\CategoryForService;
+use App\Models\Concerns\FlushesPublicContentCache;
 use App\Models\ContactLead;
 use App\Models\Faq;
 use App\Models\Partner;
@@ -33,6 +34,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -63,6 +66,8 @@ class AppServiceProvider extends ServiceProvider
             $model::observe(AdminAuditObserver::class);
         }
 
+        $this->registerPublicContentMediaInvalidation();
+
         RateLimiter::for('contact-leads', function (Request $request): Limit {
             return Limit::perMinute(5)->by($request->ip());
         });
@@ -86,6 +91,37 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(LeadCreated::class, SendLeadNotification::class);
         Event::listen(LeadCreated::class, ForwardLeadToCrm::class);
+    }
+
+    private function registerPublicContentMediaInvalidation(): void
+    {
+        Event::listen(
+            MediaHasBeenAddedEvent::class,
+            fn (MediaHasBeenAddedEvent $event) => $this->refreshPublicContentForMedia($event->media),
+        );
+
+        $mediaModel = config('media-library.media_model', Media::class);
+
+        if (is_string($mediaModel) && is_a($mediaModel, Media::class, true)) {
+            $mediaModel::deleted(
+                fn (Media $media) => $this->refreshPublicContentForMedia($media),
+            );
+        }
+    }
+
+    private function refreshPublicContentForMedia(Media $media): void
+    {
+        $owner = $media->model;
+
+        if (! $owner instanceof Model) {
+            return;
+        }
+
+        if (! in_array(FlushesPublicContentCache::class, class_uses_recursive($owner), true)) {
+            return;
+        }
+
+        $owner::refreshPublicContent();
     }
 
     /** @return array<int, class-string<Model>> */

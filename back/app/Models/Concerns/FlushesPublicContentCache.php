@@ -13,7 +13,7 @@ trait FlushesPublicContentCache
         static::deleted(fn () => self::refreshPublicContent());
     }
 
-    private static function refreshPublicContent(): void
+    public static function refreshPublicContent(): void
     {
         PublicContentCache::flush();
 

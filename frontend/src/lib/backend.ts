@@ -16,6 +16,7 @@ import { DEFAULT_SOCIAL_IMAGE } from "@/lib/seo";
 import type { TeamMember } from "@/lib/team";
 import {
     buildTranslationMap,
+    CLIENT_TRANSLATION_PREFIXES,
     translateText,
     type TranslationFallback,
     type TranslationMap,
@@ -420,7 +421,13 @@ export async function getBackendServices(category?: string) {
                     icon?: string;
                 }
             >
-        >(buildApiPath("/services", { category, locale: (await getCurrentLocale()) })),
+        >(
+            buildApiPath("/services", {
+                category,
+                locale: await getCurrentLocale(),
+                view: "card",
+            }),
+        ),
     ]);
     const t = createContentTranslator(translations, locale);
 
@@ -552,6 +559,8 @@ export async function getBackendService(
 }
 
 export async function getBackendProjects(category?: string) {
+    const locale = await getCurrentLocale();
+
     return (
         (await fetchData<
             Array<
@@ -566,7 +575,13 @@ export async function getBackendProjects(category?: string) {
                     video_url?: string | null;
                 }
             >
-        >(buildApiPath("/projects", { category }))) ?? []
+        >(
+            buildApiPath("/projects", {
+                category,
+                locale,
+                view: "summary",
+            }),
+        )) ?? []
     );
 }
 
@@ -580,7 +595,13 @@ export async function getBackendFeaturedProjects(): Promise<FeaturedProject[]> {
                     video_url?: string | null;
                 }
             >
-        >("/projects?featured=1"),
+        >(
+            buildApiPath("/projects", {
+                featured: 1,
+                locale: await getCurrentLocale(),
+                view: "summary",
+            }),
+        ),
     ]);
     const t = createContentTranslator(translations, locale);
 
@@ -703,15 +724,20 @@ export async function getBackendTeam(): Promise<TeamMember[]> {
     }));
 }
 
-const getRawBackendContent = cache(
-    async (): Promise<BackendContent> =>
-        normalizeBackendContent(await fetchData<unknown>("/content")),
-);
+const getRawBackendContent = cache(async (): Promise<BackendContent> => {
+    const locale = await getCurrentLocale();
+    const path = buildApiPath("/content", {
+        translation_locale: locale,
+        client_translation_prefixes: CLIENT_TRANSLATION_PREFIXES.join(","),
+    });
+
+    return normalizeBackendContent(await fetchData<unknown>(path));
+});
 
 /**
- * The public content endpoint intentionally remains locale-neutral so that it
- * can be cached once. Localize entries here, alongside the other CMS content,
- * before they are rendered by a locale route.
+ * Laravel keeps one locale-neutral bootstrap cache, then projects the active
+ * locale for this request. Localize entries here alongside the remaining CMS
+ * content before they are rendered by a locale route.
  */
 export const getBackendContent = cache(async (): Promise<BackendContent> => {
     const [content, { locale, translations }] = await Promise.all([

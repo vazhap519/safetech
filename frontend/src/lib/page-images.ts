@@ -4,7 +4,7 @@ import { cache } from "react";
 
 import { getBackendContent, maybeBackendAsset } from "@/lib/backend";
 
-type PageImages = {
+export type PageImages = {
     homeHero: string | null;
     homeInfrastructure: string | null;
     servicesHero: string | null;

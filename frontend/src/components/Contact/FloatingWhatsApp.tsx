@@ -2,10 +2,6 @@
 
 import SocialIcon from "@/components/ui/SocialIcon";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
-import {
-    getCurrentPagePath,
-    trackWhatsAppClick,
-} from "@/lib/analytics-events";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 const DEFAULT_MESSAGE =
@@ -41,7 +37,6 @@ export default function FloatingWhatsApp({
             aria-label={ariaLabel}
             className="group fixed right-5 z-50 isolate grid size-14 place-items-center rounded-full bg-[#25D366] text-white shadow-[0_12px_35px_rgba(37,211,102,.4)] transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40 sm:right-7 sm:size-16"
             href={href}
-            onClick={() => trackWhatsAppClick(getCurrentPagePath())}
             rel="noopener noreferrer"
             style={{ bottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
             target="_blank"

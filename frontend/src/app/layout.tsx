@@ -10,6 +10,7 @@ import Navbar from "@/components/Navbar/Navbar";
 import ConsultationProvider from "@/components/consultation/ConsultationProvider";
 import LocalizationProvider from "@/components/providers/LocalizationProvider";
 import RouteScrollManager from "@/components/providers/RouteScrollManager";
+import ContactInteractionTracker from "@/components/analytics/ContactInteractionTracker";
 import MarketingPixels from "@/components/analytics/MarketingPixels";
 import {
     getLanguageTag,
@@ -192,8 +193,15 @@ export default async function RootLayout({
         storedConsent === "accepted" || storedConsent === "rejected"
             ? storedConsent
             : "unknown";
-    const { contact, branding, integrations, locale, socialLinks, translations } =
-        await getSiteSettings();
+    const {
+        contact,
+        branding,
+        clientTranslations,
+        integrations,
+        locale,
+        socialLinks,
+        translations,
+    } = await getSiteSettings();
     const siteName = branding.siteName || SITE_NAME;
     const t = createTranslator(translations, locale);
     const skipLabel = t("accessibility.skipToContent", {
@@ -318,9 +326,10 @@ export default async function RootLayout({
 
                 <LocalizationProvider
                     locale={locale}
-                    translations={translations}
+                    translations={clientTranslations}
                 >
                     <RouteScrollManager />
+                    <ContactInteractionTracker />
                     <MarketingPixels
                         enabled={marketingEnabled}
                         googleAnalyticsId={googleAnalyticsId}

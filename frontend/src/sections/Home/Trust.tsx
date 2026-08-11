@@ -33,11 +33,12 @@ export default async function Trust() {
                         partner.logo ? (
                             <Image
                                 alt={partner.name}
-                                className="h-12 w-auto object-contain"
+                                className="h-12 w-auto max-w-40 object-contain"
                                 height={48}
                                 key={partner.name}
                                 src={resolveBackendAsset(partner.logo, "")}
                                 unoptimized
+                                variant="plain"
                                 width={160}
                             />
                         ) : (
