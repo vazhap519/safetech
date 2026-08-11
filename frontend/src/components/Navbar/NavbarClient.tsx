@@ -78,12 +78,13 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                         {logo ? (
                             <Image
                                 alt={siteName || homeLabel}
-                                className="h-10 w-auto max-w-[min(10rem,40vw)] object-contain"
-                                height={40}
+                                className="h-11 w-11 shrink-0 rounded-lg object-contain sm:h-12 sm:w-12"
+                                height={48}
+                                sizes="(min-width: 640px) 48px, 44px"
                                 src={logo}
                                 unoptimized
                                 variant="plain"
-                                width={160}
+                                width={48}
                             />
                         ) : null}
                         {siteName ? (
