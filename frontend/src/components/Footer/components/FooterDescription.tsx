@@ -42,12 +42,13 @@ export default async function FooterDescription() {
                         {logo ? (
                             <Image
                                 alt={siteName}
-                                className="h-12 w-auto max-w-[11.25rem] object-contain"
-                                height={48}
+                                className="h-32 w-32 max-w-full rounded-xl object-contain sm:h-36 sm:w-36"
+                                height={144}
+                                sizes="(min-width: 640px) 144px, 128px"
                                 src={logo}
                                 unoptimized
                                 variant="plain"
-                                width={180}
+                                width={144}
                             />
                         ) : (
                             <span className="font-headline-md text-[22px] font-bold text-primary">
