@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\AiChatController;
+use App\Http\Controllers\Api\AiFeedbackController;
 use App\Http\Controllers\Api\AnalyticsEventController;
 use App\Http\Controllers\Api\ContactLeadController;
 use App\Http\Controllers\Api\PageController;
@@ -38,6 +40,13 @@ Route::get('/health', function (): JsonResponse {
 Route::post('/contact-leads', ContactLeadController::class)
     ->middleware('throttle:contact-leads')
     ->name('api.contact-leads.store');
+
+Route::post('/ai/chat', AiChatController::class)
+    ->middleware('throttle:ai-chat')
+    ->name('api.ai.chat');
+Route::post('/ai/messages/{message}/feedback', AiFeedbackController::class)
+    ->middleware('throttle:ai-feedback')
+    ->name('api.ai.feedback');
 
 Route::get('/review-invitations/{token}', [ReviewInvitationController::class, 'show'])
     ->name('api.review-invitations.show');
