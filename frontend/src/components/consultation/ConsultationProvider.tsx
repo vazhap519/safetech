@@ -42,6 +42,8 @@ export default async function ConsultationProvider({
 }) {
     const { locale, translations } = await getSiteSettings();
     const serviceOptions = await getServiceOptions(locale);
+    const assistantEnabled =
+        process.env.NEXT_PUBLIC_AI_ASSISTANT_ENABLED === "true";
     const eyebrow = translateText(
         translations,
         "consultation.modal.eyebrow",
@@ -77,7 +79,7 @@ export default async function ConsultationProvider({
                 serviceOptions={serviceOptions}
                 title={title}
             />
-            <SafeTechAssistant />
+            {assistantEnabled ? <SafeTechAssistant /> : null}
         </>
     );
 }
