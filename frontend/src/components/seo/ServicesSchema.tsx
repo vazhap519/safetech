@@ -1,6 +1,6 @@
 import { getBackendServices } from "@/lib/backend";
 import { getLanguageTag } from "@/lib/locales";
-import { absoluteLocalizedUrl, SITE_NAME } from "@/lib/seo";
+import { absoluteLocalizedUrl, absoluteSiteUrl, SITE_NAME } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -19,10 +19,12 @@ export default async function ServicesSchema() {
         locale,
         null,
     );
+    const organizationId = `${absoluteSiteUrl("/")}#organization`;
 
     const schema = {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
+        "@id": `${absoluteLocalizedUrl("/services", locale)}#collection`,
         name,
         ...(description ? { description } : {}),
         url: absoluteLocalizedUrl("/services", locale),
@@ -35,14 +37,13 @@ export default async function ServicesSchema() {
                 name: service.title,
                 item: {
                     "@type": "Service",
+                    "@id": `${absoluteLocalizedUrl(`/services/${service.slug}`, locale)}#service`,
                     name: service.title,
                     ...(service.description
                         ? { description: service.description }
                         : {}),
                     provider: {
-                        "@type": "Organization",
-                        name: siteName,
-                        url: absoluteLocalizedUrl("/", locale),
+                        "@id": organizationId,
                     },
                     url: absoluteLocalizedUrl(`/services/${service.slug}`, locale),
                 },
