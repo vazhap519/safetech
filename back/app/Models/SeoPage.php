@@ -48,25 +48,14 @@ class SeoPage extends Model implements HasMedia
         'keywords' => '[]',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATION
-    |--------------------------------------------------------------------------
-    */
     public function seoable()
     {
         return $this->morphTo();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | AUTO FIX
-    |--------------------------------------------------------------------------
-    */
     protected static function booted()
     {
         static::saving(function ($model) {
-
             if ($model->slug) {
                 $model->slug = '/'.ltrim($model->slug, '/');
                 $model->canonical = SocialLinks::frontendUrl($model->slug);
@@ -78,14 +67,8 @@ class SeoPage extends Model implements HasMedia
                     ->toArray();
             }
         });
-
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | MEDIA
-    |--------------------------------------------------------------------------
-    */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('og_image')->useDisk('public')->singleFile();
@@ -102,11 +85,6 @@ class SeoPage extends Model implements HasMedia
             ->nonQueued();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | ACCESSORS
-    |--------------------------------------------------------------------------
-    */
     public function getOgImageUrlAttribute(): string
     {
         return $this->getFirstMediaUrl('og_image', 'og')
@@ -138,28 +116,20 @@ class SeoPage extends Model implements HasMedia
             ->toArray();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | META
-    |--------------------------------------------------------------------------
-    */
     public function getMetaAttribute(): array
     {
         return [
             'title' => $this->title,
             'description' => $this->description,
             'keywords' => $this->keywords_list,
-
             'canonical' => $this->canonical,
             'noindex' => $this->noindex,
             'robots' => $this->noindex ? 'noindex, nofollow' : 'index, follow',
-
             'og' => [
                 'title' => $this->og_title ?: $this->title,
                 'description' => $this->og_description ?: $this->description,
                 'image' => $this->og_image_url,
             ],
-
             'share_image' => $this->share_image_url,
             'schema' => $this->schema_data,
             'schemaOverride' => $this->schema ?: null,
@@ -196,11 +166,6 @@ class SeoPage extends Model implements HasMedia
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | QUERY HELPERS
-    |--------------------------------------------------------------------------
-    */
     public static function getByKey(string $key): ?self
     {
         return self::query()->where('key', $key)->first();
@@ -242,25 +207,67 @@ class SeoPage extends Model implements HasMedia
         $baseUrl = SocialLinks::frontendUrl('/');
         $sameAs = SocialLinks::sameAs($settings);
         $logo = SiteSettings::brandingMediaUrl('logo');
+        $siteName = $settings->site_name ?: config('app.name');
+        $siteDescription = $settings->site_description ?: null;
+        $organizationId = "{$baseUrl}#organization";
+        $websiteId = "{$baseUrl}#website";
+        $organizationRef = ['@id' => $organizationId];
+        $websiteRef = ['@id' => $websiteId];
+        $hasAddress = filled($settings->address)
+            || filled($settings->city)
+            || filled($settings->postal_code);
+        $hasGeo = filled($settings->lat) && filled($settings->lng);
+        $hasOpeningHours = filled($settings->open_time) && filled($settings->close_time);
+        $postalAddress = $hasAddress
+            ? array_filter([
+                '@type' => 'PostalAddress',
+                'streetAddress' => $settings->address,
+                'addressLocality' => $settings->city,
+                'postalCode' => $settings->postal_code,
+                'addressCountry' => $settings->country ?: 'GE',
+            ], fn ($value): bool => filled($value))
+            : null;
+        $geo = $hasGeo
+            ? [
+                '@type' => 'GeoCoordinates',
+                'latitude' => $settings->lat,
+                'longitude' => $settings->lng,
+            ]
+            : null;
+        $openingHours = $hasOpeningHours
+            ? [[
+                '@type' => 'OpeningHoursSpecification',
+                'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                'opens' => $settings->open_time,
+                'closes' => $settings->close_time,
+            ]]
+            : null;
 
         switch ($this->schema_type) {
-
             case 'WebSite':
                 return [
-                    [
+                    array_filter([
                         '@context' => 'https://schema.org',
                         '@type' => 'Organization',
-                        'name' => config('app.name'),
+                        '@id' => $organizationId,
+                        'name' => $siteName,
                         'url' => $baseUrl,
                         'logo' => $logo,
-                        'sameAs' => $sameAs,
-                    ],
-                    [
+                        'description' => $siteDescription,
+                        'telephone' => $settings->phone,
+                        'email' => $settings->email,
+                        'sameAs' => $sameAs ?: null,
+                        'areaServed' => $settings->country ?: 'GE',
+                    ], fn ($value): bool => $value !== null && $value !== '' && $value !== []),
+                    array_filter([
                         '@context' => 'https://schema.org',
                         '@type' => 'WebSite',
-                        'name' => config('app.name'),
+                        '@id' => $websiteId,
+                        'name' => $siteName,
                         'url' => $baseUrl,
-                    ],
+                        'description' => $siteDescription,
+                        'publisher' => $organizationRef,
+                    ], fn ($value): bool => $value !== null && $value !== '' && $value !== []),
                 ];
 
             case 'Article':
@@ -272,55 +279,39 @@ class SeoPage extends Model implements HasMedia
                     'image' => $this->og_image_url,
                     'datePublished' => $this->created_at,
                     'mainEntityOfPage' => $this->canonical ?: $baseUrl,
-                    'author' => [
-                        '@type' => 'Organization',
-                        'name' => config('app.name'),
-                    ],
-                ]);
+                    'author' => $organizationRef,
+                    'publisher' => $organizationRef,
+                ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
 
             case 'LocalBusiness':
                 return array_filter([
                     '@context' => 'https://schema.org',
                     '@type' => 'LocalBusiness',
-                    'name' => config('app.name'),
+                    '@id' => "{$baseUrl}#localbusiness",
+                    'name' => $siteName,
+                    'description' => $siteDescription,
                     'url' => $baseUrl,
-                    'telephone' => $settings?->phone,
-                    'email' => $settings?->email,
-                    'address' => array_filter([
-                        '@type' => 'PostalAddress',
-                        'streetAddress' => $settings?->address,
-                        'addressLocality' => $settings?->city,
-                        'addressCountry' => $settings?->country ?: 'GE',
-                    ]),
-                    'geo' => array_filter([
-                        '@type' => 'GeoCoordinates',
-                        'latitude' => $settings?->lat,
-                        'longitude' => $settings?->lng,
-                    ]),
-                    'openingHoursSpecification' => [
-                        array_filter([
-                            '@type' => 'OpeningHoursSpecification',
-                            'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-                            'opens' => $settings?->open_time,
-                            'closes' => $settings?->close_time,
-                        ]),
-                    ],
-                    'sameAs' => $sameAs,
-                    'areaServed' => $settings?->country ?: 'Georgia',
-                ]);
+                    'logo' => $logo,
+                    'image' => $logo,
+                    'telephone' => $settings->phone,
+                    'email' => $settings->email,
+                    'address' => $postalAddress,
+                    'geo' => $geo,
+                    'openingHoursSpecification' => $openingHours,
+                    'sameAs' => $sameAs ?: null,
+                    'areaServed' => $settings->country ?: 'GE',
+                ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
 
             case 'Service':
-                return [
+                return array_filter([
                     '@context' => 'https://schema.org',
                     '@type' => 'Service',
                     'name' => $this->title,
                     'description' => $this->description,
-                    'provider' => [
-                        '@type' => 'Organization',
-                        'name' => config('app.name'),
-                        'url' => $baseUrl,
-                    ],
-                ];
+                    'url' => $this->canonical,
+                    'provider' => $organizationRef,
+                    'areaServed' => $settings->country ?: 'GE',
+                ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
 
             case 'AboutPage':
             case 'CollectionPage':
@@ -332,12 +323,9 @@ class SeoPage extends Model implements HasMedia
                     'name' => $this->title,
                     'description' => $this->description,
                     'url' => $this->canonical,
-                    'isPartOf' => [
-                        '@type' => 'WebSite',
-                        'name' => config('app.name'),
-                        'url' => $baseUrl,
-                    ],
-                ]);
+                    'isPartOf' => $websiteRef,
+                    'about' => $organizationRef,
+                ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
 
             case 'WebApplication':
                 return array_filter([
@@ -348,21 +336,19 @@ class SeoPage extends Model implements HasMedia
                     'url' => $this->canonical,
                     'applicationCategory' => 'BusinessApplication',
                     'operatingSystem' => 'Web',
-                    'provider' => [
-                        '@type' => 'Organization',
-                        'name' => config('app.name'),
-                        'url' => $baseUrl,
-                    ],
-                ]);
+                    'provider' => $organizationRef,
+                    'isPartOf' => $websiteRef,
+                ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
 
             default:
-                return [
+                return array_filter([
                     '@context' => 'https://schema.org',
                     '@type' => 'WebPage',
                     'name' => $this->title,
                     'description' => $this->description,
                     'url' => $this->canonical,
-                ];
+                    'isPartOf' => $websiteRef,
+                ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
         }
     }
 }
