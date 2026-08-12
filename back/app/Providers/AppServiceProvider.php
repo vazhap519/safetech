@@ -12,6 +12,8 @@ use App\Infrastructure\Persistence\EloquentProjectRepository;
 use App\Infrastructure\Persistence\EloquentServiceRepository;
 use App\Listeners\ForwardLeadToCrm;
 use App\Listeners\SendLeadNotification;
+use App\Models\AiKnowledgeCandidate;
+use App\Models\AiKnowledgeItem;
 use App\Models\CategoryForService;
 use App\Models\Concerns\FlushesPublicContentCache;
 use App\Models\ContactLead;
@@ -72,6 +74,20 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
+        RateLimiter::for('ai-chat', function (Request $request): array {
+            $ip = $request->ip() ?: 'unknown';
+            $conversation = mb_substr((string) $request->input('conversation_id', 'new'), 0, 60);
+
+            return [
+                Limit::perMinute(20)->by("ai-chat-ip|{$ip}"),
+                Limit::perMinute(10)->by("ai-chat-conversation|{$ip}|{$conversation}"),
+            ];
+        });
+
+        RateLimiter::for('ai-feedback', function (Request $request): Limit {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
         RateLimiter::for('review-invitations', function (Request $request): Limit {
             return Limit::perMinute(10)->by($request->ip());
         });
@@ -128,6 +144,8 @@ class AppServiceProvider extends ServiceProvider
     private function auditedModels(): array
     {
         return [
+            AiKnowledgeCandidate::class,
+            AiKnowledgeItem::class,
             CategoryForService::class,
             ContactLead::class,
             Faq::class,
