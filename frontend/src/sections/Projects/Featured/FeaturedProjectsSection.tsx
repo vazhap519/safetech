@@ -6,7 +6,7 @@ import { translateText } from "@/lib/translations";
 
 export default async function FeaturedProjectsSection() {
     const [featuredProjects, { locale, translations }] = await Promise.all([
-        getLocalizedFeaturedProjects(),
+        getLocalizedFeaturedProjects(undefined, false),
         getSiteSettings(),
     ]);
 
