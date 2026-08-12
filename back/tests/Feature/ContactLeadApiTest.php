@@ -154,6 +154,29 @@ class ContactLeadApiTest extends TestCase
         Event::assertDispatched(LeadCreated::class);
     }
 
+    public function test_contact_page_accepts_a_low_friction_sales_lead(): void
+    {
+        Event::fake([LeadCreated::class]);
+
+        $this->postJson('/api/contact-leads', [
+            'name' => 'ლევან კაპანაძე',
+            'phone' => '+995557123456',
+            'source' => 'contact-page',
+            'privacy' => true,
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('contact_leads', [
+            'name' => 'ლევან კაპანაძე',
+            'phone' => '+995557123456',
+            'email' => null,
+            'address' => null,
+            'service_slug' => null,
+            'message' => null,
+            'source' => 'contact-page',
+        ]);
+        Event::assertDispatched(LeadCreated::class);
+    }
+
     public function test_consultation_popup_rejects_an_unpublished_or_unknown_service(): void
     {
         Service::query()->create([
@@ -192,9 +215,6 @@ class ContactLeadApiTest extends TestCase
                 'name',
                 'phone',
                 'email',
-                'address',
-                'service',
-                'message',
                 'privacy',
             ]);
     }
