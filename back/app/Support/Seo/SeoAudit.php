@@ -102,7 +102,7 @@ final class SeoAudit
         );
         $earned += self::portion(
             5,
-            [! in_array($key, self::CORE_INDEXABLE_KEYS, true) || ! (bool) ($state['noindex'] ?? false)],
+            [in_array($key, self::CORE_INDEXABLE_KEYS, true) === false || (bool) ($state['noindex'] ?? false) === false],
             $issues,
             'ძირითად კომერციულ გვერდზე Noindex ჩართულია და Google-ში გამოჩენას დაბლოკავს.',
         );
