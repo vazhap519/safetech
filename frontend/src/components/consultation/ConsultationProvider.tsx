@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import SafeTechAssistant from "@/components/ai/SafeTechAssistant";
 import ConsultationModal from "@/components/consultation/ConsultationModal";
 import { buildServerApiUrl } from "@/lib/backend-api";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -41,6 +42,8 @@ export default async function ConsultationProvider({
 }) {
     const { locale, translations } = await getSiteSettings();
     const serviceOptions = await getServiceOptions(locale);
+    const assistantEnabled =
+        process.env.NEXT_PUBLIC_AI_ASSISTANT_ENABLED === "true";
     const eyebrow = translateText(
         translations,
         "consultation.modal.eyebrow",
@@ -76,6 +79,7 @@ export default async function ConsultationProvider({
                 serviceOptions={serviceOptions}
                 title={title}
             />
+            {assistantEnabled ? <SafeTechAssistant /> : null}
         </>
     );
 }
