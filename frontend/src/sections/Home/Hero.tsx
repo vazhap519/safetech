@@ -7,7 +7,7 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function Hero() {
-    const [{ branding, locale, translations }, { homeHero }] = await Promise.all([
+    const [{ branding, contact, locale, translations }, { homeHero }] = await Promise.all([
         getSiteSettings(),
         getPageImages(),
     ]);
@@ -42,12 +42,35 @@ export default async function Hero() {
         locale,
         null,
     );
+    const conversionHint = translateText(
+        translations,
+        "home.hero.conversionHint",
+        locale,
+        {
+            ka: "დატოვეთ სახელი და ნომერი — დაგიკავშირდებით მოთხოვნის დასაზუსტებლად.",
+            en: "Leave your name and phone number — we’ll contact you to clarify your request.",
+            ru: "Оставьте имя и номер — мы свяжемся с вами, чтобы уточнить задачу.",
+        },
+    );
+    const callCta = translateText(
+        translations,
+        "home.hero.callCta",
+        locale,
+        {
+            ka: "დარეკვა",
+            en: "Call now",
+            ru: "Позвонить",
+        },
+    );
     const imageAlt = translateText(
         translations,
         "home.hero.imageAlt",
         locale,
         null,
     );
+    const phoneHref = contact.phone
+        ? `tel:${contact.phone.replace(/[^\d+]/g, "")}`
+        : "";
 
     if (
         !eyebrow &&
@@ -127,6 +150,24 @@ export default async function Hero() {
                             ) : null}
                         </div>
                     ) : null}
+
+                    {conversionHint || phoneHref ? (
+                        <div
+                            className={`mx-auto flex max-w-[620px] flex-col items-center gap-2 text-sm text-on-surface-variant sm:flex-row sm:flex-wrap sm:justify-center ${
+                                homeHero ? "lg:mx-0 lg:justify-start" : ""
+                            }`}
+                        >
+                            {conversionHint ? <span>{conversionHint}</span> : null}
+                            {phoneHref ? (
+                                <a
+                                    className="font-semibold text-primary underline-offset-4 hover:underline"
+                                    href={phoneHref}
+                                >
+                                    {callCta}: {contact.phone}
+                                </a>
+                            ) : null}
+                        </div>
+                    ) : null}
                 </div>
 
                 {homeHero ? (
@@ -136,7 +177,7 @@ export default async function Hero() {
                                 alt={imageAlt || branding.siteName}
                                 className="h-full w-full object-contain"
                                 height={900}
-                                loading="lazy"
+                                priority
                                 quality={68}
                                 sizes="(max-width: 1023px) 1px, (max-width: 1280px) 46vw, 610px"
                                 src={homeHero}
