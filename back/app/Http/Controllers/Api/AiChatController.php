@@ -14,6 +14,8 @@ final class AiChatController extends Controller
 {
     public function __invoke(Request $request, SafeTechAiAgent $agent): JsonResponse
     {
+        abort_unless((bool) config('services.openai.enabled'), 404);
+
         $validated = $request->validate([
             'conversation_id' => ['nullable', 'uuid'],
             'message' => ['required', 'string', 'min:1', 'max:2000'],
