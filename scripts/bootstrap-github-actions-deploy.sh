@@ -5,7 +5,6 @@ set -Eeuo pipefail
 DEPLOY_USER="${SAFETECH_DEPLOY_USER:-safetech-deploy}"
 PROJECT_DIR="${SAFETECH_PROJECT_DIR:-/var/www/safetech}"
 DEPLOY_HOST="${SAFETECH_DEPLOY_HOST:-95.179.163.147}"
-DEPLOY_PORT="${SAFETECH_DEPLOY_PORT:-22}"
 PRIVATE_KEY="${SAFETECH_BOOTSTRAP_PRIVATE_KEY:-/root/.safetech-github-actions-deploy}"
 AUTHORIZED_KEYS="/home/${DEPLOY_USER}/.ssh/authorized_keys"
 SSH_GATE="/usr/local/sbin/safetech-deploy-ssh-gate"
