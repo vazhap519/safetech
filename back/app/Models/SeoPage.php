@@ -161,7 +161,7 @@ class SeoPage extends Model implements HasMedia
                 'image' => $this->og_image_url,
             ],
             'share_image' => $this->share_image_url,
-            'schema' => $this->schema_data,
+            'schema' => $this->schemaDataForLocale($locale),
             'schemaOverride' => $this->schema ?: null,
         ];
     }
@@ -195,6 +195,11 @@ class SeoPage extends Model implements HasMedia
 
     public function getSchemaDataAttribute(): array
     {
+        return $this->schemaDataForLocale('ka');
+    }
+
+    private function schemaDataForLocale(string $locale): array
+    {
         if ($this->schema) {
             $schema = is_array($this->schema)
                 ? $this->schema
@@ -205,6 +210,7 @@ class SeoPage extends Model implements HasMedia
 
         $settings = SiteSettings::businessProfile();
         $baseUrl = SocialLinks::frontendUrl('/');
+        $pageUrl = $this->localizedCanonical($locale);
         $sameAs = SocialLinks::sameAs($settings);
         $logo = SiteSettings::brandingMediaUrl('logo');
         $siteName = $settings->site_name ?: config('app.name');
@@ -278,7 +284,8 @@ class SeoPage extends Model implements HasMedia
                     'description' => $this->description,
                     'image' => $this->og_image_url,
                     'datePublished' => $this->created_at,
-                    'mainEntityOfPage' => $this->canonical ?: $baseUrl,
+                    'mainEntityOfPage' => $pageUrl,
+                    'inLanguage' => $locale,
                     'author' => $organizationRef,
                     'publisher' => $organizationRef,
                 ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
@@ -308,7 +315,8 @@ class SeoPage extends Model implements HasMedia
                     '@type' => 'Service',
                     'name' => $this->title,
                     'description' => $this->description,
-                    'url' => $this->canonical,
+                    'url' => $pageUrl,
+                    'inLanguage' => $locale,
                     'provider' => $organizationRef,
                     'areaServed' => $settings->country ?: 'GE',
                 ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
@@ -322,7 +330,8 @@ class SeoPage extends Model implements HasMedia
                     '@type' => $this->schema_type,
                     'name' => $this->title,
                     'description' => $this->description,
-                    'url' => $this->canonical,
+                    'url' => $pageUrl,
+                    'inLanguage' => $locale,
                     'isPartOf' => $websiteRef,
                     'about' => $organizationRef,
                 ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
@@ -333,7 +342,8 @@ class SeoPage extends Model implements HasMedia
                     '@type' => 'WebApplication',
                     'name' => $this->title,
                     'description' => $this->description,
-                    'url' => $this->canonical,
+                    'url' => $pageUrl,
+                    'inLanguage' => $locale,
                     'applicationCategory' => 'BusinessApplication',
                     'operatingSystem' => 'Web',
                     'provider' => $organizationRef,
@@ -346,9 +356,25 @@ class SeoPage extends Model implements HasMedia
                     '@type' => 'WebPage',
                     'name' => $this->title,
                     'description' => $this->description,
-                    'url' => $this->canonical,
+                    'url' => $pageUrl,
+                    'inLanguage' => $locale,
                     'isPartOf' => $websiteRef,
                 ], fn ($value): bool => $value !== null && $value !== '' && $value !== []);
         }
+    }
+
+    private function localizedCanonical(string $locale): string
+    {
+        $slug = $this->slug ?: '/';
+
+        if ($locale === 'ka') {
+            return $this->canonical ?: SocialLinks::frontendUrl($slug);
+        }
+
+        $localizedPath = $slug === '/'
+            ? "/{$locale}"
+            : "/{$locale}/".ltrim($slug, '/');
+
+        return SocialLinks::frontendUrl($localizedPath);
     }
 }
