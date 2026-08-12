@@ -162,7 +162,7 @@ class AiAssistantApiTest extends TestCase
     }
 
     /** @param array<string, mixed> $arguments
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     private function toolCallResponse(string $name, array $arguments): array
     {
