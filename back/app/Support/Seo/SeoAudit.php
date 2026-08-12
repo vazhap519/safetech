@@ -102,7 +102,7 @@ final class SeoAudit
         );
         $earned += self::portion(
             5,
-            [in_array($key, self::CORE_INDEXABLE_KEYS, true) === false || (bool) ($state['noindex'] ?? false) === false],
+            [self::corePageCanBeIndexed($key, $state)],
             $issues,
             'ძირითად კომერციულ გვერდზე Noindex ჩართულია და Google-ში გამოჩენას დაბლოკავს.',
         );
@@ -275,6 +275,15 @@ final class SeoAudit
         }
 
         return $slug === self::slugForKey($key);
+    }
+
+    private static function corePageCanBeIndexed(string $key, array $state): bool
+    {
+        if (in_array($key, self::CORE_INDEXABLE_KEYS, true) && ($state['noindex'] ?? false) === true) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
