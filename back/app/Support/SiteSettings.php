@@ -63,6 +63,7 @@ final class SiteSettings
     public static function businessProfile(): object
     {
         $contact = self::value('contact');
+        $branding = self::value('branding');
         $seo = self::value('seo');
         $socials = self::value('socials');
         $links = is_array($socials['links'] ?? null) ? $socials['links'] : [];
@@ -93,8 +94,20 @@ final class SiteSettings
             ->all();
 
         $primaryPhone = $phones[0] ?? null;
+        $siteName = trim((string) (
+            $branding['site_name']
+            ?? $seo['site_name']
+            ?? config('app.name')
+        ));
+        $siteDescription = trim((string) (
+            $seo['site_description']
+            ?? $branding['tagline']
+            ?? ''
+        ));
 
         return (object) [
+            'site_name' => $siteName !== '' ? $siteName : config('app.name'),
+            'site_description' => $siteDescription !== '' ? $siteDescription : null,
             'phone' => $primaryPhone,
             'phones' => $phones,
             'email' => $contact['email'] ?? null,
