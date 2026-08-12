@@ -1,0 +1,98 @@
+name: Deploy Production
+
+on:
+  workflow_run:
+    workflows: ["Release Candidate QA"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: safetech-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy QA-approved main commit
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    env:
+      DEPLOY_SSH_KEY: ${{ secrets.SAFETECH_DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.SAFETECH_DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_HOST: 95.179.163.147
+      DEPLOY_PORT: "22"
+      DEPLOY_USER: safetech-deploy
+      APPROVED_SHA: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - name: Check deployment credentials
+        id: credentials
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [[ -n "${DEPLOY_SSH_KEY}" && -n "${DEPLOY_KNOWN_HOSTS}" ]]; then
+            echo "ready=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            {
+              echo "### Production deploy not configured"
+              echo
+              echo "Release Candidate QA passed for \`${APPROVED_SHA}\`, but the SSH deployment secrets are not configured yet."
+              echo "Add \`SAFETECH_DEPLOY_SSH_KEY\` and \`SAFETECH_DEPLOY_KNOWN_HOSTS\` to repository Actions secrets."
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Configure pinned SSH identity
+        if: steps.credentials.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          install -d -m 0700 "${HOME}/.ssh"
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > "${HOME}/.ssh/safetech_deploy"
+          printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" > "${HOME}/.ssh/known_hosts"
+          chmod 0600 "${HOME}/.ssh/safetech_deploy" "${HOME}/.ssh/known_hosts"
+          ssh-keygen -y -f "${HOME}/.ssh/safetech_deploy" >/dev/null
+
+      - name: Deploy exact QA-approved commit
+        if: steps.credentials.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "${APPROVED_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          ssh \
+            -i "${HOME}/.ssh/safetech_deploy" \
+            -p "${DEPLOY_PORT}" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=15 \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "deploy ${APPROVED_SHA}"
+
+      - name: Verify public production health
+        if: steps.credentials.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors \
+            --max-time 20 -o /dev/null "https://safetech.ge/"
+          curl --fail --silent --show-error --location --retry 4 --retry-all-errors \
+            --max-time 20 "https://api.safetech.ge/api/health" >/tmp/safetech-health.json
+          php -r 'json_decode(file_get_contents("/tmp/safetech-health.json"), true, 512, JSON_THROW_ON_ERROR);'
+          {
+            echo "### Production deploy succeeded"
+            echo
+            echo "Deployed QA-approved commit: \`${APPROVED_SHA}\`"
+            echo "Public homepage and Laravel API health checks passed."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Remove runner SSH material
+        if: always() && steps.credentials.outputs.ready == 'true'
+        shell: bash
+        run: rm -rf "${HOME}/.ssh/safetech_deploy" "${HOME}/.ssh/known_hosts"

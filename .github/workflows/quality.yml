@@ -144,9 +144,10 @@ jobs:
           bash -n deploy.sh
           bash -n scripts/deploy-production.sh
           bash -n scripts/repair-backend-runtime.sh
+          bash -n scripts/bootstrap-github-actions-deploy.sh
 
       - name: Run ShellCheck
-        run: shellcheck deploy.sh scripts/deploy-production.sh scripts/repair-backend-runtime.sh
+        run: shellcheck deploy.sh scripts/deploy-production.sh scripts/repair-backend-runtime.sh scripts/bootstrap-github-actions-deploy.sh
 
       - name: Verify deployment safeguards
         run: |
@@ -158,3 +159,6 @@ jobs:
           grep -q 'Atomically activating the staged frontend' scripts/deploy-production.sh
           grep -q 'storage/framework/sessions' scripts/repair-backend-runtime.sh
           grep -q 'Filament admin login smoke test passed' deploy.sh
+          grep -q 'restrict,command=' scripts/bootstrap-github-actions-deploy.sh
+          grep -q 'requested SHA is not the current origin/main commit' scripts/bootstrap-github-actions-deploy.sh
+          grep -q 'safetech-approved.git' scripts/bootstrap-github-actions-deploy.sh
