@@ -105,6 +105,7 @@ export async function getLocalizedProjectCards(
 
 export async function getLocalizedFeaturedProjects(
     localeOverride?: string,
+    fallbackToPublished = true,
 ): Promise<FeaturedProject[]> {
     const locale = await resolveProjectLocale(localeOverride);
     const featuredProjects =
@@ -115,11 +116,12 @@ export async function getLocalizedFeaturedProjects(
                 view: "summary",
             }),
         )) ?? [];
-    const projects = featuredProjects.length
-        ? featuredProjects
-        : ((await fetchProjectData<ApiProject[]>(
-              apiPath("/projects", { locale, view: "summary" }),
-          )) ?? []);
+    const projects =
+        featuredProjects.length || !fallbackToPublished
+            ? featuredProjects
+            : ((await fetchProjectData<ApiProject[]>(
+                  apiPath("/projects", { locale, view: "summary" }),
+              )) ?? []);
 
     return projects.map((project) => ({
         slug: project.slug,
