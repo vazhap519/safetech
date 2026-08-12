@@ -49,6 +49,13 @@ class AiConversationResource extends Resource
                     'closed' => 'დახურული',
                 ]),
             TextInput::make('contactLead.phone')->label('ლიდის ტელეფონი')->disabled(),
+            Textarea::make('transcript')
+                ->label('საუბრის სრული ისტორია')
+                ->helperText('👍/👎 ნიშნები აჩვენებს მომხმარებლის შეფასებას AI პასუხზე.')
+                ->rows(18)
+                ->disabled()
+                ->dehydrated(false)
+                ->columnSpanFull(),
             Textarea::make('metadata')
                 ->label('Metadata')
                 ->formatStateUsing(fn ($state): string => json_encode($state ?? [], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))
