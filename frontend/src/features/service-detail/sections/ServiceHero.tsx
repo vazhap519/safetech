@@ -25,19 +25,31 @@ export default async function ServiceHero({
         translations,
         "service.hero.highlights",
         locale,
-        null,
+        {
+            ka: "რას მიიღებთ",
+            en: "What you get",
+            ru: "Что вы получите",
+        },
     );
     const consultationLabel = translateText(
         translations,
         "service.hero.consultation",
         locale,
-        null,
+        {
+            ka: "კონსულტაციის მოთხოვნა",
+            en: "Request consultation",
+            ru: "Запросить консультацию",
+        },
     );
     const pricingLabel = translateText(
         translations,
         "service.hero.pricing",
         locale,
-        null,
+        {
+            ka: "შეთავაზების მიღება",
+            en: "Get a quote",
+            ru: "Получить расчет",
+        },
     );
     const shareLabel = translateText(
         translations,
@@ -88,23 +100,17 @@ export default async function ServiceHero({
                                 ))}
                             </ul>
                         ) : null}
-                        {consultationLabel || pricingLabel ? (
-                            <div className="flex flex-wrap gap-unit-md">
-                                {consultationLabel ? (
-                                    <ConsultationTrigger className="glow-button w-full rounded-xl bg-primary-container px-unit-lg py-unit-md text-center font-headline-md text-on-primary-container sm:w-auto sm:px-unit-xl">
-                                        {consultationLabel}
-                                    </ConsultationTrigger>
-                                ) : null}
-                                {pricingLabel ? (
-                                    <LocalizedLink
-                                        className="w-full rounded-xl border border-outline-variant bg-white/5 px-unit-lg py-unit-md text-center font-headline-md text-white transition-colors hover:bg-white/10 sm:w-auto sm:px-unit-xl"
-                                        href="/contact#contact-form"
-                                    >
-                                        {pricingLabel}
-                                    </LocalizedLink>
-                                ) : null}
-                            </div>
-                        ) : null}
+                        <div className="flex flex-wrap gap-unit-md">
+                            <ConsultationTrigger className="glow-button w-full rounded-xl bg-primary-container px-unit-lg py-unit-md text-center font-headline-md text-on-primary-container sm:w-auto sm:px-unit-xl">
+                                {consultationLabel}
+                            </ConsultationTrigger>
+                            <LocalizedLink
+                                className="w-full rounded-xl border border-outline-variant bg-white/5 px-unit-lg py-unit-md text-center font-headline-md text-white transition-colors hover:bg-white/10 sm:w-auto sm:px-unit-xl"
+                                href="/contact#contact-form"
+                            >
+                                {pricingLabel}
+                            </LocalizedLink>
+                        </div>
                         {shareLabel ? (
                             <ServiceShareButtons
                                 locale={locale}
