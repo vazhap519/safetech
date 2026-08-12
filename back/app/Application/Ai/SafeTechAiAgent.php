@@ -30,7 +30,7 @@ final readonly class SafeTechAiAgent
             throw new RuntimeException('OpenAI API key is not configured.');
         }
 
-        $model = trim((string) config('services.openai.model', 'gpt-5-mini')) ?: 'gpt-5-mini';
+        $model = trim((string) config('services.openai.model', 'gpt-5.6-terra')) ?: 'gpt-5.6-terra';
         $input = $this->conversationInput($conversation);
         $toolsUsed = [];
         $response = $this->request($apiKey, [
@@ -39,6 +39,7 @@ final readonly class SafeTechAiAgent
             'input' => $input,
             'tools' => $this->tools(),
             'tool_choice' => 'auto',
+            'reasoning' => ['effort' => 'low'],
             'store' => false,
             'max_output_tokens' => 700,
         ]);
@@ -91,6 +92,7 @@ final readonly class SafeTechAiAgent
                 'input' => $input,
                 'tools' => $this->tools(),
                 'tool_choice' => 'auto',
+                'reasoning' => ['effort' => 'low'],
                 'store' => false,
                 'max_output_tokens' => 700,
             ]);
@@ -221,19 +223,28 @@ PROMPT;
     /** @return array<int, array<string, mixed>> */
     private function searchServices(string $query, string $locale): array
     {
-        $query = trim($query);
-        $services = Service::query()->publiclyVisible()
-            ->when($query !== '', function ($builder) use ($query): void {
-                $needle = '%'.$query.'%';
-                $builder->where(function ($search) use ($needle): void {
-                    $search->where('name', 'like', $needle)
-                        ->orWhere('title', 'like', $needle)
-                        ->orWhere('description', 'like', $needle)
-                        ->orWhere('short_description', 'like', $needle);
-                });
-            })
-            ->limit(5)
-            ->get();
+        $services = Service::query()
+            ->publiclyVisible()
+            ->orderBy('sort_order')
+            ->limit(150)
+            ->get()
+            ->filter(fn (Service $service): bool => $this->matchesQuery($query, [
+                $service->name,
+                $service->title,
+                $service->description,
+                $service->short_description,
+                data_get($service->translations, 'fields.name.ka'),
+                data_get($service->translations, 'fields.name.en'),
+                data_get($service->translations, 'fields.name.ru'),
+                data_get($service->translations, 'fields.title.ka'),
+                data_get($service->translations, 'fields.title.en'),
+                data_get($service->translations, 'fields.title.ru'),
+                data_get($service->translations, 'fields.description.ka'),
+                data_get($service->translations, 'fields.description.en'),
+                data_get($service->translations, 'fields.description.ru'),
+            ]))
+            ->take(5)
+            ->values();
 
         return $services->map(fn (Service $service): array => [
             'slug' => $service->slug,
@@ -245,19 +256,28 @@ PROMPT;
     /** @return array<int, array<string, mixed>> */
     private function searchProjects(string $query, string $locale): array
     {
-        $query = trim($query);
-        $projects = Project::query()->publiclyVisible()
-            ->when($query !== '', function ($builder) use ($query): void {
-                $needle = '%'.$query.'%';
-                $builder->where(function ($search) use ($needle): void {
-                    $search->where('name', 'like', $needle)
-                        ->orWhere('title', 'like', $needle)
-                        ->orWhere('description', 'like', $needle)
-                        ->orWhere('excerpt', 'like', $needle);
-                });
-            })
-            ->limit(4)
-            ->get();
+        $projects = Project::query()
+            ->publiclyVisible()
+            ->latest('published_at')
+            ->limit(150)
+            ->get()
+            ->filter(fn (Project $project): bool => $this->matchesQuery($query, [
+                $project->name,
+                $project->title,
+                $project->description,
+                $project->excerpt,
+                data_get($project->translations, 'fields.name.ka'),
+                data_get($project->translations, 'fields.name.en'),
+                data_get($project->translations, 'fields.name.ru'),
+                data_get($project->translations, 'fields.title.ka'),
+                data_get($project->translations, 'fields.title.en'),
+                data_get($project->translations, 'fields.title.ru'),
+                data_get($project->translations, 'fields.description.ka'),
+                data_get($project->translations, 'fields.description.en'),
+                data_get($project->translations, 'fields.description.ru'),
+            ]))
+            ->take(4)
+            ->values();
 
         return $projects->map(fn (Project $project): array => [
             'slug' => $project->slug,
@@ -269,16 +289,19 @@ PROMPT;
     /** @return array<int, array<string, mixed>> */
     private function searchKnowledge(string $query, string $locale): array
     {
-        $query = trim($query);
-        $items = AiKnowledgeItem::query()->approved()
+        $items = AiKnowledgeItem::query()
+            ->approved()
             ->whereIn('locale', array_values(array_unique([$locale, 'ka'])))
-            ->when($query !== '', function ($builder) use ($query): void {
-                $needle = '%'.$query.'%';
-                $builder->where(fn ($search) => $search->where('title', 'like', $needle)->orWhere('content', 'like', $needle));
-            })
             ->latest('updated_at')
-            ->limit(5)
-            ->get();
+            ->limit(150)
+            ->get()
+            ->filter(fn (AiKnowledgeItem $item): bool => $this->matchesQuery($query, [
+                $item->title,
+                $item->content,
+                $item->category,
+            ]))
+            ->take(5)
+            ->values();
 
         if ($items->isNotEmpty()) {
             AiKnowledgeItem::query()->whereKey($items->modelKeys())->increment('usage_count');
@@ -452,6 +475,24 @@ PROMPT;
         $value = trim((string) data_get($translations ?? [], "fields.{$field}.{$locale}", ''));
 
         return $value !== '' ? $value : trim($fallback);
+    }
+
+    /** @param array<int, mixed> $values */
+    private function matchesQuery(string $query, array $values): bool
+    {
+        $needle = Str::lower(trim($query));
+
+        if ($needle === '') {
+            return true;
+        }
+
+        $haystack = Str::lower(collect($values)
+            ->filter(fn (mixed $value): bool => is_scalar($value))
+            ->map(fn (mixed $value): string => trim((string) $value))
+            ->filter()
+            ->implode(' '));
+
+        return Str::contains($haystack, $needle);
     }
 
     private function normalizePhone(string $phone): string
