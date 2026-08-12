@@ -13,10 +13,11 @@ class EditAiKnowledgeCandidate extends EditRecord
     protected function afterSave(): void
     {
         $record = $this->record;
+        $sourceReference = 'candidate:'.$record->id;
 
         if ($record->status === 'approved') {
             AiKnowledgeItem::query()->updateOrCreate(
-                ['source_reference' => 'candidate:'.$record->id],
+                ['source_reference' => $sourceReference],
                 [
                     'title' => mb_substr(trim((string) $record->question), 0, 255),
                     'content' => trim((string) $record->suggested_answer),
@@ -26,6 +27,10 @@ class EditAiKnowledgeCandidate extends EditRecord
                     'source_type' => 'learned',
                 ],
             );
+        } else {
+            AiKnowledgeItem::query()
+                ->where('source_reference', $sourceReference)
+                ->update(['status' => 'disabled']);
         }
 
         $record->forceFill([
