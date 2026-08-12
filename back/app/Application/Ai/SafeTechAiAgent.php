@@ -184,8 +184,8 @@ PROMPT;
     }
 
     /** @param array<string, mixed> $properties
-     *  @param array<int, string> $required
-     *  @return array<string, mixed>
+     * @param  array<int, string>  $required
+     * @return array<string, mixed>
      */
     private function tool(string $name, string $description, array $properties, array $required): array
     {
@@ -204,7 +204,7 @@ PROMPT;
     }
 
     /** @param array<string, mixed> $arguments
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     private function executeTool(string $name, array $arguments, AiConversation $conversation, string $locale): array
     {
@@ -303,7 +303,7 @@ PROMPT;
     }
 
     /** @param array<string, mixed> $arguments
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     private function createSalesLead(array $arguments, AiConversation $conversation): array
     {
@@ -395,7 +395,7 @@ PROMPT;
     }
 
     /** @param array<string, mixed> $payload
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     private function request(string $apiKey, array $payload): array
     {
