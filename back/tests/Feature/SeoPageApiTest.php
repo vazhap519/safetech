@@ -43,6 +43,35 @@ class SeoPageApiTest extends TestCase
             ->assertJsonPath('data.robots', 'index, follow');
     }
 
+    public function test_generated_schema_uses_the_localized_page_url(): void
+    {
+        config()->set('app.frontend_url', 'https://safetech.test');
+
+        SeoPage::query()->create([
+            'key' => 'services',
+            'slug' => '/services',
+            'title' => 'სერვისები',
+            'description' => 'SafeTech-ის პროფესიონალური სერვისები.',
+            'noindex' => false,
+            'schema_type' => 'CollectionPage',
+            'translations' => [
+                'fields' => [
+                    'title' => ['ka' => 'სერვისები', 'en' => 'Services', 'ru' => 'Услуги'],
+                    'description' => [
+                        'ka' => 'SafeTech-ის პროფესიონალური სერვისები.',
+                        'en' => 'Professional SafeTech services.',
+                        'ru' => 'Профессиональные услуги SafeTech.',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->getJson('/api/seo/services?locale=en')
+            ->assertOk()
+            ->assertJsonPath('data.schema.url', 'https://safetech.test/en/services')
+            ->assertJsonPath('data.schema.inLanguage', 'en');
+    }
+
     public function test_it_returns_not_found_without_leaking_an_exception(): void
     {
         $this->getJson('/api/seo/missing-page')
