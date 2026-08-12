@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Events\LeadCreated;
-use App\Models\AiKnowledgeCandidate;
-use App\Models\AiMessage;
 use App\Models\ContactLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -20,6 +18,7 @@ class AiAssistantApiTest extends TestCase
         parent::setUp();
 
         config([
+            'services.openai.enabled' => true,
             'services.openai.api_key' => 'test-key',
             'services.openai.model' => 'gpt-5-mini',
         ]);
