@@ -210,13 +210,14 @@ class SeoPage extends Model implements HasMedia
 
         $settings = SiteSettings::businessProfile();
         $baseUrl = SocialLinks::frontendUrl('/');
+        $entityBaseUrl = rtrim($baseUrl, '/').'/';
         $pageUrl = $this->localizedCanonical($locale);
         $sameAs = SocialLinks::sameAs($settings);
         $logo = SiteSettings::brandingMediaUrl('logo');
         $siteName = $settings->site_name ?: config('app.name');
         $siteDescription = $settings->site_description ?: null;
-        $organizationId = "{$baseUrl}#organization";
-        $websiteId = "{$baseUrl}#website";
+        $organizationId = "{$entityBaseUrl}#organization";
+        $websiteId = "{$entityBaseUrl}#website";
         $organizationRef = ['@id' => $organizationId];
         $websiteRef = ['@id' => $websiteId];
         $hasAddress = filled($settings->address)
@@ -257,7 +258,7 @@ class SeoPage extends Model implements HasMedia
                         '@type' => 'Organization',
                         '@id' => $organizationId,
                         'name' => $siteName,
-                        'url' => $baseUrl,
+                        'url' => $entityBaseUrl,
                         'logo' => $logo,
                         'description' => $siteDescription,
                         'telephone' => $settings->phone,
@@ -270,7 +271,7 @@ class SeoPage extends Model implements HasMedia
                         '@type' => 'WebSite',
                         '@id' => $websiteId,
                         'name' => $siteName,
-                        'url' => $baseUrl,
+                        'url' => $entityBaseUrl,
                         'description' => $siteDescription,
                         'publisher' => $organizationRef,
                     ], fn ($value): bool => $value !== null && $value !== '' && $value !== []),
@@ -294,10 +295,10 @@ class SeoPage extends Model implements HasMedia
                 return array_filter([
                     '@context' => 'https://schema.org',
                     '@type' => 'LocalBusiness',
-                    '@id' => "{$baseUrl}#localbusiness",
+                    '@id' => "{$entityBaseUrl}#localbusiness",
                     'name' => $siteName,
                     'description' => $siteDescription,
-                    'url' => $baseUrl,
+                    'url' => $entityBaseUrl,
                     'logo' => $logo,
                     'image' => $logo,
                     'telephone' => $settings->phone,
