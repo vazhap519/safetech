@@ -8,6 +8,8 @@ final class SeoAudit
 {
     public const LOCALES = ['ka', 'en', 'ru'];
 
+    private const CORE_INDEXABLE_KEYS = ['home', 'about', 'services', 'projects', 'contact'];
+
     /** @return array{score: int, issues: array<int, string>, notes: array<int, string>} */
     public static function analyze(array $state): array
     {
@@ -18,6 +20,7 @@ final class SeoAudit
         $slug = trim((string) ($state['slug'] ?? ''));
         $title = self::clean($state['title'] ?? null);
         $description = self::clean($state['description'] ?? null);
+        $schemaType = self::clean($state['schema_type'] ?? null);
 
         $earned += self::portion(
             10,
@@ -27,12 +30,12 @@ final class SeoAudit
         );
         $earned += self::portion(
             10,
-            [self::isCanonicalPath($slug)],
+            [self::isCanonicalPath($slug) && self::matchesCanonicalKeyPath($key, $slug)],
             $issues,
-            'URL უნდა იწყებოდეს /-ით და არ შეიცავდეს query/hash ნაწილს.',
+            'Canonical URL უნდა ემთხვეოდეს გვერდის რეალურ გზას და არ შეიცავდეს query/hash ნაწილს.',
         );
         $earned += self::portion(
-            20,
+            15,
             [$title !== '', $description !== ''],
             $issues,
             'ქართული fallback სათაური და აღწერა სავალდებულოა.',
@@ -47,7 +50,7 @@ final class SeoAudit
         }
 
         $earned += self::portion(
-            20,
+            15,
             [
                 ...array_map(fn (string $value): bool => $value !== '', $localizedTitles),
                 ...array_map(fn (string $value): bool => $value !== '', $localizedDescriptions),
@@ -59,19 +62,25 @@ final class SeoAudit
             10,
             array_map(fn (string $value): bool => self::readableTitleLength($value), $localizedTitles),
             $issues,
-            'ერთ ან მეტ ენაზე სათაური ზედმეტად მოკლე ან გრძელია; პრაქტიკული დიაპაზონია 15-70 სიმბოლო.',
+            'ერთ ან მეტ ენაზე სათაური ზედმეტად მოკლე ან გრძელია; პრაქტიკული სარედაქციო დიაპაზონია 15-70 სიმბოლო.',
         );
         $earned += self::portion(
             10,
             array_map(fn (string $value): bool => self::readableDescriptionLength($value), $localizedDescriptions),
             $issues,
-            'ერთ ან მეტ ენაზე აღწერა ზედმეტად მოკლე ან გრძელია; პრაქტიკული დიაპაზონია 50-180 სიმბოლო.',
+            'ერთ ან მეტ ენაზე აღწერა ზედმეტად მოკლე ან გრძელია; პრაქტიკული სარედაქციო დიაპაზონია 50-180 სიმბოლო.',
         );
         $earned += self::portion(
-            10,
+            5,
             [self::hasValidSchema($state)],
             $issues,
             'აირჩიეთ შესაბამისი Schema ტიპი ან გაასწორეთ JSON override.',
+        );
+        $earned += self::portion(
+            5,
+            [$schemaType !== '' && $schemaType === self::recommendedSchemaType($key)],
+            $issues,
+            'Schema.org ტიპი არ ემთხვევა ამ გვერდისთვის რეკომენდებულ ტიპს.',
         );
 
         $socialChecks = [];
@@ -85,10 +94,24 @@ final class SeoAudit
             $issues,
             'Open Graph preview-ს ერთ ან მეტ ენაზე სათაური ან აღწერა აკლია.',
         );
+        $earned += self::portion(
+            5,
+            [self::localizedCopyIsDistinct($localizedTitles, $localizedDescriptions)],
+            $issues,
+            'ენების SEO ტექსტები ერთმანეთის ზუსტი ასლებია; თითო ენაზე ბუნებრივი, დამოუკიდებელი ტექსტი გამოიყენეთ.',
+        );
+        $earned += self::portion(
+            5,
+            [! in_array($key, self::CORE_INDEXABLE_KEYS, true) || ! (bool) ($state['noindex'] ?? false)],
+            $issues,
+            'ძირითად კომერციულ გვერდზე Noindex ჩართულია და Google-ში გამოჩენას დაბლოკავს.',
+        );
 
         $notes = [
             'ეს არის SafeTech-ის შიდა SEO QA ქულა და არა Google-ის ოფიციალური შეფასება.',
+            'Title/description სიმბოლოების დიაპაზონი სარედაქციო კონტროლია და არა Google-ის ფიქსირებული ლიმიტი.',
             'Meta keywords Google-ის რეიტინგის სიგნალი არ არის; ველი მხოლოდ კონტენტის დაგეგმვისთვის რჩება.',
+            'სათაურსა და აღწერაში სერვისი და ლოკაცია ბუნებრივად აღწერეთ; keyword stuffing არ გამოიყენოთ.',
         ];
 
         if ((bool) ($state['noindex'] ?? false)) {
@@ -243,6 +266,32 @@ final class SeoAudit
             && ! str_starts_with($slug, '//')
             && ! str_contains($slug, '?')
             && ! str_contains($slug, '#');
+    }
+
+    private static function matchesCanonicalKeyPath(string $key, string $slug): bool
+    {
+        if ($key === '') {
+            return false;
+        }
+
+        return $slug === self::slugForKey($key);
+    }
+
+    /**
+     * @param array<string, string> $titles
+     * @param array<string, string> $descriptions
+     */
+    private static function localizedCopyIsDistinct(array $titles, array $descriptions): bool
+    {
+        $titleValues = array_values(array_filter($titles, fn (string $value): bool => $value !== ''));
+        $descriptionValues = array_values(array_filter($descriptions, fn (string $value): bool => $value !== ''));
+
+        if (count($titleValues) !== count(self::LOCALES) || count($descriptionValues) !== count(self::LOCALES)) {
+            return true;
+        }
+
+        return count(array_unique($titleValues)) === count($titleValues)
+            && count(array_unique($descriptionValues)) === count($descriptionValues);
     }
 
     private static function readableTitleLength(string $value): bool
