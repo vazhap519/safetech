@@ -50,7 +50,13 @@ final class StoreContactLeadRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        $isConsultationPopup = $this->input('source') === 'consultation-popup';
+        $source = (string) $this->input('source');
+        $isConsultationPopup = $source === 'consultation-popup';
+        $isLowFrictionLead = in_array(
+            $source,
+            ['consultation-popup', 'home-cta', 'contact-page'],
+            true,
+        );
 
         return [
             'name' => ['nullable', 'required_if:source,home-cta,contact-page', 'string', 'max:100'],
@@ -58,12 +64,11 @@ final class StoreContactLeadRequest extends FormRequest
             'last_name' => ['nullable', 'string', 'max:60'],
             'company' => ['nullable', 'string', 'max:120'],
             'phone' => ['required', 'string', 'regex:/^[+()0-9\s-]{7,24}$/'],
-            'email' => [$isConsultationPopup ? 'nullable' : 'required', 'email:rfc', 'max:160'],
-            'address' => [$isConsultationPopup ? 'nullable' : 'required', 'string', 'max:255'],
-            'service' => ['nullable', 'required_if:source,home-cta', 'string', 'max:120'],
+            'email' => [$isLowFrictionLead ? 'nullable' : 'required', 'email:rfc', 'max:160'],
+            'address' => [$isLowFrictionLead ? 'nullable' : 'required', 'string', 'max:255'],
+            'service' => ['nullable', 'string', 'max:120'],
             'service_slug' => [
                 'nullable',
-                'required_if:source,contact-page',
                 'string',
                 'max:120',
                 Rule::exists('services', 'slug')->where(
@@ -77,7 +82,7 @@ final class StoreContactLeadRequest extends FormRequest
             'details.*.label' => ['required_with:details', 'string', 'max:160'],
             'details.*.type' => ['nullable', 'string', 'max:40'],
             'details.*.value' => ['nullable', 'string', 'max:500'],
-            'message' => [$isConsultationPopup ? 'nullable' : 'required', 'string', 'max:3000'],
+            'message' => [$isLowFrictionLead ? 'nullable' : 'required', 'string', 'max:3000'],
             'source' => ['required', 'string', 'max:80'],
             'locale' => ['nullable', 'string', 'in:ka,en,ru'],
             'privacy' => ['accepted'],
