@@ -2,50 +2,36 @@ import { getLanguageTag } from "@/lib/locales";
 import {
     absoluteLocalizedUrl,
     absoluteSiteUrl,
-    DEFAULT_SOCIAL_IMAGE,
     SITE_NAME,
 } from "@/lib/seo";
-import {
-    getSiteSettings,
-    isOrganizationSocialLink,
-} from "@/lib/site-settings";
+import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function HomeSchema() {
-    const { branding, locale, socialLinks, translations } =
-        await getSiteSettings();
+    const { branding, locale, translations } = await getSiteSettings();
     const siteName = branding.siteName || SITE_NAME;
+    const homeUrl = absoluteLocalizedUrl("/", locale);
+    const organizationId = `${absoluteSiteUrl("/")}#organization`;
     const description = translateText(
         translations,
         "meta.home.description",
         locale,
         null,
     );
-    const organizationSocialLinks = socialLinks.filter((item) =>
-        isOrganizationSocialLink(item.network),
-    );
-    const publisher: Record<string, unknown> = {
-        "@type": "Organization",
-        name: siteName,
-        url: absoluteLocalizedUrl("/", locale),
-        logo: absoluteSiteUrl(
-            branding.logo ||
-                branding.footerLogo ||
-                branding.defaultImage ||
-                DEFAULT_SOCIAL_IMAGE,
-        ),
-        ...(organizationSocialLinks.length
-            ? { sameAs: organizationSocialLinks.map((item) => item.href) }
-            : {}),
-    };
     const schema = {
         "@context": "https://schema.org",
         "@type": "WebSite",
+        "@id": `${homeUrl}#website`,
         name: siteName,
-        url: absoluteLocalizedUrl("/", locale),
+        url: homeUrl,
         inLanguage: getLanguageTag(locale),
         ...(description ? { description } : {}),
-        publisher,
+        publisher: {
+            "@id": organizationId,
+        },
+        about: {
+            "@id": organizationId,
+        },
     };
 
     return (
