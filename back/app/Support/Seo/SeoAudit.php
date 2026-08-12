@@ -287,8 +287,8 @@ final class SeoAudit
     }
 
     /**
-     * @param array<string, string> $titles
-     * @param array<string, string> $descriptions
+     * @param  array<string, string>  $titles
+     * @param  array<string, string>  $descriptions
      */
     private static function localizedCopyIsDistinct(array $titles, array $descriptions): bool
     {
