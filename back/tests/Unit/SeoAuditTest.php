@@ -40,6 +40,46 @@ class SeoAuditTest extends TestCase
         $this->assertLessThan(100, $audit['score']);
     }
 
+    public function test_wrong_canonical_schema_and_core_noindex_are_flagged(): void
+    {
+        $state = $this->validState();
+        $state['slug'] = '/projects';
+        $state['schema_type'] = 'WebPage';
+        $state['noindex'] = true;
+
+        $audit = SeoAudit::analyze($state);
+
+        $this->assertLessThan(100, $audit['score']);
+        $this->assertTrue(collect($audit['issues'])->contains(
+            fn (string $issue): bool => str_contains($issue, 'Canonical URL'),
+        ));
+        $this->assertTrue(collect($audit['issues'])->contains(
+            fn (string $issue): bool => str_contains($issue, 'Schema.org'),
+        ));
+        $this->assertTrue(collect($audit['issues'])->contains(
+            fn (string $issue): bool => str_contains($issue, 'Noindex'),
+        ));
+    }
+
+    public function test_identical_language_copies_are_flagged(): void
+    {
+        $state = $this->validState();
+        $sameTitle = 'Professional IT and security services for business';
+        $sameDescription = 'Professional networking, server, surveillance, and managed IT support services for businesses across Georgia.';
+
+        foreach (SeoAudit::LOCALES as $locale) {
+            $state['translations']['fields']['title'][$locale] = $sameTitle;
+            $state['translations']['fields']['description'][$locale] = $sameDescription;
+        }
+
+        $audit = SeoAudit::analyze($state);
+
+        $this->assertLessThan(100, $audit['score']);
+        $this->assertTrue(collect($audit['issues'])->contains(
+            fn (string $issue): bool => str_contains($issue, 'ზუსტი ასლებია'),
+        ));
+    }
+
     /** @return array<string, mixed> */
     private function validState(): array
     {
