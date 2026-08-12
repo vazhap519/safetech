@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Events\LeadCreated;
+use App\Models\AiMessage;
 use App\Models\ContactLead;
+use App\Models\Service;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
@@ -20,7 +22,7 @@ class AiAssistantApiTest extends TestCase
         config([
             'services.openai.enabled' => true,
             'services.openai.api_key' => 'test-key',
-            'services.openai.model' => 'gpt-5-mini',
+            'services.openai.model' => 'gpt-5.6-terra',
         ]);
     }
 
@@ -51,6 +53,59 @@ class AiAssistantApiTest extends TestCase
             'role' => 'assistant',
             'content' => 'გამარჯობა! როგორ დაგეხმაროთ?',
         ]);
+    }
+
+    public function test_it_searches_published_services_using_localized_content(): void
+    {
+        Service::query()->create([
+            'slug' => 'video-surveillance',
+            'name' => 'ვიდეო მეთვალყურეობა',
+            'title' => 'ვიდეო მეთვალყურეობის სისტემები',
+            'description' => 'უსაფრთხოების კამერების მონტაჟი და გამართვა.',
+            'seo_description' => 'ვიდეო მეთვალყურეობის სისტემების მონტაჟი.',
+            'translations' => [
+                'fields' => [
+                    'name' => [
+                        'en' => 'Video surveillance',
+                        'ru' => 'Видеонаблюдение',
+                    ],
+                    'title' => [
+                        'en' => 'Video surveillance systems',
+                        'ru' => 'Системы видеонаблюдения',
+                    ],
+                    'description' => [
+                        'en' => 'Professional surveillance camera installation.',
+                        'ru' => 'Профессиональный монтаж камер видеонаблюдения.',
+                    ],
+                ],
+            ],
+            'is_published' => true,
+        ]);
+
+        Http::fakeSequence()
+            ->push($this->toolCallResponse('search_services', [
+                'query' => 'surveillance',
+            ]))
+            ->push($this->textResponse('We install professional video surveillance systems.'));
+
+        $chat = $this->postJson('/api/ai/chat', [
+            'message' => 'I need surveillance cameras for my house.',
+            'locale' => 'en',
+            'privacy' => true,
+        ])->assertOk();
+
+        $assistantMessage = AiMessage::query()
+            ->where('public_id', $chat->json('data.message_id'))
+            ->firstOrFail();
+
+        $this->assertSame(
+            'video-surveillance',
+            data_get($assistantMessage->tool_payload, '0.result.items.0.slug'),
+        );
+        $this->assertSame(
+            'Video surveillance',
+            data_get($assistantMessage->tool_payload, '0.result.items.0.name'),
+        );
     }
 
     public function test_negative_feedback_creates_a_review_candidate_instead_of_auto_learning(): void
@@ -142,7 +197,7 @@ class AiAssistantApiTest extends TestCase
     {
         return [
             'id' => 'resp_test',
-            'model' => 'gpt-5-mini',
+            'model' => 'gpt-5.6-terra',
             'output' => [[
                 'id' => 'msg_test',
                 'type' => 'message',
@@ -168,7 +223,7 @@ class AiAssistantApiTest extends TestCase
     {
         return [
             'id' => 'resp_tool',
-            'model' => 'gpt-5-mini',
+            'model' => 'gpt-5.6-terra',
             'output' => [[
                 'id' => 'fc_test',
                 'type' => 'function_call',
