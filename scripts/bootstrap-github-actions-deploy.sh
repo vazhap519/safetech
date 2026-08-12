@@ -94,7 +94,7 @@ git -C "\${PROJECT_DIR}" fetch --prune origin main
 main_sha="\$(git -C "\${PROJECT_DIR}" rev-parse refs/remotes/origin/main)"
 [[ "\${main_sha}" == "\${sha}" ]] || fail "requested SHA is not the current origin/main commit"
 
-git cat-file -e "\${sha}^{commit}" 2>/dev/null || fail "requested commit is unavailable"
+git -C "\${PROJECT_DIR}" cat-file -e "\${sha}^{commit}" 2>/dev/null || fail "requested commit is unavailable"
 
 if [[ ! -d "\${APPROVED_REMOTE_DIR}" ]]; then
     git init --bare "\${APPROVED_REMOTE_DIR}" >/dev/null
