@@ -8,6 +8,8 @@ import {
     CONSULTATION_MODAL_ID,
     CONSULTATION_OPEN_EVENT,
 } from "@/components/consultation/constants";
+import { trackConsultationOpen } from "@/lib/analytics-events";
+import { trackEvent } from "@/lib/analytics";
 
 type ServiceOption = {
     slug: string;
@@ -34,6 +36,8 @@ export default function ConsultationModal({
     useEffect(() => {
         function handleOpen() {
             setOpen(true);
+            trackEvent("consultation_open");
+            trackConsultationOpen();
         }
 
         function handleClose() {
