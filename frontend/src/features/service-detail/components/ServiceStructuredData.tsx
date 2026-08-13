@@ -10,10 +10,17 @@ import {
     DEFAULT_SOCIAL_IMAGE,
 } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { buildBreadcrumbSchema } from "@/lib/structured-data";
+import {
+    buildBreadcrumbSchema,
+    type StructuredDataValue,
+} from "@/lib/structured-data";
 import { createTranslator } from "@/lib/translations";
 
 import type { ServiceDetail } from "../model/types";
+
+function structuredDataItems(data: StructuredDataValue) {
+    return Array.isArray(data) ? data : [data];
+}
 
 export default async function ServiceStructuredData({
     service,
@@ -23,6 +30,7 @@ export default async function ServiceStructuredData({
     const { contact, branding, locale, translations } = await getSiteSettings();
     const t = createTranslator(translations, locale);
     const url = absoluteLocalizedUrl(`/services/${service.slug}`, locale);
+    const description = service.seoDescription || service.description;
     const organizationLogo =
         branding.logo ||
         branding.footerLogo ||
@@ -50,9 +58,10 @@ export default async function ServiceStructuredData({
             "@type": "Service",
             "@id": `${url}#service`,
             name: service.title || service.name,
-            description: service.seoDescription,
+            description,
             url,
-            serviceType: service.name,
+            mainEntityOfPage: url,
+            serviceType: service.name || service.title,
             image: absoluteSiteUrl(serviceImage),
             inLanguage: getLanguageTag(locale),
             provider,
@@ -100,16 +109,21 @@ export default async function ServiceStructuredData({
         });
     }
 
-    if (service.seo?.schema) {
-        return <JsonLd data={service.seo.schema} />;
-    }
+    const defaultSchema = {
+        "@context": "https://schema.org",
+        "@graph": graph,
+    };
+    const customSchemas = service.seo?.schema
+        ? structuredDataItems(service.seo.schema)
+        : [];
 
     return (
         <JsonLd
-            data={{
-                "@context": "https://schema.org",
-                "@graph": graph,
-            }}
+            data={
+                customSchemas.length
+                    ? [defaultSchema, ...customSchemas]
+                    : defaultSchema
+            }
         />
     );
 }
