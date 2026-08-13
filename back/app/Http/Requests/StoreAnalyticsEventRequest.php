@@ -35,6 +35,12 @@ class StoreAnalyticsEventRequest extends FormRequest
                 Rule::in([
                     AnalyticsEvent::TYPE_SERVICE_VIEW,
                     AnalyticsEvent::TYPE_WHATSAPP_CLICK,
+                    AnalyticsEvent::TYPE_PHONE_CLICK,
+                    AnalyticsEvent::TYPE_EMAIL_CLICK,
+                    AnalyticsEvent::TYPE_CONSULTATION_OPEN,
+                    AnalyticsEvent::TYPE_LEAD_CREATED,
+                    AnalyticsEvent::TYPE_AI_OPEN,
+                    AnalyticsEvent::TYPE_AI_MESSAGE,
                 ]),
             ],
             'service_slug' => ['nullable', 'string', 'max:255', 'exists:services,slug'],
