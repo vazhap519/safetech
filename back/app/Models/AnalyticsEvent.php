@@ -12,6 +12,18 @@ class AnalyticsEvent extends Model
 
     public const TYPE_WHATSAPP_CLICK = 'whatsapp_click';
 
+    public const TYPE_PHONE_CLICK = 'phone_click';
+
+    public const TYPE_EMAIL_CLICK = 'email_click';
+
+    public const TYPE_CONSULTATION_OPEN = 'consultation_open';
+
+    public const TYPE_LEAD_CREATED = 'lead_created';
+
+    public const TYPE_AI_OPEN = 'ai_open';
+
+    public const TYPE_AI_MESSAGE = 'ai_message';
+
     protected $guarded = ['id'];
 
     protected function casts(): array
@@ -39,5 +51,10 @@ class AnalyticsEvent extends Model
     public function scopeWhatsAppClicks(Builder $query): Builder
     {
         return $query->forType(self::TYPE_WHATSAPP_CLICK);
+    }
+
+    public function scopeLeadCreated(Builder $query): Builder
+    {
+        return $query->forType(self::TYPE_LEAD_CREATED);
     }
 }
