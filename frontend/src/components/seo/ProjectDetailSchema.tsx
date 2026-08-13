@@ -48,6 +48,10 @@ function ensureVideoUploadDate(
     return enrich(data) as StructuredDataValue;
 }
 
+function structuredDataItems(data: StructuredDataValue) {
+    return Array.isArray(data) ? data : [data];
+}
+
 export default async function ProjectDetailSchema({
     project,
 }: {
@@ -59,6 +63,7 @@ export default async function ProjectDetailSchema({
     const videoEmbedUrl = getYouTubeEmbedUrl(project.videoUrl);
     const videoWatchUrl = getYouTubeWatchUrl(project.videoUrl);
     const videoUploadDate = project.publishedAt || project.updated_at || "";
+    const description = project.seoDescription || project.description;
     const projectImage =
         project.image || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
     const organizationLogo =
@@ -73,9 +78,10 @@ export default async function ProjectDetailSchema({
                 "@type": "CreativeWork",
                 "@id": `${url}#project`,
                 name: project.title || project.name,
-                description: project.seoDescription,
+                description,
                 image: absoluteSiteUrl(projectImage),
                 url,
+                mainEntityOfPage: url,
                 ...(project.publishedAt
                     ? { datePublished: project.publishedAt }
                     : {}),
@@ -87,7 +93,7 @@ export default async function ProjectDetailSchema({
                           video: {
                               "@type": "VideoObject",
                               name: project.title || project.name,
-                              description: project.seoDescription,
+                              description,
                               thumbnailUrl: absoluteSiteUrl(projectImage),
                               uploadDate: videoUploadDate,
                               url: videoWatchUrl,
@@ -131,13 +137,13 @@ export default async function ProjectDetailSchema({
     };
 
     if (project.seo?.schema) {
+        const customSchema = ensureVideoUploadDate(
+            project.seo.schema,
+            videoUploadDate,
+        );
+
         return (
-            <JsonLd
-                data={ensureVideoUploadDate(
-                    project.seo.schema,
-                    videoUploadDate,
-                )}
-            />
+            <JsonLd data={[schema, ...structuredDataItems(customSchema)]} />
         );
     }
 
