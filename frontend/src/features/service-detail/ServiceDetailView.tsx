@@ -1,6 +1,7 @@
 import ContentShareButtons from "@/components/social/ContentShareButtons";
 import type { Locale } from "@/lib/locales";
 import type { SiteSocialSharing } from "@/lib/site-settings";
+import FeaturedProjectsSection from "@/sections/Projects/Featured/FeaturedProjectsSection";
 
 import type { ServiceDetail } from "./model/types";
 import ServiceViewTracker from "./components/ServiceViewTracker";
@@ -44,6 +45,7 @@ export default function ServiceDetailView({
             <IndustriesSection service={service} />
             <ProcessSection service={service} />
             <PartnersSection />
+            <FeaturedProjectsSection limit={3} />
             <FaqSection service={service} />
             <RelatedServices service={service} />
             <ServiceCta service={service} />
