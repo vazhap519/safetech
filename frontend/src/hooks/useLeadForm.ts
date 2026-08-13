@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
+import { trackLeadCreated } from "@/lib/analytics-events";
 import {
     getLeadAttributionDetails,
     trackEvent,
@@ -138,6 +139,7 @@ export function useLeadForm(source: string) {
                 form_source: source,
                 service_slug: serviceSlug || undefined,
             });
+            trackLeadCreated(source, serviceSlug || undefined);
         } catch (error) {
             setStatus("error");
 
