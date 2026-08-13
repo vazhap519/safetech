@@ -79,6 +79,35 @@ class AnalyticsEventApiTest extends TestCase
         ]);
     }
 
+    public function test_it_accepts_consultation_and_lead_conversion_events(): void
+    {
+        $this->postJson('/api/analytics/events', [
+            'event_type' => AnalyticsEvent::TYPE_CONSULTATION_OPEN,
+            'page_path' => '/services',
+            'visitor_id' => 'conversion-browser',
+            'locale' => 'ka-GE',
+        ])->assertCreated();
+
+        $this->postJson('/api/analytics/events', [
+            'event_type' => AnalyticsEvent::TYPE_LEAD_CREATED,
+            'page_path' => '/services',
+            'visitor_id' => 'conversion-browser',
+            'locale' => 'ka-GE',
+            'meta' => ['source' => 'consultation-popup'],
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('analytics_events', [
+            'event_type' => AnalyticsEvent::TYPE_CONSULTATION_OPEN,
+            'page_path' => '/services',
+            'locale' => 'ka',
+        ]);
+        $this->assertDatabaseHas('analytics_events', [
+            'event_type' => AnalyticsEvent::TYPE_LEAD_CREATED,
+            'page_path' => '/services',
+            'locale' => 'ka',
+        ]);
+    }
+
     public function test_it_limits_repeated_events_even_when_the_ip_limit_is_not_reached(): void
     {
         $payload = [
