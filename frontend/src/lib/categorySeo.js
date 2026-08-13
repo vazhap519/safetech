@@ -112,20 +112,24 @@ export function categoryMetadata({ category, path, locale, kind }) {
 export function categorySchemas({ category, path, locale }) {
   const schemas = [];
 
-  if (category?.schema) {
-    schemas.push(...(Array.isArray(category.schema) ? category.schema : [category.schema]));
-  } else if (category?.name && path) {
+  if (category?.name && path) {
     const description = plainText(
       category.seo_description || category.intro_text,
     );
+    const url = absoluteLocalizedUrl(path, locale);
 
     schemas.push({
       "@context": "https://schema.org",
       "@type": "CollectionPage",
       name: category.name,
       ...(description ? { description } : {}),
-      url: absoluteLocalizedUrl(path, locale),
+      url,
+      mainEntityOfPage: url,
     });
+  }
+
+  if (category?.schema) {
+    schemas.push(...(Array.isArray(category.schema) ? category.schema : [category.schema]));
   }
 
   const faq = Array.isArray(category?.faq) ? category.faq : [];
