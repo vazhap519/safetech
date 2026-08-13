@@ -13,7 +13,14 @@ export default async function CmsPageSchema({
 }) {
     const locale = await getCurrentLocale();
     const seo = await getBackendSeoPage(pageKey, locale);
-    const schema = seo?.schemaOverride || seo?.schema;
 
-    return schema ? <JsonLd data={schema} /> : fallback;
+    if (seo?.schemaOverride) {
+        return <JsonLd data={seo.schemaOverride} />;
+    }
+
+    if (fallback) {
+        return fallback;
+    }
+
+    return seo?.schema ? <JsonLd data={seo.schema} /> : null;
 }
