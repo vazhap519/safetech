@@ -4,7 +4,15 @@ import { trackEvent } from "@/lib/analytics";
 import { hasAnalyticsConsent } from "@/lib/consent";
 import { normalizeLocale, stripLocalePrefix } from "@/lib/locales";
 
-type AnalyticsEventType = "service_view" | "whatsapp_click";
+export type AnalyticsEventType =
+    | "service_view"
+    | "whatsapp_click"
+    | "phone_click"
+    | "email_click"
+    | "consultation_open"
+    | "lead_created"
+    | "ai_open"
+    | "ai_message";
 
 type AnalyticsPayload = {
     eventType: AnalyticsEventType;
@@ -113,22 +121,61 @@ function sendAnalyticsEvent(
     return true;
 }
 
+export function trackInternalEvent(
+    eventType: AnalyticsEventType,
+    options: Omit<AnalyticsPayload, "eventType"> = {},
+    immediate = false,
+) {
+    return sendAnalyticsEvent(
+        { eventType, ...options },
+        immediate ? { immediate: true } : undefined,
+    );
+}
+
 export function trackServiceView(serviceSlug: string, pagePath?: string | null) {
-    return sendAnalyticsEvent({
-        eventType: "service_view",
-        serviceSlug,
-        pagePath,
-    });
+    return trackInternalEvent("service_view", { serviceSlug, pagePath });
 }
 
 export function trackWhatsAppClick(pagePath?: string | null) {
     trackEvent("contact", { method: "whatsapp" });
 
-    return sendAnalyticsEvent(
-        {
-            eventType: "whatsapp_click",
-            pagePath,
-        },
-        { immediate: true },
+    return trackInternalEvent("whatsapp_click", { pagePath }, true);
+}
+
+export function trackContactClick(
+    method: "phone" | "email",
+    pagePath?: string | null,
+) {
+    return trackInternalEvent(
+        method === "phone" ? "phone_click" : "email_click",
+        { pagePath, meta: { method } },
+        true,
     );
+}
+
+export function trackConsultationOpen(pagePath?: string | null) {
+    return trackInternalEvent("consultation_open", { pagePath });
+}
+
+export function trackLeadCreated(
+    source: string,
+    serviceSlug?: string | null,
+    pagePath?: string | null,
+) {
+    return trackInternalEvent(
+        "lead_created",
+        {
+            serviceSlug,
+            pagePath,
+            meta: { source },
+        },
+        true,
+    );
+}
+
+export function trackAiEvent(
+    eventType: "ai_open" | "ai_message",
+    pagePath?: string | null,
+) {
+    return trackInternalEvent(eventType, { pagePath });
 }
