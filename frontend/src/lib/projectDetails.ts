@@ -14,6 +14,8 @@ export type ProjectDetail = {
     image: string;
     imageAlt: string;
     videoUrl?: string | null;
+    publishedAt?: string | null;
+    updated_at?: string | null;
     meta: Array<{ label: string; value: string }>;
     scope: Array<{ value: string; label: string }>;
     specs: Array<{ value: string; label: string }>;

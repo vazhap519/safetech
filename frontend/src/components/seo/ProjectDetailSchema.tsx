@@ -7,9 +7,46 @@ import {
     DEFAULT_SOCIAL_IMAGE,
 } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
-import { buildBreadcrumbSchema } from "@/lib/structured-data";
+import {
+    buildBreadcrumbSchema,
+    type StructuredDataValue,
+} from "@/lib/structured-data";
 import { createTranslator } from "@/lib/translations";
 import { getYouTubeEmbedUrl, getYouTubeWatchUrl } from "@/lib/youtube";
+
+function ensureVideoUploadDate(
+    data: StructuredDataValue,
+    uploadDate: string,
+): StructuredDataValue {
+    const enrich = (value: unknown): unknown => {
+        if (Array.isArray(value)) {
+            return value.map(enrich);
+        }
+
+        if (!value || typeof value !== "object") {
+            return value;
+        }
+
+        const normalized = Object.fromEntries(
+            Object.entries(value).map(([key, nestedValue]) => [
+                key,
+                enrich(nestedValue),
+            ]),
+        );
+        const type = normalized["@type"];
+        const isVideoObject =
+            type === "VideoObject" ||
+            (Array.isArray(type) && type.includes("VideoObject"));
+
+        if (isVideoObject && !normalized.uploadDate && uploadDate) {
+            normalized.uploadDate = uploadDate;
+        }
+
+        return normalized;
+    };
+
+    return enrich(data) as StructuredDataValue;
+}
 
 export default async function ProjectDetailSchema({
     project,
@@ -21,6 +58,7 @@ export default async function ProjectDetailSchema({
     const url = absoluteLocalizedUrl(`/projects/${project.slug}`, locale);
     const videoEmbedUrl = getYouTubeEmbedUrl(project.videoUrl);
     const videoWatchUrl = getYouTubeWatchUrl(project.videoUrl);
+    const videoUploadDate = project.publishedAt || project.updated_at || "";
     const projectImage =
         project.image || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
     const organizationLogo =
@@ -38,13 +76,20 @@ export default async function ProjectDetailSchema({
                 description: project.seoDescription,
                 image: absoluteSiteUrl(projectImage),
                 url,
-                ...(videoWatchUrl
+                ...(project.publishedAt
+                    ? { datePublished: project.publishedAt }
+                    : {}),
+                ...(project.updated_at
+                    ? { dateModified: project.updated_at }
+                    : {}),
+                ...(videoWatchUrl && videoUploadDate
                     ? {
                           video: {
                               "@type": "VideoObject",
                               name: project.title || project.name,
                               description: project.seoDescription,
                               thumbnailUrl: absoluteSiteUrl(projectImage),
+                              uploadDate: videoUploadDate,
                               url: videoWatchUrl,
                               ...(videoEmbedUrl
                                   ? { embedUrl: videoEmbedUrl }
@@ -86,7 +131,14 @@ export default async function ProjectDetailSchema({
     };
 
     if (project.seo?.schema) {
-        return <JsonLd data={project.seo.schema} />;
+        return (
+            <JsonLd
+                data={ensureVideoUploadDate(
+                    project.seo.schema,
+                    videoUploadDate,
+                )}
+            />
+        );
     }
 
     return <JsonLd data={schema} />;
