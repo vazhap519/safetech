@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useRef, useState } from "react";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
+import { trackEvent } from "@/lib/analytics";
 import { buildPublicApiUrl } from "@/lib/public-api";
 
 type ChatMessage = {
@@ -108,6 +109,7 @@ export default function SafeTechAssistant() {
         setInput("");
         setSending(true);
         setMessages((current) => [...current, { role: "user", content: message }]);
+        trackEvent("ai_assistant_message", { action: "send" });
 
         try {
             const response = await fetch(buildPublicApiUrl("/ai/chat"), {
@@ -130,6 +132,13 @@ export default function SafeTechAssistant() {
 
             if (payload.data?.conversation_id) {
                 setConversationId(payload.data.conversation_id);
+            }
+
+            if (payload.data?.lead_created) {
+                trackEvent("generate_lead", {
+                    form_source: "ai_assistant",
+                    lead_score: payload.data.lead_score,
+                });
             }
 
             setMessages((current) => [
@@ -176,6 +185,14 @@ export default function SafeTechAssistant() {
                 return next;
             });
         }
+    }
+
+    function toggleOpen() {
+        setOpen((current) => {
+            const next = !current;
+            if (next) trackEvent("ai_assistant_open");
+            return next;
+        });
     }
 
     return (
@@ -276,7 +293,7 @@ export default function SafeTechAssistant() {
 
             <button
                 type="button"
-                onClick={() => setOpen((current) => !current)}
+                onClick={toggleOpen}
                 className="ml-auto flex h-14 min-w-14 items-center justify-center rounded-full border border-primary/30 bg-primary-container px-4 font-semibold text-on-primary-container shadow-xl shadow-black/30 transition hover:scale-[1.03] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 aria-expanded={open}
                 aria-label={labels.open}
