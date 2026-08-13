@@ -32,6 +32,7 @@ final class AiChatController extends Controller
             $ipHash,
             $request->userAgent(),
         );
+        $hadLead = (bool) $conversation->contact_lead_id;
 
         $conversation->messages()->create([
             'role' => 'user',
@@ -67,6 +68,8 @@ final class AiChatController extends Controller
         ]);
 
         $conversation->forceFill(['last_message_at' => now()])->save();
+        $conversation->refresh();
+        $hasLead = (bool) $conversation->contact_lead_id;
 
         return response()->json([
             'data' => [
@@ -74,7 +77,8 @@ final class AiChatController extends Controller
                 'message_id' => $assistantMessage->public_id,
                 'message' => $assistantMessage->content,
                 'lead_score' => $result['lead_score'],
-                'lead_created' => (bool) $conversation->fresh()->contact_lead_id,
+                'lead_created' => ! $hadLead && $hasLead,
+                'lead_exists' => $hasLead,
             ],
         ]);
     }
