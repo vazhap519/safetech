@@ -4,7 +4,6 @@ namespace App\Support\Analytics;
 
 use App\Models\AnalyticsEvent;
 use App\Models\LocalServiceLanding;
-use Illuminate\Database\Eloquent\Builder;
 
 final class LocalLandingAnalytics
 {
