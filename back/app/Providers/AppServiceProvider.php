@@ -18,6 +18,7 @@ use App\Models\CategoryForService;
 use App\Models\Concerns\FlushesPublicContentCache;
 use App\Models\ContactLead;
 use App\Models\Faq;
+use App\Models\LocalServiceLanding;
 use App\Models\Partner;
 use App\Models\Project;
 use App\Models\ProjectCategory;
@@ -149,6 +150,7 @@ class AppServiceProvider extends ServiceProvider
             CategoryForService::class,
             ContactLead::class,
             Faq::class,
+            LocalServiceLanding::class,
             Partner::class,
             Project::class,
             ProjectCategory::class,
