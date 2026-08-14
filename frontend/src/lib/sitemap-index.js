@@ -1,6 +1,7 @@
 export const SITEMAP_INDEX_PATHS = [
   "/sitemap-main.xml",
   "/sitemap-services.xml",
+  "/sitemap-local-services.xml",
   "/sitemap-service-categories.xml",
   "/sitemap-projects.xml",
   "/sitemap-project-categories.xml",
