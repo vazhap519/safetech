@@ -81,6 +81,17 @@ class Service extends Model implements HasMedia
         return $this->hasMany(AnalyticsEvent::class);
     }
 
+    public function localServiceLandings(): HasMany
+    {
+        return $this->hasMany(LocalServiceLanding::class);
+    }
+
+    public function publicLocalServiceLandings(): HasMany
+    {
+        return $this->hasMany(LocalServiceLanding::class)
+            ->publiclyVisible();
+    }
+
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('is_published', true)->orderBy('sort_order');
