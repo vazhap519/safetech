@@ -12,7 +12,7 @@ export default function DynamicPage({
     page: BackendPage;
     locale: Locale;
 }) {
-    const url = absoluteLocalizedUrl(`/${page.slug}`, locale);
+    const url = absoluteLocalizedUrl(`/pages/${page.slug}`, locale);
     const paragraphs = page.content
         .split(/\n\s*\n/)
         .map((item) => item.trim())

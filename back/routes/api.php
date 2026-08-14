@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AiFeedbackController;
 use App\Http\Controllers\Api\AnalyticsEventController;
 use App\Http\Controllers\Api\ContactLeadController;
+use App\Http\Controllers\Api\LocalServiceLandingController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\ProjectCategoryController;
 use App\Http\Controllers\Api\ProjectController;
@@ -66,6 +67,11 @@ Route::get('/service-categories', ServiceCategoryController::class)
     ->name('api.service-categories.index');
 Route::get('/project-categories', ProjectCategoryController::class)
     ->name('api.project-categories.index');
+
+Route::get('/local-service-landings', [LocalServiceLandingController::class, 'index'])
+    ->name('api.local-service-landings.index');
+Route::get('/local-service-landings/{service}/{location}', [LocalServiceLandingController::class, 'show'])
+    ->name('api.local-service-landings.show');
 
 Route::get('/services', [ServiceController::class, 'index'])->name('api.services.index');
 Route::get('/services/options', [ServiceController::class, 'options'])->name('api.services.options');

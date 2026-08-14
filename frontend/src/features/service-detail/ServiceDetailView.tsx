@@ -8,6 +8,7 @@ import ServiceViewTracker from "./components/ServiceViewTracker";
 import BenefitsSection from "./sections/BenefitsSection";
 import FaqSection from "./sections/FaqSection";
 import IndustriesSection from "./sections/IndustriesSection";
+import LocalServiceAreas from "./sections/LocalServiceAreas";
 import PartnersSection from "./sections/PartnersSection";
 import ProcessSection from "./sections/ProcessSection";
 import RelatedServices from "./sections/RelatedServices";
@@ -45,6 +46,7 @@ export default function ServiceDetailView({
             <IndustriesSection service={service} />
             <ProcessSection service={service} />
             <PartnersSection />
+            <LocalServiceAreas serviceSlug={service.slug} />
             <FeaturedProjectsSection limit={3} />
             <FaqSection service={service} />
             <RelatedServices service={service} />
