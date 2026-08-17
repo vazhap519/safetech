@@ -38,7 +38,7 @@ return [
     'openai' => [
         'enabled' => env('AI_ASSISTANT_ENABLED', false),
         'api_key' => env('OPENAI_API_KEY'),
-        'model' => env('OPENAI_MODEL', 'gpt-5.6-terra'),
+        'model' => env('OPENAI_MODEL', 'gpt-5.6'),
     ],
 
 ];

@@ -79,8 +79,7 @@ class LocalServiceLanding extends Model
             'landing_id',
             'project_id',
         )
-            ->where('projects.is_published', true)
-            ->orderBy('projects.sort_order')
+            ->publiclyVisible()
             ->withTimestamps();
     }
 }

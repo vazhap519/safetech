@@ -46,6 +46,20 @@ class ProductionReadinessCheckTest extends TestCase
             ->expectsOutputToContain('[FAIL] SMTP scheme is supported');
     }
 
+    public function test_it_rejects_an_enabled_ai_assistant_without_an_api_key(): void
+    {
+        $this->configureHardenedProduction();
+        config()->set([
+            'services.openai.enabled' => true,
+            'services.openai.api_key' => '',
+            'services.openai.model' => 'gpt-5.6',
+        ]);
+
+        $this->artisan('cms:production-check')
+            ->assertFailed()
+            ->expectsOutputToContain('[FAIL] OpenAI API key is configured when AI assistant is enabled');
+    }
+
     private function configureHardenedProduction(): void
     {
         $this->app->detectEnvironment(fn (): string => 'production');
@@ -76,6 +90,9 @@ class ProductionReadinessCheckTest extends TestCase
             'mail.mailers.smtp.port' => 587,
             'mail.mailers.smtp.username' => 'safetechgeorgia@gmail.com',
             'mail.mailers.smtp.password' => 'provider-app-password',
+            'services.openai.enabled' => false,
+            'services.openai.api_key' => '',
+            'services.openai.model' => 'gpt-5.6',
         ]);
     }
 }

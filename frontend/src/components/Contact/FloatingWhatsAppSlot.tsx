@@ -7,6 +7,13 @@ type FloatingWhatsAppSlotProps = {
     message?: string;
 };
 
+const SafeTechAssistant = dynamic(
+    () => import("@/components/ai/SafeTechAssistant"),
+    {
+        ssr: false,
+    },
+);
+
 const FloatingWhatsApp = dynamic(
     () => import("@/components/Contact/FloatingWhatsApp"),
     {
@@ -17,5 +24,10 @@ const FloatingWhatsApp = dynamic(
 export default function FloatingWhatsAppSlot(
     props: FloatingWhatsAppSlotProps,
 ) {
-    return <FloatingWhatsApp {...props} />;
+    return (
+        <>
+            <SafeTechAssistant />
+            <FloatingWhatsApp {...props} />
+        </>
+    );
 }

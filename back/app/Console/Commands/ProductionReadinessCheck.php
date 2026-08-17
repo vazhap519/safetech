@@ -43,6 +43,9 @@ class ProductionReadinessCheck extends Command
             && $mailerTransports !== []
             && array_diff($mailerTransports, array_keys($mailers)) === []
             && array_intersect($mailerTransports, ['array', 'log', 'null']) === [];
+        $aiEnabled = (bool) config('services.openai.enabled');
+        $openAiKey = trim((string) config('services.openai.api_key'));
+        $openAiModel = trim((string) config('services.openai.model'));
 
         $checks = [
             'APP_ENV is production' => app()->environment('production'),
@@ -66,6 +69,8 @@ class ProductionReadinessCheck extends Command
             'Outbound mailer does not fall back to logs' => $deliveryMailerConfigured,
             'SMTP scheme is supported' => ! $usesSmtp || in_array($smtpScheme, ['', 'smtp', 'smtps'], true),
             'SMTP credentials are configured when SMTP is used' => ! $usesSmtp || $smtpConfigured,
+            'OpenAI API key is configured when AI assistant is enabled' => ! $aiEnabled || $openAiKey !== '',
+            'OpenAI model is configured when AI assistant is enabled' => ! $aiEnabled || $openAiModel !== '',
         ];
 
         $failed = 0;

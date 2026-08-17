@@ -45,6 +45,11 @@ class Page extends Model implements HasMedia
     {
         return $query
             ->where('is_published', true)
+            ->where(function (Builder $published): void {
+                $published
+                    ->whereNull('published_at')
+                    ->orWhere('published_at', '<=', now());
+            })
             ->whereNotNull('slug')
             ->whereRaw("TRIM(COALESCE(slug, '')) <> ''")
             ->whereRaw("TRIM(COALESCE(title, '')) <> ''")
