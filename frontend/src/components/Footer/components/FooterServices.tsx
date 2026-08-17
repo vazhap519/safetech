@@ -31,22 +31,6 @@ export default async function FooterServices() {
                         </LocalizedLink>
                     </li>
                 ))}
-                <li>
-                    <LocalizedLink
-                        className="inline-flex min-h-9 items-center font-medium transition-colors duration-300 hover:text-secondary"
-                        href="/tbilisi/security-systems"
-                        prefetch={false}
-                    >
-                        <TranslatedText
-                            fallback={{
-                                ka: "უსაფრთხოების სისტემები თბილისში",
-                                en: "Security systems in Tbilisi",
-                                ru: "Системы безопасности в Тбилиси",
-                            }}
-                            translationKey="footer.services.tbilisiSecuritySystems"
-                        />
-                    </LocalizedLink>
-                </li>
             </ul>
         </nav>
     );
