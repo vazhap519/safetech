@@ -23,7 +23,7 @@ class SiteSettingValueNormalizerTest extends TestCase
     }
 
     #[Test]
-    public function it_normalizes_enabled_social_profiles_and_dynamic_share_buttons(): void
+    public function it_normalizes_social_profiles_and_dynamic_share_buttons_without_losing_disabled_rows(): void
     {
         $normalized = SiteSettingValueNormalizer::normalize('socials', [
             'links' => [
@@ -67,6 +67,13 @@ class SiteSettingValueNormalizerTest extends TestCase
                 'open_in_new_tab' => false,
             ],
             [
+                'network' => 'instagram',
+                'label' => 'Instagram',
+                'href' => 'instagram.com/hidden',
+                'enabled' => false,
+                'open_in_new_tab' => true,
+            ],
+            [
                 'network' => 'viber',
                 'label' => 'Viber support',
                 'href' => '+995599123456',
@@ -82,6 +89,57 @@ class SiteSettingValueNormalizerTest extends TestCase
             ['type' => 'facebook', 'label' => '', 'enabled' => true],
             ['type' => 'x', 'label' => 'Post on X', 'enabled' => true],
             ['type' => 'copy', 'label' => '', 'enabled' => true],
+            ['type' => 'telegram', 'label' => '', 'enabled' => false],
         ], $normalized['share_buttons']);
+    }
+
+    #[Test]
+    public function canonical_social_links_make_repeater_deletions_persistent(): void
+    {
+        $normalized = SiteSettingValueNormalizer::normalize('socials', [
+            // Legacy values can still exist in production records from the old editor.
+            'facebook' => 'https://facebook.com/old-safetech',
+            'instagram' => 'https://instagram.com/old-safetech',
+            // The administrator deleted Facebook and kept only Instagram in the repeater.
+            'links' => [
+                [
+                    'network' => 'instagram',
+                    'href' => 'https://instagram.com/safetech-new',
+                    'enabled' => true,
+                    'open_in_new_tab' => true,
+                ],
+            ],
+        ]);
+
+        $this->assertArrayNotHasKey('facebook', $normalized);
+        $this->assertArrayNotHasKey('instagram', $normalized);
+        $this->assertCount(1, $normalized['links']);
+        $this->assertSame('instagram', $normalized['links'][0]['network']);
+        $this->assertSame('https://instagram.com/safetech-new', $normalized['links'][0]['href']);
+    }
+
+    #[Test]
+    public function it_migrates_legacy_social_keys_when_the_repeater_has_never_been_saved(): void
+    {
+        $normalized = SiteSettingValueNormalizer::normalize('socials', [
+            'facebook' => 'https://facebook.com/safetech',
+            'youtube' => 'https://youtube.com/@safetech',
+        ]);
+
+        $this->assertArrayNotHasKey('facebook', $normalized);
+        $this->assertArrayNotHasKey('youtube', $normalized);
+        $this->assertSame(['facebook', 'youtube'], array_column($normalized['links'], 'network'));
+    }
+
+    #[Test]
+    public function deleting_every_social_profile_does_not_restore_legacy_values(): void
+    {
+        $normalized = SiteSettingValueNormalizer::normalize('socials', [
+            'facebook' => 'https://facebook.com/legacy',
+            'links' => [],
+        ]);
+
+        $this->assertSame([], $normalized['links']);
+        $this->assertArrayNotHasKey('facebook', $normalized);
     }
 }
