@@ -5,7 +5,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 API_URL="${SAFETECH_API_URL:-https://api.safetech.ge}"
 DEPLOY_SCRIPT="${SCRIPT_DIR}/scripts/deploy-production.sh"
-PATCHED_DEPLOY="$(mktemp "${SCRIPT_DIR}/.deploy-production.XXXXXX.sh")"
+PATCHED_DEPLOY="$(mktemp /tmp/safetech-deploy-production.XXXXXX.sh)"
 
 cleanup_patched_deploy() {
     rm -f "${PATCHED_DEPLOY}"
@@ -17,7 +17,8 @@ bash "${SCRIPT_DIR}/scripts/repair-backend-runtime.sh"
 # Production deploy already performs a strict TypeScript check and a full Next.js
 # production build. ESLint has repeatedly stalled indefinitely on the production
 # host, so keep linting in CI/development and remove only that block from the
-# temporary deploy copy. The tracked deploy-production.sh remains unchanged.
+# temporary deploy copy. Keep the temporary script outside the Git checkout so
+# the production cleanliness check does not see it as an untracked file.
 awk '
     /log "Linting staged frontend"/ { skipping = 1; next }
     /log "Type-checking staged frontend"/ { skipping = 0 }
