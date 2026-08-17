@@ -2,8 +2,9 @@
 
 namespace App\Support;
 
-use Illuminate\Support\Facades\Http;
+use App\Jobs\RevalidateFrontend;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class FrontendRevalidator
 {
@@ -48,45 +49,22 @@ final class FrontendRevalidator
         self::$pending = [];
 
         foreach ($pending as $request) {
-            self::deliver(
-                $frontendUrl,
-                $secret,
-                $request['tag'],
-                $request['path'],
-            );
-        }
-    }
-
-    private static function deliver(
-        string $frontendUrl,
-        string $secret,
-        ?string $tag,
-        ?string $path,
-    ): void {
-        try {
-            $response = Http::connectTimeout(1)
-                ->timeout(3)
-                ->withHeaders(['x-secret' => $secret])
-                ->post("{$frontendUrl}/api/revalidate", array_filter([
-                    'tag' => $tag,
-                    'path' => $path,
-                ], fn ($value) => $value !== null && $value !== ''));
-
-            if (! $response->successful()) {
-                Log::warning('Frontend cache revalidation request failed.', [
-                    'status' => $response->status(),
-                    'tag' => $tag,
-                    'path' => $path,
+            try {
+                RevalidateFrontend::dispatch(
+                    $frontendUrl,
+                    $secret,
+                    $request['tag'],
+                    $request['path'],
+                );
+            } catch (Throwable $exception) {
+                Log::warning('Frontend cache revalidation could not be queued.', [
+                    'tag' => $request['tag'],
+                    'path' => $request['path'],
+                    'exception' => $exception::class,
                 ]);
-            }
-        } catch (\Throwable $exception) {
-            Log::warning('Frontend cache revalidation could not be delivered.', [
-                'tag' => $tag,
-                'path' => $path,
-                'exception' => $exception::class,
-            ]);
 
-            // Revalidation should never break or delay the CMS/API write response.
+                // CMS writes must never fail because cache revalidation could not be queued.
+            }
         }
     }
 }
