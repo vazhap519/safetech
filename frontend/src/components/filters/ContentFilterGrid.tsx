@@ -37,10 +37,11 @@ type Props =
 
 function categoryHref(kind: FilterKind, slug: string) {
     const basePath = kind === "projects" ? "/projects" : "/services";
-
-    return slug === "all"
+    const path = slug === "all"
         ? basePath
         : `${basePath}/category/${encodeURIComponent(slug)}`;
+
+    return `${path}#content-filter`;
 }
 
 export default function ContentFilterGrid({
@@ -63,7 +64,7 @@ export default function ContentFilterGrid({
             : "mb-unit-xl grid gap-gutter md:grid-cols-2 lg:grid-cols-3";
 
     return (
-        <>
+        <div id="content-filter" className="scroll-mt-28">
             {filterItems.length > 1 ? (
                 <div
                     aria-label={filterAriaLabel}
@@ -107,6 +108,6 @@ export default function ContentFilterGrid({
                           />
                       ))}
             </div>
-        </>
+        </div>
     );
 }
