@@ -53,6 +53,12 @@ fi
 # so lint remains a CI/development concern. For backend-only releases, also omit
 # the expensive isolated Next.js build and activation block entirely. Public
 # frontend smoke checks still run against the currently active release.
+#
+# Next.js 16 uses Turbopack for `next build` by default. The base deployment
+# script still forces `--webpack`, which is substantially slower on this small
+# VPS. Rewrite only that invocation in the temporary deploy copy so production
+# builds use the supported Next.js 16 default bundler without modifying the
+# tracked base script.
 awk -v skip_frontend="${SKIP_FRONTEND_BUILD}" '
     /log "Linting staged frontend"/ { skipping_lint = 1; next }
     /log "Type-checking staged frontend"/ { skipping_lint = 0 }
@@ -65,7 +71,11 @@ awk -v skip_frontend="${SKIP_FRONTEND_BUILD}" '
         skipping_frontend = 0
     }
 
-    !skipping_lint && !skipping_frontend { print }
+    !skipping_lint && !skipping_frontend {
+        gsub(/run build -- --webpack/, "run build")
+        gsub(/Building staged frontend with Webpack/, "Building staged frontend with Turbopack")
+        print
+    }
 ' "${DEPLOY_SCRIPT}" > "${PATCHED_DEPLOY}"
 chmod 0700 "${PATCHED_DEPLOY}"
 
