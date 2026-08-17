@@ -18,7 +18,7 @@ jobs:
   full-stack-e2e:
     name: Full-stack browser QA
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 45
     env:
       APP_ENV: testing
       APP_KEY: "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
@@ -47,6 +47,7 @@ jobs:
       NEXT_TELEMETRY_DISABLED: "1"
       NODE_OPTIONS: "--max-old-space-size=4096"
       COMPOSER_MAX_PARALLEL_HTTP: "4"
+      COMPOSER_PROCESS_TIMEOUT: "1800"
       XDEBUG_MODE: "off"
 
     steps:
@@ -79,15 +80,18 @@ jobs:
         env:
           COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
         run: |
-          for attempt in 1 2 3; do
-            if composer install --no-interaction --prefer-dist --no-progress; then
-              exit 0
-            fi
-            if [[ "${attempt}" -eq 3 ]]; then
-              exit 1
-            fi
-            sleep $((attempt * 20))
-          done
+          if composer install --no-interaction --prefer-dist --no-progress; then
+            exit 0
+          fi
+
+          sleep 20
+
+          if composer install --no-interaction --prefer-dist --no-progress; then
+            exit 0
+          fi
+
+          echo 'GitHub archive downloads are throttled; retrying the remaining locked packages from source.' >&2
+          composer install --no-interaction --prefer-source --no-progress
 
       - name: Prepare seeded QA database
         working-directory: back
@@ -168,7 +172,7 @@ jobs:
         run: npx playwright test
 
       - name: Verify CMS cache invalidation end to end
-        if: always()
+        if: success()
         run: |
           curl --fail --silent http://127.0.0.1:3000/services > /tmp/services-before.html
           if grep -q 'qa-cache-service' /tmp/services-before.html; then
