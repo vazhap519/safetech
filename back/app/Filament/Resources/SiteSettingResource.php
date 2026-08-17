@@ -10,6 +10,7 @@ use App\Models\SiteSetting;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -107,83 +108,82 @@ class SiteSettingResource extends Resource
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'contact'),
 
-            Section::make('Your social media profiles')
-                ->description('These public profile links appear in the footer and Organization structured data. WhatsApp is managed in Contact details so every contact CTA uses one number and message; existing WhatsApp profile rows can be removed.')
+            Section::make('Social profiles')
+                ->description('Add only the public profiles you want to show. Cards stay collapsed to keep this page short. Remove a card and click Save to persist the deletion.')
                 ->schema([
+                    Hidden::make('value.links_managed')
+                        ->default(true),
                     Repeater::make('value.links')
-                        ->label('Profile links')
+                        ->label('Profiles')
                         ->schema([
                             Select::make('network')
-                                ->label('Network / icon')
+                                ->label('Network')
                                 ->options(AdminIconOptions::socials())
                                 ->searchable()
                                 ->preload()
-                                ->required()
-                                ->helperText('WhatsApp contact links always use Contact details. Selecting a network automatically selects its official icon.'),
-                            TextInput::make('label')
-                                ->label('Visible label')
-                                ->helperText('Optional. The network name is used when left empty.'),
+                                ->required(),
                             TextInput::make('href')
-                                ->label('Profile URL or value')
+                                ->label('Profile URL / value')
                                 ->required()
-                                ->helperText('Use an email address for Email, a phone number for WhatsApp/Viber, or a full profile URL for the rest. WhatsApp contact CTAs use the Contact details configuration.'),
+                                ->placeholder('https://facebook.com/...')
+                                ->helperText('Use a full profile URL. Email, Viber and WhatsApp may use their direct value.'),
                             Toggle::make('enabled')
                                 ->label('Show')
                                 ->default(true),
                             Toggle::make('open_in_new_tab')
-                                ->label('New tab')
+                                ->label('Open in new tab')
                                 ->default(true),
                         ])
-                        ->columns(5)
+                        ->columns(2)
                         ->default([])
                         ->collapsible()
+                        ->collapsed()
                         ->reorderable()
+                        ->addActionLabel('Add social profile')
                         ->itemLabel(fn (array $state): ?string => AdminIconOptions::socials()[$state['network'] ?? ''] ?? 'Social profile'),
                 ])
                 ->visible(fn (Get $get): bool => $get('key') === 'socials'),
 
-            Section::make('Service and project sharing')
-                ->description('Configure which sharing buttons appear on service and project detail pages. Reorder the rows to control button order.')
+            Section::make('Sharing buttons')
+                ->description('Choose the share actions that appear on service and project pages. Buttons are collapsed by default to keep the editor compact.')
                 ->schema([
                     Toggle::make('value.share_enabled')
-                        ->label('Enable sharing buttons')
+                        ->label('Enable sharing')
                         ->default(true),
                     Toggle::make('value.share_on_services')
-                        ->label('Show on service pages')
+                        ->label('Service pages')
                         ->default(true),
                     Toggle::make('value.share_on_projects')
-                        ->label('Show on project pages')
+                        ->label('Project pages')
                         ->default(true),
                     TextInput::make('value.share_title_ka')
-                        ->label('Share heading — Georgian')
+                        ->label('Heading — KA')
                         ->default('გაზიარება'),
                     TextInput::make('value.share_title_en')
-                        ->label('Share heading — English')
+                        ->label('Heading — EN')
                         ->default('Share'),
                     TextInput::make('value.share_title_ru')
-                        ->label('Share heading — Russian')
+                        ->label('Heading — RU')
                         ->default('Поделиться'),
                     Repeater::make('value.share_buttons')
-                        ->label('Sharing buttons')
+                        ->label('Buttons')
                         ->schema([
                             Select::make('type')
-                                ->label('Network / icon')
+                                ->label('Network / action')
                                 ->options(AdminIconOptions::shareNetworks())
                                 ->searchable()
                                 ->preload()
-                                ->required()
-                                ->helperText('The matching icon and share action are generated automatically.'),
-                            TextInput::make('label')
-                                ->label('Custom label')
-                                ->helperText('Optional. Leave empty to use the network name.'),
+                                ->required(),
                             Toggle::make('enabled')
                                 ->label('Show')
                                 ->default(true),
                         ])
-                        ->columns(3)
+                        ->columns(2)
                         ->default([])
                         ->collapsible()
+                        ->collapsed()
                         ->reorderable()
+                        ->addActionLabel('Add sharing button')
                         ->itemLabel(fn (array $state): ?string => AdminIconOptions::shareNetworks()[$state['type'] ?? ''] ?? 'Share button'),
                 ])
                 ->columns(3)
