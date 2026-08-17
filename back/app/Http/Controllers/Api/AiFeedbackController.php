@@ -17,10 +17,12 @@ final class AiFeedbackController extends Controller
             'rating' => ['required', 'integer', 'in:-1,1'],
             'comment' => ['nullable', 'string', 'max:500'],
         ]);
+        $ipHash = hash_hmac('sha256', (string) $request->ip(), (string) config('app.key'));
 
         $assistantMessage = AiMessage::query()
             ->where('public_id', $message)
             ->where('role', 'assistant')
+            ->whereHas('conversation', fn ($query) => $query->where('ip_hash', $ipHash))
             ->firstOrFail();
 
         $feedback = AiFeedback::query()->updateOrCreate(
@@ -28,7 +30,7 @@ final class AiFeedbackController extends Controller
             [
                 'rating' => (int) $validated['rating'],
                 'comment' => $validated['comment'] ?? null,
-                'ip_hash' => hash_hmac('sha256', (string) $request->ip(), (string) config('app.key')),
+                'ip_hash' => $ipHash,
             ],
         );
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Application\Ai\SafeTechAiAgent;
 use App\Http\Controllers\Controller;
 use App\Models\AiConversation;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -46,7 +47,7 @@ final class AiChatController extends Controller
 
         try {
             $result = $agent->respond($conversation->fresh(), $locale);
-        } catch (RuntimeException $exception) {
+        } catch (RuntimeException|ConnectionException $exception) {
             Log::warning('SafeTech AI assistant request failed.', [
                 'conversation_id' => $conversation->public_id,
                 'error' => $exception->getMessage(),
@@ -86,7 +87,10 @@ final class AiChatController extends Controller
     private function resolveConversation(?string $publicId, string $locale, string $ipHash, ?string $userAgent): AiConversation
     {
         if ($publicId) {
-            $existing = AiConversation::query()->where('public_id', $publicId)->first();
+            $existing = AiConversation::query()
+                ->where('public_id', $publicId)
+                ->where('ip_hash', $ipHash)
+                ->first();
 
             if ($existing) {
                 return $existing;
