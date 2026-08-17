@@ -448,8 +448,6 @@ export async function getBackendServices(category?: string) {
 
     return remote.map((service) => {
         const prefix = `service.${service.slug}`;
-        const fallbackTitle = (service.name || service.title || "").trim();
-        const fallbackDescription = (service.description || "").trim();
 
         return {
             slug: service.slug,
@@ -457,13 +455,13 @@ export async function getBackendServices(category?: string) {
                 translations,
                 locale,
                 [`${prefix}.card.title`, `${prefix}.name`, `${prefix}.title`],
-                fallbackTitle,
+                service.name || service.title || service.slug,
             ),
             description: firstConfiguredTranslation(
                 translations,
                 locale,
                 [`${prefix}.card.description`, `${prefix}.description`],
-                fallbackDescription,
+                service.description || "",
             ),
             category: service.category?.slug || "",
             icon: service.icon || "settings",
@@ -517,7 +515,7 @@ export async function getBackendSeoPage(
 ): Promise<BackendSeoPage | undefined> {
     const resolvedLocale = locale ?? (await getCurrentLocale());
 
-    return fetchData<BackendSeoPage | undefined>(
+    return fetchData<BackendSeoPage>(
         buildApiPath(`/seo/${encodeURIComponent(key)}`, {
             locale: resolvedLocale,
         }),
@@ -546,4 +544,254 @@ export async function getBackendPage(
     };
 }
 
-// Remaining backend helpers are unchanged below this point in the repository version.
+export async function getBackendService(
+    slug: string,
+): Promise<ServiceDetail | undefined> {
+    const [{ locale, translations }, remote] = await Promise.all([
+        getTranslationContext(),
+        fetchData<ServiceDetail>(
+            buildApiPath(`/services/${encodeURIComponent(slug)}`, { locale: await getCurrentLocale() }),
+        ),
+    ]);
+
+    if (!remote) return undefined;
+
+    return localizeServiceDetail(
+        {
+            ...remote,
+            heroImage: resolveBackendAsset(remote.heroImage),
+            keywords: remote.keywords ?? [],
+            highlights: remote.highlights ?? [],
+            overview: remote.overview ?? {
+                title: remote.title || remote.name,
+                paragraphs: remote.description ? [remote.description] : [],
+                stats: [],
+            },
+            benefits: remote.benefits ?? [],
+            solutions: remote.solutions ?? [],
+            industries: remote.industries ?? [],
+            process: remote.process ?? [],
+            faqs: remote.faqs ?? [],
+            related: remote.related ?? [],
+        },
+        locale,
+        translations,
+    );
+}
+
+export async function getBackendProjects(category?: string) {
+    const locale = await getCurrentLocale();
+
+    return (
+        (await fetchData<
+            Array<
+                ProjectDetail & {
+                    featured?: boolean;
+                    category?: string;
+                    technology?: string;
+                    icon?: string;
+                    accent?: "primary" | "secondary";
+                    publishedAt?: string;
+                    videoUrl?: string | null;
+                    video_url?: string | null;
+                }
+            >
+        >(
+            buildApiPath("/projects", {
+                category,
+                locale,
+                view: "summary",
+            }),
+        )) ?? []
+    );
+}
+
+export async function getBackendFeaturedProjects(): Promise<FeaturedProject[]> {
+    const [{ locale, translations }, remote] = await Promise.all([
+        getTranslationContext(),
+        fetchData<
+            Array<
+                ProjectDetail & {
+                    featured?: boolean;
+                    video_url?: string | null;
+                }
+            >
+        >(
+            buildApiPath("/projects", {
+                featured: 1,
+                locale: await getCurrentLocale(),
+                view: "summary",
+            }),
+        ),
+    ]);
+    const t = createContentTranslator(translations, locale);
+
+    if (!remote?.length) return [];
+
+    return remote.map((item) => ({
+        slug: item.slug,
+        title: t(
+            `project.${item.slug}.featured.title`,
+            item.name || item.title || item.slug,
+        ),
+        category: t(
+            `project.${item.slug}.featured.category`,
+            item.meta?.[0]?.value || item.name || item.title || item.slug,
+        ),
+        image: resolveBackendAsset(item.image),
+        imageAlt: t(
+            `project.${item.slug}.featured.imageAlt`,
+            item.imageAlt || item.name || item.title || item.slug,
+        ),
+        videoUrl: normalizeProjectVideoUrl(item),
+        specs: (item.specs ?? []).map((spec, index) => ({
+            value: t(
+                `project.${item.slug}.featured.spec.${index}.value`,
+                spec.value,
+            ),
+            label: t(
+                `project.${item.slug}.featured.spec.${index}.label`,
+                spec.label,
+            ),
+        })),
+    }));
+}
+
+export async function getBackendProjectCards(
+    category?: string,
+): Promise<Project[]> {
+    const [{ locale, translations }, remote] = await Promise.all([
+        getTranslationContext(),
+        getBackendProjects(category),
+    ]);
+    const t = createContentTranslator(translations, locale);
+
+    if (!remote.length) return [];
+
+    return remote.map((item) => ({
+        slug: item.slug,
+        title: t(
+            `project.${item.slug}.card.title`,
+            item.name || item.title || item.slug,
+        ),
+        description: t(
+            `project.${item.slug}.card.description`,
+            item.description,
+        ),
+        category: item.category || "",
+        icon: item.icon || "business",
+        accent: item.accent || "primary",
+        technology: t(
+            `project.${item.slug}.technology`,
+            item.technology || "",
+        ),
+        videoUrl: normalizeProjectVideoUrl(item),
+    }));
+}
+
+export async function getBackendProject(
+    slug: string,
+): Promise<ProjectDetail | undefined> {
+    const [{ locale, translations }, remote] = await Promise.all([
+        getTranslationContext(),
+        fetchData<ProjectDetail & { video_url?: string | null }>(
+            `/projects/${encodeURIComponent(slug)}`,
+        ),
+    ]);
+
+    if (!remote) return undefined;
+
+    return localizeProjectDetail(
+        {
+            ...remote,
+            image: resolveBackendAsset(remote.image),
+            videoUrl: normalizeProjectVideoUrl(remote),
+            gallery: (remote.gallery ?? []).map((image) => ({
+                ...image,
+                src: resolveBackendAsset(image.src),
+            })),
+            meta: remote.meta ?? [],
+            scope: remote.scope ?? [],
+            specs: remote.specs ?? [],
+            challenges: remote.challenges ?? [],
+            solutions: remote.solutions ?? [],
+            process: remote.process ?? [],
+            results: remote.results ?? [],
+            related: remote.related ?? [],
+        },
+        locale,
+        translations,
+    );
+}
+
+export async function getBackendTeam(): Promise<TeamMember[]> {
+    const [content, locale] = await Promise.all([
+        getBackendContent(),
+        getCurrentLocale(),
+    ]);
+    const settings = isRecord(content.settings) ? content.settings : {};
+    const translations = buildTranslationMap(settings.translations);
+    const t = createContentTranslator(translations, locale);
+
+    if (!content?.team?.length) return [];
+
+    return content.team.map((member) => ({
+        ...member,
+        firstName: t(`team.${member.id}.firstName`, member.firstName),
+        lastName: t(`team.${member.id}.lastName`, member.lastName),
+        position: t(`team.${member.id}.position`, member.position),
+        image: resolveBackendAsset(member.image, "/team-avatar.svg"),
+        socials: member.socials ?? {},
+    }));
+}
+
+const getRawBackendContent = cache(async (): Promise<BackendContent> => {
+    const locale = await getCurrentLocale();
+    const path = buildApiPath("/content", {
+        translation_locale: locale,
+        client_translation_prefixes: CLIENT_TRANSLATION_PREFIXES.join(","),
+    });
+
+    return normalizeBackendContent(await fetchData<unknown>(path));
+});
+
+/**
+ * Laravel keeps one locale-neutral bootstrap cache, then projects the active
+ * locale for this request. Localize entries here alongside the remaining CMS
+ * content before they are rendered by a locale route.
+ */
+export const getBackendContent = cache(async (): Promise<BackendContent> => {
+    const [content, { locale, translations }] = await Promise.all([
+        getRawBackendContent(),
+        getTranslationContext(),
+    ]);
+    const t = createContentTranslator(translations, locale);
+
+    return {
+        ...content,
+        faqs: (content.faqs ?? []).map((faq) => {
+            const key = faq.id ? `faq.${faq.id}` : "";
+
+            return {
+                ...faq,
+                question: key ? t(`${key}.question`, faq.question) : faq.question,
+                answer: key ? t(`${key}.answer`, faq.answer) : faq.answer,
+            };
+        }),
+        testimonials: (content.testimonials ?? []).map((testimonial) => {
+            const key = `testimonial.${testimonial.id}`;
+
+            return {
+                ...testimonial,
+                quote: t(`${key}.quote`, testimonial.quote),
+                author: t(`${key}.author`, testimonial.author),
+                role: testimonial.role
+                    ? t(`${key}.role`, testimonial.role)
+                    : testimonial.role,
+                company: testimonial.company
+                    ? t(`${key}.company`, testimonial.company)
+                    : testimonial.company,
+            };
+        }),
+    };
+});
