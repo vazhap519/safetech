@@ -20,6 +20,7 @@ type ChatResponse = {
         lead_score?: number;
         lead_created?: boolean;
     };
+    conversation_id?: string;
     message?: string;
 };
 
@@ -91,6 +92,16 @@ export default function SafeTechAssistant() {
                 en: "Preparing an answer...",
                 ru: "Готовлю ответ...",
             }),
+            helpful: t("ai.assistant.helpful", {
+                ka: "სასარგებლო პასუხი",
+                en: "Helpful answer",
+                ru: "Полезный ответ",
+            }),
+            notHelpful: t("ai.assistant.notHelpful", {
+                ka: "არასასარგებლო პასუხი",
+                en: "Not helpful",
+                ru: "Неполезный ответ",
+            }),
         }),
         [t],
     );
@@ -125,13 +136,15 @@ export default function SafeTechAssistant() {
             });
             const payload = (await response.json().catch(() => ({}))) as ChatResponse;
             const assistantText = payload.data?.message || payload.message;
+            const nextConversationId =
+                payload.data?.conversation_id || payload.conversation_id;
+
+            if (nextConversationId) {
+                setConversationId(nextConversationId);
+            }
 
             if (!response.ok || !assistantText) {
                 throw new Error(assistantText || "AI assistant request failed");
-            }
-
-            if (payload.data?.conversation_id) {
-                setConversationId(payload.data.conversation_id);
             }
 
             if (payload.data?.lead_created) {
@@ -173,11 +186,21 @@ export default function SafeTechAssistant() {
         setFeedback((current) => ({ ...current, [messageId]: rating }));
 
         try {
-            await fetch(buildPublicApiUrl(`/ai/messages/${encodeURIComponent(messageId)}/feedback`), {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Accept: "application/json" },
-                body: JSON.stringify({ rating }),
-            });
+            const response = await fetch(
+                buildPublicApiUrl(`/ai/messages/${encodeURIComponent(messageId)}/feedback`),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                    body: JSON.stringify({ rating }),
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error("AI feedback request failed");
+            }
         } catch {
             setFeedback((current) => {
                 const next = { ...current };
@@ -235,7 +258,7 @@ export default function SafeTechAssistant() {
                                             type="button"
                                             onClick={() => rateMessage(message.id as string, 1)}
                                             className="rounded-lg px-2 py-1 text-xs text-on-surface-variant hover:bg-surface-container-high"
-                                            aria-label="Helpful"
+                                            aria-label={labels.helpful}
                                             aria-pressed={feedback[message.id] === 1}
                                         >
                                             👍
@@ -244,7 +267,7 @@ export default function SafeTechAssistant() {
                                             type="button"
                                             onClick={() => rateMessage(message.id as string, -1)}
                                             className="rounded-lg px-2 py-1 text-xs text-on-surface-variant hover:bg-surface-container-high"
-                                            aria-label="Not helpful"
+                                            aria-label={labels.notHelpful}
                                             aria-pressed={feedback[message.id] === -1}
                                         >
                                             👎
