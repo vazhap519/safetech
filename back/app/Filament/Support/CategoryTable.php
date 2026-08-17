@@ -3,6 +3,7 @@
 namespace App\Filament\Support;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
@@ -51,9 +52,18 @@ final class CategoryTable
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
             ])
-            ->recordActions([EditAction::make()])
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()
+                    ->label('წაშლა')
+                    ->requiresConfirmation(),
+            ])
             ->toolbarActions([
-                BulkActionGroup::make([DeleteBulkAction::make()]),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('არჩეული ჩანაწერების წაშლა')
+                        ->requiresConfirmation(),
+                ]),
             ]);
     }
 }
