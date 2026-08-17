@@ -5,6 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AiConversationResource\Pages;
 use App\Filament\Support\NavigationGroup;
 use App\Models\AiConversation;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -87,6 +90,16 @@ class AiConversationResource extends Resource
             ])
             ->recordActions([
                 EditAction::make()->label('ნახვა'),
+                DeleteAction::make()
+                    ->label('წაშლა')
+                    ->requiresConfirmation(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('არჩეული საუბრების წაშლა')
+                        ->requiresConfirmation(),
+                ]),
             ]);
     }
 
