@@ -17,7 +17,7 @@ jobs:
   backend:
     name: Laravel
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: back
@@ -33,6 +33,7 @@ jobs:
       MAIL_MAILER: array
       SEED_DEMO_CONTENT: "false"
       COMPOSER_MAX_PARALLEL_HTTP: "4"
+      COMPOSER_PROCESS_TIMEOUT: "1200"
       XDEBUG_MODE: "off"
 
     steps:
@@ -71,15 +72,18 @@ jobs:
         env:
           COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
         run: |
-          for attempt in 1 2 3; do
-            if composer install --no-interaction --prefer-dist --no-progress; then
-              exit 0
-            fi
-            if [[ "${attempt}" -eq 3 ]]; then
-              exit 1
-            fi
-            sleep $((attempt * 20))
-          done
+          if composer install --no-interaction --prefer-dist --no-progress; then
+            exit 0
+          fi
+
+          sleep 20
+
+          if composer install --no-interaction --prefer-dist --no-progress; then
+            exit 0
+          fi
+
+          echo 'GitHub archive downloads are throttled; retrying the remaining locked packages from source.' >&2
+          composer install --no-interaction --prefer-source --no-progress
 
       - name: Audit PHP dependencies
         run: composer audit --locked --no-interaction
