@@ -26,6 +26,7 @@ class SiteSettingValueNormalizerTest extends TestCase
     public function it_normalizes_social_profiles_and_dynamic_share_buttons_without_losing_disabled_rows(): void
     {
         $normalized = SiteSettingValueNormalizer::normalize('socials', [
+            'links_managed' => true,
             'links' => [
                 [
                     'network' => 'facebook',
@@ -58,6 +59,7 @@ class SiteSettingValueNormalizerTest extends TestCase
             ],
         ]);
 
+        $this->assertTrue($normalized['links_managed']);
         $this->assertSame([
             [
                 'network' => 'facebook',
@@ -97,10 +99,9 @@ class SiteSettingValueNormalizerTest extends TestCase
     public function canonical_social_links_make_repeater_deletions_persistent(): void
     {
         $normalized = SiteSettingValueNormalizer::normalize('socials', [
-            // Legacy values can still exist in production records from the old editor.
+            'links_managed' => true,
             'facebook' => 'https://facebook.com/old-safetech',
             'instagram' => 'https://instagram.com/old-safetech',
-            // The administrator deleted Facebook and kept only Instagram in the repeater.
             'links' => [
                 [
                     'network' => 'instagram',
@@ -119,13 +120,15 @@ class SiteSettingValueNormalizerTest extends TestCase
     }
 
     #[Test]
-    public function it_migrates_legacy_social_keys_when_the_repeater_has_never_been_saved(): void
+    public function it_migrates_legacy_social_keys_even_when_seeders_added_an_empty_links_array(): void
     {
         $normalized = SiteSettingValueNormalizer::normalize('socials', [
+            'links' => [],
             'facebook' => 'https://facebook.com/safetech',
             'youtube' => 'https://youtube.com/@safetech',
         ]);
 
+        $this->assertTrue($normalized['links_managed']);
         $this->assertArrayNotHasKey('facebook', $normalized);
         $this->assertArrayNotHasKey('youtube', $normalized);
         $this->assertSame(['facebook', 'youtube'], array_column($normalized['links'], 'network'));
@@ -135,6 +138,7 @@ class SiteSettingValueNormalizerTest extends TestCase
     public function deleting_every_social_profile_does_not_restore_legacy_values(): void
     {
         $normalized = SiteSettingValueNormalizer::normalize('socials', [
+            'links_managed' => true,
             'facebook' => 'https://facebook.com/legacy',
             'links' => [],
         ]);
