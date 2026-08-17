@@ -5,6 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AiKnowledgeCandidateResource\Pages;
 use App\Filament\Support\NavigationGroup;
 use App\Models\AiKnowledgeCandidate;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -73,6 +76,16 @@ class AiKnowledgeCandidateResource extends Resource
             ])
             ->recordActions([
                 EditAction::make()->label('განხილვა'),
+                DeleteAction::make()
+                    ->label('წაშლა')
+                    ->requiresConfirmation(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('არჩეული კანდიდატების წაშლა')
+                        ->requiresConfirmation(),
+                ]),
             ]);
     }
 
