@@ -56,30 +56,43 @@ final class SiteSettingValueNormalizer
      */
     public static function normalizeSocials(array $value): array
     {
+        // Once the canonical repeater key exists, it is the source of truth. This is
+        // important for deletions: old top-level legacy keys must not resurrect a
+        // profile that an administrator removed from the repeater.
+        $hasCanonicalLinks = array_key_exists('links', $value);
         $links = collect(is_array($value['links'] ?? null) ? $value['links'] : [])
             ->map(fn (mixed $item): ?array => self::normalizeSocialLinkItem($item))
-            ->filter(fn (?array $item): bool => is_array($item) && $item['enabled'] === true)
-            ->values();
+            ->filter(fn (?array $item): bool => is_array($item));
 
-        foreach ($value as $network => $href) {
-            $normalizedNetwork = self::normalizeSocialNetwork(is_string($network) ? $network : null);
+        if (! $hasCanonicalLinks) {
+            foreach ($value as $network => $href) {
+                $normalizedNetwork = self::normalizeSocialNetwork(is_string($network) ? $network : null);
 
-            if ($normalizedNetwork === null || ! is_string($href) || blank($href)) {
-                continue;
+                if ($normalizedNetwork === null || ! is_string($href) || blank($href)) {
+                    continue;
+                }
+
+                $links->push([
+                    'network' => $normalizedNetwork,
+                    'label' => self::socialLabel($normalizedNetwork),
+                    'href' => trim($href),
+                    'enabled' => true,
+                    'open_in_new_tab' => true,
+                ]);
             }
+        }
 
-            $links->push([
-                'network' => $normalizedNetwork,
-                'label' => self::socialLabel($normalizedNetwork),
-                'href' => trim($href),
-                'enabled' => true,
-                'open_in_new_tab' => true,
-            ]);
+        // Remove migrated legacy keys from the stored payload so future edits are
+        // fully controlled by value.links and deleting the last item also persists.
+        foreach (array_keys($value) as $key) {
+            if (self::normalizeSocialNetwork(is_string($key) ? $key : null) !== null) {
+                unset($value[$key]);
+            }
         }
 
         $shareButtons = collect(is_array($value['share_buttons'] ?? null) ? $value['share_buttons'] : [])
             ->map(fn (mixed $button): ?array => self::normalizeShareButtonItem($button))
-            ->filter(fn (?array $button): bool => is_array($button) && $button['enabled'] === true)
+            ->filter(fn (?array $button): bool => is_array($button))
             ->unique('type')
             ->values()
             ->all();
