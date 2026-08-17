@@ -9,6 +9,7 @@ use App\Filament\Support\NavigationGroup;
 use App\Filament\Support\StableSlug;
 use App\Models\Project;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -280,9 +281,16 @@ class ProjectResource extends Resource
                 TextColumn::make('published_at')->label('Published at')->dateTime()->sortable(),
             ])
             ->defaultSort('sort_order')
-            ->recordActions([EditAction::make()])
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()->label('წაშლა')->requiresConfirmation(),
+            ])
             ->toolbarActions([
-                BulkActionGroup::make([DeleteBulkAction::make()]),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('არჩეული პროექტების წაშლა')
+                        ->requiresConfirmation(),
+                ]),
             ]);
     }
 
