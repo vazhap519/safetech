@@ -56,15 +56,16 @@ final class SiteSettingValueNormalizer
      */
     public static function normalizeSocials(array $value): array
     {
-        // Once the canonical repeater key exists, it is the source of truth. This is
-        // important for deletions: old top-level legacy keys must not resurrect a
-        // profile that an administrator removed from the repeater.
-        $hasCanonicalLinks = array_key_exists('links', $value);
+        // links_managed distinguishes the new repeater format from legacy records.
+        // Existing production rows may contain both links: [] (added by a seeder)
+        // and old top-level network keys. We migrate those once, then the repeater
+        // becomes authoritative so a deleted row can never be resurrected.
+        $linksManaged = self::booleanValue($value['links_managed'] ?? false, false);
         $links = collect(is_array($value['links'] ?? null) ? $value['links'] : [])
             ->map(fn (mixed $item): ?array => self::normalizeSocialLinkItem($item))
             ->filter(fn (?array $item): bool => is_array($item));
 
-        if (! $hasCanonicalLinks) {
+        if (! $linksManaged) {
             foreach ($value as $network => $href) {
                 $normalizedNetwork = self::normalizeSocialNetwork(is_string($network) ? $network : null);
 
@@ -82,8 +83,8 @@ final class SiteSettingValueNormalizer
             }
         }
 
-        // Remove migrated legacy keys from the stored payload so future edits are
-        // fully controlled by value.links and deleting the last item also persists.
+        // Strip old scalar social keys from the normalized payload. The edit form
+        // receives only the repeater state, and saving it marks that state managed.
         foreach (array_keys($value) as $key) {
             if (self::normalizeSocialNetwork(is_string($key) ? $key : null) !== null) {
                 unset($value[$key]);
@@ -98,6 +99,7 @@ final class SiteSettingValueNormalizer
             ->all();
 
         return array_merge($value, [
+            'links_managed' => true,
             'links' => $links
                 ->unique(fn (array $item): string => "{$item['network']}|{$item['href']}")
                 ->values()
