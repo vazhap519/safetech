@@ -38,6 +38,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Reject committed OpenAI secrets
+        run: |
+          if git -C .. grep -nE 'sk-(proj|admin|svcacct)-[A-Za-z0-9_-]{20,}' -- .; then
+            echo 'A value matching an OpenAI API key pattern is committed to the repository.' >&2
+            exit 1
+          fi
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -57,6 +64,8 @@ jobs:
           fi
 
       - name: Install PHP dependencies
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
         run: |
           for attempt in 1 2 3; do
             if composer install --no-interaction --prefer-dist --no-progress; then
