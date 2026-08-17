@@ -1,5 +1,11 @@
 <?php
 
+$openAiModel = trim((string) env('OPENAI_MODEL', 'gpt-5.6'));
+$openAiModel = match ($openAiModel) {
+    '', 'gpt-5.6-terra' => 'gpt-5.6',
+    default => $openAiModel,
+};
+
 return [
 
     /*
@@ -10,7 +16,7 @@ return [
     | This file is for storing the credentials for third party services such
     | as Mailgun, Postmark, AWS and more. This file provides the de facto
     | location for this type of information, allowing packages to have a
-    | conventional file to locate the various service credentials.
+    | conventional file to locate this information.
     |
     */
 
@@ -30,7 +36,7 @@ return [
 
     'slack' => [
         'notifications' => [
-            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+            'bot_user_oauth_token' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
@@ -38,7 +44,7 @@ return [
     'openai' => [
         'enabled' => env('AI_ASSISTANT_ENABLED', false),
         'api_key' => env('OPENAI_API_KEY'),
-        'model' => env('OPENAI_MODEL', 'gpt-5.6'),
+        'model' => $openAiModel,
     ],
 
 ];
