@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import LocalServiceLinks from "@/components/seo/LocalServiceLinks";
 import ServiceDetailView from "@/features/service-detail/ServiceDetailView";
 import ServiceStructuredData from "@/features/service-detail/components/ServiceStructuredData";
 import { getBackendService } from "@/lib/backend";
@@ -75,6 +76,7 @@ export default async function ServicePage({ params }: ServicePageProps) {
                 service={service}
                 sharing={socialSharing}
             />
+            <LocalServiceLinks locale={locale} serviceSlug={service.slug} />
         </>
     );
 }
