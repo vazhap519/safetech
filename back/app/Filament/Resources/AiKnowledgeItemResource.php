@@ -5,7 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AiKnowledgeItemResource\Pages;
 use App\Filament\Support\NavigationGroup;
 use App\Models\AiKnowledgeItem;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -75,7 +77,16 @@ class AiKnowledgeItemResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->label('წაშლა')
+                    ->requiresConfirmation(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('არჩეული ცოდნის ჩანაწერების წაშლა')
+                        ->requiresConfirmation(),
+                ]),
             ]);
     }
 
