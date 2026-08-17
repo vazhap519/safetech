@@ -15,6 +15,7 @@ const sitemapRoutes = [
     "/sitemap.xml",
     "/sitemap-main.xml",
     "/sitemap-services.xml",
+    "/sitemap-local-services.xml",
     "/sitemap-service-categories.xml",
     "/sitemap-projects.xml",
     "/sitemap-project-categories.xml",
@@ -91,7 +92,7 @@ test.describe("release candidate public matrix", () => {
             });
         }
 
-        test(`${locale} service project category CMS page and review routes render`, async ({ page, request }) => {
+        test(`${locale} service local landing project category CMS page and review routes render`, async ({ page, request }) => {
             const servicesResponse = await request.get(`${apiBase}/services?locale=${locale}`);
             expect(servicesResponse.ok()).toBeTruthy();
             const services = (await servicesResponse.json()) as { data?: Array<{ slug?: string }> };
@@ -103,6 +104,37 @@ test.describe("release candidate public matrix", () => {
             });
             expect(serviceResponse?.status()).toBe(200);
             await expect(page.locator("h1").first()).toBeVisible();
+
+            const localLandingsResponse = await request.get(
+                `${apiBase}/local-service-landings?locale=${locale}`,
+            );
+            expect(localLandingsResponse.ok()).toBeTruthy();
+            const localLandings = (await localLandingsResponse.json()) as {
+                data?: Array<{
+                    locationSlug?: string;
+                    service?: { slug?: string };
+                }>;
+            };
+            const localLanding = localLandings.data?.find(
+                (item) => item.locationSlug && item.service?.slug,
+            );
+            expect(localLanding?.locationSlug).toBeTruthy();
+            expect(localLanding?.service?.slug).toBeTruthy();
+
+            const localLandingResponse = await page.goto(
+                localizedPath(
+                    prefix,
+                    `/services/${localLanding!.service!.slug}/${localLanding!.locationSlug}`,
+                ),
+                { waitUntil: "domcontentloaded" },
+            );
+            expect(localLandingResponse?.status()).toBe(200);
+            await expect(page.locator("h1").first()).toBeVisible();
+            const localJsonLd = (
+                await page.locator('script[type="application/ld+json"]').allTextContents()
+            ).join(" ");
+            expect(localJsonLd).toMatch(/"@type"\s*:\s*"Service"/);
+            expect(localJsonLd).toMatch(/"@type"\s*:\s*"BreadcrumbList"/);
 
             const categoriesResponse = await request.get(`${apiBase}/service-categories?locale=${locale}`);
             expect(categoriesResponse.ok()).toBeTruthy();
