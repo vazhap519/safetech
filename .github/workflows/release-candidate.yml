@@ -17,7 +17,7 @@ concurrency:
 jobs:
   full-stack-e2e:
     name: Full-stack browser QA
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     env:
       APP_ENV: testing
@@ -47,6 +47,7 @@ jobs:
       NEXT_TELEMETRY_DISABLED: "1"
       NODE_OPTIONS: "--max-old-space-size=4096"
       COMPOSER_MAX_PARALLEL_HTTP: "4"
+      XDEBUG_MODE: "off"
 
     steps:
       - name: Checkout
@@ -59,20 +60,19 @@ jobs:
             exit 1
           fi
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          extensions: mbstring, pdo_sqlite, sqlite3, gd, exif
-          coverage: none
-          tools: composer:v2
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+      - name: Verify runner PHP, Composer and Node.js
+        run: |
+          php --version
+          composer --version
+          node --version
+          npm --version
+          node -e 'const major = Number(process.versions.node.split(".")[0]); if (major < 22) process.exit(1)'
+          for extension in mbstring pdo_sqlite sqlite3 gd exif; do
+            php -r "exit(extension_loaded('${extension}') ? 0 : 1);" || {
+              echo "Missing required PHP extension: ${extension}" >&2
+              exit 1
+            }
+          done
 
       - name: Install backend dependencies
         working-directory: back

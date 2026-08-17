@@ -16,7 +16,7 @@ concurrency:
 jobs:
   backend:
     name: Laravel
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
       run:
@@ -33,6 +33,7 @@ jobs:
       MAIL_MAILER: array
       SEED_DEMO_CONTENT: "false"
       COMPOSER_MAX_PARALLEL_HTTP: "4"
+      XDEBUG_MODE: "off"
 
     steps:
       - name: Checkout
@@ -45,13 +46,16 @@ jobs:
             exit 1
           fi
 
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          extensions: mbstring, pdo_sqlite, sqlite3, gd, exif
-          coverage: none
-          tools: composer:v2
+      - name: Verify runner PHP and Composer
+        run: |
+          php --version
+          composer --version
+          for extension in mbstring pdo_sqlite sqlite3 gd exif; do
+            php -r "exit(extension_loaded('${extension}') ? 0 : 1);" || {
+              echo "Missing required PHP extension: ${extension}" >&2
+              exit 1
+            }
+          done
 
       - name: Validate Composer metadata
         run: composer validate --strict --no-check-publish
@@ -91,7 +95,7 @@ jobs:
 
   frontend:
     name: Next.js
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -109,12 +113,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+      - name: Verify runner Node.js
+        run: |
+          node --version
+          npm --version
+          node -e 'const major = Number(process.versions.node.split(".")[0]); if (major < 22) process.exit(1)'
 
       - name: Install frontend dependencies
         run: npm ci
@@ -151,7 +154,7 @@ jobs:
 
   deployment-script:
     name: Deployment script
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
 
     steps:
