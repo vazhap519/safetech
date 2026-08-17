@@ -7,6 +7,9 @@ type FloatingWhatsAppSlotProps = {
     message?: string;
 };
 
+const aiAssistantEnabled =
+    process.env.NEXT_PUBLIC_AI_ASSISTANT_ENABLED === "true";
+
 const SafeTechAssistant = dynamic(
     () => import("@/components/ai/SafeTechAssistant"),
     {
@@ -26,7 +29,7 @@ export default function FloatingWhatsAppSlot(
 ) {
     return (
         <>
-            <SafeTechAssistant />
+            {aiAssistantEnabled ? <SafeTechAssistant /> : null}
             <FloatingWhatsApp {...props} />
         </>
     );
