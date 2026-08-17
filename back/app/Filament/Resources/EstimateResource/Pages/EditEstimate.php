@@ -20,7 +20,9 @@ class EditEstimate extends EditRecord
                 ->color('gray')
                 ->url(fn (): string => route('admin.estimates.pdf', $this->record))
                 ->openUrlInNewTab(),
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->label('წაშლა')
+                ->requiresConfirmation(),
         ];
     }
 
