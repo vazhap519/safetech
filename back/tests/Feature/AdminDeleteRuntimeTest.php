@@ -19,7 +19,10 @@ class AdminDeleteRuntimeTest extends TestCase
             'name' => 'Runtime category',
             'slug' => 'runtime-category',
         ]);
-        $service = Service::factory()->create([
+        $service = Service::query()->create([
+            'title' => 'Runtime service',
+            'slug' => 'runtime-service',
+            'short_description' => 'Runtime service description.',
             'category_for_service_id' => $category->id,
         ]);
 
