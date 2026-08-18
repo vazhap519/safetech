@@ -1,10 +1,6 @@
 <?php
 
-$openAiModel = trim((string) env('OPENAI_MODEL', 'gpt-5.6'));
-$openAiModel = match ($openAiModel) {
-    '', 'gpt-5.6-terra' => 'gpt-5.6',
-    default => $openAiModel,
-};
+$openAiModel = trim((string) env('OPENAI_MODEL', 'gpt-5.6-terra')) ?: 'gpt-5.6-terra';
 
 return [
 

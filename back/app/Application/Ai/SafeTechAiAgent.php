@@ -39,9 +39,9 @@ final readonly class SafeTechAiAgent
             'input' => $input,
             'tools' => $this->tools(),
             'tool_choice' => 'auto',
-            'reasoning' => ['effort' => 'low'],
+            'reasoning' => ['effort' => 'none'],
             'store' => false,
-            'max_output_tokens' => 700,
+            'max_output_tokens' => 1200,
         ]);
 
         for ($round = 0; $round < self::MAX_TOOL_ROUNDS; $round++) {
@@ -92,9 +92,9 @@ final readonly class SafeTechAiAgent
                 'input' => $input,
                 'tools' => $this->tools(),
                 'tool_choice' => 'auto',
-                'reasoning' => ['effort' => 'low'],
+                'reasoning' => ['effort' => 'none'],
                 'store' => false,
-                'max_output_tokens' => 700,
+                'max_output_tokens' => 1200,
             ]);
         }
 
@@ -425,13 +425,34 @@ PROMPT;
         $response = $this->http($apiKey)->post('https://api.openai.com/v1/responses', $payload);
 
         if (! $response->successful()) {
-            throw new RuntimeException('OpenAI request failed with status '.$response->status().'.');
+            $requestId = trim((string) $response->header('x-request-id'));
+            $errorCode = trim((string) $response->json('error.code'));
+            $errorType = trim((string) $response->json('error.type'));
+            $diagnostics = array_filter([
+                "status={$response->status()}",
+                $errorType !== '' ? "type={$errorType}" : null,
+                $errorCode !== '' ? "code={$errorCode}" : null,
+                $requestId !== '' ? "request_id={$requestId}" : null,
+            ]);
+
+            throw new RuntimeException('OpenAI request failed ('.implode(', ', $diagnostics).').');
         }
 
         $json = $response->json();
 
         if (! is_array($json)) {
             throw new RuntimeException('OpenAI returned an invalid response.');
+        }
+
+        $status = trim((string) ($json['status'] ?? ''));
+        $incompleteReason = trim((string) data_get($json, 'incomplete_details.reason', ''));
+
+        if ($status === 'failed' || $status === 'cancelled') {
+            throw new RuntimeException("OpenAI response ended with status {$status}.");
+        }
+
+        if ($status === 'incomplete' && $incompleteReason !== '') {
+            throw new RuntimeException("OpenAI response was incomplete ({$incompleteReason}).");
         }
 
         return $json;

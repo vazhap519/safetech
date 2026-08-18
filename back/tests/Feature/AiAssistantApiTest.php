@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Events\LeadCreated;
+use App\Models\AiConversation;
 use App\Models\AiMessage;
 use App\Models\ContactLead;
 use App\Models\Service;
@@ -53,6 +54,48 @@ class AiAssistantApiTest extends TestCase
             'role' => 'assistant',
             'content' => 'გამარჯობა! როგორ დაგეხმაროთ?',
         ]);
+
+        Http::assertSent(fn ($request): bool =>
+            $request->url() === 'https://api.openai.com/v1/responses'
+            && $request['model'] === 'gpt-5.6-terra'
+            && data_get($request->data(), 'reasoning.effort') === 'none'
+            && $request['max_output_tokens'] === 1200
+            && $request['store'] === false
+        );
+    }
+
+    public function test_an_incomplete_openai_response_returns_a_safe_unavailable_response(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'id' => 'resp_incomplete',
+                'status' => 'incomplete',
+                'incomplete_details' => ['reason' => 'max_output_tokens'],
+                'output' => [],
+            ]),
+        ]);
+
+        $this->postJson('/api/ai/chat', [
+            'message' => 'Please recommend a camera system.',
+            'locale' => 'en',
+            'privacy' => true,
+        ])->assertStatus(503)
+            ->assertJsonPath(
+                'message',
+                'The AI consultant is temporarily unavailable. You can still contact SafeTech by phone or WhatsApp.',
+            );
+
+        $this->assertDatabaseCount('ai_messages', 2);
+        $this->assertDatabaseHas('ai_messages', ['role' => 'user']);
+        $this->assertDatabaseHas('ai_messages', [
+            'role' => 'assistant',
+            'content' => 'The AI consultant is temporarily unavailable. You can still contact SafeTech by phone or WhatsApp.',
+        ]);
+        $conversation = AiConversation::query()->firstOrFail();
+        $this->assertStringContainsString(
+            'max_output_tokens',
+            (string) data_get($conversation->metadata, 'last_error.message'),
+        );
     }
 
     public function test_it_searches_published_services_using_localized_content(): void

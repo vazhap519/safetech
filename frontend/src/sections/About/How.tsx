@@ -38,7 +38,7 @@ export default async function HowSection() {
                 {steps.length ? (
                     <div className="relative">
                         <div className="absolute bottom-0 left-1/2 top-0 hidden w-px bg-outline-variant/30 md:block" />
-                        <div className="relative space-y-unit-lg">
+                        <div className="relative space-y-unit-md md:space-y-unit-lg">
                             {steps.map((step, index) => (
                                 <HowComponent
                                     key={`${step.title}-${index}`}

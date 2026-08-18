@@ -10,10 +10,10 @@ export default function HowComponent({
     title: string;
 }) {
     return (
-        <div className="group flex flex-col items-center gap-unit-md md:flex-row">
+        <div className="group relative grid grid-cols-[1rem_minmax(0,1fr)] items-start gap-x-unit-md md:grid-cols-[minmax(0,1fr)_1rem_minmax(0,1fr)] md:items-center">
             <div
-                className={`md:w-1/2 ${
-                    align === "right" ? "md:text-right" : "md:order-3"
+                className={`col-start-2 row-start-1 min-w-0 md:col-auto ${
+                    align === "right" ? "md:text-right" : "md:col-start-3"
                 }`}
             >
                 {title ? (
@@ -27,8 +27,13 @@ export default function HowComponent({
                     </Typography>
                 ) : null}
             </div>
-            <div className="z-10 h-4 w-4 rounded-full bg-primary shadow-[0_0_15px_rgba(37,99,235,0.8)]" />
-            <div className="md:w-1/2" />
+            <div className="z-10 col-start-1 row-start-1 mt-1 h-3 w-3 rounded-full bg-primary shadow-[0_0_12px_rgba(37,99,235,0.65)] md:col-start-2 md:mt-0 md:h-4 md:w-4 md:justify-self-center" />
+            <div
+                aria-hidden="true"
+                className={`hidden md:block ${
+                    align === "right" ? "md:col-start-3" : "md:col-start-1 md:row-start-1"
+                }`}
+            />
         </div>
     );
 }

@@ -48,13 +48,37 @@ final class AiChatController extends Controller
         try {
             $result = $agent->respond($conversation->fresh(), $locale);
         } catch (RuntimeException|ConnectionException $exception) {
+            $unavailableMessage = $this->unavailableMessage($locale);
+
             Log::warning('SafeTech AI assistant request failed.', [
                 'conversation_id' => $conversation->public_id,
                 'error' => $exception->getMessage(),
             ]);
 
+            $conversation->messages()->create([
+                'role' => 'assistant',
+                'content' => $unavailableMessage,
+                'tool_payload' => [[
+                    'name' => 'request_error',
+                    'result' => [
+                        'type' => class_basename($exception),
+                        'message' => $exception->getMessage(),
+                    ],
+                ]],
+            ]);
+            $conversation->forceFill([
+                'metadata' => array_replace($conversation->metadata ?? [], [
+                    'last_error' => [
+                        'type' => class_basename($exception),
+                        'message' => $exception->getMessage(),
+                        'at' => now()->toAtomString(),
+                    ],
+                ]),
+                'last_message_at' => now(),
+            ])->save();
+
             return response()->json([
-                'message' => $this->unavailableMessage($locale),
+                'message' => $unavailableMessage,
                 'conversation_id' => $conversation->public_id,
             ], 503);
         }
