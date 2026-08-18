@@ -55,8 +55,7 @@ class AiAssistantApiTest extends TestCase
             'content' => 'გამარჯობა! როგორ დაგეხმაროთ?',
         ]);
 
-        Http::assertSent(fn ($request): bool =>
-            $request->url() === 'https://api.openai.com/v1/responses'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.com/v1/responses'
             && $request['model'] === 'gpt-5.6-terra'
             && data_get($request->data(), 'reasoning.effort') === 'none'
             && $request['max_output_tokens'] === 1200
