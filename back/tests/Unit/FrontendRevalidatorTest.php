@@ -44,6 +44,6 @@ class FrontendRevalidatorTest extends TestCase
                     && $context['status'] === 401
                     && $context['tag'] === 'cms';
             })
-            ->times(3);
+            ->once();
     }
 }
