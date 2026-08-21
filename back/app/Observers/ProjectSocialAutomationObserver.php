@@ -31,6 +31,8 @@ class ProjectSocialAutomationObserver
             return;
         }
 
-        PublishProjectToSocialAutomation::dispatch($project->getKey())->afterCommit();
+        PublishProjectToSocialAutomation::dispatch($project->getKey())
+            ->delay(now()->addSeconds(8))
+            ->afterCommit();
     }
 }
