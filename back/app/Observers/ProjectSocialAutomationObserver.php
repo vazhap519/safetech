@@ -31,8 +31,13 @@ class ProjectSocialAutomationObserver
             return;
         }
 
+        $delaySeconds = max(
+            0,
+            (int) config('social_automation.project_publish.delay_seconds', 120),
+        );
+
         PublishProjectToSocialAutomation::dispatch($project->getKey())
-            ->delay(now()->addSeconds(8))
+            ->delay(now()->addSeconds($delaySeconds))
             ->afterCommit();
     }
 }

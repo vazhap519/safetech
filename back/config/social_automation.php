@@ -11,6 +11,7 @@ return [
             'https://n8n.safetech.ge/webhook/project-published',
         ),
         'token' => env('N8N_PROJECT_PUBLISH_WEBHOOK_TOKEN'),
+        'delay_seconds' => max(0, (int) env('N8N_PROJECT_PUBLISH_DELAY_SECONDS', 120)),
         'connect_timeout' => (int) env('N8N_PROJECT_PUBLISH_CONNECT_TIMEOUT', 3),
         'timeout' => (int) env('N8N_PROJECT_PUBLISH_TIMEOUT', 30),
     ],
