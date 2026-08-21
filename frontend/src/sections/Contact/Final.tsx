@@ -17,7 +17,7 @@ export default async function FinalSection() {
             actions={[
                 {
                     label: buttonLabel,
-                    href: "#contact-form",
+                    consultation: true,
                     className: "w-full max-w-xs sm:w-auto sm:max-w-none",
                 },
             ]}

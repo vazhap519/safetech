@@ -45,6 +45,26 @@ final class ConsultationCopySeeder extends Seeder
                 'en' => $this->copy('Project details', ['Project details']),
                 'ru' => $this->copy('Детали задачи', ['Детали задачи']),
             ],
+            'consultation.form.address' => [
+                'ka' => $this->copy('ქალაქი / მომსახურების მისამართი', []),
+                'en' => $this->copy('City / service address', []),
+                'ru' => $this->copy('Город / адрес оказания услуги', []),
+            ],
+            'consultation.form.requiredHint' => [
+                'ka' => $this->copy('ყველა ველი სავალდებულოა.', []),
+                'en' => $this->copy('All fields are required.', []),
+                'ru' => $this->copy('Все поля обязательны.', []),
+            ],
+            'consultation.form.submit' => [
+                'ka' => $this->copy('კონსულტაციის მიღება', ['მოთხოვნის გაგზავნა', 'კონსულტაციის მოთხოვნა']),
+                'en' => $this->copy('Get consultation', ['Send request', 'Request consultation', 'Submit a request']),
+                'ru' => $this->copy('Получить консультацию', ['Отправить запрос', 'Запросить консультацию', 'Заполнить заявку']),
+            ],
+            'consultation.form.validation' => [
+                'ka' => $this->copy('შეავსეთ ყველა სავალდებულო ველი და დაეთანხმეთ მონაცემების დამუშავებას.', []),
+                'en' => $this->copy('Complete every required field and accept data processing.', []),
+                'ru' => $this->copy('Заполните все обязательные поля и подтвердите согласие на обработку данных.', []),
+            ],
             'forms.submitRequest' => [
                 'ka' => $this->copy('კონსულტაციის მოთხოვნა', ['მოთხოვნის გაგზავნა']),
                 'en' => $this->copy('Request consultation', ['Send request']),
@@ -104,6 +124,16 @@ final class ConsultationCopySeeder extends Seeder
                 'ka' => $this->copy('მიიღეთ ტექნიკური კონსულტაცია', ['მოგვწერეთ მოთხოვნა']),
                 'en' => $this->copy('Get a technical consultation', ['Send your request']),
                 'ru' => $this->copy('Получите техническую консультацию', ['Отправьте запрос']),
+            ],
+            'contact.hero.button' => [
+                'ka' => $this->copy('კონსულტაციის მიღება', ['მოთხოვნის შევსება', 'მოთხოვნის გაგზავნა', 'კონსულტაციის მოთხოვნა']),
+                'en' => $this->copy('Get consultation', ['Submit a request', 'Send request', 'Request consultation']),
+                'ru' => $this->copy('Получить консультацию', ['Заполнить заявку', 'Отправить запрос', 'Запросить консультацию']),
+            ],
+            'contact.final.button' => [
+                'ka' => $this->copy('კონსულტაციის მიღება', ['მოთხოვნის გაგზავნა', 'კონსულტაციის მოთხოვნა']),
+                'en' => $this->copy('Get consultation', ['Send request', 'Request consultation']),
+                'ru' => $this->copy('Получить консультацию', ['Отправить запрос', 'Запросить консультацию']),
             ],
             'contact.side.title' => [
                 'ka' => $this->copy('შემდეგი ნაბიჯები', ['რა მოხდება მოთხოვნის შემდეგ']),

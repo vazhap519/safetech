@@ -30,7 +30,7 @@ final readonly class SafeTechAiAgent
             throw new RuntimeException('OpenAI API key is not configured.');
         }
 
-        $model = trim((string) config('services.openai.model', 'gpt-5.6-terra')) ?: 'gpt-5.6-terra';
+        $model = trim((string) config('services.openai.model', 'gpt-5.6')) ?: 'gpt-5.6';
         $input = $this->conversationInput($conversation);
         $toolsUsed = [];
         $response = $this->request($apiKey, [

@@ -9,6 +9,13 @@ use Illuminate\Validation\Rule;
 
 final class StoreContactLeadRequest extends FormRequest
 {
+    /** @var array<int, string> */
+    private const PUBLIC_SOURCES = [
+        'consultation-popup',
+        'home-cta',
+        'contact-page',
+    ];
+
     public function authorize(): bool
     {
         return true;
@@ -17,58 +24,65 @@ final class StoreContactLeadRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $details = $this->input('details');
-        $serviceSlug = $this->input('service_slug', $this->input('serviceSlug'));
-        $normalizedServiceSlug = is_string($serviceSlug) ? trim($serviceSlug) : null;
-        $publishedServiceName = $normalizedServiceSlug
+        $serviceSlug = $this->normalizeSlug(
+            $this->input('service_slug', $this->input('serviceSlug')),
+        );
+        $publishedServiceName = $serviceSlug
             ? Service::query()
-                ->where('slug', $normalizedServiceSlug)
+                ->where('slug', $serviceSlug)
                 ->where('is_published', true)
                 ->value('name')
             : null;
 
         $this->merge([
-            'first_name' => $this->input('first_name', $this->input('firstName')),
-            'last_name' => $this->input('last_name', $this->input('lastName')),
-            'service' => $publishedServiceName ?: $this->input('service'),
-            'service_slug' => $normalizedServiceSlug,
-            'project_size' => $this->input(
+            'name' => $this->normalizeText($this->input('name')),
+            'first_name' => $this->normalizeText(
+                $this->input('first_name', $this->input('firstName')),
+            ),
+            'last_name' => $this->normalizeText(
+                $this->input('last_name', $this->input('lastName')),
+            ),
+            'company' => $this->normalizeText($this->input('company')),
+            'phone' => $this->normalizeText($this->input('phone')),
+            'email' => $this->normalizeEmail($this->input('email')),
+            'address' => $this->normalizeText($this->input('address')),
+            // Public callers cannot supply an arbitrary service name. It is derived
+            // from the selected, published service slug instead.
+            'service' => $publishedServiceName,
+            'service_slug' => $serviceSlug,
+            'project_size' => $this->normalizeText($this->input(
                 'project_size',
                 $this->input('project-size', $this->input('projectSize')),
-            ),
-            'property_type' => $this->input(
+            )),
+            'property_type' => $this->normalizeText($this->input(
                 'property_type',
                 $this->input('property-type', $this->input('propertyType')),
-            ),
-            'message' => $this->input(
+            )),
+            'message' => $this->normalizeMessage($this->input(
                 'message',
                 is_string($details) ? $details : $this->input('details_message'),
-            ),
-            'details' => is_array($details) ? $details : [],
+            )),
+            'details' => $this->normalizeDetailInputs($details),
+            'source' => $this->normalizeSlug($this->input('source')),
+            'locale' => $this->normalizeSlug($this->input('locale')),
+            'website' => $this->normalizeText($this->input('website')),
         ]);
     }
 
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        $source = (string) $this->input('source');
-        $isConsultationPopup = $source === 'consultation-popup';
-        $isLowFrictionLead = in_array(
-            $source,
-            ['consultation-popup', 'home-cta', 'contact-page'],
-            true,
-        );
-
         return [
-            'name' => ['nullable', 'required_if:source,home-cta,contact-page', 'string', 'max:100'],
-            'first_name' => ['nullable', 'required_if:source,consultation-popup', 'string', 'max:60'],
-            'last_name' => ['nullable', 'string', 'max:60'],
+            'name' => ['nullable', 'string', 'max:100'],
+            'first_name' => ['required', 'string', 'min:2', 'max:60'],
+            'last_name' => ['required', 'string', 'min:2', 'max:60'],
             'company' => ['nullable', 'string', 'max:120'],
             'phone' => ['required', 'string', 'regex:/^[+()0-9\s-]{7,24}$/'],
-            'email' => [$isLowFrictionLead ? 'nullable' : 'required', 'email:rfc', 'max:160'],
-            'address' => [$isLowFrictionLead ? 'nullable' : 'required', 'string', 'max:255'],
+            'email' => ['required', 'email:rfc', 'max:160'],
+            'address' => ['required', 'string', 'min:2', 'max:255'],
             'service' => ['nullable', 'string', 'max:120'],
             'service_slug' => [
-                'nullable',
+                'required',
                 'string',
                 'max:120',
                 Rule::exists('services', 'slug')->where(
@@ -82,8 +96,8 @@ final class StoreContactLeadRequest extends FormRequest
             'details.*.label' => ['required_with:details', 'string', 'max:160'],
             'details.*.type' => ['nullable', 'string', 'max:40'],
             'details.*.value' => ['nullable', 'string', 'max:500'],
-            'message' => [$isLowFrictionLead ? 'nullable' : 'required', 'string', 'max:3000'],
-            'source' => ['required', 'string', 'max:80'],
+            'message' => ['required', 'string', 'min:10', 'max:3000'],
+            'source' => ['required', 'string', Rule::in(self::PUBLIC_SOURCES)],
             'locale' => ['nullable', 'string', 'in:ka,en,ru'],
             'privacy' => ['accepted'],
             'website' => ['nullable', 'max:0'],
@@ -93,27 +107,29 @@ final class StoreContactLeadRequest extends FormRequest
     public function toData(): LeadData
     {
         $data = $this->validated();
+        $fullName = trim($data['first_name'].' '.$data['last_name']);
 
         return new LeadData(
-            name: $data['name'] ?? null,
-            firstName: $data['first_name'] ?? null,
-            lastName: $data['last_name'] ?? null,
+            name: $fullName,
+            firstName: $data['first_name'],
+            lastName: $data['last_name'],
             company: $data['company'] ?? null,
-            phone: $data['phone'] ?? null,
-            email: $data['email'] ?? null,
-            address: $data['address'] ?? null,
+            phone: $data['phone'],
+            email: $data['email'],
+            address: $data['address'],
             service: $data['service'] ?? null,
-            serviceSlug: $data['service_slug'] ?? null,
+            serviceSlug: $data['service_slug'],
             projectSize: $data['project_size'] ?? null,
             propertyType: $data['property_type'] ?? null,
             details: $this->normalizeDetails($data['details'] ?? []),
-            message: $data['message'] ?? null,
+            message: $data['message'],
             source: $data['source'],
             ipHash: hash_hmac('sha256', (string) $this->ip(), (string) config('app.key')),
             userAgent: mb_substr((string) $this->userAgent(), 0, 500) ?: null,
         );
     }
 
+    /** @return array<int, array<string, string>> */
     private function normalizeDetails(mixed $details): array
     {
         if (! is_array($details)) {
@@ -135,58 +151,124 @@ final class StoreContactLeadRequest extends FormRequest
             ->all();
     }
 
+    private function normalizeText(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = preg_replace('/\s+/u', ' ', trim($value)) ?? '';
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function normalizeMessage(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = preg_replace('/\R/u', "\n", trim($value)) ?? '';
+        $value = preg_replace('/[\t ]+/u', ' ', $value) ?? '';
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function normalizeEmail(mixed $value): ?string
+    {
+        $value = $this->normalizeText($value);
+
+        return $value !== null ? mb_strtolower($value) : null;
+    }
+
+    private function normalizeSlug(mixed $value): ?string
+    {
+        $value = $this->normalizeText($value);
+
+        return $value !== null ? mb_strtolower($value) : null;
+    }
+
+    /** @return array<int, array<string, ?string>> */
+    private function normalizeDetailInputs(mixed $details): array
+    {
+        if (! is_array($details)) {
+            return [];
+        }
+
+        return collect($details)
+            ->filter(fn (mixed $detail): bool => is_array($detail))
+            ->map(fn (array $detail): array => [
+                'key' => $this->normalizeText($detail['key'] ?? null),
+                'label' => $this->normalizeText($detail['label'] ?? null),
+                'type' => $this->normalizeText($detail['type'] ?? null),
+                'value' => $this->normalizeText($detail['value'] ?? null),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** @return array<string, string> */
     public function messages(): array
     {
         return match ($this->input('locale')) {
             'en' => [
-                'name.required_if' => 'Enter your full name.',
-                'first_name.required_if' => 'Enter your first name.',
-                'last_name.required_if' => 'Enter your last name.',
+                'first_name.required' => 'Enter your first name.',
+                'first_name.min' => 'Your first name must contain at least 2 characters.',
+                'last_name.required' => 'Enter your last name.',
+                'last_name.min' => 'Your last name must contain at least 2 characters.',
                 'phone.required' => 'Enter your phone number.',
                 'phone.regex' => 'Enter a valid phone number.',
                 'email.required' => 'Enter your email address.',
                 'email.email' => 'Enter a valid email address.',
                 'address.required' => 'Enter the city or service address.',
-                'service.required_if' => 'Select the service you need.',
-                'service_slug.required_if' => 'Select a service.',
+                'address.min' => 'Enter the city or service address.',
+                'service_slug.required' => 'Select a service.',
                 'service_slug.exists' => 'The selected service is unavailable.',
                 'message.required' => 'Describe what service you need.',
+                'message.min' => 'Add at least 10 characters to describe your request.',
+                'source.in' => 'The consultation source is invalid.',
                 'privacy.accepted' => 'Consent to data processing is required.',
                 'details.array' => 'The additional field format is invalid.',
                 'details.max' => 'Too many additional fields were submitted.',
                 'website.max' => 'The request was rejected.',
             ],
             'ru' => [
-                'name.required_if' => 'Укажите имя и фамилию.',
-                'first_name.required_if' => 'Укажите имя.',
-                'last_name.required_if' => 'Укажите фамилию.',
+                'first_name.required' => 'Укажите имя.',
+                'first_name.min' => 'Имя должно содержать не менее 2 символов.',
+                'last_name.required' => 'Укажите фамилию.',
+                'last_name.min' => 'Фамилия должна содержать не менее 2 символов.',
                 'phone.required' => 'Укажите номер телефона.',
                 'phone.regex' => 'Введите корректный номер телефона.',
                 'email.required' => 'Укажите электронную почту.',
                 'email.email' => 'Введите корректный адрес электронной почты.',
                 'address.required' => 'Укажите город или адрес оказания услуги.',
-                'service.required_if' => 'Выберите необходимую услугу.',
-                'service_slug.required_if' => 'Выберите услугу.',
+                'address.min' => 'Укажите город или адрес оказания услуги.',
+                'service_slug.required' => 'Выберите услугу.',
                 'service_slug.exists' => 'Выбранная услуга недоступна.',
                 'message.required' => 'Опишите, какая услуга вам нужна.',
+                'message.min' => 'Опишите задачу не менее чем в 10 символах.',
+                'source.in' => 'Источник консультации указан неверно.',
                 'privacy.accepted' => 'Необходимо согласие на обработку данных.',
                 'details.array' => 'Неверный формат дополнительных полей.',
                 'details.max' => 'Отправлено слишком много дополнительных полей.',
                 'website.max' => 'Запрос отклонен.',
             ],
             default => [
-                'name.required_if' => 'მიუთითეთ სახელი და გვარი.',
-                'first_name.required_if' => 'მიუთითეთ სახელი.',
-                'last_name.required_if' => 'მიუთითეთ გვარი.',
+                'first_name.required' => 'მიუთითეთ სახელი.',
+                'first_name.min' => 'სახელი უნდა შეიცავდეს მინიმუმ 2 სიმბოლოს.',
+                'last_name.required' => 'მიუთითეთ გვარი.',
+                'last_name.min' => 'გვარი უნდა შეიცავდეს მინიმუმ 2 სიმბოლოს.',
                 'phone.required' => 'მიუთითეთ ტელეფონის ნომერი.',
                 'phone.regex' => 'ტელეფონის ნომრის ფორმატი არასწორია.',
                 'email.required' => 'მიუთითეთ ელფოსტა.',
                 'email.email' => 'ელფოსტის ფორმატი არასწორია.',
                 'address.required' => 'მიუთითეთ ქალაქი ან მომსახურების მისამართი.',
-                'service.required_if' => 'აირჩიეთ რომელი მომსახურება გჭირდებათ.',
-                'service_slug.required_if' => 'აირჩიეთ სერვისი.',
+                'address.min' => 'მიუთითეთ ქალაქი ან მომსახურების მისამართი.',
+                'service_slug.required' => 'აირჩიეთ სერვისი.',
                 'service_slug.exists' => 'არჩეული სერვისი მიუწვდომელია.',
                 'message.required' => 'აღწერეთ რა მომსახურება გჭირდებათ.',
+                'message.min' => 'მოთხოვნის აღწერა უნდა შეიცავდეს მინიმუმ 10 სიმბოლოს.',
+                'source.in' => 'კონსულტაციის წყარო არასწორია.',
                 'privacy.accepted' => 'მონაცემების დამუშავებაზე თანხმობა აუცილებელია.',
                 'details.array' => 'დამატებითი ველების ფორმატი არასწორია.',
                 'details.max' => 'დამატებითი ველების დასაშვები რაოდენობა გადაჭარბებულია.',

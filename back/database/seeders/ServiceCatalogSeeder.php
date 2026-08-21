@@ -854,6 +854,7 @@ class ServiceCatalogSeeder extends Seeder
             'highlights' => [
                 ['en' => 'Stable Wi-Fi coverage', 'ru' => 'Стабильное покрытие Wi-Fi'],
                 ['en' => 'Secure network settings', 'ru' => 'Защищенные настройки сети'],
+                ['en' => 'VLAN, VPN and firewall', 'ru' => 'VLAN, VPN и межсетевой экран'],
             ],
             'scope' => [
                 ['en' => 'Coverage and requirements assessment', 'ru' => 'Оценка покрытия и требований'],

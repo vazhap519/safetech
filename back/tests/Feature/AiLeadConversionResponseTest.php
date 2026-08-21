@@ -17,7 +17,7 @@ class AiLeadConversionResponseTest extends TestCase
         config([
             'services.openai.enabled' => true,
             'services.openai.api_key' => 'test-key',
-            'services.openai.model' => 'gpt-5.6-terra',
+            'services.openai.model' => 'gpt-5.6',
         ]);
     }
 
@@ -57,7 +57,7 @@ class AiLeadConversionResponseTest extends TestCase
     {
         return [
             'id' => 'resp_text',
-            'model' => 'gpt-5.6-terra',
+            'model' => 'gpt-5.6',
             'output' => [[
                 'id' => 'msg_text',
                 'type' => 'message',
@@ -83,7 +83,7 @@ class AiLeadConversionResponseTest extends TestCase
     {
         return [
             'id' => 'resp_tool',
-            'model' => 'gpt-5.6-terra',
+            'model' => 'gpt-5.6',
             'output' => [[
                 'id' => 'fc_test',
                 'type' => 'function_call',

@@ -56,7 +56,7 @@ printf '\n'
 
 set_env_var "${BACKEND_ENV}" "AI_ASSISTANT_ENABLED" "true"
 set_env_var "${BACKEND_ENV}" "OPENAI_API_KEY" "${OPENAI_KEY}"
-set_env_var "${BACKEND_ENV}" "OPENAI_MODEL" "gpt-5.6-terra"
+set_env_var "${BACKEND_ENV}" "OPENAI_MODEL" "gpt-5.6"
 set_env_var "${FRONTEND_ENV}" "NEXT_PUBLIC_AI_ASSISTANT_ENABLED" "true"
 
 unset OPENAI_KEY

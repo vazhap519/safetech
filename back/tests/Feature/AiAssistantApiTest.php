@@ -23,7 +23,7 @@ class AiAssistantApiTest extends TestCase
         config([
             'services.openai.enabled' => true,
             'services.openai.api_key' => 'test-key',
-            'services.openai.model' => 'gpt-5.6-terra',
+            'services.openai.model' => 'gpt-5.6',
         ]);
     }
 
@@ -56,11 +56,28 @@ class AiAssistantApiTest extends TestCase
         ]);
 
         Http::assertSent(fn ($request): bool => $request->url() === 'https://api.openai.com/v1/responses'
-            && $request['model'] === 'gpt-5.6-terra'
+            && $request['model'] === 'gpt-5.6'
             && data_get($request->data(), 'reasoning.effort') === 'none'
             && $request['max_output_tokens'] === 1200
             && $request['store'] === false
         );
+    }
+
+    public function test_it_uses_the_supported_default_model_when_the_configured_model_is_blank(): void
+    {
+        config(['services.openai.model' => '']);
+
+        Http::fake([
+            'api.openai.com/*' => Http::response($this->textResponse('AI is available.')),
+        ]);
+
+        $this->postJson('/api/ai/chat', [
+            'message' => 'Please confirm the assistant is available.',
+            'locale' => 'en',
+            'privacy' => true,
+        ])->assertOk();
+
+        Http::assertSent(fn ($request): bool => $request['model'] === 'gpt-5.6');
     }
 
     public function test_an_incomplete_openai_response_returns_a_safe_unavailable_response(): void
@@ -239,7 +256,7 @@ class AiAssistantApiTest extends TestCase
     {
         return [
             'id' => 'resp_test',
-            'model' => 'gpt-5.6-terra',
+            'model' => 'gpt-5.6',
             'output' => [[
                 'id' => 'msg_test',
                 'type' => 'message',
@@ -265,7 +282,7 @@ class AiAssistantApiTest extends TestCase
     {
         return [
             'id' => 'resp_tool',
-            'model' => 'gpt-5.6-terra',
+            'model' => 'gpt-5.6',
             'output' => [[
                 'id' => 'fc_test',
                 'type' => 'function_call',

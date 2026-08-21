@@ -110,6 +110,7 @@ class SiteSettingResource extends Resource
 
             Section::make('Social profiles')
                 ->description('Add only the public profiles you want to show. Cards stay collapsed to keep this page short. Remove a card and click Save to persist the deletion.')
+                ->columnSpanFull()
                 ->schema([
                     Hidden::make('value.links_managed')
                         ->default(true),
@@ -121,25 +122,30 @@ class SiteSettingResource extends Resource
                                 ->options(AdminIconOptions::socials())
                                 ->searchable()
                                 ->preload()
-                                ->required(),
+                                ->required()
+                                ->columnSpan(['default' => 1, 'md' => 2]),
                             TextInput::make('href')
                                 ->label('Profile URL / value')
                                 ->required()
                                 ->placeholder('https://facebook.com/...')
-                                ->helperText('Use a full profile URL. Email, Viber and WhatsApp may use their direct value.'),
+                                ->helperText('Use a full profile URL. Email, Viber and WhatsApp may use their direct value.')
+                                ->columnSpan(['default' => 1, 'md' => 2]),
                             Toggle::make('enabled')
                                 ->label('Show')
-                                ->default(true),
+                                ->default(true)
+                                ->columnSpan(['default' => 1, 'md' => 2]),
                             Toggle::make('open_in_new_tab')
                                 ->label('Open in new tab')
-                                ->default(true),
+                                ->default(true)
+                                ->columnSpan(['default' => 1, 'md' => 2]),
                         ])
-                        ->columns(2)
+                        ->columns(['default' => 1, 'md' => 4])
                         ->default([])
                         ->collapsible()
                         ->collapsed()
                         ->reorderable()
                         ->addActionLabel('Add social profile')
+                        ->columnSpanFull()
                         ->itemLabel(fn (array $state): ?string => AdminIconOptions::socials()[$state['network'] ?? ''] ?? 'Social profile'),
                 ])
                 ->visible(fn (Get $get): bool => $get('key') === 'socials'),
@@ -173,20 +179,24 @@ class SiteSettingResource extends Resource
                                 ->options(AdminIconOptions::shareNetworks())
                                 ->searchable()
                                 ->preload()
-                                ->required(),
+                                ->required()
+                                ->columnSpan(['default' => 1, 'md' => 3]),
                             Toggle::make('enabled')
                                 ->label('Show')
-                                ->default(true),
+                                ->default(true)
+                                ->columnSpan(['default' => 1, 'md' => 1]),
                         ])
-                        ->columns(2)
+                        ->columns(['default' => 1, 'md' => 4])
                         ->default([])
                         ->collapsible()
                         ->collapsed()
                         ->reorderable()
                         ->addActionLabel('Add sharing button')
+                        ->columnSpanFull()
                         ->itemLabel(fn (array $state): ?string => AdminIconOptions::shareNetworks()[$state['type'] ?? ''] ?? 'Share button'),
                 ])
                 ->columns(3)
+                ->columnSpanFull()
                 ->visible(fn (Get $get): bool => $get('key') === 'socials'),
 
             Section::make('Branding')

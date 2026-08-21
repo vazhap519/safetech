@@ -1,10 +1,10 @@
 import TranslatedText from "@/components/i18n/TranslatedText";
-import LocalizedLink from "@/components/ui/LocalizedLink";
 import Typography from "@/components/ui/Typography";
-import { getBackendServices } from "@/lib/backend";
+import FooterServicesList from "@/components/Footer/components/FooterServicesList";
+import { getBackendFooterServices } from "@/lib/backend";
 
 export default async function FooterServices() {
-    const services = await getBackendServices();
+    const services = await getBackendFooterServices();
 
     if (!services.length) return null;
 
@@ -16,22 +16,7 @@ export default async function FooterServices() {
                     translationKey="footer.services.title"
                 />
             </Typography>
-            <ul className="space-y-1 text-[15px] leading-7 text-on-surface-variant">
-                {services.slice(0, 6).map((service) => (
-                    <li key={service.slug}>
-                        <LocalizedLink
-                            className="inline-flex min-h-9 items-center transition-colors duration-300 hover:text-secondary"
-                            href={`/services/${service.slug}`}
-                            prefetch={false}
-                        >
-                            <TranslatedText
-                                fallback={service.title}
-                                translationKey={`service.${service.slug}.card.title`}
-                            />
-                        </LocalizedLink>
-                    </li>
-                ))}
-            </ul>
+            <FooterServicesList services={services.slice(0, 6)} />
         </nav>
     );
 }

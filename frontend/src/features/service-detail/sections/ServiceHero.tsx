@@ -1,7 +1,6 @@
 import ConsultationTrigger from "@/components/consultation/ConsultationTrigger";
 import Icon from "@/components/ui/Icon";
 import Image from "@/components/ui/Image";
-import LocalizedLink from "@/components/ui/LocalizedLink";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -104,12 +103,11 @@ export default async function ServiceHero({
                             <ConsultationTrigger className="glow-button w-full rounded-xl bg-primary-container px-unit-lg py-unit-md text-center font-headline-md text-on-primary-container sm:w-auto sm:px-unit-xl">
                                 {consultationLabel}
                             </ConsultationTrigger>
-                            <LocalizedLink
+                            <ConsultationTrigger
                                 className="w-full rounded-xl border border-outline-variant bg-white/5 px-unit-lg py-unit-md text-center font-headline-md text-white transition-colors hover:bg-white/10 sm:w-auto sm:px-unit-xl"
-                                href="/contact#contact-form"
                             >
                                 {pricingLabel}
-                            </LocalizedLink>
+                            </ConsultationTrigger>
                         </div>
                         {shareLabel ? (
                             <ServiceShareButtons

@@ -1,4 +1,4 @@
-import ActionLink from "@/components/ui/ActionLink";
+import ConsultationTrigger from "@/components/consultation/ConsultationTrigger";
 import Typography from "@/components/ui/Typography";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
@@ -54,12 +54,11 @@ export default async function Hero() {
 
                 {buttonLabel ? (
                     <div className="flex justify-center">
-                        <ActionLink
+                        <ConsultationTrigger
                             className="rounded-full px-unit-lg py-4"
-                            href="#contact-form"
                         >
                             {buttonLabel}
-                        </ActionLink>
+                        </ConsultationTrigger>
                     </div>
                 ) : null}
             </div>

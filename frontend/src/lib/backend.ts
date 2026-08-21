@@ -9,7 +9,7 @@ import {
     type RawLeadFormConfig,
 } from "@/lib/lead-form";
 import { getCurrentLocale } from "@/lib/locale-server";
-import type { Locale } from "@/lib/locales";
+import { supportedLocales, type Locale } from "@/lib/locales";
 import type { ProjectDetail } from "@/lib/projectDetails";
 import type { FeaturedProject, Project } from "@/lib/projects";
 import { DEFAULT_SOCIAL_IMAGE } from "@/lib/seo";
@@ -31,6 +31,16 @@ export type ContentFilterCategory = {
     id?: number;
     name: string;
     slug: string;
+};
+
+type ServiceCardPayload = ServiceDetail & {
+    category?: { slug?: string; name?: string };
+    icon?: string;
+};
+
+export type FooterServiceLink = {
+    slug: string;
+    titles: Partial<Record<Locale, string>>;
 };
 
 export type BackendContent = {
@@ -425,23 +435,21 @@ function localizeProjectDetail(
     } satisfies ProjectDetail;
 }
 
+async function fetchServiceCards(locale: Locale, category?: string) {
+    return fetchData<ServiceCardPayload[]>(
+        buildApiPath("/services", {
+            category,
+            locale,
+            view: "card",
+        }),
+    );
+}
+
 export async function getBackendServices(category?: string) {
-    const [{ locale, translations }, remote] = await Promise.all([
+    const locale = await getCurrentLocale();
+    const [{ translations }, remote] = await Promise.all([
         getTranslationContext(),
-        fetchData<
-            Array<
-                ServiceDetail & {
-                    category?: { slug?: string; name?: string };
-                    icon?: string;
-                }
-            >
-        >(
-            buildApiPath("/services", {
-                category,
-                locale: await getCurrentLocale(),
-                view: "card",
-            }),
-        ),
+        fetchServiceCards(locale, category),
     ]);
 
     if (!remote?.length) return [];
@@ -467,6 +475,45 @@ export async function getBackendServices(category?: string) {
             icon: service.icon || "settings",
         };
     });
+}
+
+/**
+ * Root-layout server components persist during client-side locale changes.
+ * Keep the small footer service list locale-aware without exposing every
+ * service-detail translation to the browser.
+ */
+export async function getBackendFooterServices(): Promise<FooterServiceLink[]> {
+    const localizedServiceLists = await Promise.all(
+        supportedLocales.map(async (locale) => ({
+            locale,
+            services: (await fetchServiceCards(locale)) ?? [],
+        })),
+    );
+    const services = new Map<string, FooterServiceLink>();
+
+    for (const { locale, services: localizedServices } of localizedServiceLists) {
+        for (const service of localizedServices) {
+            const slug = service.slug?.trim();
+
+            if (!slug) continue;
+
+            const entry = services.get(slug) ?? {
+                slug,
+                titles: {},
+            };
+            const title = (service.name || service.title || "").trim();
+
+            if (title) {
+                entry.titles[locale] = title;
+            }
+
+            services.set(slug, entry);
+        }
+    }
+
+    return [...services.values()].filter((service) =>
+        Object.values(service.titles).some(Boolean),
+    );
 }
 
 export async function getBackendFilterCategories(kind: ContentFilterKind) {

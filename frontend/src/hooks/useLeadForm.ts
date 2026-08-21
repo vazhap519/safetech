@@ -73,25 +73,34 @@ export function useLeadForm(source: string) {
         const leadMessage = String(
             cleanedPayload.message ?? cleanedPayload.details ?? "",
         ).trim();
-
         const firstName = String(cleanedPayload.firstName ?? "");
+        const lastName = String(cleanedPayload.lastName ?? "");
         const email = String(cleanedPayload.email ?? "");
         const phone = String(cleanedPayload.phone ?? "");
+        const address = String(cleanedPayload.address ?? "");
+        const serviceSlug = String(
+            cleanedPayload.serviceSlug ?? cleanedPayload.service_slug ?? "",
+        ).trim();
+        const privacyAccepted = cleanedPayload.privacy === "1";
         const missingRequiredContact =
-            source === "consultation-popup"
-                ? !firstName || !phone
-                : !email || !phone;
+            source === "consultation-popup" &&
+            (!firstName ||
+                !lastName ||
+                !phone ||
+                !email ||
+                !address ||
+                !serviceSlug ||
+                !leadMessage ||
+                !privacyAccepted);
 
         if (missingRequiredContact) {
             setStatus("error");
             setMessage(
-                source === "consultation-popup"
-                    ? t("forms.validation.consultationContact", {
-                          ka: "მიუთითეთ სახელი და ტელეფონის ნომერი.",
-                          en: "Enter your name and phone number.",
-                          ru: "Укажите имя и номер телефона.",
-                      })
-                    : t("forms.validation.contact", null),
+                t("consultation.form.validation", {
+                    ka: "შეავსეთ ყველა სავალდებულო ველი და დაეთანხმეთ მონაცემების დამუშავებას.",
+                    en: "Complete every required field and accept data processing.",
+                    ru: "Заполните все обязательные поля и подтвердите согласие на обработку данных.",
+                }),
             );
             return;
         }
@@ -129,11 +138,6 @@ export function useLeadForm(source: string) {
             form.reset();
             setStatus("success");
             setMessage(result?.message || t("forms.success.submit", null));
-            const serviceSlug = String(
-                cleanedPayload.serviceSlug ??
-                    cleanedPayload.service_slug ??
-                    "",
-            ).trim();
 
             trackEvent("generate_lead", {
                 form_source: source,

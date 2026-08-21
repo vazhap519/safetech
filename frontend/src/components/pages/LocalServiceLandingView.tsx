@@ -179,12 +179,11 @@ export default function LocalServiceLandingView({
                             <ConsultationTrigger className="glow-button rounded-xl bg-primary-container px-6 py-4 text-center font-semibold text-on-primary-container">
                                 {copy.consultation}
                             </ConsultationTrigger>
-                            <LocalizedLink
+                            <ConsultationTrigger
                                 className="rounded-xl border border-outline-variant bg-white/5 px-6 py-4 text-center font-semibold text-white transition hover:bg-white/10"
-                                href="/contact#contact-form"
                             >
                                 {copy.quote}
-                            </LocalizedLink>
+                            </ConsultationTrigger>
                             <LocalizedLink
                                 className="rounded-xl px-5 py-4 text-center font-medium text-primary hover:underline"
                                 href={`/services/${landing.service.slug}`}
@@ -342,12 +341,11 @@ export default function LocalServiceLandingView({
                         <ConsultationTrigger className="rounded-xl bg-primary-container px-7 py-4 font-semibold text-on-primary-container">
                             {copy.consultation}
                         </ConsultationTrigger>
-                        <LocalizedLink
+                        <ConsultationTrigger
                             className="rounded-xl border border-outline-variant bg-surface/40 px-7 py-4 font-semibold text-on-surface"
-                            href="/contact#contact-form"
                         >
                             {copy.quote}
-                        </LocalizedLink>
+                        </ConsultationTrigger>
                     </div>
                 </div>
             </section>

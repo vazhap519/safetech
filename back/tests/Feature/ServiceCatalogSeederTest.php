@@ -51,11 +51,68 @@ class ServiceCatalogSeederTest extends TestCase
             $translationMap['service.operating-system-installation.highlight.1']['en'] ?? null,
         );
         $this->assertSame(
+            'VLAN, VPN and firewall',
+            $translationMap['service.router-wifi-configuration.highlight.2']['en'] ?? null,
+        );
+        $this->assertSame(
+            'VLAN, VPN и межсетевой экран',
+            $translationMap['service.router-wifi-configuration.benefit.2.title']['ru'] ?? null,
+        );
+        $this->assertSame(
             'Настройка драйверов и программ',
             $translationMap['service.operating-system-installation.solution.1.title']['ru'] ?? null,
         );
         $this->assertNotEmpty(
             $translationMap['service.router-wifi-configuration.seoDescription']['ru'] ?? null,
+        );
+    }
+
+    public function test_it_replaces_legacy_georgian_router_highlight_placeholders(): void
+    {
+        SiteSetting::query()->updateOrCreate(
+            ['key' => 'translations'],
+            [
+                'group' => 'general',
+                'is_public' => true,
+                'value' => [
+                    'entries' => [
+                        [
+                            'key' => 'service.router-wifi-configuration.highlight.2',
+                            'ka' => 'VLAN, VPN და Firewall',
+                            'en' => 'VLAN, VPN და Firewall',
+                            'ru' => 'VLAN, VPN და Firewall',
+                        ],
+                        [
+                            'key' => 'service.router-wifi-configuration.benefit.2.title',
+                            'ka' => 'VLAN, VPN და Firewall',
+                            'en' => 'VLAN, VPN და Firewall',
+                            'ru' => 'VLAN, VPN და Firewall',
+                        ],
+                    ],
+                ],
+            ],
+        );
+
+        $this->seed(ServiceCatalogSeeder::class);
+
+        $translations = SiteSetting::query()->where('key', 'translations')->firstOrFail();
+        $translationMap = MultilingualContent::mapFrom($translations->value);
+
+        $this->assertSame(
+            'VLAN, VPN and firewall',
+            $translationMap['service.router-wifi-configuration.highlight.2']['en'] ?? null,
+        );
+        $this->assertSame(
+            'VLAN, VPN и межсетевой экран',
+            $translationMap['service.router-wifi-configuration.highlight.2']['ru'] ?? null,
+        );
+        $this->assertSame(
+            'VLAN, VPN and firewall',
+            $translationMap['service.router-wifi-configuration.benefit.2.title']['en'] ?? null,
+        );
+        $this->assertSame(
+            'VLAN, VPN и межсетевой экран',
+            $translationMap['service.router-wifi-configuration.benefit.2.title']['ru'] ?? null,
         );
     }
 

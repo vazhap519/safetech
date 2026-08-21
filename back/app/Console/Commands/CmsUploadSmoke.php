@@ -19,6 +19,10 @@ use Throwable;
 
 class CmsUploadSmoke extends Command
 {
+    private const PNG_PROBE_SIZE_BYTES = 2 * 1024 * 1024;
+
+    private const PNG_SIGNATURE = "\x89PNG\r\n\x1a\n";
+
     protected $signature = 'cms:upload-smoke
         {--check-nginx-runtime : Require the installed Nginx configuration to match the repository copy}
         {--http-base-url= : Upload a real 2 MB image through the public Livewire HTTP endpoint}';
@@ -65,14 +69,10 @@ class CmsUploadSmoke extends Command
 
     private function assertUploadRulesAcceptARealPng(): void
     {
-        $path = tempnam(sys_get_temp_dir(), 'safetech-upload-smoke-');
-
-        if ($path === false) {
-            throw new RuntimeException('Unable to create the upload validation probe.');
-        }
+        $path = $this->createPngProbe();
 
         try {
-            file_put_contents($path, $this->pngPayload());
+            $this->assertPngProbe($path);
 
             $upload = new UploadedFile(
                 $path,
@@ -128,27 +128,54 @@ class CmsUploadSmoke extends Command
         $publicPath = "cms-upload-smoke/{$identifier}.png";
         $temporaryDisk = Storage::disk(CmsMediaUpload::temporaryDisk());
         $publicDisk = Storage::disk('public');
-        $payload = $this->pngPayload();
+        $probePath = $this->createPngProbe();
 
         try {
-            if (! $temporaryDisk->put($temporaryPath, $payload)) {
+            $this->assertPngProbe($probePath);
+
+            $probeStream = fopen($probePath, 'rb');
+
+            if ($probeStream === false) {
+                throw new RuntimeException('Unable to open the upload storage probe.');
+            }
+
+            try {
+                $stored = $temporaryDisk->put($temporaryPath, $probeStream);
+            } finally {
+                fclose($probeStream);
+            }
+
+            if (! $stored) {
                 throw new RuntimeException('The Livewire temporary upload disk is not writable.');
             }
 
-            if ($temporaryDisk->size($temporaryPath) !== strlen($payload)) {
+            if ($temporaryDisk->size($temporaryPath) !== self::PNG_PROBE_SIZE_BYTES) {
                 throw new RuntimeException('The temporary upload was truncated.');
             }
 
-            if (! $publicDisk->put($publicPath, $temporaryDisk->get($temporaryPath))) {
+            $temporaryStream = $temporaryDisk->readStream($temporaryPath);
+
+            if (! is_resource($temporaryStream)) {
+                throw new RuntimeException('Unable to read the temporary CMS upload.');
+            }
+
+            try {
+                $copied = $publicDisk->put($publicPath, $temporaryStream);
+            } finally {
+                fclose($temporaryStream);
+            }
+
+            if (! $copied) {
                 throw new RuntimeException('The public media disk is not writable.');
             }
 
-            if ($publicDisk->size($publicPath) !== strlen($payload)) {
+            if ($publicDisk->size($publicPath) !== self::PNG_PROBE_SIZE_BYTES) {
                 throw new RuntimeException('The permanent media copy was truncated.');
             }
         } finally {
             $temporaryDisk->delete($temporaryPath);
             $publicDisk->delete($publicPath);
+            @unlink($probePath);
         }
     }
 
@@ -178,25 +205,41 @@ class CmsUploadSmoke extends Command
 
         $cookieJar = new CookieJar;
         $probe = $this->publicLivewireUploadProbe($baseUrl, $cookieJar);
+        $probePath = $this->createPngProbe();
 
-        $response = Http::acceptJson()
-            ->withOptions(['cookies' => $cookieJar])
-            ->withHeaders([
-                'X-CSRF-TOKEN' => $probe['csrf_token'],
-                'Origin' => $baseUrl,
-                'Referer' => $baseUrl.'/admin',
-            ])
-            ->timeout(60)
-            ->connectTimeout(10)
-            ->attach(
-                'files[]',
-                $this->pngPayload(),
-                'safetech-upload-smoke.png',
-                ['Content-Type' => 'image/png'],
-            )
-            ->post($probe['signed_url']);
+        try {
+            $this->assertPngProbe($probePath);
+            $probeStream = fopen($probePath, 'rb');
 
-        $this->assertSuccessfulUploadResponse($response, $probe['signed_url']);
+            if ($probeStream === false) {
+                throw new RuntimeException('Unable to open the public upload probe.');
+            }
+
+            try {
+                $response = Http::acceptJson()
+                    ->withOptions(['cookies' => $cookieJar])
+                    ->withHeaders([
+                        'X-CSRF-TOKEN' => $probe['csrf_token'],
+                        'Origin' => $baseUrl,
+                        'Referer' => $baseUrl.'/admin',
+                    ])
+                    ->timeout(60)
+                    ->connectTimeout(10)
+                    ->attach(
+                        'files[]',
+                        $probeStream,
+                        'safetech-upload-smoke.png',
+                        ['Content-Type' => 'image/png'],
+                    )
+                    ->post($probe['signed_url']);
+            } finally {
+                fclose($probeStream);
+            }
+
+            $this->assertSuccessfulUploadResponse($response, $probe['signed_url']);
+        } finally {
+            @unlink($probePath);
+        }
     }
 
     /**
@@ -354,17 +397,134 @@ class CmsUploadSmoke extends Command
         return $bytes * (1024 ** $powers[$unit]);
     }
 
-    private function pngPayload(): string
+    private function createPngProbe(): string
     {
-        $png = base64_decode(
-            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z1pAAAAAASUVORK5CYII=',
-            true,
-        );
+        $path = tempnam(sys_get_temp_dir(), 'safetech-upload-smoke-');
 
-        if ($png === false) {
-            throw new RuntimeException('Unable to build the PNG smoke-test payload.');
+        if ($path === false) {
+            throw new RuntimeException('Unable to create the upload validation probe.');
         }
 
-        return $png.str_repeat("\0", (2 * 1024 * 1024) - strlen($png));
+        $stream = fopen($path, 'w+b');
+
+        if ($stream === false) {
+            @unlink($path);
+
+            throw new RuntimeException('Unable to open the upload validation probe.');
+        }
+
+        $completed = false;
+
+        try {
+            // A valid 1x1 RGBA scanline. The large, ancillary padding chunk keeps this
+            // a real 2 MiB PNG without appending invalid bytes after IEND.
+            $idat = gzcompress("\0\xff\xff\xff\xff", 9);
+
+            if ($idat === false) {
+                throw new RuntimeException('Unable to compress the PNG upload probe.');
+            }
+
+            $ihdr = pack('N2', 1, 1)."\x08\x06\0\0\0";
+            $paddingLength = self::PNG_PROBE_SIZE_BYTES
+                - strlen(self::PNG_SIGNATURE)
+                - $this->pngChunkLength(strlen($ihdr))
+                - $this->pngChunkLength(strlen($idat))
+                - $this->pngChunkLength(0)
+                - $this->pngChunkLength(0);
+
+            if ($paddingLength < 1) {
+                throw new RuntimeException('The PNG upload probe size is invalid.');
+            }
+
+            $this->writeProbeBytes($stream, self::PNG_SIGNATURE);
+            $this->writePngChunk($stream, 'IHDR', $ihdr);
+            $this->writePngPaddingChunk($stream, $paddingLength);
+            $this->writePngChunk($stream, 'IDAT', $idat);
+            $this->writePngChunk($stream, 'IEND');
+            $completed = true;
+        } finally {
+            fclose($stream);
+
+            if (! $completed) {
+                @unlink($path);
+            }
+        }
+
+        return $path;
+    }
+
+    private function assertPngProbe(string $path): void
+    {
+        clearstatcache(true, $path);
+        $size = filesize($path);
+
+        if ($size !== self::PNG_PROBE_SIZE_BYTES) {
+            throw new RuntimeException('The upload validation probe is not exactly 2 MiB.');
+        }
+
+        $image = @getimagesize($path);
+
+        if ($image === false || ($image['mime'] ?? null) !== 'image/png') {
+            throw new RuntimeException('The upload validation probe is not a valid PNG image.');
+        }
+    }
+
+    private function pngChunkLength(int $dataLength): int
+    {
+        return 12 + $dataLength;
+    }
+
+    /**
+     * @param  resource  $stream
+     */
+    private function writePngChunk($stream, string $type, string $data = ''): void
+    {
+        $this->writeProbeBytes($stream, pack('N', strlen($data)).$type.$data);
+        $this->writeProbeBytes($stream, pack('H*', hash('crc32b', $type.$data)));
+    }
+
+    /**
+     * @param  resource  $stream
+     */
+    private function writePngPaddingChunk($stream, int $length): void
+    {
+        $type = 'pADd';
+        $checksum = hash_init('crc32b');
+        hash_update($checksum, $type);
+        $this->writeProbeBytes($stream, pack('N', $length).$type);
+
+        $remaining = $length;
+        $padding = str_repeat("\0", min(64 * 1024, $length));
+
+        while ($remaining > 0) {
+            $chunk = $remaining >= strlen($padding)
+                ? $padding
+                : substr($padding, 0, $remaining);
+
+            $this->writeProbeBytes($stream, $chunk);
+            hash_update($checksum, $chunk);
+            $remaining -= strlen($chunk);
+        }
+
+        $this->writeProbeBytes($stream, pack('H*', hash_final($checksum)));
+    }
+
+    /**
+     * @param  resource  $stream
+     */
+    private function writeProbeBytes($stream, string $bytes): void
+    {
+        $length = strlen($bytes);
+        $offset = 0;
+
+        while ($offset < $length) {
+            $written = fwrite($stream, substr($bytes, $offset));
+
+            if ($written === false || $written === 0) {
+                throw new RuntimeException('Unable to write the PNG upload probe.');
+            }
+
+            $offset += $written;
+        }
     }
 }
