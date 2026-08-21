@@ -61,13 +61,14 @@ class PublishProjectToSocial extends Command
 
     private function resolveProject(): ?Project
     {
-        $identifier = $this->argument('project');
+        $identifier = trim((string) $this->argument('project'));
 
-        if ($identifier !== null && $identifier !== '') {
-            return Project::query()
-                ->where('id', $identifier)
-                ->orWhere('slug', $identifier)
-                ->first();
+        if ($identifier !== '') {
+            if (ctype_digit($identifier)) {
+                return Project::query()->find((int) $identifier);
+            }
+
+            return Project::query()->where('slug', $identifier)->first();
         }
 
         return Project::query()
