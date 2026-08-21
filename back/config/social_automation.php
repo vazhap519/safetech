@@ -12,6 +12,6 @@ return [
         ),
         'token' => env('N8N_PROJECT_PUBLISH_WEBHOOK_TOKEN'),
         'connect_timeout' => (int) env('N8N_PROJECT_PUBLISH_CONNECT_TIMEOUT', 3),
-        'timeout' => (int) env('N8N_PROJECT_PUBLISH_TIMEOUT', 10),
+        'timeout' => (int) env('N8N_PROJECT_PUBLISH_TIMEOUT', 30),
     ],
 ];
