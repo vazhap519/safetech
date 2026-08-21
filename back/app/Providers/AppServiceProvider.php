@@ -30,6 +30,7 @@ use App\Models\TeamMember;
 use App\Models\Testimonial;
 use App\Models\User;
 use App\Observers\AdminAuditObserver;
+use App\Observers\ProjectSocialAutomationObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -68,6 +69,8 @@ class AppServiceProvider extends ServiceProvider
         foreach ($this->auditedModels() as $model) {
             $model::observe(AdminAuditObserver::class);
         }
+
+        Project::observe(ProjectSocialAutomationObserver::class);
 
         $this->registerPublicContentMediaInvalidation();
 
