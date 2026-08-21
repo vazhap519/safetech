@@ -20,7 +20,7 @@ class PublishProjectToSocialAutomation implements ShouldBeUnique, ShouldQueue
     /** @var array<int, int> */
     public array $backoff = [30, 120, 300];
 
-    public int $timeout = 30;
+    public int $timeout = 45;
 
     public int $uniqueFor = 600;
 
@@ -58,7 +58,7 @@ class PublishProjectToSocialAutomation implements ShouldBeUnique, ShouldQueue
         $request = Http::acceptJson()
             ->asJson()
             ->connectTimeout((int) config('social_automation.project_publish.connect_timeout', 3))
-            ->timeout((int) config('social_automation.project_publish.timeout', 10));
+            ->timeout((int) config('social_automation.project_publish.timeout', 30));
 
         $token = trim((string) config('social_automation.project_publish.token'));
 
