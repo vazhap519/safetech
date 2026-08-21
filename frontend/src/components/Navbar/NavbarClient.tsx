@@ -43,7 +43,8 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
             label: t(item.key, item.fallback),
         }))
         .filter((item) => item.label);
-    const hasBrand = Boolean(logo || siteName);
+    const headerLogo = logo?.trim() || null;
+    const hasBrand = Boolean(headerLogo || siteName);
 
     useEffect(() => {
         if (mobileMenuRef.current) mobileMenuRef.current.open = false;
@@ -70,24 +71,25 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                 {hasBrand ? (
                     <LocalizedLink
                         aria-label={[siteName, homeLabel].filter(Boolean).join(" - ")}
-                        className="flex min-h-11 shrink-0 items-center gap-3 text-primary"
+                        className="group flex min-h-11 shrink-0 cursor-pointer items-center gap-3 text-primary"
                         href="/"
                         onClick={closeMobileMenu}
                         prefetch={false}
+                        title={homeLabel}
                     >
-                        {logo ? (
+                        {headerLogo ? (
                             <Image
                                 alt={siteName || homeLabel}
-                                className="h-11 w-11 shrink-0 rounded-lg object-contain sm:h-12 sm:w-12"
+                                className="h-11 w-11 shrink-0 rounded-lg object-contain transition-transform duration-200 group-hover:scale-105 sm:h-12 sm:w-12"
                                 height={48}
                                 sizes="(min-width: 640px) 48px, 44px"
-                                src={logo}
+                                src={headerLogo}
                                 unoptimized
                                 variant="plain"
                                 width={48}
                             />
                         ) : null}
-                        {siteName ? (
+                        {!headerLogo && siteName ? (
                             <span className="font-headline-md text-[22px] font-bold leading-none">
                                 {siteName}
                             </span>

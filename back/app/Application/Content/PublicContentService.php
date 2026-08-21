@@ -12,6 +12,7 @@ use App\Models\Testimonial;
 use App\Support\MultilingualContent;
 use App\Support\PublicContentCache;
 use App\Support\SiteSettingValueNormalizer;
+use App\Support\TeamMemberSocialLinks;
 use Illuminate\Support\Facades\Cache;
 
 final class PublicContentService
@@ -33,7 +34,7 @@ final class PublicContentService
                     'position' => $member->position,
                     'image' => $member->image,
                     'bio' => $member->bio,
-                    'socials' => $member->socials ?? [],
+                    'socials' => TeamMemberSocialLinks::normalize($member->socials),
                 ])->values()->all(),
                 'partners' => Partner::query()->active()->get()->map->only([
                     'name',

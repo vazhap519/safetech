@@ -3,17 +3,20 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TeamMemberResource\Pages;
+use App\Filament\Support\AdminIconOptions;
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\NavigationGroup;
 use App\Models\TeamMember;
+use App\Support\TeamMemberSocialLinks;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -50,10 +53,39 @@ class TeamMemberResource extends Resource
                         ->imageEditor()
                         ->maxSize(10240),
                     Textarea::make('bio')->label('ბიოგრაფია'),
-                    KeyValue::make('socials')
+                    Repeater::make('socials')
                         ->label('სოციალური ბმულები')
-                        ->keyLabel('ქსელი')
-                        ->valueLabel('URL'),
+                        ->helperText('ქსელი აირჩიეთ სიიდან — საიტზე შესაბამისი აიკონი ავტომატურად გამოჩნდება.')
+                        ->schema([
+                            ToggleButtons::make('network')
+                                ->label('ქსელი')
+                                ->options(AdminIconOptions::socials())
+                                ->icons(AdminIconOptions::socialIcons())
+                                ->colors(AdminIconOptions::socialColors())
+                                ->tooltips(AdminIconOptions::socials())
+                                ->hiddenButtonLabels()
+                                ->columns(['default' => 3, 'sm' => 4, 'lg' => 6])
+                                ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                                ->helperText('აირჩიეთ აიკონი, რომელიც თანამშრომლის ბარათზე გამოჩნდება.')
+                                ->required()
+                                ->columnSpanFull(),
+                            TextInput::make('href')
+                                ->label('ბმული / ელფოსტა / ნომერი')
+                                ->helperText('ელფოსტა, WhatsApp და Viber შეიძლება პირდაპირი მნიშვნელობით ჩაიწეროს; სხვებისთვის გამოიყენეთ სრული ბმული.')
+                                ->maxLength(2048)
+                                ->required()
+                                ->columnSpanFull(),
+                        ])
+                        ->formatStateUsing(fn (mixed $state): array => TeamMemberSocialLinks::formRows($state))
+                        ->mutateDehydratedStateUsing(fn (mixed $state): array => TeamMemberSocialLinks::normalize($state))
+                        ->columns(1)
+                        ->default([])
+                        ->collapsible()
+                        ->collapsed()
+                        ->reorderable()
+                        ->addActionLabel('სოციალური ქსელის დამატება')
+                        ->itemLabel(fn (array $state): ?string => AdminIconOptions::socials()[$state['network'] ?? ''] ?? 'სოციალური ქსელი')
+                        ->columnSpanFull(),
                     Toggle::make('is_active')->label('აქტიური')->default(true),
                     TextInput::make('sort_order')->label('რიგითობა')->numeric()->default(0),
                 ])

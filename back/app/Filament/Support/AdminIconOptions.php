@@ -2,6 +2,8 @@
 
 namespace App\Filament\Support;
 
+use Illuminate\Support\HtmlString;
+
 final class AdminIconOptions
 {
     /** @return array<string, string> */
@@ -63,6 +65,48 @@ final class AdminIconOptions
         ];
     }
 
+    /**
+     * Brand-shaped SVGs for the CMS picker. These are inline rather than external
+     * images, so the icon selector remains fast and works without third-party
+     * requests in the admin panel.
+     *
+     * @return array<string, HtmlString>
+     */
+    public static function socialIcons(): array
+    {
+        return [
+            'facebook' => self::svg('M13.5 21v-8.2h2.8l.4-3.2h-3.2v-2c0-.9.3-1.6 1.7-1.6H17V3.1c-.3 0-1.4-.1-2.6-.1-2.6 0-4.4 1.6-4.4 4.5v2.1H7v3.2h3V21h3.5Z'),
+            'instagram' => self::svg('M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6A3.6 3.6 0 0 0 16.4 4H7.6Zm9.6 1.5a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z'),
+            'linkedin' => self::svg('M5.2 3.7A2.2 2.2 0 1 1 .8 3.7a2.2 2.2 0 0 1 4.4 0ZM1.2 7h3.9v12.5H1.2V7Zm6.4 0h3.7v1.7h.1c.5-1 1.8-2.1 3.7-2.1 4 0 4.7 2.6 4.7 6v6.9H16v-6.1c0-1.5 0-3.4-2.1-3.4s-2.4 1.6-2.4 3.3v6.2H7.6V7Z'),
+            'tiktok' => self::svg('M16.6 2c.3 2.5 1.7 4 4.2 4.2v3.1a8.6 8.6 0 0 1-4.2-1v6.1a6.4 6.4 0 1 1-5.5-6.3v3.2a3.2 3.2 0 1 0 2.3 3.1V2h3.2Z'),
+            'x' => self::svg('M18.9 2H22l-6.8 7.8 8 12.2h-6.3l-4.9-7.4L5.7 22H2.6l7.2-8.3L2 2h6.4l4.4 6.9L18.9 2Zm-1.1 18h1.7L7.4 3.9H5.6L17.8 20Z'),
+            'youtube' => self::svg('M21.6 7.2a2.9 2.9 0 0 0-2-2C17.8 4.7 12 4.7 12 4.7s-5.8 0-7.6.5a2.9 2.9 0 0 0-2 2A30.5 30.5 0 0 0 2 12a30.5 30.5 0 0 0 .4 4.8 2.9 2.9 0 0 0 2 2c1.8.5 7.6.5 7.6.5s5.8 0 7.6-.5a2.9 2.9 0 0 0 2-2A30.5 30.5 0 0 0 22 12a30.5 30.5 0 0 0-.4-4.8ZM9.8 15.5v-7L16 12l-6.2 3.5Z'),
+            'telegram' => self::svg('M21.2 4.3 18.1 19c-.2 1-.8 1.2-1.7.8l-4.7-3.4-2.2 2.1c-.2.2-.4.4-.8.4l.3-4.8 8.8-7.8c.4-.4-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-.9.2-1.4l18-7c.8-.3 1.5.2 1.3 1.1Z'),
+            'whatsapp' => self::svg('M12.1 2a9.8 9.8 0 0 0-8.5 14.7L2.2 22l5.4-1.4A9.9 9.9 0 1 0 12.1 2Zm0 17.8a8 8 0 0 1-4.1-1.1l-.3-.2-3.2.9.9-3.1-.2-.3a8 8 0 1 1 6.9 3.8Zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.3 0-.4.1-.5l.4-.5.3-.4c.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-1 1-1 2.4s1 2.7 1.2 2.9c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.4-.6 1.6-1.1.2-.6.2-1 .2-1.1-.1-.1-.3-.2-.5-.3Z'),
+            'viber' => self::svg('M12 2C6.5 2 2.4 5.7 2.4 10.7c0 2.8 1.4 5.2 3.7 6.8L5.3 22l4.7-2.6c.7.1 1.3.2 2 .2 5.5 0 9.6-3.7 9.6-8.7S17.5 2 12 2Zm5.2 12.7c-.2.6-1.1 1.2-1.7 1.3-.4.1-1 .2-2.9-.6-2.4-1-4-3.5-4.1-3.7-.1-.2-1-1.3-1-2.5s.6-1.8.9-2.1c.2-.2.5-.3.8-.3h.6c.2 0 .4 0 .5.4l.8 1.9c.1.3.1.5 0 .7l-.4.6c-.2.2-.4.4-.2.7.2.4.8 1.3 1.7 2 .9.8 1.7 1 2.1 1.2.3.1.5.1.7-.1l.9-1.1c.2-.2.4-.3.7-.2l1.9.9c.3.1.5.2.5.4 0 .1 0 .7-.2 1.4ZM14 6.1c2.1.5 3.7 2.1 4.2 4.2l-1.4.3a4.1 4.1 0 0 0-3.1-3.1l.3-1.4Zm-.5 2.2c1.2.3 2.1 1.2 2.4 2.4l-1.3.3c-.2-.7-.7-1.2-1.4-1.4l.3-1.3Z'),
+            'pinterest' => self::svg('M12 2a10 10 0 0 0-3.6 19.3c-.1-1.6 0-3.5.4-5.2l1.3-5.5s-.3-.7-.3-1.8c0-1.7 1-3 2.2-3 1 0 1.6.8 1.6 1.8 0 1.1-.7 2.7-1 4.2-.3 1.3.7 2.4 2 2.4 2.4 0 4.2-2.5 4.2-6.1 0-3.2-2.3-5.4-5.6-5.4-3.8 0-6 2.8-6 5.8 0 1.1.4 2.4 1 3 .1.1.1.2.1.4l-.4 1.5c-.1.5-.5.6-.9.4-1.7-.8-2.7-3.2-2.7-5.1 0-4.2 3-8 8.8-8 4.6 0 8.2 3.3 8.2 7.7 0 4.6-2.9 8.3-6.9 8.3-1.3 0-2.6-.7-3-1.5l-.8 3.1c-.3 1.1-1.1 2.5-1.6 3.4.9.3 1.9.5 3 .5a10 10 0 1 0 0-20Z'),
+            'email' => self::svg('M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm9 7.2L20.4 7H3.6l8.4 5.2Zm0 2.4L3 9v8h18V9l-9 5.6Z'),
+        ];
+    }
+
+    /** @return array<string, string> */
+    public static function socialColors(): array
+    {
+        return [
+            'facebook' => 'info',
+            'instagram' => 'danger',
+            'linkedin' => 'info',
+            'tiktok' => 'gray',
+            'x' => 'gray',
+            'youtube' => 'danger',
+            'telegram' => 'info',
+            'whatsapp' => 'success',
+            'viber' => 'primary',
+            'pinterest' => 'danger',
+            'email' => 'gray',
+        ];
+    }
+
     /** @return array<string, string> */
     public static function shareNetworks(): array
     {
@@ -78,5 +122,32 @@ final class AdminIconOptions
             'native' => 'Device share menu',
             'copy' => 'Copy link',
         ];
+    }
+
+    /**
+     * @return array<string, HtmlString>
+     */
+    public static function shareIcons(): array
+    {
+        return array_merge(self::socialIcons(), [
+            'native' => self::svg('M18 16a3 3 0 0 0-2.4 1.2l-7-4a3.3 3.3 0 0 0 0-2.4l7-4A3 3 0 1 0 15 5c0 .2 0 .4.1.6l-7 4a3 3 0 1 0 0 4.8l7 4A3 3 0 1 0 18 16Z'),
+            'copy' => self::svg('M8.6 15.4a4 4 0 0 1 0-5.7l2.1-2.1a4 4 0 0 1 5.7 5.7l-1 1-1.4-1.4 1-1a2 2 0 1 0-2.8-2.8l-2.1 2.1a2 2 0 0 0 0 2.8l.7.7-1.4 1.4-.8-.7Zm6.8-6.8a4 4 0 0 1 0 5.7l-2.1 2.1a4 4 0 0 1-5.7-5.7l1-1L10 11.1l-1 1a2 2 0 1 0 2.8 2.8l2.1-2.1a2 2 0 0 0 0-2.8l-.7-.7 1.4-1.4.8.7Z'),
+        ]);
+    }
+
+    /** @return array<string, string> */
+    public static function shareColors(): array
+    {
+        return array_merge(
+            array_intersect_key(self::socialColors(), self::shareNetworks()),
+            ['native' => 'primary', 'copy' => 'gray'],
+        );
+    }
+
+    private static function svg(string $path): HtmlString
+    {
+        return new HtmlString(
+            '<svg aria-hidden="true" fill="currentColor" focusable="false" viewBox="0 0 24 24"><path d="'.$path.'" /></svg>',
+        );
     }
 }

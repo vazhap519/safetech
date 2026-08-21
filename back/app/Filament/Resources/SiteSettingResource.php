@@ -18,6 +18,7 @@ use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -117,13 +118,17 @@ class SiteSettingResource extends Resource
                     Repeater::make('value.links')
                         ->label('Profiles')
                         ->schema([
-                            Select::make('network')
-                                ->label('Network')
+                            ToggleButtons::make('network')
+                                ->label('Choose a network')
                                 ->options(AdminIconOptions::socials())
-                                ->searchable()
-                                ->preload()
+                                ->icons(AdminIconOptions::socialIcons())
+                                ->colors(AdminIconOptions::socialColors())
+                                ->tooltips(AdminIconOptions::socials())
+                                ->hiddenButtonLabels()
+                                ->columns(['default' => 3, 'sm' => 4, 'lg' => 6])
                                 ->required()
-                                ->columnSpan(['default' => 1, 'md' => 2]),
+                                ->helperText('Select the icon visitors should see for this profile.')
+                                ->columnSpanFull(),
                             TextInput::make('href')
                                 ->label('Profile URL / value')
                                 ->required()
@@ -133,11 +138,11 @@ class SiteSettingResource extends Resource
                             Toggle::make('enabled')
                                 ->label('Show')
                                 ->default(true)
-                                ->columnSpan(['default' => 1, 'md' => 2]),
+                                ->columnSpan(['default' => 1, 'md' => 1]),
                             Toggle::make('open_in_new_tab')
                                 ->label('Open in new tab')
                                 ->default(true)
-                                ->columnSpan(['default' => 1, 'md' => 2]),
+                                ->columnSpan(['default' => 1, 'md' => 1]),
                         ])
                         ->columns(['default' => 1, 'md' => 4])
                         ->default([])
@@ -174,17 +179,21 @@ class SiteSettingResource extends Resource
                     Repeater::make('value.share_buttons')
                         ->label('Buttons')
                         ->schema([
-                            Select::make('type')
-                                ->label('Network / action')
+                            ToggleButtons::make('type')
+                                ->label('Choose a sharing action')
                                 ->options(AdminIconOptions::shareNetworks())
-                                ->searchable()
-                                ->preload()
+                                ->icons(AdminIconOptions::shareIcons())
+                                ->colors(AdminIconOptions::shareColors())
+                                ->tooltips(AdminIconOptions::shareNetworks())
+                                ->hiddenButtonLabels()
+                                ->columns(['default' => 3, 'sm' => 4, 'lg' => 5])
                                 ->required()
-                                ->columnSpan(['default' => 1, 'md' => 3]),
+                                ->helperText('Select the button visitors can use to share the current page.')
+                                ->columnSpanFull(),
                             Toggle::make('enabled')
                                 ->label('Show')
                                 ->default(true)
-                                ->columnSpan(['default' => 1, 'md' => 1]),
+                                ->columnSpanFull(),
                         ])
                         ->columns(['default' => 1, 'md' => 4])
                         ->default([])
@@ -195,7 +204,7 @@ class SiteSettingResource extends Resource
                         ->columnSpanFull()
                         ->itemLabel(fn (array $state): ?string => AdminIconOptions::shareNetworks()[$state['type'] ?? ''] ?? 'Share button'),
                 ])
-                ->columns(3)
+                ->columns(['default' => 1, 'lg' => 3])
                 ->columnSpanFull()
                 ->visible(fn (Get $get): bool => $get('key') === 'socials'),
 
