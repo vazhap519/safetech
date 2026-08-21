@@ -28,7 +28,7 @@ class Project extends Model implements HasMedia
             'solutions' => 'array', 'process' => 'array', 'gallery' => 'array', 'results' => 'array',
             'testimonial' => 'array', 'related' => 'array', 'is_featured' => 'boolean',
             'seo' => 'array', 'translations' => 'array', 'is_published' => 'boolean',
-            'published_at' => 'datetime',
+            'published_at' => 'datetime', 'social_shared_at' => 'datetime',
         ];
     }
 
@@ -90,6 +90,20 @@ class Project extends Model implements HasMedia
                     ->orWhereRaw("TRIM(COALESCE(content, '')) <> ''");
             })
             ->orderBy('sort_order');
+    }
+
+    public function isReadyForSocialShare(): bool
+    {
+        $isPublishedNow = $this->published_at === null || $this->published_at->lte(now());
+        $hasHeadline = filled($this->name) || filled($this->title);
+        $hasContent = filled($this->description) || filled($this->excerpt) || filled($this->content);
+
+        return $this->is_published
+            && $this->social_shared_at === null
+            && $isPublishedNow
+            && filled($this->slug)
+            && $hasHeadline
+            && $hasContent;
     }
 
     public function getRouteKeyName(): string
