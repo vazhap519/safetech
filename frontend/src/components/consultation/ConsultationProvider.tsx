@@ -11,6 +11,12 @@ type ServiceOption = {
     label: string;
 };
 
+type PublicSettingsResponse = {
+    ai_assistant?: {
+        enabled?: boolean;
+    };
+};
+
 async function getServiceOptions(locale: string): Promise<ServiceOption[]> {
     try {
         const response = await fetch(
@@ -35,15 +41,37 @@ async function getServiceOptions(locale: string): Promise<ServiceOption[]> {
     }
 }
 
+async function getAiAssistantEnabled(): Promise<boolean> {
+    if (process.env.NEXT_PUBLIC_AI_ASSISTANT_ENABLED !== "true") {
+        return false;
+    }
+
+    try {
+        const response = await fetch(buildServerApiUrl("/settings"), {
+            next: { revalidate: 300, tags: ["cms"] },
+            signal: AbortSignal.timeout(3000),
+        });
+
+        if (!response.ok) return false;
+
+        const payload = (await response.json()) as PublicSettingsResponse;
+
+        return payload.ai_assistant?.enabled === true;
+    } catch {
+        return false;
+    }
+}
+
 export default async function ConsultationProvider({
     children,
 }: {
     children: ReactNode;
 }) {
     const { locale, translations } = await getSiteSettings();
-    const serviceOptions = await getServiceOptions(locale);
-    const assistantEnabled =
-        process.env.NEXT_PUBLIC_AI_ASSISTANT_ENABLED === "true";
+    const [serviceOptions, assistantEnabled] = await Promise.all([
+        getServiceOptions(locale),
+        getAiAssistantEnabled(),
+    ]);
     const eyebrow = translateText(
         translations,
         "consultation.modal.eyebrow",
