@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Application\Ai\SafeTechAiAgent;
 use App\Http\Controllers\Controller;
 use App\Models\AiConversation;
+use App\Support\SiteSettings;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ final class AiChatController extends Controller
 {
     public function __invoke(Request $request, SafeTechAiAgent $agent): JsonResponse
     {
-        abort_unless((bool) config('services.openai.enabled'), 404);
+        abort_unless(SiteSettings::aiAssistantEnabled(), 404);
 
         $validated = $request->validate([
             'conversation_id' => ['nullable', 'uuid'],
