@@ -8,6 +8,7 @@ use App\Filament\Support\NavigationGroup;
 use App\Filament\Support\StableSlug;
 use App\Models\Page;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -69,13 +70,28 @@ class PageResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->columns([
-            TextColumn::make('title')->searchable()->sortable(),
-            TextColumn::make('slug')->searchable(),
-            IconColumn::make('is_published')->label('Published')->boolean(),
-            IconColumn::make('noindex')->label('Noindex')->boolean(),
-            TextColumn::make('updated_at')->dateTime()->sortable(),
-        ])->defaultSort('sort_order')->recordActions([EditAction::make()])->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
+        return $table
+            ->columns([
+                TextColumn::make('title')->searchable()->sortable(),
+                TextColumn::make('slug')->searchable(),
+                IconColumn::make('is_published')->label('Published')->boolean(),
+                IconColumn::make('noindex')->label('Noindex')->boolean(),
+                TextColumn::make('updated_at')->dateTime()->sortable(),
+            ])
+            ->defaultSort('sort_order')
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()
+                    ->label('წაშლა')
+                    ->requiresConfirmation(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('არჩეული გვერდების წაშლა')
+                        ->requiresConfirmation(),
+                ]),
+            ]);
     }
 
     public static function getPages(): array
