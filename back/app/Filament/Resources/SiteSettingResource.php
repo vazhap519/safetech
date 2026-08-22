@@ -273,6 +273,17 @@ class SiteSettingResource extends Resource
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'seo'),
 
+            Section::make('AI assistant')
+                ->description('Control whether the SafeTech AI consultant is available to website visitors.')
+                ->schema([
+                    Toggle::make('value.ai_assistant_enabled')
+                        ->label('Show AI consultant on website')
+                        ->helperText('When disabled, the AI button and chat are hidden and the public AI chat API is disabled.')
+                        ->default(true)
+                        ->columnSpanFull(),
+                ])
+                ->visible(fn (Get $get): bool => $get('key') === 'integrations'),
+
             Section::make('Analytics, pixels and verification')
                 ->description('IDs are only exposed publicly when marketing integrations are enabled.')
                 ->schema([
