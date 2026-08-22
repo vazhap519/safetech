@@ -32,6 +32,10 @@ class SettingsController extends Controller
             'favicons' => [],
             'favicon_version' => 1,
 
+            'ai_assistant' => [
+                'enabled' => SiteSettings::aiAssistantEnabled(),
+            ],
+
             'socials' => SocialLinks::socials([], $settings),
             'headers' => [],
             'contact' => $contact,
