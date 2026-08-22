@@ -198,7 +198,7 @@ PROMPT;
             'strict' => true,
             'parameters' => [
                 'type' => 'object',
-                'properties' => $properties,
+                'properties' => $properties === [] ? (object) [] : $properties,
                 'required' => $required,
                 'additionalProperties' => false,
             ],
