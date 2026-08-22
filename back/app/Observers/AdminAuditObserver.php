@@ -17,6 +17,32 @@ class AdminAuditObserver
     /** @var array<int, string> */
     private const IGNORED_FIELDS = ['created_at', 'updated_at', 'deleted_at'];
 
+    /**
+     * Keep delete audit rows intentionally small. Content models can contain
+     * several large JSON/text attributes and serializing the whole record made
+     * destructive admin actions noticeably slower while adding little value to
+     * the audit trail.
+     *
+     * @var array<int, string>
+     */
+    private const DELETION_AUDIT_FIELDS = [
+        'id',
+        'public_id',
+        'name',
+        'title',
+        'email',
+        'slug',
+        'key',
+        'group',
+        'status',
+        'estimate_number',
+        'recipient_name',
+        'project_id',
+        'service_id',
+        'category_id',
+        'category_for_service_id',
+    ];
+
     public function created(Model $model): void
     {
         $this->record($model, 'created', [], $model->getAttributes());
@@ -44,7 +70,7 @@ class AdminAuditObserver
 
     public function deleted(Model $model): void
     {
-        $this->record($model, 'deleted', $model->getAttributes(), []);
+        $this->record($model, 'deleted', $this->deletionSnapshot($model), []);
     }
 
     /** @param array<string, mixed> $oldValues @param array<string, mixed> $newValues */
@@ -78,6 +104,29 @@ class AdminAuditObserver
                 'exception' => $exception::class,
             ]);
         }
+    }
+
+    /** @return array<string, mixed> */
+    private function deletionSnapshot(Model $model): array
+    {
+        $attributes = $model->getAttributes();
+        $snapshot = [];
+
+        foreach (self::DELETION_AUDIT_FIELDS as $field) {
+            if (array_key_exists($field, $attributes)) {
+                $snapshot[$field] = $attributes[$field];
+            }
+        }
+
+        $keyName = $model->getKeyName();
+
+        if (! array_key_exists($keyName, $snapshot) && array_key_exists($keyName, $attributes)) {
+            $snapshot[$keyName] = $attributes[$keyName];
+        }
+
+        $snapshot['_attribute_count'] = count($attributes);
+
+        return $snapshot;
     }
 
     private function modelLabel(Model $model): string
