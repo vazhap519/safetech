@@ -6,6 +6,7 @@ use App\Filament\Resources\PartnerResource\Pages;
 use App\Filament\Support\NavigationGroup;
 use App\Models\Partner;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -69,9 +70,18 @@ class PartnerResource extends Resource
                 IconColumn::make('is_active')->label('აქტიური')->boolean(),
             ])
             ->defaultSort('sort_order')
-            ->recordActions([EditAction::make()])
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()
+                    ->label('წაშლა')
+                    ->requiresConfirmation(),
+            ])
             ->toolbarActions([
-                BulkActionGroup::make([DeleteBulkAction::make()]),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('არჩეული პარტნიორების წაშლა')
+                        ->requiresConfirmation(),
+                ]),
             ]);
     }
 
