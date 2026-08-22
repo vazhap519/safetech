@@ -32,6 +32,7 @@ return new class extends Migration
             ['services', 'category_for_service_id', 'category_for_services'],
             ['projects', 'category_id', 'project_categories'],
             ['faqs', 'service_id', 'services'],
+            ['analytics_events', 'service_id', 'services'],
             ['review_invitations', 'project_id', 'projects'],
             ['review_invitations', 'testimonial_id', 'testimonials'],
             ['ai_conversations', 'contact_lead_id', 'contact_leads'],
