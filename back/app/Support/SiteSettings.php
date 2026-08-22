@@ -33,6 +33,18 @@ final class SiteSettings
         return SiteSettingValueNormalizer::normalize($key, $value);
     }
 
+    public static function aiAssistantEnabled(): bool
+    {
+        if (! (bool) config('services.openai.enabled')) {
+            return false;
+        }
+
+        $integrations = self::value('integrations');
+        $configured = $integrations['ai_assistant_enabled'] ?? true;
+
+        return filter_var($configured, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? true;
+    }
+
     public static function brandingMediaUrl(string $collection): ?string
     {
         if (! in_array($collection, [
