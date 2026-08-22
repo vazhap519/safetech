@@ -40,6 +40,7 @@ jobs:
       BACKEND_API_URL: http://127.0.0.1:8000/api
       NEXT_PUBLIC_API_URL: http://127.0.0.1:8000/api
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
+      AI_ASSISTANT_ENABLED: "true"
       NEXT_PUBLIC_AI_ASSISTANT_ENABLED: "true"
       REVALIDATE_SECRET: qa-release-candidate-revalidate-secret
       E2E_BASE_URL: http://127.0.0.1:3000
