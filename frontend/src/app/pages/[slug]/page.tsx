@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import DynamicPage from "@/components/pages/DynamicPage";
 import { getBackendPage } from "@/lib/backend";
+import { localizePath } from "@/lib/locales";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 
 type DynamicPageProps = {
     params: Promise<{ slug: string }>;
 };
+
+const LEGAL_PAGE_SLUGS = new Set(["privacy", "terms"]);
 
 export async function generateMetadata({ params }: DynamicPageProps): Promise<Metadata> {
     const { slug } = await params;
@@ -21,10 +24,14 @@ export async function generateMetadata({ params }: DynamicPageProps): Promise<Me
         return { title: withSiteTitle("Page not found", branding.siteName), robots: { index: false, follow: false } };
     }
 
+    const path = LEGAL_PAGE_SLUGS.has(page.slug)
+        ? `/${page.slug}`
+        : `/pages/${page.slug}`;
+
     return createMetadata({
         title: page.seo?.title || page.title,
         description: page.seo?.description || page.excerpt || page.content,
-        path: `/pages/${page.slug}`,
+        path,
         locale,
         keywords: page.seo?.keywords || siteSeo.defaultKeywords,
         image: page.seo?.image || page.coverImage || undefined,
@@ -37,7 +44,13 @@ export async function generateMetadata({ params }: DynamicPageProps): Promise<Me
 
 export default async function DynamicPageRoute({ params }: DynamicPageProps) {
     const { slug } = await params;
-    const [{ locale }, page] = await Promise.all([getSiteSettings(), getBackendPage(slug)]);
+    const { locale } = await getSiteSettings();
+
+    if (LEGAL_PAGE_SLUGS.has(slug)) {
+        redirect(localizePath(`/${slug}`, locale));
+    }
+
+    const page = await getBackendPage(slug);
 
     if (!page) notFound();
 
