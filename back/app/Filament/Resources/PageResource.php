@@ -28,11 +28,11 @@ class PageResource extends Resource
 {
     protected static ?string $model = Page::class;
 
-    protected static ?string $navigationLabel = 'დამატებითი გვერდები';
+    protected static ?string $navigationLabel = 'გვერდები';
 
-    protected static ?string $modelLabel = 'დამატებითი გვერდი';
+    protected static ?string $modelLabel = 'გვერდი';
 
-    protected static ?string $pluralModelLabel = 'დამატებითი გვერდები';
+    protected static ?string $pluralModelLabel = 'გვერდები';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Pages;
 
@@ -42,9 +42,9 @@ class PageResource extends Resource
             Section::make('Page')
                 ->schema([
                     TextInput::make('title')->required()->maxLength(255)->live(onBlur: true)->afterStateUpdated(StableSlug::syncOnCreate()),
-                    TextInput::make('slug')->required()->unique(ignoreRecord: true)->helperText('Public URL: /pages/{slug}. Use a unique URL segment, for example: corporate-security.'),
+                    TextInput::make('slug')->required()->unique(ignoreRecord: true)->helperText('Public URL is /pages/{slug}. Reserved legal slugs privacy and terms are exposed at /privacy and /terms.'),
                     Textarea::make('excerpt')->rows(3),
-                    Textarea::make('content')->required()->rows(14)->helperText('Plain text is rendered as readable paragraphs on the public page.'),
+                    Textarea::make('content')->required()->rows(14)->helperText('Plain paragraphs are supported. Legal pages also support section headings beginning with ## and bullet lists beginning with -.'),
                     SpatieMediaLibraryFileUpload::make('cover')->label('Cover image')->collection('cover')->conversion('webp')->image()->imageEditor()->maxSize(10240),
                 ])->columns(2),
             Section::make('Translations (KA / EN / RU)')
