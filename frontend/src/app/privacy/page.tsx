@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 import LegalPage from "@/components/pages/LegalPage";
 import { getBackendPage } from "@/lib/backend";
+import { getLegalPageFallback } from "@/lib/legal-page-fallback";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 
 export async function generateMetadata(): Promise<Metadata> {
-    const [{ branding, locale, seo: siteSeo }, page] = await Promise.all([
+    const [{ branding, locale, seo: siteSeo }, backendPage] = await Promise.all([
         getSiteSettings(),
         getBackendPage("privacy"),
     ]);
+    const page = backendPage ?? getLegalPageFallback("privacy", locale);
 
-    if (!page) {
+    if (!backendPage) {
         return {
-            title: withSiteTitle("Privacy Policy", branding.siteName),
+            title: withSiteTitle(page.title, branding.siteName),
+            description: page.excerpt || page.content,
             robots: { index: false, follow: false },
         };
     }
@@ -33,12 +35,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PrivacyPage() {
-    const [{ locale }, page] = await Promise.all([
+    const [{ locale }, backendPage] = await Promise.all([
         getSiteSettings(),
         getBackendPage("privacy"),
     ]);
-
-    if (!page) notFound();
+    const page = backendPage ?? getLegalPageFallback("privacy", locale);
 
     return <LegalPage canonicalPath="/privacy" locale={locale} page={page} />;
 }
