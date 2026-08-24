@@ -3,7 +3,9 @@
 namespace App\Listeners;
 
 use App\Events\LeadCreated;
+use App\Filament\Resources\ContactLeadResource;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -30,6 +32,11 @@ final class NotifyAdminsOfNewLead
                             ? $summary
                             : 'SafeTech-ის საიტიდან ახალი მოთხოვნა შემოვიდა.')
                         ->success()
+                        ->actions([
+                            Action::make('view')
+                                ->label('მოთხოვნის გახსნა')
+                                ->url(ContactLeadResource::getUrl('edit', ['record' => $lead])),
+                        ])
                         ->sendToDatabase($admin);
                 } catch (Throwable $exception) {
                     Log::warning('Unable to create admin lead notification.', [
