@@ -53,8 +53,8 @@ class AdminFilamentDeleteActionRuntimeTest extends TestCase
         ]);
 
         Livewire::test(EditCategoryForService::class, ['record' => $category->getRouteKey()])
-            ->callAction('delete')
-            ->assertHasNoActionErrors();
+            ->assertActionExists('delete')
+            ->callAction('delete');
 
         $this->assertDatabaseMissing('category_for_services', ['id' => $category->id]);
         $this->assertDatabaseHas('services', [
@@ -99,8 +99,8 @@ class AdminFilamentDeleteActionRuntimeTest extends TestCase
         ]);
 
         Livewire::test(EditService::class, ['record' => $service->getRouteKey()])
-            ->callAction('delete')
-            ->assertHasNoActionErrors();
+            ->assertActionExists('delete')
+            ->callAction('delete');
 
         $this->assertDatabaseMissing('services', ['id' => $service->id]);
         $this->assertDatabaseHas('faqs', ['id' => $faq->id, 'service_id' => null]);
@@ -125,8 +125,8 @@ class AdminFilamentDeleteActionRuntimeTest extends TestCase
         ]);
 
         Livewire::test(EditProjectCategory::class, ['record' => $category->getRouteKey()])
-            ->callAction('delete')
-            ->assertHasNoActionErrors();
+            ->assertActionExists('delete')
+            ->callAction('delete');
 
         $this->assertDatabaseMissing('project_categories', ['id' => $category->id]);
         $this->assertDatabaseHas('projects', [
@@ -157,8 +157,8 @@ class AdminFilamentDeleteActionRuntimeTest extends TestCase
         ]);
 
         Livewire::test(EditProject::class, ['record' => $project->getRouteKey()])
-            ->callAction('delete')
-            ->assertHasNoActionErrors();
+            ->assertActionExists('delete')
+            ->callAction('delete');
 
         $this->assertDatabaseMissing('projects', ['id' => $project->id]);
         $this->assertDatabaseHas('review_invitations', [
