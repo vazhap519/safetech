@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import LegalPage from "@/components/pages/LegalPage";
 import { getBackendPage } from "@/lib/backend";
 import { getLegalPageFallback } from "@/lib/legal-page-fallback";
-import { createMetadata, withSiteTitle } from "@/lib/seo";
+import { createMetadata } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -13,14 +13,6 @@ export async function generateMetadata(): Promise<Metadata> {
     ]);
     const page = backendPage ?? getLegalPageFallback("terms", locale);
 
-    if (!backendPage) {
-        return {
-            title: withSiteTitle(page.title, branding.siteName),
-            description: page.excerpt || page.content,
-            robots: { index: false, follow: false },
-        };
-    }
-
     return createMetadata({
         title: page.seo?.title || page.title,
         description: page.seo?.description || page.excerpt || page.content,
@@ -28,9 +20,9 @@ export async function generateMetadata(): Promise<Metadata> {
         locale,
         keywords: page.seo?.keywords || siteSeo.defaultKeywords,
         siteName: branding.siteName,
-        noindex: Boolean(page.seo?.noindex),
+        noindex: !backendPage || Boolean(page.seo?.noindex),
         robotsIndex: siteSeo.robotsIndex,
-        robotsFollow: siteSeo.robotsFollow,
+        robotsFollow: backendPage ? siteSeo.robotsFollow : false,
     });
 }
 
