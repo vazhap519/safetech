@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\FlushesPublicContentCache;
 use App\Models\Concerns\HasActiveOrder;
 use App\Models\Concerns\HasOptimizedSingleImage;
+use App\Support\TeamMemberSocialLinks;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -22,6 +23,14 @@ class TeamMember extends Model implements HasMedia
     protected function casts(): array
     {
         return ['socials' => 'array', 'translations' => 'array', 'is_active' => 'boolean'];
+    }
+
+    public function setSocialsAttribute(mixed $value): void
+    {
+        $this->attributes['socials'] = json_encode(
+            TeamMemberSocialLinks::normalize($value),
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+        );
     }
 
     public function getImageAttribute(?string $value): ?string
