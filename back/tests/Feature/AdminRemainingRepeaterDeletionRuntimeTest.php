@@ -113,6 +113,18 @@ class AdminRemainingRepeaterDeletionRuntimeTest extends TestCase
             'title' => 'Translation service',
             'description' => 'Translation service description.',
             'seo_description' => 'Translation service SEO description.',
+            'lead_form' => [
+                'calculator_enabled' => true,
+                'pricing' => [
+                    'currency' => 'GEL',
+                    'base_price' => 0,
+                    'monthly_base_price' => 0,
+                    'minimum_price' => 0,
+                ],
+                'project_size_options' => [],
+                'property_type_options' => [],
+                'extra_fields' => [],
+            ],
             'translations' => [
                 'entries' => [
                     ['key' => 'legacy.keep', 'ka' => 'დატოვე', 'en' => 'Keep', 'ru' => 'Keep'],
