@@ -21,9 +21,19 @@ final class NotifyAdminsOfNewLead
             filled($lead->phone) ? $lead->phone : null,
             filled($lead->service) ? $lead->service : null,
         ])->filter()->implode(' • ');
+        $configuredAdminEmail = mb_strtolower(trim((string) config('cms.admin.email')));
+
+        if ($configuredAdminEmail === '') {
+            Log::warning('Unable to create admin lead notification: admin email is not configured.', [
+                'lead_id' => $lead->getKey(),
+            ]);
+
+            return;
+        }
 
         User::query()
             ->where('is_admin', true)
+            ->whereRaw('LOWER(email) = ?', [$configuredAdminEmail])
             ->eachById(function (User $admin) use ($lead, $summary): void {
                 try {
                     Notification::make()
