@@ -21,14 +21,18 @@ export default async function Info() {
             ),
             content: phoneNumbers.length ? (
                 <div className="flex flex-col items-center gap-1">
-                    {phoneNumbers.map((phone) => (
-                        <a
-                            className="font-headline-md break-words text-base text-on-surface transition-colors hover:text-primary md:text-headline-md"
-                            href={toPhoneHref(phone)}
-                            key={phone}
-                        >
-                            {phone}
-                        </a>
+                    {phoneNumbers.map((phone, index) => (
+                        <span className="contents" key={phone}>
+                            <a
+                                className="font-headline-md break-words text-base text-on-surface transition-colors hover:text-primary md:text-headline-md"
+                                href={toPhoneHref(phone)}
+                            >
+                                {phone}
+                            </a>
+                            {index < phoneNumbers.length - 1 ? (
+                                <span className="sr-only"> / </span>
+                            ) : null}
+                        </span>
                     ))}
                 </div>
             ) : null,
