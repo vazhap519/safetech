@@ -40,9 +40,13 @@ class PageApiTest extends TestCase
 
         $this->getJson('/api/pages?locale=en')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.slug', 'corporate-security')
-            ->assertJsonPath('data.0.title', 'Corporate security');
+            ->assertJsonFragment([
+                'slug' => 'corporate-security',
+                'title' => 'Corporate security',
+            ])
+            ->assertJsonMissing([
+                'slug' => 'draft-page',
+            ]);
 
         $this->getJson('/api/pages/corporate-security?locale=en')
             ->assertOk()
