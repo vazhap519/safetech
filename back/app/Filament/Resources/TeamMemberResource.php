@@ -78,7 +78,6 @@ class TeamMemberResource extends Resource
                                 ->columnSpanFull(),
                         ])
                         ->formatStateUsing(fn (mixed $state): array => TeamMemberSocialLinks::formRows($state))
-                        ->mutateDehydratedStateUsing(fn (mixed $state): array => TeamMemberSocialLinks::normalize($state))
                         ->columns(1)
                         ->default([])
                         ->collapsible()
