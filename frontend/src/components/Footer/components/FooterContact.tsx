@@ -16,14 +16,18 @@ export default async function FooterContact() {
                   key: "phone",
                   content: (
                       <div className="flex flex-col items-start gap-1">
-                          {phoneNumbers.map((phone) => (
-                              <a
-                                  className="inline-flex min-h-9 items-center transition-colors hover:text-secondary"
-                                  href={toPhoneHref(phone)}
-                                  key={phone}
-                              >
-                                  {phone}
-                              </a>
+                          {phoneNumbers.map((phone, index) => (
+                              <span className="contents" key={phone}>
+                                  <a
+                                      className="inline-flex min-h-9 items-center transition-colors hover:text-secondary"
+                                      href={toPhoneHref(phone)}
+                                  >
+                                      {phone}
+                                  </a>
+                                  {index < phoneNumbers.length - 1 ? (
+                                      <span className="sr-only"> / </span>
+                                  ) : null}
+                              </span>
                           ))}
                       </div>
                   ),
