@@ -11,7 +11,7 @@ return new class extends Migration
         // Fresh installs already have the intended nullable/cascade schema.
         // This migration specifically repairs older PostgreSQL production
         // databases whose foreign keys or nullability may predate those rules.
-        if (DB::getDriverName() !== 'pgsql') {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
             return;
         }
 
@@ -79,6 +79,24 @@ return new class extends Migration
 
         if ($makeNullable) {
             DB::statement("ALTER TABLE {$quotedTable} ALTER COLUMN {$quotedColumn} DROP NOT NULL");
+        }
+
+        // Repair inconsistent legacy rows before recreating the FK. SET NULL
+        // relationships preserve the child row; CASCADE relationships discard
+        // children whose parent no longer exists.
+        if ($makeNullable) {
+            DB::statement(
+                "UPDATE {$quotedTable} AS child SET {$quotedColumn} = NULL "
+                ."WHERE child.{$quotedColumn} IS NOT NULL "
+                ."AND NOT EXISTS (SELECT 1 FROM {$quotedReferences} AS parent "
+                ."WHERE parent.\"id\" = child.{$quotedColumn})",
+            );
+        } else {
+            DB::statement(
+                "DELETE FROM {$quotedTable} AS child "
+                ."WHERE NOT EXISTS (SELECT 1 FROM {$quotedReferences} AS parent "
+                ."WHERE parent.\"id\" = child.{$quotedColumn})",
+            );
         }
 
         // Do not assume Laravel's conventional constraint name. Production has
