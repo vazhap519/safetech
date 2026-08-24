@@ -46,6 +46,8 @@ class AdminPanelProvider extends PanelProvider
             ->databaseTransactions()
             ->unsavedChangesAlerts()
             ->broadcasting(false)
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('5s')
             ->navigationGroups(NavigationGroup::class)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
