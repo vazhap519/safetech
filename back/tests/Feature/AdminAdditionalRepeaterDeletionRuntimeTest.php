@@ -57,10 +57,9 @@ class AdminAdditionalRepeaterDeletionRuntimeTest extends TestCase
             ->call('save')
             ->assertHasNoFormErrors();
 
-        $this->assertSame(
-            ['linkedin'],
-            array_column($member->refresh()->socials ?? [], 'network'),
-        );
+        $this->assertSame([
+            'linkedin' => 'https://linkedin.com/in/member',
+        ], $member->refresh()->socials);
     }
 
     public function test_local_landing_benefit_and_faq_rows_can_be_removed_and_stay_removed(): void
