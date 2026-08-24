@@ -19,16 +19,22 @@ class AdminLeadNotificationTest extends TestCase
         ]);
 
         $service = Service::query()->create([
+            'name' => 'Notification test service',
             'title' => 'Notification test service',
             'slug' => 'notification-test-service',
-            'short_description' => 'Notification test service description.',
+            'description' => 'Notification test service description.',
+            'seo_description' => 'Notification test service description.',
+            'is_published' => true,
         ]);
 
         $response = $this->postJson('/api/contact-leads', [
             'firstName' => 'Notification',
             'lastName' => 'Customer',
             'phone' => '+995555123456',
+            'email' => 'notification@example.com',
+            'address' => 'Tbilisi',
             'serviceSlug' => $service->slug,
+            'message' => 'I need a notification test consultation.',
             'source' => 'contact-page',
             'privacy' => true,
         ]);
