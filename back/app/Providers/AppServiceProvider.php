@@ -5,13 +5,10 @@ namespace App\Providers;
 use App\Domain\Content\Contracts\ProjectRepository;
 use App\Domain\Content\Contracts\ServiceRepository;
 use App\Domain\Leads\Contracts\LeadRepository;
-use App\Events\LeadCreated;
 use App\Filament\Support\CmsMediaUpload;
 use App\Infrastructure\Persistence\EloquentLeadRepository;
 use App\Infrastructure\Persistence\EloquentProjectRepository;
 use App\Infrastructure\Persistence\EloquentServiceRepository;
-use App\Listeners\ForwardLeadToCrm;
-use App\Listeners\SendLeadNotification;
 use App\Models\AiKnowledgeCandidate;
 use App\Models\AiKnowledgeItem;
 use App\Models\CategoryForService;
@@ -108,9 +105,6 @@ class AppServiceProvider extends ServiceProvider
                 ),
             ];
         });
-
-        Event::listen(LeadCreated::class, SendLeadNotification::class);
-        Event::listen(LeadCreated::class, ForwardLeadToCrm::class);
     }
 
     private function registerPublicContentMediaInvalidation(): void
