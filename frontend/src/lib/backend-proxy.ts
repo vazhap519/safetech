@@ -7,6 +7,7 @@ export async function forwardBackendRequest(
     path: string,
 ) {
     const body = await request.text();
+    const idempotencyKey = request.headers.get("idempotency-key");
 
     try {
         const response = await fetch(buildServerApiUrl(path), {
@@ -18,6 +19,9 @@ export async function forwardBackendRequest(
                 "User-Agent":
                     request.headers.get("user-agent") ||
                     "SafeTech Frontend Proxy",
+                ...(idempotencyKey
+                    ? { "Idempotency-Key": idempotencyKey }
+                    : {}),
                 ...(request.headers.get("x-forwarded-for")
                     ? {
                           "X-Forwarded-For":
