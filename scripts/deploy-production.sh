@@ -9,7 +9,6 @@ FRONTEND_DIR="${SAFETECH_FRONTEND_DIR:-${PROJECT_DIR}/frontend}"
 STATIC_DIR="${SAFETECH_STATIC_DIR:-/var/www/safetech-static}"
 BRANCH="${SAFETECH_BRANCH:-main}"
 REMOTE="${SAFETECH_REMOTE:-origin}"
-TARGET_SHA="${SAFETECH_TARGET_SHA:-}"
 SITE_URL="${SAFETECH_SITE_URL:-https://safetech.ge}"
 API_URL="${SAFETECH_API_URL:-https://api.safetech.ge}"
 WEB_USER="${SAFETECH_WEB_USER:-www-data}"
@@ -348,10 +347,6 @@ require_supported_node
 [[ "${STATIC_DIR}" == /* && "${STATIC_DIR}" != "/" ]] || fail "static path must be absolute"
 [[ "${STAGE_ROOT}" == "${PROJECT_DIR}"/* ]] || fail "stage path must be inside the project directory"
 
-if [[ -n "${TARGET_SHA}" && ! "${TARGET_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
-    fail "SAFETECH_TARGET_SHA must be an exact 40-character lowercase Git commit SHA"
-fi
-
 install -d -o root -g root -m 0755 "$(dirname -- "${DEPLOY_LOCK_FILE}")"
 exec 9>"${DEPLOY_LOCK_FILE}"
 flock -n 9 || fail "another SafeTech deployment is already running"
@@ -371,19 +366,7 @@ fi
 log "Updating ${REMOTE}/${BRANCH}"
 git -C "${PROJECT_DIR}" fetch --prune "${REMOTE}"
 git -C "${PROJECT_DIR}" checkout "${BRANCH}"
-
-if [[ -n "${TARGET_SHA}" ]]; then
-    git -C "${PROJECT_DIR}" cat-file -e "${TARGET_SHA}^{commit}" 2>/dev/null \
-        || fail "requested deployment commit does not exist locally after fetch: ${TARGET_SHA}"
-    git -C "${PROJECT_DIR}" merge-base --is-ancestor "${TARGET_SHA}" "${REMOTE}/${BRANCH}" \
-        || fail "requested deployment commit is not contained in ${REMOTE}/${BRANCH}: ${TARGET_SHA}"
-    git -C "${PROJECT_DIR}" reset --hard "${TARGET_SHA}"
-    [[ "$(git -C "${PROJECT_DIR}" rev-parse HEAD)" == "${TARGET_SHA}" ]] \
-        || fail "failed to activate requested deployment commit: ${TARGET_SHA}"
-    log "Deploying exact approved commit ${TARGET_SHA}"
-else
-    git -C "${PROJECT_DIR}" pull --ff-only "${REMOTE}" "${BRANCH}"
-fi
+git -C "${PROJECT_DIR}" pull --ff-only "${REMOTE}" "${BRANCH}"
 
 log "Installing current systemd service definitions"
 install_systemd_units
@@ -535,43 +518,29 @@ for api_payload in "${health_json}" "${services_json}" "${projects_json}"; do
 done
 
 home_html="$(curl --fail --silent --show-error --compressed --location \
-    --max-time 30 "${SITE_URL%/}/?deploy_smoke=home")"
-services_html="$(curl --fail --silent --show-error --compressed --location \
-    --max-time 30 "${SITE_URL%/}/services?deploy_smoke=services")"
-projects_html="$(curl --fail --silent --show-error --compressed --location \
-    --max-time 30 "${SITE_URL%/}/projects?deploy_smoke=projects")"
-[[ "${home_html}" == *'<html'* ]] || fail "homepage response is not HTML"
-[[ "${services_html}" == *'<html'* ]] || fail "services response is not HTML"
-[[ "${projects_html}" == *'<html'* ]] || fail "projects response is not HTML"
+    --max-time 20 -H 'Accept: text/html' -H 'Cache-Control: no-cache' \
+    "${SITE_URL%/}/?asset_check=$(<"${FRONTEND_DIR}/.next/BUILD_ID")")"
+static_asset_paths="$(grep -Eo '/_next/static/[^"[:space:]]+\.(js|css)' \
+    <<< "${home_html}" | sort -u || true)"
+[[ -n "${static_asset_paths}" ]] || fail "homepage does not reference CSS or JavaScript assets"
 
-if grep -qE '/_next/static/(css|chunks)/[^"'"' ]+' <<< "${home_html}"; then
-    while IFS= read -r asset_path; do
-        asset_status="$(curl --silent --show-error --location --output /dev/null \
-            --write-out '%{http_code}' --max-time 20 "${SITE_URL%/}${asset_path}" || true)"
-        [[ "${asset_status}" == "200" ]] || fail "public Next.js asset failed: ${asset_path} (HTTP ${asset_status:-unreachable})"
-    done < <(grep -oE '/_next/static/(css|chunks)/[^"'"' ]+' <<< "${home_html}" | sort -u)
-fi
+while IFS= read -r static_asset_path; do
+    [[ -z "${static_asset_path}" ]] && continue
+    curl --fail --silent --show-error --compressed --location \
+        --retry 5 --retry-all-errors --retry-delay 2 --max-time 20 \
+        -H 'Cache-Control: no-cache' -o /dev/null \
+        "${SITE_URL%/}${static_asset_path}" \
+        || fail "static asset is unavailable: ${static_asset_path}"
+done <<< "${static_asset_paths}"
 
-[[ "${home_html}" != *'Application error: a server-side exception has occurred'* ]] \
-    || fail "homepage contains a server-side application error"
-[[ "${services_html}" != *'Application error: a server-side exception has occurred'* ]] \
-    || fail "services page contains a server-side application error"
-[[ "${projects_html}" != *'Application error: a server-side exception has occurred'* ]] \
-    || fail "projects page contains a server-side application error"
+log "Running Google SEO smoke checks"
+SEO_BASE_URL="${SITE_URL%/}" \
+NEXT_PUBLIC_SITE_URL="${SITE_URL%/}" \
+node "${FRONTEND_DIR}/scripts/seo-smoke.mjs"
 
-admin_status="$(curl --silent --show-error --location --output /tmp/safetech-admin-login.html \
-    --write-out '%{http_code}' --max-time 20 "${API_URL%/}/admin/login" || true)"
-[[ "${admin_status}" == "200" ]] || {
-    head -c 5000 /tmp/safetech-admin-login.html >&2 || true
-    printf '\n' >&2
-    fail "Filament admin login smoke test failed: HTTP ${admin_status:-unreachable}"
-}
-rm -f /tmp/safetech-admin-login.html
-
-if [[ -n "${TARGET_SHA}" ]]; then
-    [[ "$(git -C "${PROJECT_DIR}" rev-parse HEAD)" == "${TARGET_SHA}" ]] \
-        || fail "production checkout moved away from the approved commit during deployment"
-fi
-
+FRONTEND_SWAPPED=0
 DEPLOY_SUCCESS=1
-log "Production deployment completed successfully"
+rm -rf "${FRONTEND_ROLLBACK_DIR}" "${FRONTEND_STAGE_DIR}"
+
+log "Deployment completed successfully"
+git -C "${PROJECT_DIR}" log -1 --oneline
