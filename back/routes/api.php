@@ -28,13 +28,64 @@ Route::get('/health', function (): JsonResponse {
             'status' => 'unavailable',
             'commit' => DeploymentInfo::commit(),
             'database' => 'unavailable',
+            'queue' => [
+                'connection' => (string) config('queue.default'),
+                'status' => 'unavailable',
+                'pending' => null,
+                'failed' => null,
+                'oldest_pending_seconds' => null,
+            ],
         ], 503);
     }
 
+    $queueConnection = (string) config('queue.default');
+    $queueHealth = [
+        'connection' => $queueConnection,
+        'status' => 'not_applicable',
+        'pending' => null,
+        'failed' => null,
+        'oldest_pending_seconds' => null,
+    ];
+
+    if ($queueConnection === 'database') {
+        try {
+            $queueDatabase = config('queue.connections.database.connection');
+            $jobsTable = (string) config('queue.connections.database.table', 'jobs');
+            $failedDatabase = config('queue.failed.database');
+            $failedTable = (string) config('queue.failed.table', 'failed_jobs');
+
+            $jobs = DB::connection($queueDatabase)->table($jobsTable);
+            $pending = (int) $jobs->count();
+            $oldestCreatedAt = $jobs->min('created_at');
+            $oldestPendingSeconds = $oldestCreatedAt === null
+                ? null
+                : max(0, now()->timestamp - (int) $oldestCreatedAt);
+            $failed = (int) DB::connection($failedDatabase)
+                ->table($failedTable)
+                ->count();
+            $staleSeconds = max(1, (int) config('queue.health_stale_seconds', 300));
+
+            $queueHealth = [
+                'connection' => $queueConnection,
+                'status' => $oldestPendingSeconds !== null && $oldestPendingSeconds > $staleSeconds
+                    ? 'delayed'
+                    : 'ok',
+                'pending' => $pending,
+                'failed' => $failed,
+                'oldest_pending_seconds' => $oldestPendingSeconds,
+            ];
+        } catch (Throwable) {
+            $queueHealth['status'] = 'unavailable';
+        }
+    }
+
     return response()->json([
-        'status' => 'ok',
+        'status' => in_array($queueHealth['status'], ['delayed', 'unavailable'], true)
+            ? 'degraded'
+            : 'ok',
         'commit' => DeploymentInfo::commit(),
         'database' => 'ok',
+        'queue' => $queueHealth,
     ]);
 });
 

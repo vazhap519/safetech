@@ -10,6 +10,9 @@ return [
 
     'default' => env('QUEUE_CONNECTION', 'database'),
 
+    // A queued job older than this threshold is surfaced as delayed by /api/health.
+    'health_stale_seconds' => (int) env('QUEUE_HEALTH_STALE_SECONDS', 300),
+
     /*
     |--------------------------------------------------------------------------
     | Queue Connections
