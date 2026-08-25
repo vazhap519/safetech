@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import { trackLeadCreated } from "@/lib/analytics-events";
@@ -16,13 +16,27 @@ type LeadResponse = {
     errors?: Record<string, string[]>;
 };
 
+type PendingSubmission = {
+    fingerprint: string;
+    idempotencyKey: string;
+};
+
+function newIdempotencyKey() {
+    return globalThis.crypto?.randomUUID?.() ??
+        `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function useLeadForm(source: string) {
     const [status, setStatus] = useState<FormStatus>("idle");
     const [message, setMessage] = useState("");
+    const pendingSubmission = useRef<PendingSubmission | null>(null);
     const { locale, t } = useLocalization();
 
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
+
+        if (status === "submitting") return;
+
         setStatus("submitting");
         setMessage("");
 
@@ -105,19 +119,32 @@ export function useLeadForm(source: string) {
             return;
         }
 
+        const requestBody = {
+            ...cleanedPayload,
+            ...(email ? { email } : {}),
+            phone,
+            ...(leadMessage ? { message: leadMessage } : {}),
+            details,
+            locale,
+            source,
+        };
+        const fingerprint = JSON.stringify(requestBody);
+
+        if (pendingSubmission.current?.fingerprint !== fingerprint) {
+            pendingSubmission.current = {
+                fingerprint,
+                idempotencyKey: newIdempotencyKey(),
+            };
+        }
+
         try {
             const response = await fetch("/api/contact-leads", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...cleanedPayload,
-                    ...(email ? { email } : {}),
-                    phone,
-                    ...(leadMessage ? { message: leadMessage } : {}),
-                    details,
-                    locale,
-                    source,
-                }),
+                headers: {
+                    "Content-Type": "application/json",
+                    "Idempotency-Key": pendingSubmission.current.idempotencyKey,
+                },
+                body: fingerprint,
                 signal: AbortSignal.timeout(15000),
             });
             const result = (await response
@@ -135,6 +162,7 @@ export function useLeadForm(source: string) {
                 );
             }
 
+            pendingSubmission.current = null;
             form.reset();
             setStatus("success");
             setMessage(result?.message || t("forms.success.submit", null));
