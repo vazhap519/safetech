@@ -13,6 +13,8 @@ class AdminLeadNotificationTest extends TestCase
 
     public function test_new_contact_lead_creates_an_unread_admin_notification(): void
     {
+        config()->set('cms.admin.email', 'admin@example.com');
+
         $admin = User::factory()->create([
             'email' => 'admin@example.com',
             'is_admin' => true,
