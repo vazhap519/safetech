@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import LocalServiceLandingView from "@/components/pages/LocalServiceLandingView";
+import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
 import { getLocalServiceLanding } from "@/lib/local-service-landings";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -20,6 +21,11 @@ export async function generateMetadata({
     ]);
 
     if (!landing) {
+        await confirmBackendResourceNotFound(
+            `/local-service-landings/${encodeURIComponent(slug)}/${encodeURIComponent(location)}`,
+            { locale },
+        );
+
         return {
             title: withSiteTitle("Page not found", branding.siteName),
             robots: { index: false, follow: false },
@@ -54,7 +60,13 @@ export default async function LocalServicePage({
         getLocalServiceLanding(slug, location),
     ]);
 
-    if (!landing) notFound();
+    if (!landing) {
+        await confirmBackendResourceNotFound(
+            `/local-service-landings/${encodeURIComponent(slug)}/${encodeURIComponent(location)}`,
+            { locale },
+        );
+        notFound();
+    }
 
     return <LocalServiceLandingView landing={landing} locale={locale} />;
 }
