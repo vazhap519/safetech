@@ -1,0 +1,125 @@
+name: Production Health
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: safetech-production-health
+  cancel-in-progress: true
+
+jobs:
+  health:
+    name: Check production freshness and queue
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE_URL: https://safetech.ge
+      API_HEALTH_URL: https://api.safetech.ge/api/health
+      EXPECTED_SHA: ${{ github.sha }}
+      MAX_HOME_TOTAL_SECONDS: "5.0"
+      MAX_API_TOTAL_SECONDS: "3.0"
+
+    steps:
+      - name: Probe live homepage and API health
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          home_metrics="$(curl --fail --silent --show-error --location \
+            --retry 2 --retry-all-errors --max-time 20 \
+            --output /tmp/safetech-home.html \
+            --write-out '%{http_code} %{time_starttransfer} %{time_total}' \
+            "${SITE_URL}/?production_health=${GITHUB_RUN_ID}")"
+          read -r home_status home_ttfb home_total <<< "${home_metrics}"
+
+          api_metrics="$(curl --fail --silent --show-error --location \
+            --retry 2 --retry-all-errors --max-time 20 \
+            --output /tmp/safetech-health.json \
+            --write-out '%{http_code} %{time_starttransfer} %{time_total}' \
+            "${API_HEALTH_URL}")"
+          read -r api_status api_ttfb api_total <<< "${api_metrics}"
+
+          export HOME_STATUS="${home_status}"
+          export HOME_TTFB="${home_ttfb}"
+          export HOME_TOTAL="${home_total}"
+          export API_STATUS="${api_status}"
+          export API_TTFB="${api_ttfb}"
+          export API_TOTAL="${api_total}"
+
+          php <<'PHP'
+          <?php
+          $health = json_decode(file_get_contents('/tmp/safetech-health.json'), true, 512, JSON_THROW_ON_ERROR);
+          $expectedSha = strtolower((string) getenv('EXPECTED_SHA'));
+          $actualSha = strtolower((string) ($health['commit'] ?? ''));
+          $queue = is_array($health['queue'] ?? null) ? $health['queue'] : [];
+          $queueStatus = (string) ($queue['status'] ?? 'unavailable');
+          $pending = $queue['pending'] ?? null;
+          $failed = $queue['failed'] ?? null;
+          $oldest = $queue['oldest_pending_seconds'] ?? null;
+          $database = (string) ($health['database'] ?? 'unavailable');
+          $overall = (string) ($health['status'] ?? 'unavailable');
+          $homeTotal = (float) getenv('HOME_TOTAL');
+          $apiTotal = (float) getenv('API_TOTAL');
+          $maxHome = (float) getenv('MAX_HOME_TOTAL_SECONDS');
+          $maxApi = (float) getenv('MAX_API_TOTAL_SECONDS');
+
+          $problems = [];
+
+          if (!preg_match('/^[0-9a-f]{40}$/', $actualSha)) {
+              $problems[] = 'Production health does not expose a valid deployed commit SHA.';
+          } elseif ($actualSha !== $expectedSha) {
+              $problems[] = "Production is stale: expected {$expectedSha}, deployed {$actualSha}.";
+          }
+
+          if ($database !== 'ok') {
+              $problems[] = "Database health is {$database}.";
+          }
+
+          if (in_array($queueStatus, ['delayed', 'unavailable'], true)) {
+              $problems[] = "Queue health is {$queueStatus}.";
+          }
+
+          if (is_numeric($failed) && (int) $failed > 0) {
+              $problems[] = "Queue has {$failed} failed job(s).";
+          }
+
+          if ($homeTotal > $maxHome) {
+              $problems[] = sprintf('Homepage total time %.3fs exceeds %.1fs.', $homeTotal, $maxHome);
+          }
+
+          if ($apiTotal > $maxApi) {
+              $problems[] = sprintf('Health API total time %.3fs exceeds %.1fs.', $apiTotal, $maxApi);
+          }
+
+          $summary = [
+              '### SafeTech production health',
+              '',
+              "- Expected main SHA: `{$expectedSha}`",
+              "- Deployed SHA: `" . ($actualSha ?: 'missing') . '`',
+              "- Overall/API status: `{$overall}`",
+              "- Database: `{$database}`",
+              "- Queue: `{$queueStatus}`; pending=" . var_export($pending, true) . '; failed=' . var_export($failed, true) . '; oldest_pending_seconds=' . var_export($oldest, true),
+              '- Homepage: HTTP ' . getenv('HOME_STATUS') . '; TTFB=' . getenv('HOME_TTFB') . 's; total=' . getenv('HOME_TOTAL') . 's',
+              '- Health API: HTTP ' . getenv('API_STATUS') . '; TTFB=' . getenv('API_TTFB') . 's; total=' . getenv('API_TOTAL') . 's',
+          ];
+
+          if ($problems !== []) {
+              $summary[] = '';
+              $summary[] = '### Problems';
+              foreach ($problems as $problem) {
+                  $summary[] = '- ' . $problem;
+              }
+          }
+
+          file_put_contents((string) getenv('GITHUB_STEP_SUMMARY'), implode(PHP_EOL, $summary) . PHP_EOL, FILE_APPEND);
+
+          if ($problems !== []) {
+              fwrite(STDERR, implode(PHP_EOL, $problems) . PHP_EOL);
+              exit(1);
+          }
+          PHP
