@@ -98,7 +98,7 @@ export default function LegalPage({
                     ...(page.updated_at ? { dateModified: page.updated_at } : {}),
                 }}
             />
-            <main className="bg-surface pb-16 pt-28 sm:pb-20 sm:pt-32">
+            <div className="bg-surface pb-16 pt-28 sm:pb-20 sm:pt-32">
                 <article className="mx-auto w-full max-w-4xl px-5 sm:px-6 lg:px-8">
                     <header className="rounded-3xl border border-outline-variant/15 bg-surface-container/70 p-6 shadow-sm sm:p-10">
                         <div className="max-w-3xl">
@@ -164,7 +164,7 @@ export default function LegalPage({
                         })}
                     </div>
                 </article>
-            </main>
+            </div>
         </>
     );
 }
