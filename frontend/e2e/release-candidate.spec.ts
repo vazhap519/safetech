@@ -77,6 +77,25 @@ async function closeConsultation(page: Page) {
     }
 }
 
+async function fillConsultationForm(form: Locator, phone: string, details: string) {
+    const serviceSelect = form.locator('select[name="serviceSlug"]');
+    await expect(serviceSelect).toBeEnabled();
+    const serviceOptions = serviceSelect.locator("option:not([disabled])");
+    expect(await serviceOptions.count()).toBeGreaterThan(0);
+    const serviceValues = await serviceOptions.evaluateAll((options) =>
+        options.map((option) => (option as HTMLOptionElement).value).filter(Boolean),
+    );
+
+    await serviceSelect.selectOption(serviceValues[0]);
+    await form.locator('input[name="firstName"]').fill("QA");
+    await form.locator('input[name="lastName"]').fill("Customer");
+    await form.locator('input[name="phone"]').fill(phone);
+    await form.locator('input[name="email"]').fill("qa-consultation@safetech.test");
+    await form.locator('input[name="address"]').fill("Tbilisi");
+    await form.locator('textarea[name="message"]').fill(details);
+    await form.locator('input[name="privacy"]').check();
+}
+
 test.describe("release candidate public matrix", () => {
     for (const { locale, prefix, lang } of locales) {
         for (const route of publicRoutes) {
@@ -225,19 +244,11 @@ test.describe("release candidate public matrix", () => {
 
             const dialog = await openConsultation(page);
             const form = dialog.locator("form");
-            const serviceSelect = form.locator('select[name="serviceSlug"]');
-            await expect(serviceSelect).toBeEnabled();
-            const serviceOptions = serviceSelect.locator("option:not([disabled])");
-            expect(await serviceOptions.count()).toBeGreaterThan(0);
-            const serviceValues = await serviceOptions.evaluateAll((options) =>
-                options.map((option) => (option as HTMLOptionElement).value).filter(Boolean),
+            await fillConsultationForm(
+                form,
+                "+995555000111",
+                "Automated release candidate consultation submission test.",
             );
-
-            await serviceSelect.selectOption(serviceValues[0]);
-            await form.locator('input[name="firstName"]').fill("QA");
-            await form.locator('input[name="phone"]').fill("+995555000111");
-            await form.locator('textarea[name="details"]').fill("Automated release candidate consultation submission test.");
-            await form.locator('input[name="privacy"]').check();
 
             const submission = page.waitForResponse(
                 (response) => response.url().includes("/api/contact-leads") && response.request().method() === "POST",
@@ -403,17 +414,7 @@ test.describe("release candidate public matrix", () => {
         await page.goto("/services", { waitUntil: "domcontentloaded" });
         const dialog = await openConsultation(page);
         const form = dialog.locator("form");
-        const serviceSelect = form.locator('select[name="serviceSlug"]');
-        await expect(serviceSelect).toBeEnabled();
-        const values = await serviceSelect.locator("option:not([disabled])").evaluateAll((options) =>
-            options.map((option) => (option as HTMLOptionElement).value).filter(Boolean),
-        );
-        expect(values.length).toBeGreaterThan(0);
-        await serviceSelect.selectOption(values[0]);
-        await form.locator('input[name="firstName"]').fill("QA");
-        await form.locator('input[name="phone"]').fill("+995555000222");
-        await form.locator('textarea[name="details"]').fill("Simulated gateway failure test.");
-        await form.locator('input[name="privacy"]').check();
+        await fillConsultationForm(form, "+995555000222", "Simulated gateway failure test.");
         await form.locator('button[type="submit"]').click();
 
         const status = form.locator('[role="status"]');
