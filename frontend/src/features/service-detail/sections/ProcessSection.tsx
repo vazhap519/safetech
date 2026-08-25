@@ -45,10 +45,9 @@ export default async function ProcessSection({
                                 index === 0
                                     ? "bg-primary text-on-primary"
                                     : "border border-primary bg-primary/20 text-primary"
-                            } z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-xl font-bold`}
-                        >
-                            {index + 1}
-                        </span>
+                            } z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-xl font-bold before:content-[attr(data-step)]`}
+                            data-step={String(index + 1)}
+                        />
                         <article className="glass-card flex-1 rounded-2xl p-unit-lg">
                             {step.title ? (
                                 <h3 className="mb-unit-xs font-headline-md text-xl text-white">
