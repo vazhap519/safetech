@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import ProjectDetailSchema from "@/components/seo/ProjectDetailSchema";
 import ContentShareButtons from "@/components/social/ContentShareButtons";
+import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
 import { getLocalizedProject } from "@/lib/project-api";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -32,6 +33,11 @@ export async function generateMetadata({
     const siteName = branding.siteName;
 
     if (!project) {
+        await confirmBackendResourceNotFound(
+            `/projects/${encodeURIComponent(slug)}`,
+            { locale: routeLocale || locale },
+        );
+
         return {
             title: withSiteTitle(
                 translateText(
@@ -73,7 +79,13 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         getLocalizedProject(slug, routeLocale),
     ]);
 
-    if (!project) notFound();
+    if (!project) {
+        await confirmBackendResourceNotFound(
+            `/projects/${encodeURIComponent(slug)}`,
+            { locale: routeLocale || locale },
+        );
+        notFound();
+    }
 
     const relatedProjects = (
         await Promise.all(
