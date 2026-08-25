@@ -23,8 +23,8 @@ final class ContactLeadController extends Controller
         }
 
         try {
-            [$lead, $created] = $idempotencyKey === ''
-                ? [$action->execute($request->toData()), true]
+            [$lead, $created, $conflict] = $idempotencyKey === ''
+                ? [$action->execute($request->toData()), true, false]
                 : $this->createIdempotently($idempotencyKey, $request, $action);
         } catch (LockTimeoutException) {
             return response()->json([
@@ -32,6 +32,16 @@ final class ContactLeadController extends Controller
                     'en' => 'Your request is still being processed. Please try again.',
                     'ru' => 'Ваша заявка ещё обрабатывается. Пожалуйста, повторите попытку.',
                     default => 'თქვენი მოთხოვნა ჯერ კიდევ მუშავდება. გთხოვთ, სცადოთ ხელახლა.',
+                },
+            ], 409);
+        }
+
+        if ($conflict || ! $lead instanceof ContactLead) {
+            return response()->json([
+                'message' => match ($request->input('locale')) {
+                    'en' => 'This submission key was already used for different request data. Please submit again.',
+                    'ru' => 'Этот ключ отправки уже использован для других данных. Пожалуйста, отправьте форму ещё раз.',
+                    default => 'ეს გაგზავნის გასაღები უკვე გამოყენებულია სხვა მონაცემებისთვის. გთხოვთ, ფორმა თავიდან გაგზავნოთ.',
                 },
             ], 409);
         }
@@ -52,31 +62,56 @@ final class ContactLeadController extends Controller
         ], $created ? 201 : 200);
     }
 
-    /** @return array{ContactLead, bool} */
+    /** @return array{ContactLead|null, bool, bool} */
     private function createIdempotently(
         string $idempotencyKey,
         StoreContactLeadRequest $request,
         CreateLead $action,
     ): array {
         $cacheKey = 'contact-lead:idempotency:'.hash('sha256', $idempotencyKey);
+        $payloadHash = hash(
+            'sha256',
+            json_encode(
+                $request->validated(),
+                JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+            ),
+        );
 
         return Cache::lock("{$cacheKey}:lock", 15)->block(
             10,
-            function () use ($cacheKey, $request, $action): array {
-                $existingId = Cache::get($cacheKey);
+            function () use ($cacheKey, $payloadHash, $request, $action): array {
+                $existing = Cache::get($cacheKey);
 
-                if ($existingId !== null) {
-                    $existingLead = ContactLead::query()->find($existingId);
+                if (is_array($existing) && isset($existing['lead_id'])) {
+                    if (
+                        isset($existing['payload_hash'])
+                        && ! hash_equals((string) $existing['payload_hash'], $payloadHash)
+                    ) {
+                        return [null, false, true];
+                    }
+
+                    $existingLead = ContactLead::query()->find($existing['lead_id']);
 
                     if ($existingLead) {
-                        return [$existingLead, false];
+                        return [$existingLead, false, false];
+                    }
+                } elseif (is_int($existing) || ctype_digit((string) $existing)) {
+                    // Backward compatibility for a key written by the first
+                    // idempotency implementation before payload hashes existed.
+                    $existingLead = ContactLead::query()->find((int) $existing);
+
+                    if ($existingLead) {
+                        return [$existingLead, false, false];
                     }
                 }
 
                 $lead = $action->execute($request->toData());
-                Cache::put($cacheKey, $lead->getKey(), now()->addHours(6));
+                Cache::put($cacheKey, [
+                    'lead_id' => $lead->getKey(),
+                    'payload_hash' => $payloadHash,
+                ], now()->addHours(6));
 
-                return [$lead, true];
+                return [$lead, true, false];
             },
         );
     }
