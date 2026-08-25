@@ -5,6 +5,7 @@ import LocalServiceLinks from "@/components/seo/LocalServiceLinks";
 import ServiceDetailView from "@/features/service-detail/ServiceDetailView";
 import ServiceStructuredData from "@/features/service-detail/components/ServiceStructuredData";
 import { getBackendService } from "@/lib/backend";
+import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
@@ -24,6 +25,11 @@ export async function generateMetadata({
     const siteName = branding.siteName;
 
     if (!service) {
+        await confirmBackendResourceNotFound(
+            `/services/${encodeURIComponent(slug)}`,
+            { locale },
+        );
+
         return {
             title: withSiteTitle(
                 translateText(
@@ -66,7 +72,13 @@ export default async function ServicePage({ params }: ServicePageProps) {
         getBackendService(slug),
     ]);
 
-    if (!service) notFound();
+    if (!service) {
+        await confirmBackendResourceNotFound(
+            `/services/${encodeURIComponent(slug)}`,
+            { locale },
+        );
+        notFound();
+    }
 
     return (
         <>
