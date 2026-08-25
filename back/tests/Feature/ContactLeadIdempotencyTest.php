@@ -32,6 +32,29 @@ class ContactLeadIdempotencyTest extends TestCase
         Event::assertDispatchedTimes(LeadCreated::class, 1);
     }
 
+    public function test_same_submission_key_cannot_be_reused_for_different_payload(): void
+    {
+        Event::fake([LeadCreated::class]);
+        $service = $this->publishedService();
+        $headers = ['Idempotency-Key' => 'lead-conflict-test-12345678'];
+
+        $first = $this->withHeaders($headers)->postJson(
+            '/api/contact-leads',
+            $this->payload($service),
+        );
+        $changedPayload = $this->payload($service);
+        $changedPayload['message'] = 'This is a different request using the same submission key.';
+        $second = $this->withHeaders($headers)->postJson(
+            '/api/contact-leads',
+            $changedPayload,
+        );
+
+        $first->assertCreated();
+        $second->assertStatus(409);
+        $this->assertDatabaseCount('contact_leads', 1);
+        Event::assertDispatchedTimes(LeadCreated::class, 1);
+    }
+
     public function test_invalid_idempotency_key_is_rejected_without_creating_a_lead(): void
     {
         $service = $this->publishedService();
