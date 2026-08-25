@@ -11,11 +11,17 @@ PATCHED_DEPLOY="$(mktemp /tmp/safetech-deploy-production.XXXXXX.sh)"
 DEPLOY_STATE_DIR="${SAFETECH_DEPLOY_STATE_DIR:-/var/lib/safetech}"
 FRONTEND_RELEASE_MARKER="${DEPLOY_STATE_DIR}/frontend-release-commit"
 SKIP_FRONTEND_BUILD=0
+TARGET_SHA="${1:-${SAFETECH_TARGET_SHA:-}}"
 
 cleanup_patched_deploy() {
     rm -f "${PATCHED_DEPLOY}"
 }
 trap cleanup_patched_deploy EXIT INT TERM
+
+if [[ -n "${TARGET_SHA}" && ! "${TARGET_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+    printf 'Invalid deployment SHA: %s\n' "${TARGET_SHA}" >&2
+    exit 1
+fi
 
 bash "${SCRIPT_DIR}/scripts/repair-backend-runtime.sh"
 
@@ -25,6 +31,20 @@ bash "${SCRIPT_DIR}/scripts/repair-backend-runtime.sh"
 # already be at the new commit while the live .next release is still old.
 git -C "${SCRIPT_DIR}" fetch --prune "${REMOTE}"
 TARGET_REF="${REMOTE}/${BRANCH}"
+
+if [[ -n "${TARGET_SHA}" ]]; then
+    git -C "${SCRIPT_DIR}" cat-file -e "${TARGET_SHA}^{commit}" 2>/dev/null || {
+        printf 'Requested deployment commit was not fetched: %s\n' "${TARGET_SHA}" >&2
+        exit 1
+    }
+    git -C "${SCRIPT_DIR}" merge-base --is-ancestor "${TARGET_SHA}" "${REMOTE}/${BRANCH}" || {
+        printf 'Requested deployment commit is not contained in %s/%s: %s\n' \
+            "${REMOTE}" "${BRANCH}" "${TARGET_SHA}" >&2
+        exit 1
+    }
+    TARGET_REF="${TARGET_SHA}"
+    printf 'Pinned deployment target: %s\n' "${TARGET_SHA}"
+fi
 
 install -d -o root -g root -m 0755 "${DEPLOY_STATE_DIR}"
 
@@ -80,13 +100,21 @@ awk -v skip_frontend="${SKIP_FRONTEND_BUILD}" '
 chmod 0700 "${PATCHED_DEPLOY}"
 
 SAFETECH_PROJECT_DIR="${SAFETECH_PROJECT_DIR:-${SCRIPT_DIR}}" \
-    bash "${PATCHED_DEPLOY}" "$@"
+SAFETECH_TARGET_SHA="${TARGET_SHA}" \
+    bash "${PATCHED_DEPLOY}"
 
 # Reaching this point means the production deploy and all of its smoke checks
 # succeeded. Advancing the marker after backend-only releases is safe because we
 # only skip when there were no frontend changes between the previous marker and
 # the target release.
 DEPLOYED_COMMIT="$(git -C "${SCRIPT_DIR}" rev-parse HEAD)"
+
+if [[ -n "${TARGET_SHA}" && "${DEPLOYED_COMMIT}" != "${TARGET_SHA}" ]]; then
+    printf 'Deployment finished on unexpected commit %s (expected %s).\n' \
+        "${DEPLOYED_COMMIT}" "${TARGET_SHA}" >&2
+    exit 1
+fi
+
 printf '%s\n' "${DEPLOYED_COMMIT}" > "${FRONTEND_RELEASE_MARKER}"
 chmod 0644 "${FRONTEND_RELEASE_MARKER}"
 printf 'Frontend release marker updated to %s.\n' "${DEPLOYED_COMMIT:0:12}"
