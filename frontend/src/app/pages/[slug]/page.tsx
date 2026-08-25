@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import DynamicPage from "@/components/pages/DynamicPage";
 import { getBackendPage } from "@/lib/backend";
+import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
 import { localizePath } from "@/lib/locales";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -21,7 +22,14 @@ export async function generateMetadata({ params }: DynamicPageProps): Promise<Me
     ]);
 
     if (!page) {
-        return { title: withSiteTitle("Page not found", branding.siteName), robots: { index: false, follow: false } };
+        await confirmBackendResourceNotFound(`/pages/${encodeURIComponent(slug)}`, {
+            locale,
+        });
+
+        return {
+            title: withSiteTitle("Page not found", branding.siteName),
+            robots: { index: false, follow: false },
+        };
     }
 
     const path = LEGAL_PAGE_SLUGS.has(page.slug)
@@ -52,7 +60,12 @@ export default async function DynamicPageRoute({ params }: DynamicPageProps) {
 
     const page = await getBackendPage(slug);
 
-    if (!page) notFound();
+    if (!page) {
+        await confirmBackendResourceNotFound(`/pages/${encodeURIComponent(slug)}`, {
+            locale,
+        });
+        notFound();
+    }
 
     return <DynamicPage locale={locale} page={page} />;
 }
