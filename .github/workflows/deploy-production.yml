@@ -38,18 +38,20 @@ jobs:
           set -Eeuo pipefail
           if [[ -n "${DEPLOY_SSH_KEY}" && -n "${DEPLOY_KNOWN_HOSTS}" ]]; then
             echo "ready=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "ready=false" >> "${GITHUB_OUTPUT}"
-            {
-              echo "### Production deploy not configured"
-              echo
-              echo "Release Candidate QA passed for \`${APPROVED_SHA}\`, but the SSH deployment secrets are not configured yet."
-              echo "Add \`SAFETECH_DEPLOY_SSH_KEY\` and \`SAFETECH_DEPLOY_KNOWN_HOSTS\` to repository Actions secrets."
-            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
           fi
 
+          echo "ready=false" >> "${GITHUB_OUTPUT}"
+          {
+            echo "### Production deploy blocked"
+            echo
+            echo "Release Candidate QA passed for \`${APPROVED_SHA}\`, but the SSH deployment secrets are missing."
+            echo "Configure \`SAFETECH_DEPLOY_SSH_KEY\` and \`SAFETECH_DEPLOY_KNOWN_HOSTS\` before treating this release as deployed."
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "Production deployment credentials are not configured." >&2
+          exit 1
+
       - name: Configure pinned SSH identity
-        if: steps.credentials.outputs.ready == 'true'
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -60,7 +62,6 @@ jobs:
           ssh-keygen -y -f "${HOME}/.ssh/safetech_deploy" >/dev/null
 
       - name: Deploy exact QA-approved commit
-        if: steps.credentials.outputs.ready == 'true'
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -75,8 +76,7 @@ jobs:
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
             "deploy ${APPROVED_SHA}"
 
-      - name: Verify public production health
-        if: steps.credentials.outputs.ready == 'true'
+      - name: Verify public production health and freshness
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -84,15 +84,32 @@ jobs:
             --max-time 20 -o /dev/null "https://safetech.ge/"
           curl --fail --silent --show-error --location --retry 4 --retry-all-errors \
             --max-time 20 "https://api.safetech.ge/api/health" >/tmp/safetech-health.json
-          php -r 'json_decode(file_get_contents("/tmp/safetech-health.json"), true, 512, JSON_THROW_ON_ERROR);'
+          php -r '
+            $data = json_decode(file_get_contents("/tmp/safetech-health.json"), true, 512, JSON_THROW_ON_ERROR);
+            $approved = getenv("APPROVED_SHA");
+            $commit = $data["commit"] ?? null;
+            if ($commit !== $approved) {
+                fwrite(STDERR, "Production commit mismatch: expected {$approved}, got ".var_export($commit, true).PHP_EOL);
+                exit(1);
+            }
+            if (($data["database"] ?? null) !== "ok") {
+                fwrite(STDERR, "Production database health is not OK.".PHP_EOL);
+                exit(1);
+            }
+            $queueStatus = $data["queue"]["status"] ?? "unavailable";
+            if (in_array($queueStatus, ["delayed", "unavailable"], true)) {
+                fwrite(STDERR, "Production queue health is {$queueStatus}.".PHP_EOL);
+                exit(1);
+            }
+          '
           {
             echo "### Production deploy succeeded"
             echo
-            echo "Deployed QA-approved commit: \`${APPROVED_SHA}\`"
-            echo "Public homepage and Laravel API health checks passed."
+            echo "Deployed and verified QA-approved commit: \`${APPROVED_SHA}\`"
+            echo "Public homepage, Laravel database health, queue freshness, and production commit identity passed."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Remove runner SSH material
-        if: always() && steps.credentials.outputs.ready == 'true'
+        if: always()
         shell: bash
         run: rm -rf "${HOME}/.ssh/safetech_deploy" "${HOME}/.ssh/known_hosts"
