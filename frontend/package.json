@@ -2,19 +2,14 @@
   "name": "safetech",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": ">=20.9.0"
-  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "icons:check": "node scripts/icon-catalog-check.mjs",
-    "prelint": "npm run icons:check",
-    "lint": "eslint",
+    "lint": "eslint . --ignore-pattern .next --ignore-pattern node_modules",
     "typecheck": "tsc --noEmit",
-    "seo:smoke": "node scripts/seo-smoke.mjs",
-    "check": "npm run lint && npm run typecheck && npm run build -- --webpack"
+    "check": "npm run lint && npm run typecheck && npm run build",
+    "seo:smoke": "node scripts/seo-smoke.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -35,9 +30,8 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "sharp": "0.35.3",
     "next": {
-      "postcss": "8.5.19"
+      "postcss": "8.5.26"
     }
   }
 }

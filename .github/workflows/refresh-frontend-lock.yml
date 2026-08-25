@@ -1,0 +1,66 @@
+name: Refresh frontend lockfile
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - frontend/package.json
+      - .github/workflows/refresh-frontend-lock.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-frontend-lock
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Regenerate lockfile with npm
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Verify frozen install
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Verify patched PostCSS resolution
+        run: |
+          node <<'NODE'
+          const lock = require('./package-lock.json');
+          const root = lock.packages?.['node_modules/postcss']?.version;
+          const nested = lock.packages?.['node_modules/next/node_modules/postcss']?.version;
+          const vulnerable = (version) => {
+            if (!version) return false;
+            const [major, minor, patch] = version.split('.').map(Number);
+            return major === 8 && (minor < 5 || (minor === 5 && patch <= 22));
+          };
+          if (!root || vulnerable(root) || vulnerable(nested)) {
+            console.error({ root, nested });
+            process.exit(1);
+          }
+          console.log({ root, nested: nested ?? 'deduped-to-root' });
+          NODE
+          npm audit --omit=dev --audit-level=high
+
+      - name: Commit regenerated lockfile
+        run: |
+          git diff --check
+          if git diff --quiet -- package-lock.json; then
+            echo 'package-lock.json is already synchronized.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'Regenerate frontend lockfile for patched PostCSS'
+          git push origin HEAD:main
