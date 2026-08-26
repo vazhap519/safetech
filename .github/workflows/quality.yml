@@ -126,6 +126,22 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Verify Next.js security baseline
+        run: |
+          node - <<'NODE'
+          const version = require('next/package.json').version;
+          const parts = version.split('.').map(Number);
+          const minimum = [16, 3, 3];
+          const secure = parts[0] > minimum[0]
+            || (parts[0] === minimum[0] && parts[1] > minimum[1])
+            || (parts[0] === minimum[0] && parts[1] === minimum[1] && parts[2] >= minimum[2]);
+          if (!secure) {
+            console.error(`Next.js ${version} is below the SafeTech security baseline 16.3.3.`);
+            process.exit(1);
+          }
+          console.log(`Next.js security baseline satisfied: ${version}`);
+          NODE
+
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
@@ -193,3 +209,7 @@ jobs:
           grep -q 'NEXT_PUBLIC_AI_ASSISTANT_ENABLED' scripts/configure-ai-assistant.sh
           grep -q 'safetech_marketing_consent' frontend/deploy/nginx/safetech.example.conf
           grep -q 'safetech_has_marketing_consent_cookie' frontend/deploy/nginx/safetech.example.conf
+          if grep -q 'image/avif' frontend/next.config.ts; then
+            echo 'AVIF optimization must stay disabled until SafeTech intentionally re-enables it after the 2026 advisory.' >&2
+            exit 1
+          fi
