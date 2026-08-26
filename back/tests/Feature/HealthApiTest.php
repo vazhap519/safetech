@@ -33,7 +33,7 @@ class HealthApiTest extends TestCase
             ]);
     }
 
-    public function test_database_queue_health_reports_pending_and_historical_failures(): void
+    public function test_database_queue_health_marks_failed_jobs_as_degraded(): void
     {
         config()->set('queue.default', 'database');
 
@@ -56,7 +56,7 @@ class HealthApiTest extends TestCase
 
         $this->getJson('/api/health')
             ->assertOk()
-            ->assertJsonPath('status', 'ok')
+            ->assertJsonPath('status', 'degraded')
             ->assertJsonPath('queue.connection', 'database')
             ->assertJsonPath('queue.status', 'ok')
             ->assertJsonPath('queue.pending', 1)
