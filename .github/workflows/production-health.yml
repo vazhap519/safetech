@@ -51,6 +51,14 @@ jobs:
           export API_TTFB="${api_ttfb}"
           export API_TOTAL="${api_total}"
 
+          printf 'Homepage: HTTP %s; TTFB=%ss; total=%ss\n' \
+            "${HOME_STATUS}" "${HOME_TTFB}" "${HOME_TOTAL}"
+          printf 'Health API: HTTP %s; TTFB=%ss; total=%ss\n' \
+            "${API_STATUS}" "${API_TTFB}" "${API_TOTAL}"
+          printf '%s\n' 'Health payload:'
+          cat /tmp/safetech-health.json
+          printf '\n'
+
           php <<'PHP'
           <?php
           $health = json_decode(file_get_contents('/tmp/safetech-health.json'), true, 512, JSON_THROW_ON_ERROR);
