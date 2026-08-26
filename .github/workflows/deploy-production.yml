@@ -101,12 +101,17 @@ jobs:
                 fwrite(STDERR, "Production queue health is {$queueStatus}.".PHP_EOL);
                 exit(1);
             }
+            $failedJobs = $data["queue"]["failed"] ?? null;
+            if (is_numeric($failedJobs) && (int) $failedJobs > 0) {
+                fwrite(STDERR, "Production queue has {$failedJobs} failed job(s).".PHP_EOL);
+                exit(1);
+            }
           '
           {
             echo "### Production deploy succeeded"
             echo
             echo "Deployed and verified QA-approved commit: \`${APPROVED_SHA}\`"
-            echo "Public homepage, Laravel database health, queue freshness, and production commit identity passed."
+            echo "Public homepage, Laravel database health, queue freshness, zero failed queue jobs, and production commit identity passed."
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Remove runner SSH material
