@@ -79,10 +79,11 @@ Route::get('/health', function (): JsonResponse {
         }
     }
 
+    $queueDegraded = in_array($queueHealth['status'], ['delayed', 'unavailable'], true)
+        || (is_numeric($queueHealth['failed']) && (int) $queueHealth['failed'] > 0);
+
     return response()->json([
-        'status' => in_array($queueHealth['status'], ['delayed', 'unavailable'], true)
-            ? 'degraded'
-            : 'ok',
+        'status' => $queueDegraded ? 'degraded' : 'ok',
         'commit' => DeploymentInfo::commit(),
         'database' => 'ok',
         'queue' => $queueHealth,
