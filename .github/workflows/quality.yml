@@ -191,3 +191,5 @@ jobs:
           grep -q 'safetech-approved.git' scripts/bootstrap-github-actions-deploy.sh
           grep -q 'OPENAI_API_KEY' scripts/configure-ai-assistant.sh
           grep -q 'NEXT_PUBLIC_AI_ASSISTANT_ENABLED' scripts/configure-ai-assistant.sh
+          grep -q 'safetech_marketing_consent' frontend/deploy/nginx/safetech.example.conf
+          grep -q 'safetech_has_marketing_consent_cookie' frontend/deploy/nginx/safetech.example.conf
