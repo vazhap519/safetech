@@ -28,7 +28,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   images: {
-    formats: ["image/avif", "image/webp"],
+    // Next.js 16.3.3 patches the AVIF optimizer RCE path, but keep AVIF
+    // disabled as defense-in-depth until the underlying image stack has had
+    // wider production exposure. WebP preserves modern compression benefits.
+    formats: ["image/webp"],
     qualities: [68, 75, 82],
     minimumCacheTTL: 2678400,
     remotePatterns: apiOrigin ? [new URL(`${apiOrigin}/storage/**`)] : [],
