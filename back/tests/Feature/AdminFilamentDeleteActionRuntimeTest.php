@@ -3,11 +3,14 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\CategoryForServices\Pages\EditCategoryForService;
+use App\Filament\Resources\ContactLeadResource\Pages\EditContactLead;
 use App\Filament\Resources\ProjectCategories\Pages\EditProjectCategory;
 use App\Filament\Resources\ProjectResource\Pages\EditProject;
 use App\Filament\Resources\ServiceResource\Pages\EditService;
+use App\Models\AiConversation;
 use App\Models\AnalyticsEvent;
 use App\Models\CategoryForService;
+use App\Models\ContactLead;
 use App\Models\Faq;
 use App\Models\LocalServiceLanding;
 use App\Models\Project;
@@ -164,6 +167,29 @@ class AdminFilamentDeleteActionRuntimeTest extends TestCase
         $this->assertDatabaseHas('review_invitations', [
             'id' => $invitation->id,
             'project_id' => null,
+        ]);
+    }
+
+    public function test_contact_lead_delete_action_clears_ai_relation_and_removes_the_lead(): void
+    {
+        $lead = ContactLead::query()->create([
+            'name' => 'Deletion request',
+            'phone' => '+995555123456',
+            'source' => 'contact-page',
+        ]);
+        $conversation = AiConversation::query()->create([
+            'contact_lead_id' => $lead->id,
+            'locale' => 'ka',
+        ]);
+
+        Livewire::test(EditContactLead::class, ['record' => $lead->getRouteKey()])
+            ->assertActionExists('delete')
+            ->callAction('delete');
+
+        $this->assertDatabaseMissing('contact_leads', ['id' => $lead->id]);
+        $this->assertDatabaseHas('ai_conversations', [
+            'id' => $conversation->id,
+            'contact_lead_id' => null,
         ]);
     }
 }

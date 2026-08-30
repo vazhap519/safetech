@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Events\LeadCreated;
 use App\Models\Service;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
@@ -51,6 +52,23 @@ class ContactLeadIdempotencyTest extends TestCase
 
         $first->assertCreated();
         $second->assertStatus(409);
+        $this->assertDatabaseCount('contact_leads', 1);
+        Event::assertDispatchedTimes(LeadCreated::class, 1);
+    }
+
+    public function test_retry_stays_idempotent_after_the_cache_is_lost(): void
+    {
+        Event::fake([LeadCreated::class]);
+        $service = $this->publishedService();
+        $payload = $this->payload($service);
+        $headers = ['Idempotency-Key' => 'lead-durable-test-12345678'];
+
+        $first = $this->withHeaders($headers)->postJson('/api/contact-leads', $payload);
+        Cache::flush();
+        $second = $this->withHeaders($headers)->postJson('/api/contact-leads', $payload);
+
+        $first->assertCreated();
+        $second->assertOk()->assertJsonPath('data.replayed', true);
         $this->assertDatabaseCount('contact_leads', 1);
         Event::assertDispatchedTimes(LeadCreated::class, 1);
     }

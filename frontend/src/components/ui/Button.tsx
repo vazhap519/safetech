@@ -30,10 +30,12 @@ export default function Button({
                                    size = "md",
                                    fullWidth = false,
                                    className,
+                                   type = "button",
                                    ...props
                                }: ButtonProps) {
     return (
         <button
+            type={type}
             className={clsx(
                 // BASE
                 `

@@ -14,7 +14,9 @@ export default function Form() {
                 className="
                     max-w-container-max
                     mx-auto
-                    px-margin-desktop
+                    px-4
+                    sm:px-6
+                    lg:px-margin-desktop
                 "
             >
                 <div

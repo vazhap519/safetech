@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 
@@ -108,6 +108,7 @@ export default function ReviewRequestForm({ token }: { token: string }) {
     const [status, setStatus] = useState<RequestStatus>("loading");
     const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
     const [message, setMessage] = useState("");
+    const submitting = useRef(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -116,7 +117,10 @@ export default function ReviewRequestForm({ token }: { token: string }) {
             try {
                 const response = await fetch(endpoint, {
                     cache: "no-store",
-                    signal: controller.signal,
+                    signal: AbortSignal.any([
+                        controller.signal,
+                        AbortSignal.timeout(10000),
+                    ]),
                 });
 
                 if (!response.ok) {
@@ -146,6 +150,9 @@ export default function ReviewRequestForm({ token }: { token: string }) {
 
     async function submit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        if (submitting.current) return;
+
+        submitting.current = true;
         setStatus("submitting");
         setMessage("");
 
@@ -176,8 +183,16 @@ export default function ReviewRequestForm({ token }: { token: string }) {
             setMessage(text.success);
             setStatus("success");
         } catch (error) {
-            setMessage(error instanceof Error ? error.message : text.error);
+            const safeMessage =
+                error instanceof Error &&
+                !["AbortError", "TimeoutError", "TypeError"].includes(error.name)
+                    ? error.message
+                    : text.error;
+
+            setMessage(safeMessage);
             setStatus("ready");
+        } finally {
+            submitting.current = false;
         }
     }
 
@@ -242,6 +257,7 @@ export default function ReviewRequestForm({ token }: { token: string }) {
                         autoComplete="name"
                         className="w-full rounded-xl border border-outline-variant/30 bg-surface-container px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                         defaultValue={invitation?.recipientName ?? ""}
+                        maxLength={120}
                         name="author"
                         required
                         type="text"
@@ -253,6 +269,7 @@ export default function ReviewRequestForm({ token }: { token: string }) {
                         <input
                             autoComplete="organization"
                             className="w-full rounded-xl border border-outline-variant/30 bg-surface-container px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                            maxLength={120}
                             name="company"
                             type="text"
                         />
@@ -262,6 +279,7 @@ export default function ReviewRequestForm({ token }: { token: string }) {
                         <input
                             autoComplete="organization-title"
                             className="w-full rounded-xl border border-outline-variant/30 bg-surface-container px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                            maxLength={120}
                             name="role"
                             type="text"
                         />
@@ -271,6 +289,7 @@ export default function ReviewRequestForm({ token }: { token: string }) {
                     <span>{text.quote}</span>
                     <textarea
                         className="min-h-40 w-full resize-y rounded-xl border border-outline-variant/30 bg-surface-container px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        maxLength={5000}
                         name="quote"
                         placeholder={text.quotePlaceholder}
                         required

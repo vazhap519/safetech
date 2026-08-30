@@ -21,22 +21,58 @@ type PendingSubmission = {
     idempotencyKey: string;
 };
 
+const SUBMISSION_STORAGE_PREFIX = "safetech:lead-submission:";
+
 function newIdempotencyKey() {
     return globalThis.crypto?.randomUUID?.() ??
         `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function submissionStorageKey(source: string, fingerprint: string) {
+    let hash = 2166136261;
+
+    for (let index = 0; index < fingerprint.length; index += 1) {
+        hash ^= fingerprint.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+
+    return `${SUBMISSION_STORAGE_PREFIX}${source}:${(hash >>> 0).toString(36)}`;
+}
+
+function readSubmissionKey(storageKey: string) {
+    try {
+        return globalThis.sessionStorage?.getItem(storageKey) || null;
+    } catch {
+        return null;
+    }
+}
+
+function writeSubmissionKey(storageKey: string, value: string | null) {
+    try {
+        if (value) {
+            globalThis.sessionStorage?.setItem(storageKey, value);
+        } else {
+            globalThis.sessionStorage?.removeItem(storageKey);
+        }
+    } catch {
+        // Storage can be unavailable in privacy-restricted browsers. Database
+        // idempotency still protects retries within the current page session.
+    }
 }
 
 export function useLeadForm(source: string) {
     const [status, setStatus] = useState<FormStatus>("idle");
     const [message, setMessage] = useState("");
     const pendingSubmission = useRef<PendingSubmission | null>(null);
+    const submitting = useRef(false);
     const { locale, t } = useLocalization();
 
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        if (status === "submitting") return;
+        if (submitting.current) return;
 
+        submitting.current = true;
         setStatus("submitting");
         setMessage("");
 
@@ -116,6 +152,7 @@ export function useLeadForm(source: string) {
                     ru: "Заполните все обязательные поля и подтвердите согласие на обработку данных.",
                 }),
             );
+            submitting.current = false;
             return;
         }
 
@@ -130,11 +167,18 @@ export function useLeadForm(source: string) {
         };
         const fingerprint = JSON.stringify(requestBody);
 
+        const storageKey = submissionStorageKey(source, fingerprint);
+        const storedIdempotencyKey = readSubmissionKey(storageKey);
+
         if (pendingSubmission.current?.fingerprint !== fingerprint) {
             pendingSubmission.current = {
                 fingerprint,
-                idempotencyKey: newIdempotencyKey(),
+                idempotencyKey: storedIdempotencyKey || newIdempotencyKey(),
             };
+            writeSubmissionKey(
+                storageKey,
+                pendingSubmission.current.idempotencyKey,
+            );
         }
 
         try {
@@ -163,6 +207,7 @@ export function useLeadForm(source: string) {
             }
 
             pendingSubmission.current = null;
+            writeSubmissionKey(storageKey, null);
             form.reset();
             setStatus("success");
             setMessage(result?.message || t("forms.success.submit", null));
@@ -187,6 +232,8 @@ export function useLeadForm(source: string) {
                     : "";
 
             setMessage(safeApiMessage || t("forms.error.network", null));
+        } finally {
+            submitting.current = false;
         }
     }
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreContactLeadRequest;
 use App\Models\ContactLead;
 use Illuminate\Cache\LockTimeoutException;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
@@ -79,7 +80,7 @@ final class ContactLeadController extends Controller
 
         return Cache::lock("{$cacheKey}:lock", 15)->block(
             10,
-            function () use ($cacheKey, $payloadHash, $request, $action): array {
+            function () use ($cacheKey, $idempotencyKey, $payloadHash, $request, $action): array {
                 $existing = Cache::get($cacheKey);
 
                 if (is_array($existing) && isset($existing['lead_id'])) {
@@ -105,7 +106,31 @@ final class ContactLeadController extends Controller
                     }
                 }
 
-                $lead = $action->execute($request->toData());
+                try {
+                    $lead = $action->execute($request->toData(
+                        $idempotencyKey,
+                        $payloadHash,
+                    ));
+                } catch (QueryException $exception) {
+                    // Cache locks are not shared when instances use different
+                    // cache stores. The database unique key is the final guard.
+                    $lead = ContactLead::query()
+                        ->where('submission_key', $idempotencyKey)
+                        ->first();
+
+                    if (! $lead) {
+                        throw $exception;
+                    }
+
+                    if (! hash_equals(
+                        (string) $lead->submission_payload_hash,
+                        $payloadHash,
+                    )) {
+                        return [null, false, true];
+                    }
+
+                    return [$lead, false, false];
+                }
                 Cache::put($cacheKey, [
                     'lead_id' => $lead->getKey(),
                     'payload_hash' => $payloadHash,

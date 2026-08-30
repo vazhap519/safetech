@@ -12,19 +12,35 @@ export const metadata = {
 
 export default async function NotFound() {
   const { locale, translations } = await getSiteSettings();
-  const title = translateText(translations, "notFound.title", locale, null);
+  const title = translateText(translations, "notFound.title", locale, {
+    ka: "გვერდი ვერ მოიძებნა",
+    en: "Page not found",
+    ru: "Страница не найдена",
+  });
   const description = translateText(
     translations,
     "notFound.description",
     locale,
-    null,
+    {
+      ka: "მითითებული მისამართი არასწორია ან გვერდი გადატანილია.",
+      en: "The address may be incorrect or the page may have moved.",
+      ru: "Возможно, адрес указан неверно или страница была перемещена.",
+    },
   );
-  const homeLabel = translateText(translations, "notFound.home", locale, null);
+  const homeLabel = translateText(translations, "notFound.home", locale, {
+    ka: "მთავარ გვერდზე დაბრუნება",
+    en: "Return home",
+    ru: "Вернуться на главную",
+  });
   const contactLabel = translateText(
     translations,
     "notFound.contact",
     locale,
-    null,
+    {
+      ka: "დაგვიკავშირდით",
+      en: "Contact us",
+      ru: "Связаться с нами",
+    },
   );
 
   return (

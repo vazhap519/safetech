@@ -88,7 +88,7 @@ export default function ConsultationForm({
         ru: "Я согласен на использование моих контактных данных, чтобы SafeTech мог связаться со мной по поводу консультации.",
     });
     const inputClassName =
-        "w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+        "min-w-0 w-full rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 py-3 text-base text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
     const hasServices = serviceOptions.length > 0;
 
     return (
@@ -213,14 +213,14 @@ export default function ConsultationForm({
             </p>
             <div className="flex flex-col-reverse gap-unit-sm pt-unit-sm sm:flex-row sm:justify-end">
                 <button
-                    className="rounded-xl border border-outline-variant px-6 py-3 font-medium text-on-surface transition-colors hover:bg-surface-container-high"
+                    className="min-h-12 w-full rounded-xl border border-outline-variant px-6 py-3 font-medium text-on-surface transition-colors hover:bg-surface-container-high sm:w-auto"
                     onClick={() => window.dispatchEvent(new Event(CONSULTATION_CLOSE_EVENT))}
                     type="button"
                 >
                     {cancelLabel}
                 </button>
                 <button
-                    className="rounded-xl bg-primary-container px-6 py-3 font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
+                    className="min-h-12 w-full rounded-xl bg-primary-container px-6 py-3 font-medium text-on-primary-container shadow-lg shadow-blue-500/20 transition hover:brightness-110 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
                     disabled={status === "submitting" || !hasServices}
                     type="submit"
                 >

@@ -2,12 +2,16 @@
 
 namespace App\Support;
 
-use App\Models\Post;
 use Illuminate\Database\Eloquent\Model;
 
 final class PublicContentEligibility
 {
-    public static function post(Post $post, string $locale = 'ka'): bool
+    /**
+     * Kept for compatibility with legacy content models. The blog Post model
+     * was removed from the core application, so depending on that concrete
+     * class made merely loading this helper fail with a missing-class error.
+     */
+    public static function post(Model $post, string $locale = 'ka'): bool
     {
         if (! self::hasMeaningfulText(self::translated($post, 'title', $post->title, $locale))) {
             return false;

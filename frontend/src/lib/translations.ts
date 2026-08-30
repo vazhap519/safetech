@@ -5,6 +5,7 @@ export type TranslationMap = Record<string, TranslationValues>;
 
 export const CLIENT_TRANSLATION_PREFIXES = [
     "common",
+    "ai",
     "nav",
     "footer",
     "forms",
@@ -14,6 +15,7 @@ export const CLIENT_TRANSLATION_PREFIXES = [
     "consent",
     "calculator",
     "error",
+    "notFound",
     "filters",
     "services.filters",
     "projects.filters",

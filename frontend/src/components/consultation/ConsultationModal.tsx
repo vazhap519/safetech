@@ -77,7 +77,7 @@ export default function ConsultationModal({
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) {
                     setOpen(false);
@@ -87,11 +87,11 @@ export default function ConsultationModal({
             <section
                 aria-labelledby={title ? "consultation-title" : undefined}
                 aria-modal="true"
-                className="max-h-[90dvh] w-[min(92vw,42rem)] overflow-y-auto rounded-3xl border border-outline-variant/30 bg-surface-container text-on-surface shadow-2xl"
+                className="max-h-[100dvh] w-full overscroll-contain overflow-y-auto rounded-t-3xl border border-outline-variant/30 bg-surface-container text-on-surface shadow-2xl sm:max-h-[90dvh] sm:w-[min(92vw,42rem)] sm:rounded-3xl"
                 id={CONSULTATION_MODAL_ID}
                 role="dialog"
             >
-                <div className="relative p-unit-lg sm:p-unit-xl">
+                <div className="relative px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-6 sm:p-unit-xl">
                     <button
                         aria-label={closeLabel || undefined}
                         className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/30 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-white"

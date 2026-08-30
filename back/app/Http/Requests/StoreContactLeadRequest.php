@@ -104,7 +104,10 @@ final class StoreContactLeadRequest extends FormRequest
         ];
     }
 
-    public function toData(): LeadData
+    public function toData(
+        ?string $submissionKey = null,
+        ?string $submissionPayloadHash = null,
+    ): LeadData
     {
         $data = $this->validated();
         $fullName = trim($data['first_name'].' '.$data['last_name']);
@@ -126,6 +129,8 @@ final class StoreContactLeadRequest extends FormRequest
             source: $data['source'],
             ipHash: hash_hmac('sha256', (string) $this->ip(), (string) config('app.key')),
             userAgent: mb_substr((string) $this->userAgent(), 0, 500) ?: null,
+            submissionKey: $submissionKey,
+            submissionPayloadHash: $submissionPayloadHash,
         );
     }
 

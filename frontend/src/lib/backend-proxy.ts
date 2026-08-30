@@ -31,7 +31,9 @@ export async function forwardBackendRequest(
             },
             body: body || undefined,
             cache: "no-store",
-            signal: AbortSignal.timeout(10000),
+            // Keep this above the browser timeout. The browser can retry with
+            // the same durable idempotency key while this request completes.
+            signal: AbortSignal.timeout(20000),
         });
 
         return new Response(await response.text(), {

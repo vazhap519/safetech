@@ -21,6 +21,8 @@ final readonly class LeadData
         public string $source,
         public string $ipHash,
         public ?string $userAgent,
+        public ?string $submissionKey = null,
+        public ?string $submissionPayloadHash = null,
     ) {}
 
     /** @return array<string, mixed> */
@@ -43,6 +45,8 @@ final readonly class LeadData
             'source' => $this->source,
             'ip_hash' => $this->ipHash,
             'user_agent' => $this->userAgent,
+            'submission_key' => $this->submissionKey,
+            'submission_payload_hash' => $this->submissionPayloadHash,
             'privacy_accepted_at' => now(),
         ];
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import { trackEvent } from "@/lib/analytics";
@@ -26,6 +26,11 @@ type ChatResponse = {
 
 export default function SafeTechAssistant() {
     const { locale, t } = useLocalization();
+    const greeting = t("ai.assistant.greeting", {
+        ka: "გამარჯობა! მე ვარ SafeTech-ის AI კონსულტანტი. მითხარით რა სისტემის ან IT მომსახურების შერჩევაში დაგეხმაროთ.",
+        en: "Hello! I’m SafeTech’s AI consultant. Tell me what security system or IT service you need help choosing.",
+        ru: "Здравствуйте! Я AI-консультант SafeTech. Расскажите, какую систему безопасности или IT-услугу вы хотите подобрать.",
+    });
     const [open, setOpen] = useState(false);
     const [conversationId, setConversationId] = useState<string | null>(null);
     const [input, setInput] = useState("");
@@ -36,14 +41,21 @@ export default function SafeTechAssistant() {
     const [messages, setMessages] = useState<ChatMessage[]>(() => [
         {
             role: "assistant",
-            content: t("ai.assistant.greeting", {
-                ka: "გამარჯობა! მე ვარ SafeTech-ის AI კონსულტანტი. მითხარით რა სისტემის ან IT მომსახურების შერჩევაში დაგეხმაროთ.",
-                en: "Hello! I’m SafeTech’s AI consultant. Tell me what security system or IT service you need help choosing.",
-                ru: "Здравствуйте! Я AI-консультант SafeTech. Расскажите, какую систему безопасности или IT-услугу вы хотите подобрать.",
-            }),
+            content: greeting,
         },
     ]);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const submitting = useRef(false);
+
+    useEffect(() => {
+        if (conversationId) return;
+
+        setMessages((current) =>
+            current.length === 1 && current[0]?.role === "assistant"
+                ? [{ role: "assistant", content: greeting }]
+                : current,
+        );
+    }, [conversationId, greeting]);
 
     const labels = useMemo(
         () => ({
@@ -110,12 +122,13 @@ export default function SafeTechAssistant() {
         event.preventDefault();
         const message = input.trim();
 
-        if (!message || sending) return;
+        if (!message || submitting.current) return;
         if (!consent) {
             setError(labels.consentRequired);
             return;
         }
 
+        submitting.current = true;
         setError(null);
         setInput("");
         setSending(true);
@@ -133,6 +146,7 @@ export default function SafeTechAssistant() {
                     privacy: true,
                     website: "",
                 }),
+                signal: AbortSignal.timeout(30000),
             });
             const payload = (await response.json().catch(() => ({}))) as ChatResponse;
             const assistantText = payload.data?.message || payload.message;
@@ -176,6 +190,7 @@ export default function SafeTechAssistant() {
                       }),
             );
         } finally {
+            submitting.current = false;
             setSending(false);
         }
     }
@@ -195,6 +210,7 @@ export default function SafeTechAssistant() {
                         Accept: "application/json",
                     },
                     body: JSON.stringify({ rating }),
+                    signal: AbortSignal.timeout(10000),
                 },
             );
 
@@ -223,6 +239,7 @@ export default function SafeTechAssistant() {
             {open ? (
                 <section
                     aria-label={labels.title}
+                    role="dialog"
                     className="mb-3 flex h-[min(72vh,620px)] w-[min(calc(100vw-2rem),390px)] flex-col overflow-hidden rounded-3xl border border-outline-variant/30 bg-surface-container shadow-2xl shadow-black/40"
                 >
                     <header className="flex items-start justify-between gap-3 border-b border-outline-variant/20 bg-surface-container-high px-4 py-4">
@@ -294,6 +311,7 @@ export default function SafeTechAssistant() {
                         </label>
                         <div className="flex items-end gap-2">
                             <textarea
+                                aria-label={labels.placeholder}
                                 value={input}
                                 onChange={(event) => setInput(event.target.value)}
                                 placeholder={labels.placeholder}
