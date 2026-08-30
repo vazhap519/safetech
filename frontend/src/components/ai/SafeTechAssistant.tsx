@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import { trackEvent } from "@/lib/analytics";
@@ -38,24 +38,12 @@ export default function SafeTechAssistant() {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [feedback, setFeedback] = useState<Record<string, -1 | 1>>({});
-    const [messages, setMessages] = useState<ChatMessage[]>(() => [
-        {
-            role: "assistant",
-            content: greeting,
-        },
-    ]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
     const submitting = useRef(false);
-
-    useEffect(() => {
-        if (conversationId) return;
-
-        setMessages((current) =>
-            current.length === 1 && current[0]?.role === "assistant"
-                ? [{ role: "assistant", content: greeting }]
-                : current,
-        );
-    }, [conversationId, greeting]);
+    const visibleMessages = messages.length
+        ? messages
+        : [{ role: "assistant" as const, content: greeting }];
 
     const labels = useMemo(
         () => ({
@@ -132,7 +120,12 @@ export default function SafeTechAssistant() {
         setError(null);
         setInput("");
         setSending(true);
-        setMessages((current) => [...current, { role: "user", content: message }]);
+        setMessages((current) => [
+            ...(current.length
+                ? current
+                : [{ role: "assistant" as const, content: greeting }]),
+            { role: "user", content: message },
+        ]);
         trackEvent("ai_assistant_message", { action: "send" });
 
         try {
@@ -258,7 +251,7 @@ export default function SafeTechAssistant() {
                     </header>
 
                     <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4" aria-live="polite">
-                        {messages.map((message, index) => (
+                        {visibleMessages.map((message, index) => (
                             <div key={`${message.role}-${message.id ?? index}`} className={message.role === "user" ? "ml-10" : "mr-6"}>
                                 <div
                                     className={

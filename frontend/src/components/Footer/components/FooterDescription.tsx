@@ -46,7 +46,6 @@ export default async function FooterDescription() {
                                 height={144}
                                 sizes="(min-width: 640px) 144px, 128px"
                                 src={logo}
-                                unoptimized
                                 variant="plain"
                                 width={144}
                             />

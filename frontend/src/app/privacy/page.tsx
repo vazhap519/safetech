@@ -20,9 +20,11 @@ export async function generateMetadata(): Promise<Metadata> {
         locale,
         keywords: page.seo?.keywords || siteSeo.defaultKeywords,
         siteName: branding.siteName,
-        noindex: !backendPage || Boolean(page.seo?.noindex),
+        // Privacy is intentionally excluded from search results and the sitemap.
+        // Do not let a nullable/false CMS SEO flag override that route contract.
+        noindex: true,
         robotsIndex: siteSeo.robotsIndex,
-        robotsFollow: backendPage ? siteSeo.robotsFollow : false,
+        robotsFollow: false,
     });
 }
 

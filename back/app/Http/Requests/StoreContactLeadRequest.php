@@ -107,8 +107,7 @@ final class StoreContactLeadRequest extends FormRequest
     public function toData(
         ?string $submissionKey = null,
         ?string $submissionPayloadHash = null,
-    ): LeadData
-    {
+    ): LeadData {
         $data = $this->validated();
         $fullName = trim($data['first_name'].' '.$data['last_name']);
 

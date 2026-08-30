@@ -84,7 +84,6 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                                 height={48}
                                 sizes="(min-width: 640px) 48px, 44px"
                                 src={headerLogo}
-                                unoptimized
                                 variant="plain"
                                 width={48}
                             />
