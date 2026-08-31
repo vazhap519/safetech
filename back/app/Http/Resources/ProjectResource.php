@@ -110,6 +110,9 @@ class ProjectResource extends JsonResource
             ->values()
             ->map(fn (array $item, int $index): array => [
                 ...$item,
+                'icon' => filled($item['icon'] ?? null)
+                    ? (string) $item['icon']
+                    : ($prefix === 'challenge' ? 'security' : 'settings'),
                 'title' => $this->localizedItemValue(
                     $item,
                     'title',

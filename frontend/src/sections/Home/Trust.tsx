@@ -37,7 +37,6 @@ export default async function Trust() {
                                 height={48}
                                 key={partner.name}
                                 src={resolveBackendAsset(partner.logo, "")}
-                                unoptimized
                                 variant="plain"
                                 width={160}
                             />

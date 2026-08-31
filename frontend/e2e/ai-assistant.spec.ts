@@ -9,7 +9,7 @@ test("AI assistant renders and enforces privacy consent", async ({ page }) => {
     await expect(openButton).toBeVisible();
     await openButton.click();
 
-    const assistant = page.getByRole("region", {
+    const assistant = page.getByRole("dialog", {
         name: /SafeTech AI კონსულტანტი|SafeTech AI Consultant|AI-консультант SafeTech/i,
     });
     await expect(assistant).toBeVisible();

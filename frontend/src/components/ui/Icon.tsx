@@ -2,7 +2,7 @@ import clsx from "clsx";
 import type { ReactNode } from "react";
 
 type IconProps = {
-    name: string;
+    name?: string | null;
     className?: string;
     title?: string;
 };
@@ -452,7 +452,9 @@ const legacyIconAliases: Record<string, CanonicalIconName> = {
     warning: "triangle-alert",
 };
 
-function normalizeIconName(name: string): CanonicalIconName {
+function normalizeIconName(name?: string | null): CanonicalIconName {
+    if (!name) return "circle-help";
+
     const normalized = name.trim().toLowerCase().replaceAll(" ", "_");
 
     if (normalized in contentIconAliases) {
@@ -475,7 +477,8 @@ export function isSupportedContentIcon(name: string): name is ContentIconName {
 }
 
 export default function Icon({ name, className, title }: IconProps) {
-    const label = title || name.replaceAll("_", " ").replaceAll("-", " ");
+    const label =
+        title || name?.replaceAll("_", " ").replaceAll("-", " ") || "Icon";
     const canonicalName = normalizeIconName(name);
 
     return (

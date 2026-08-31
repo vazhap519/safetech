@@ -18,7 +18,6 @@ export default async function PartnerSection() {
                             height={40}
                             key={partner.name}
                             src={resolveBackendAsset(partner.logo, "")}
-                            unoptimized
                             variant="plain"
                             width={144}
                         />
