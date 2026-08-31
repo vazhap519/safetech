@@ -50,7 +50,6 @@ return new class extends Migration
     private function defaults(): array
     {
         return [
-            ['key' => 'nav.blog', 'ka' => 'ბლოგი', 'en' => 'Blog', 'ru' => 'Блог'],
             ['key' => 'footer.company.title', 'ka' => 'კომპანია', 'en' => 'Company', 'ru' => 'Компания'],
             ['key' => 'footer.services.title', 'ka' => 'სერვისები', 'en' => 'Services', 'ru' => 'Услуги'],
             ['key' => 'footer.contact.title', 'ka' => 'კონტაქტი', 'en' => 'Contact', 'ru' => 'Контакты'],

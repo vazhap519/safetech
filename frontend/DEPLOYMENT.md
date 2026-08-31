@@ -224,7 +224,7 @@ Do not edit files inside `/var/www/safetech-source`. Commit and push changes to 
 sudo bash /var/www/safetech-source/deploy.sh
 ```
 
-The script refuses a dirty source tree, fast-forwards `main`, preserves both production environment files and Laravel storage, installs dependencies, runs migrations, syncs production-safe system defaults without demo catalog content, builds/tests the frontend, installs and validates the Nginx site, restarts services, warms localized pages, verifies metadata, HTTP/2, HTML caching, `llms.txt`, the live API and calculator, validates the shop when products exist, then loads every URL emitted by the sitemap and fails the release if any URL is malformed or does not return HTTP 200.
+The script refuses a dirty source tree, fast-forwards `main`, preserves both production environment files and Laravel storage, installs dependencies, runs migrations, syncs production-safe system defaults without demo catalog content, builds/tests the frontend, installs and validates the Nginx site, restarts services, warms localized pages, verifies metadata, HTTP/2, HTML caching, `llms.txt`, the live API and calculator, then loads every URL emitted by the sitemap and fails the release if any URL is malformed or does not return HTTP 200.
 
 Before schema-changing deployments, back up PostgreSQL and uploaded media:
 
@@ -240,12 +240,9 @@ curl -I https://safetech.ge/
 curl -I https://safetech.ge/en/services
 curl -I https://safetech.ge/ru/projects
 curl -I https://safetech.ge/service-calculator
-curl -I https://safetech.ge/shop
 curl -I https://safetech.ge/robots.txt
 curl -I https://safetech.ge/llms.txt
 curl -I https://safetech.ge/sitemap.xml
-curl -I https://safetech.ge/sitemap-product-categories.xml
-curl -I https://safetech.ge/sitemap-products.xml
 curl -I https://api.safetech.ge/api/health
 curl -I https://api.safetech.ge/api/services
 ```
@@ -259,4 +256,4 @@ curl -fsS https://safetech.ge/ \
   | while read -r asset; do curl -fsS -o /dev/null "https://safetech.ge${asset}" || exit 1; done
 ```
 
-Then verify login at `https://api.safetech.ge/admin`, submit each public form, confirm queued email delivery, open all sitemap children, and validate a service, project, blog post and category in Google Rich Results Test and Search Console URL Inspection.
+Then verify login at `https://api.safetech.ge/admin`, submit each public form, confirm queued email delivery, open all sitemap children, and validate a service, project and category in Google Rich Results Test and Search Console URL Inspection.

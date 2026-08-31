@@ -17,7 +17,6 @@ return new class extends Migration
             'service-calculator' => 'WebApplication',
             'projects' => 'CollectionPage',
             'about' => 'AboutPage',
-            'blog' => 'Blog',
         ] as $key => $schemaType) {
             DB::table('seo_pages')
                 ->where('key', $key)

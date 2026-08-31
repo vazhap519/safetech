@@ -11,7 +11,6 @@ enum NavigationGroup: string implements HasIcon, HasLabel
 {
     case Services = 'სერვისები';
     case Projects = 'პროექტები';
-    case Blog = 'ბლოგი';
     case Content = 'კონტენტი';
     case Sales = 'გაყიდვები';
     case Pages = 'გვერდები';
@@ -27,7 +26,6 @@ enum NavigationGroup: string implements HasIcon, HasLabel
         return match ($this) {
             self::Services => 'heroicon-o-wrench-screwdriver',
             self::Projects => 'heroicon-o-briefcase',
-            self::Blog => 'heroicon-o-document-text',
             self::Content => 'heroicon-o-rectangle-stack',
             self::Sales => 'heroicon-o-inbox-arrow-down',
             self::Pages => 'heroicon-o-document-duplicate',

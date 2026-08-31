@@ -324,7 +324,6 @@ class SeoPage extends Model implements HasMedia
 
             case 'AboutPage':
             case 'CollectionPage':
-            case 'Blog':
             case 'ContactPage':
                 return array_filter([
                     '@context' => 'https://schema.org',

@@ -21,7 +21,6 @@ const sitemapRoutes = [
     "/sitemap-project-categories.xml",
     "/sitemap-pages.xml",
     "/sitemap-images.xml",
-    "/sitemap-blog.xml",
 ];
 
 function localizedPath(prefix: string, path: string) {

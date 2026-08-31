@@ -37,8 +37,6 @@ class SeoPageForm
                             'services' => 'სერვისები',
                             'service-calculator' => 'სერვისების კალკულატორი',
                             'projects' => 'პროექტები',
-                            'shop' => 'მაღაზია',
-                            'blog' => 'ბლოგი',
                             'contact' => 'კონტაქტი',
                             'privacy' => 'კონფიდენციალურობა',
                         ])
@@ -88,7 +86,6 @@ class SeoPageForm
                             'AboutPage' => 'AboutPage',
                             'CollectionPage' => 'CollectionPage',
                             'WebApplication' => 'WebApplication',
-                            'Blog' => 'Blog',
                             'ContactPage' => 'ContactPage',
                             'Article' => 'Article',
                             'LocalBusiness' => 'LocalBusiness',

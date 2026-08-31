@@ -11,16 +11,6 @@ const descriptionFallbacks = {
     en: (name) => `${name}: IT infrastructure and security projects delivered by SafeTech.`,
     ru: (name) => `${name}: реализованные SafeTech проекты IT-инфраструктуры и безопасности.`,
   },
-  blog: {
-    ka: (name) => `${name}: SafeTech-ის პრაქტიკული სტატიები IT ინფრასტრუქტურისა და უსაფრთხოების შესახებ.`,
-    en: (name) => `${name}: practical SafeTech articles about IT infrastructure and security.`,
-    ru: (name) => `${name}: практические статьи SafeTech об IT-инфраструктуре и безопасности.`,
-  },
-  shop: {
-    ka: (name) => `${name}: SafeTech product catalog with dynamic filters and detail pages.`,
-    en: (name) => `${name}: SafeTech IT and security products with dynamic filtering and detail pages.`,
-    ru: (name) => `${name}: SafeTech product catalog with dynamic filters and detail pages.`,
-  },
 };
 
 const titleFallbacks = {
@@ -33,16 +23,6 @@ const titleFallbacks = {
     ka: (name) => `${name} პროექტები`,
     en: (name) => `${name} Projects`,
     ru: (name) => `${name}: проекты`,
-  },
-  blog: {
-    ka: (name) => `${name} სტატიები`,
-    en: (name) => `${name} Articles`,
-    ru: (name) => `${name}: статьи`,
-  },
-  shop: {
-    ka: (name) => `${name} Products`,
-    en: (name) => `${name} Products`,
-    ru: (name) => `${name} Products`,
   },
 };
 

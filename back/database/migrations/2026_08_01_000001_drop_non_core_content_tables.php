@@ -9,15 +9,6 @@ return new class extends Migration
     {
         Schema::disableForeignKeyConstraints();
 
-        Schema::dropIfExists('post_sections');
-        Schema::dropIfExists('posts');
-        Schema::dropIfExists('authors');
-        Schema::dropIfExists('categories');
-
-        Schema::dropIfExists('products');
-        Schema::dropIfExists('product_filters');
-        Schema::dropIfExists('product_categories');
-
         Schema::dropIfExists('privacy_policies');
 
         Schema::enableForeignKeyConstraints();

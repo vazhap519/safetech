@@ -13,11 +13,7 @@ return new class extends Migration
         'faqs',
         'team_members',
         'testimonials',
-        'posts',
-        'post_sections',
         'privacy_policies',
-        'categories',
-        'authors',
     ];
 
     public function up(): void

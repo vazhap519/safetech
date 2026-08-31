@@ -16,7 +16,6 @@ const coreRoutes = [
 ];
 
 const noindexRoutes = ["/privacy", "/en/privacy", "/ru/privacy"];
-const removedRoutes = ["/blog", "/shop"];
 const requiredHreflangs = ["ka-GE", "en-GE", "ru-GE", "x-default"];
 
 function fail(message) {
@@ -258,13 +257,6 @@ async function validateSitemaps() {
     }
 }
 
-async function validateRemovedRoutes() {
-    for (const path of removedRoutes) {
-        const { response } = await request(path);
-        assert(response.status === 404, `${path}: expected HTTP 404, got ${response.status}`);
-    }
-}
-
 async function validateLegacyCalculatorRedirect() {
     const path = "/service-calculator?service=custom-computer-build";
     const startedAt = performance.now();
@@ -311,7 +303,6 @@ async function main() {
 
     await validateRobots();
     await validateSitemaps();
-    await validateRemovedRoutes();
     await validateLegacyCalculatorRedirect();
 
     console.log("Google SEO and Georgia targeting smoke checks passed.");

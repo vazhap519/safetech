@@ -255,7 +255,7 @@ class SiteSettingResource extends Resource
                     Textarea::make('value.site_description')->label('Organization description')->rows(3),
                     TagsInput::make('value.default_keywords')
                         ->label('Default SEO keywords')
-                        ->helperText('Used as a site-wide fallback when a page or product does not define its own keywords.'),
+                        ->helperText('Used as a site-wide fallback when a page does not define its own keywords.'),
                     Toggle::make('value.robots_index')
                         ->label('Allow search engines to index the site')
                         ->default(true),
@@ -329,7 +329,7 @@ class SiteSettingResource extends Resource
                             TextInput::make('key')
                                 ->label('Key')
                                 ->required()
-                                ->helperText('Example: nav.home, blog.title, services.hero.eyebrow, project.slug.card.title'),
+                                ->helperText('Example: nav.home, services.hero.eyebrow, project.slug.card.title'),
                             TextInput::make('ka')->label('Georgian'),
                             TextInput::make('en')->label('English'),
                             TextInput::make('ru')->label('Russian'),

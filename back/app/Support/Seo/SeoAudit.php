@@ -206,7 +206,6 @@ final class SeoAudit
             'about' => 'AboutPage',
             'services', 'projects' => 'CollectionPage',
             'service-calculator' => 'WebApplication',
-            'blog' => 'Blog',
             'contact' => 'ContactPage',
             default => 'WebPage',
         };
