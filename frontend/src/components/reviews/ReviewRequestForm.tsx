@@ -33,6 +33,7 @@ const copy = {
         success:
             "გმადლობთ შეფასებისთვის! ის გამოქვეყნდება მხოლოდ ადმინისტრატორის შემოწმებისა და დამტკიცების შემდეგ.",
         thankYou: "მადლობა, რომ დაგვითმეთ დრო.",
+        googleReview: "შეფასების გაზიარება Google-ზეც",
     },
     en: {
         eyebrow: "Client feedback",
@@ -55,6 +56,7 @@ const copy = {
         success:
             "Thank you for your feedback. It will be published only after an administrator reviews and approves it.",
         thankYou: "Thank you for taking the time.",
+        googleReview: "Share your review on Google too",
     },
     ru: {
         eyebrow: "Отзыв клиента",
@@ -77,6 +79,7 @@ const copy = {
         success:
             "Спасибо за отзыв. Он будет опубликован только после проверки и одобрения администратора.",
         thankYou: "Спасибо, что уделили нам время.",
+        googleReview: "Поделиться отзывом также в Google",
     },
 } as const;
 
@@ -98,7 +101,13 @@ function getErrorMessage(payload: unknown) {
     return null;
 }
 
-export default function ReviewRequestForm({ token }: { token: string }) {
+export default function ReviewRequestForm({
+    googleReviewUrl,
+    token,
+}: {
+    googleReviewUrl?: string;
+    token: string;
+}) {
     const { locale } = useLocalization();
     const text = copy[locale];
     const endpoint = useMemo(
@@ -218,6 +227,16 @@ export default function ReviewRequestForm({ token }: { token: string }) {
             <section className="mx-auto max-w-2xl rounded-3xl border border-primary/30 bg-primary/5 p-6 text-center sm:p-10">
                 <p className="font-headline-md text-xl text-on-surface">{text.thankYou}</p>
                 <p className="mt-3 leading-relaxed text-on-surface-variant">{message}</p>
+                {googleReviewUrl ? (
+                    <a
+                        className="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-primary-container px-6 py-3 font-semibold text-on-primary-container shadow-lg shadow-blue-500/20 transition hover:brightness-110"
+                        href={googleReviewUrl}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                    >
+                        {text.googleReview}
+                    </a>
+                ) : null}
             </section>
         );
     }
