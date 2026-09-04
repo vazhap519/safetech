@@ -76,14 +76,16 @@ class SiteSettingResource extends Resource
                         )
                         ->default([]),
                     TextInput::make('value.email')
-                        ->label('Email')
+                        ->label('Public contact email')
                         ->email()
-                        ->required(),
+                        ->required()
+                        ->default('info@safetech.ge')
+                        ->helperText('This address is shown on the website and used in public structured data.'),
                     TextInput::make('value.lead_email')
                         ->label('Lead notification email')
                         ->email()
-                        ->helperText('Lead form submissions are delivered here unless a production override is configured.')
-                        ->default('safetechgeorgia@gmail.com'),
+                        ->helperText('Contact form submissions are delivered here. Use an inbox that is configured to receive mail for the domain.')
+                        ->default('info@safetech.ge'),
                     Toggle::make('value.whatsapp_enabled')
                         ->label('Show WhatsApp contact links')
                         ->helperText('Controls both the floating WhatsApp button and the footer WhatsApp icon.')

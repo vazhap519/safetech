@@ -7,7 +7,7 @@ export default function Form() {
             id="contact-form"
             className="
                 relative
-                py-unit-xl
+                py-10 sm:py-12 lg:py-16
             "
         >
             <div
@@ -24,9 +24,9 @@ export default function Form() {
                         grid
                         grid-cols-1
                         items-start
-                        gap-unit-lg
+                        gap-5 sm:gap-6
                         lg:grid-cols-12
-                        lg:gap-unit-xl
+                        lg:gap-8
                     "
                 >
                     <Left />

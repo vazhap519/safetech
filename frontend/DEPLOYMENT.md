@@ -97,12 +97,12 @@ MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USERNAME=safetechgeorgia@gmail.com
 MAIL_PASSWORD=replace_with_a_google_app_password
-MAIL_FROM_ADDRESS=safetechgeorgia@gmail.com
-MAIL_FROM_NAME="SafeTech Website"
-LEADS_NOTIFICATION_EMAIL=safetechgeorgia@gmail.com
+MAIL_FROM_ADDRESS=info@safetech.ge
+MAIL_FROM_NAME="SafeTech Georgia"
+LEADS_NOTIFICATION_EMAIL=info@safetech.ge
 ```
 
-Also configure Gmail SMTP with an app password, keep `LEADS_NOTIFICATION_EMAIL=safetechgeorgia@gmail.com`, configure CRM credentials when used, and use the same strong `REVALIDATE_SECRET` in both applications. `APP_KEY` is generated in the initial-install step. The deployment provisions the configured administrator when missing, promotes an existing account with the same email, and never overwrites a password changed later in Filament.
+`info@safetech.ge` is the public contact address and the destination for contact-form notifications. Cloudflare Email Routing forwards incoming messages to Gmail, but it does not send mail. When using the Gmail SMTP settings above, first add and verify `info@safetech.ge` as a **Send mail as** alias in the `safetechgeorgia@gmail.com` Gmail account; otherwise use a transactional SMTP provider that authorizes the SafeTech domain. Do not use an unverified `From` address. Configure Gmail SMTP with an app password, configure CRM credentials when used, and use the same strong `REVALIDATE_SECRET` in both applications. `APP_KEY` is generated in the initial-install step. The deployment provisions the configured administrator when missing, promotes an existing account with the same email, and never overwrites a password changed later in Filament.
 
 `SQLSTATE ... fe_sendauth: no password supplied` means `DB_PASSWORD` is still blank or Laravel is using cached configuration. Correct `.env`, then run `php artisan config:clear` before retrying.
 

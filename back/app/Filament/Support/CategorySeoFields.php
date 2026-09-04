@@ -60,9 +60,6 @@ final class CategorySeoFields
         return Section::make("კონტენტი და SEO - {$label}")
             ->collapsed($locale !== 'ka')
             ->schema([
-                TextInput::make("translations.fields.name.{$locale}")
-                    ->label('კატეგორიის სახელი')
-                    ->maxLength(255),
                 TextInput::make("translations.fields.seo_title.{$locale}")
                     ->label('SEO სათაური')
                     ->maxLength(255),

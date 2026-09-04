@@ -24,10 +24,13 @@ final class SendLeadNotification implements ShouldQueue
         $configuredRecipient = trim((string) config('leads.notification_email'));
         $settingsRecipient = trim((string) data_get($contactSettings, 'lead_email', ''));
 
-        $recipient = filter_var($configuredRecipient, FILTER_VALIDATE_EMAIL)
-            ? $configuredRecipient
-            : (filter_var($settingsRecipient, FILTER_VALIDATE_EMAIL)
-                ? $settingsRecipient
+        // The CMS recipient is intentional, editable business data. The
+        // environment value remains a safe deployment fallback when no valid
+        // address has been saved in the Contact settings yet.
+        $recipient = filter_var($settingsRecipient, FILTER_VALIDATE_EMAIL)
+            ? $settingsRecipient
+            : (filter_var($configuredRecipient, FILTER_VALIDATE_EMAIL)
+                ? $configuredRecipient
                 : (string) config('mail.from.address'));
 
         Notification::route('mail', $recipient)

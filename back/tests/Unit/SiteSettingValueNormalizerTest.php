@@ -20,6 +20,7 @@ class SiteSettingValueNormalizerTest extends TestCase
         $this->assertSame('+995 599 12 34 56', $normalized['whatsapp']);
         $this->assertFalse($normalized['whatsapp_enabled']);
         $this->assertSame('Hello from SafeTech', $normalized['whatsapp_message']);
+        $this->assertSame('info@safetech.ge', $normalized['lead_email']);
     }
 
     #[Test]

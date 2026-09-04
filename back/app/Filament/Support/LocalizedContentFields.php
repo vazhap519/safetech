@@ -75,6 +75,7 @@ final class LocalizedContentFields
         bool $textarea = false,
         int $rows = 3,
         ?int $maxLength = null,
+        bool|\Closure $required = false,
     ): array {
         return collect(self::SECONDARY_LOCALE_LABELS)
             ->map(function (string $localeLabel, string $locale) use (
@@ -83,6 +84,7 @@ final class LocalizedContentFields
                 $textarea,
                 $rows,
                 $maxLength,
+                $required,
             ): TextInput|Textarea {
                 $component = $textarea
                     ? Textarea::make("translations.fields.{$field}.{$locale}")->rows($rows)
@@ -94,6 +96,10 @@ final class LocalizedContentFields
 
                 if ($maxLength !== null) {
                     $component->maxLength($maxLength);
+                }
+
+                if ($required !== false) {
+                    $component->required($required);
                 }
 
                 return $component;
@@ -145,7 +151,7 @@ final class LocalizedContentFields
     public static function customEntries(string $helperText): Repeater
     {
         return Repeater::make('translations.entries')
-            ->label('Advanced / legacy translation keys')
+            ->label('Legacy translations (compatibility only)')
             ->helperText('ძველი პროექტების ხელით დამატებული გასაღებები თავსებადობისთვის შენარჩუნებულია. ახალი პროექტის სექციებისთვის გამოიყენეთ EN/RU ველები უშუალოდ შესაბამის ბლოკში.')
             ->schema([
                 TextInput::make('key')

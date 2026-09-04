@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Service;
+use App\Models\SiteSetting;
 use App\Notifications\NewContactLeadNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\AnonymousNotifiable;
@@ -16,7 +17,14 @@ class LeadNotificationTest extends TestCase
     public function test_it_routes_complete_consultations_to_the_configured_business_email_without_blank_rows(): void
     {
         Notification::fake();
-        config()->set('leads.notification_email', 'safetechgeorgia@gmail.com');
+        config()->set('leads.notification_email', 'fallback@example.com');
+
+        SiteSetting::query()->create([
+            'key' => 'contact',
+            'group' => 'general',
+            'is_public' => true,
+            'value' => ['lead_email' => 'info@safetech.ge'],
+        ]);
 
         $service = Service::query()->create([
             'slug' => 'it-support',
@@ -50,7 +58,7 @@ class LeadNotificationTest extends TestCase
                 $rendered = implode("\n", array_map('strval', $mail->introLines));
 
                 return $channels === ['mail']
-                    && $notifiable->routeNotificationFor('mail') === 'safetechgeorgia@gmail.com'
+                    && $notifiable->routeNotificationFor('mail') === 'info@safetech.ge'
                     && str_contains((string) $mail->subject, 'Test Customer')
                     && str_contains($rendered, 'სახელი: Test Customer')
                     && str_contains($rendered, 'ელფოსტა: customer@example.com')

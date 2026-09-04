@@ -365,7 +365,7 @@ const defaultSiteContact: SiteContact = {
     whatsappEnabled: false,
     whatsappMessage: "",
     hours: "",
-    leadEmail: "safetechgeorgia@gmail.com",
+    leadEmail: "info@safetech.ge",
 };
 
 const defaultSiteSocialLinks: SiteSocialLink[] = [];

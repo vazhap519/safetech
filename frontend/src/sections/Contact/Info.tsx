@@ -10,33 +10,13 @@ export default async function Info() {
         : contact.phone
           ? [contact.phone]
           : [];
-    const items = [
-        {
-            icon: "call",
-            label: translateText(
-                translations,
-                "contact.info.phone",
-                locale,
-                null,
-            ),
-            content: phoneNumbers.length ? (
-                <div className="flex flex-col items-center gap-1">
-                    {phoneNumbers.map((phone, index) => (
-                        <span className="contents" key={phone}>
-                            <a
-                                className="font-headline-md break-words text-base text-on-surface transition-colors hover:text-primary md:text-headline-md"
-                                href={toPhoneHref(phone)}
-                            >
-                                {phone}
-                            </a>
-                            {index < phoneNumbers.length - 1 ? (
-                                <span className="sr-only"> / </span>
-                            ) : null}
-                        </span>
-                    ))}
-                </div>
-            ) : null,
-        },
+    const phoneLabel = translateText(
+        translations,
+        "contact.info.phone",
+        locale,
+        null,
+    );
+    const details = [
         {
             icon: "mail",
             label: translateText(
@@ -47,7 +27,7 @@ export default async function Info() {
             ),
             content: contact.email ? (
                 <a
-                    className="font-headline-md break-all text-base text-on-surface transition-colors hover:text-primary md:text-headline-md"
+                    className="break-all text-base font-semibold text-on-surface transition-colors hover:text-primary focus-visible:text-primary"
                     href={toEmailHref(contact.email)}
                 >
                     {contact.email}
@@ -63,7 +43,7 @@ export default async function Info() {
                 null,
             ),
             content: contact.address ? (
-                <p className="font-headline-md text-base text-on-surface md:text-headline-md">
+                <p className="text-base font-semibold text-on-surface">
                     {contact.address}
                 </p>
             ) : null,
@@ -77,37 +57,108 @@ export default async function Info() {
                 null,
             ),
             content: contact.hours ? (
-                <p className="font-headline-md text-base text-on-surface md:text-headline-md">
+                <p className="text-base font-semibold text-on-surface">
                     {contact.hours}
                 </p>
             ) : null,
         },
     ].filter((item) => item.content);
 
-    if (!items.length) return null;
+    if (!phoneNumbers.length && !details.length) return null;
 
     return (
-        <section className="bg-surface-container-lowest py-unit-xl">
-            <div className="mx-auto grid max-w-container-max grid-cols-1 gap-unit-md px-margin-desktop sm:grid-cols-2 lg:grid-cols-4">
-                {items.map((item) => (
-                    <div
-                        key={item.icon}
-                        className="glass-panel rounded-xl p-unit-md text-center md:p-unit-lg"
-                    >
-                        <Icon
-                            className="mb-4 block text-2xl text-primary md:text-3xl"
-                            name={item.icon}
-                        />
+        <section
+            aria-label={phoneLabel || undefined}
+            className="border-y border-outline-variant/15 bg-surface-container-lowest py-8 sm:py-10 lg:py-12"
+        >
+            <div className="mx-auto max-w-container-max px-margin-desktop">
+                <div className="space-y-3 sm:space-y-4">
+                    {phoneNumbers.length ? (
+                        <article className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary-container/20 via-surface-container-low to-surface-container-lowest shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+                            <div
+                                aria-hidden="true"
+                                className="absolute -right-14 -top-16 h-44 w-44 rounded-full bg-primary/10 blur-3xl"
+                            />
 
-                        {item.label ? (
-                            <p className="mb-2 text-xs font-label-md uppercase tracking-tighter text-on-surface-variant md:text-label-md">
-                                {item.label}
-                            </p>
-                        ) : null}
+                            <div className="relative flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+                                <div className="flex items-center gap-4">
+                                    <span
+                                        aria-hidden="true"
+                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-secondary/30 bg-secondary/10 text-secondary shadow-[0_0_20px_rgba(76,215,246,0.12)]"
+                                    >
+                                        <Icon className="text-2xl" name="call" />
+                                    </span>
 
-                        {item.content}
-                    </div>
-                ))}
+                                    {phoneLabel ? (
+                                        <div>
+                                            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-secondary">
+                                                {phoneLabel}
+                                            </p>
+                                            <p className="mt-1 text-sm text-on-surface-variant">
+                                                {locale === "ka"
+                                                    ? "დაგვირეკეთ პირდაპირ"
+                                                    : locale === "ru"
+                                                      ? "Позвоните нам напрямую"
+                                                      : "Call us directly"}
+                                            </p>
+                                        </div>
+                                    ) : null}
+                                </div>
+
+                                <div
+                                    className={`grid w-full gap-2 sm:gap-3 lg:w-auto lg:min-w-[25rem] ${
+                                        phoneNumbers.length === 1
+                                            ? "sm:grid-cols-1"
+                                            : "sm:grid-cols-2"
+                                    }`}
+                                >
+                                    {phoneNumbers.map((phone, index) => (
+                                        <a
+                                            aria-label={
+                                                phoneLabel
+                                                    ? `${phoneLabel}: ${phone}`
+                                                    : phone
+                                            }
+                                            className="group flex min-h-14 items-center justify-between gap-3 rounded-xl border border-outline-variant/35 bg-background/60 px-4 py-3 text-base font-semibold text-on-surface transition duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary-container hover:text-on-primary-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-container-lowest sm:text-lg"
+                                            href={toPhoneHref(phone)}
+                                            key={`${phone}-${index}`}
+                                        >
+                                            <span className="whitespace-nowrap">{phone}</span>
+                                            <Icon
+                                                className="text-xl transition-transform duration-200 group-hover:translate-x-0.5"
+                                                name="arrow_forward"
+                                            />
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        </article>
+                    ) : null}
+
+                    {details.length ? (
+                        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+                            {details.map((item) => (
+                                <article
+                                    className="glass-panel flex min-h-28 items-start gap-3 rounded-xl p-4 sm:p-5"
+                                    key={item.icon}
+                                >
+                                    <Icon
+                                        className="mt-0.5 shrink-0 text-xl text-primary"
+                                        name={item.icon}
+                                    />
+                                    <div className="min-w-0">
+                                        {item.label ? (
+                                            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
+                                                {item.label}
+                                            </p>
+                                        ) : null}
+                                        {item.content}
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    ) : null}
+                </div>
             </div>
         </section>
     );

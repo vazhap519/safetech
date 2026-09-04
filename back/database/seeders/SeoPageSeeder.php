@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\SeoPage;
+use App\Support\CanonicalSeedTombstones;
 use Illuminate\Database\Seeder;
 
 class SeoPageSeeder extends Seeder
@@ -14,8 +15,40 @@ class SeoPageSeeder extends Seeder
         }
     }
 
+    /**
+     * Seeds only the immutable defaults for /contact. Existing administrator
+     * edits and deletion tombstones are handled by seedPage().
+     */
+    public function seedContactPage(): void
+    {
+        foreach ($this->pages() as $page) {
+            if ($page['key'] !== 'contact') {
+                continue;
+            }
+
+            $this->seedPage($page);
+
+            return;
+        }
+    }
+
+    /** @return array<int, string> */
+    public static function canonicalKeys(): array
+    {
+        $seeder = new self;
+
+        return array_values(array_map(
+            static fn (array $page): string => $page['key'],
+            $seeder->pages(),
+        ));
+    }
+
     private function seedPage(array $page): void
     {
+        if (CanonicalSeedTombstones::seoPageWasDeleted($page['key'])) {
+            return;
+        }
+
         $record = SeoPage::query()->firstOrNew(['key' => $page['key']]);
 
         if (! $record->exists) {
@@ -41,7 +74,7 @@ class SeoPageSeeder extends Seeder
             }
         }
 
-        if (! is_array($record->keywords) || $record->keywords === []) {
+        if ($record->getRawOriginal('keywords') === null) {
             $record->keywords = $page['keywords'];
         }
 
@@ -49,19 +82,32 @@ class SeoPageSeeder extends Seeder
             $record->canonical = $page['canonical'];
         }
 
-        $record->noindex = false;
-        $record->translations = $this->mergeTranslations(
-            is_array($record->translations) ? $record->translations : [],
-            $page['translations'],
-            is_array($legacy['translations'] ?? null) ? $legacy['translations'] : [],
-        );
+        $rawTranslations = $record->getRawOriginal('translations');
+        $record->translations = $rawTranslations === null
+            ? $page['translations']
+            : $this->mergeTranslations(
+                is_array($record->translations) ? $record->translations : [],
+                $page['translations'],
+                is_array($legacy['translations'] ?? null) ? $legacy['translations'] : [],
+            );
         $record->save();
     }
 
     private function mergeTranslations(array $current, array $defaults, array $legacy): array
     {
+        if ($current === []) {
+            // A blank translation repeater was saved deliberately. Seed values
+            // are only applied when the translation payload is actually null.
+            return $current;
+        }
+
         $current['fields'] ??= [];
-        $current['keywords'] ??= [];
+        $currentHasKeywords = array_key_exists('keywords', $current)
+            && is_array($current['keywords']);
+
+        if (! $currentHasKeywords) {
+            $current['keywords'] = $defaults['keywords'];
+        }
 
         foreach ($defaults['fields'] as $field => $locales) {
             $current['fields'][$field] ??= [];
@@ -76,9 +122,11 @@ class SeoPageSeeder extends Seeder
             }
         }
 
-        foreach ($defaults['keywords'] as $locale => $keywords) {
-            if (! is_array($current['keywords'][$locale] ?? null) || $current['keywords'][$locale] === []) {
-                $current['keywords'][$locale] = $keywords;
+        if ($currentHasKeywords && $current['keywords'] !== []) {
+            foreach ($defaults['keywords'] as $locale => $keywords) {
+                if (! array_key_exists($locale, $current['keywords'])) {
+                    $current['keywords'][$locale] = $keywords;
+                }
             }
         }
 

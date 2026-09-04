@@ -28,6 +28,7 @@ use App\Models\Testimonial;
 use App\Models\User;
 use App\Observers\AdminAuditObserver;
 use App\Observers\ProjectSocialAutomationObserver;
+use App\Support\CanonicalSeedTombstones;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -62,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
         CmsMediaUpload::registerDefaults();
         CmsMediaUpload::ensureTemporaryDirectory();
         CmsMediaUpload::installProductionNginxLimits();
+        CanonicalSeedTombstones::register();
 
         foreach ($this->auditedModels() as $model) {
             $model::observe(AdminAuditObserver::class);

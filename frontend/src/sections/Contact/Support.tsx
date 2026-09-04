@@ -43,9 +43,9 @@ export default async function Support() {
     );
 
     return (
-        <section className="relative overflow-hidden py-unit-xl">
+        <section className="relative overflow-hidden py-10 sm:py-12 lg:py-16">
             <div
-                className={`mx-auto grid max-w-container-max grid-cols-1 items-center gap-unit-lg px-margin-desktop lg:gap-unit-xl ${
+                className={`mx-auto grid max-w-container-max grid-cols-1 items-center gap-6 px-margin-desktop lg:gap-10 ${
                     contactSupport ? "lg:grid-cols-2" : ""
                 }`}
             >

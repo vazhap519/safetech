@@ -38,4 +38,24 @@ class SystemContentSeederTest extends TestCase
         $this->assertFalse($contact['whatsapp_enabled']);
         $this->assertSame('custom@example.com', $contact['email']);
     }
+
+    public function test_it_replaces_legacy_blank_contact_email_values_with_the_public_business_inbox(): void
+    {
+        SiteSetting::query()->create([
+            'key' => 'contact',
+            'group' => 'general',
+            'is_public' => true,
+            'value' => [
+                'email' => '',
+                'lead_email' => 'safetechgeorgia@gmail.com',
+            ],
+        ]);
+
+        $this->seed(SystemContentSeeder::class);
+
+        $contact = SiteSetting::query()->where('key', 'contact')->sole()->value;
+
+        $this->assertSame('info@safetech.ge', $contact['email']);
+        $this->assertSame('info@safetech.ge', $contact['lead_email']);
+    }
 }

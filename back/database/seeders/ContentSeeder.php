@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\SiteSetting;
+use App\Support\CanonicalSeedTombstones;
 use Illuminate\Database\Seeder;
 
 class ContentSeeder extends Seeder
@@ -15,6 +16,10 @@ class ContentSeeder extends Seeder
     protected function seedSystemContent(): void
     {
         foreach ($this->defaultSiteSettings() as $key => $defaults) {
+            if (CanonicalSeedTombstones::siteSettingWasDeleted($key)) {
+                continue;
+            }
+
             $setting = SiteSetting::query()->firstOrCreate(
                 ['key' => $key],
                 [
@@ -28,9 +33,13 @@ class ContentSeeder extends Seeder
                 continue;
             }
 
-            $current = is_array($setting->value) ? $setting->value : [];
-            $current = $this->normalizeExistingValue($key, $current);
-            $merged = $this->mergeMissingValues($current, $defaults);
+            $current = $setting->value;
+            $merged = is_array($current)
+                ? $this->mergeMissingValues(
+                    $this->normalizeExistingValue($key, $current),
+                    $defaults,
+                )
+                : $defaults;
 
             $setting->forceFill([
                 'group' => filled($setting->group) ? $setting->group : 'general',
@@ -97,7 +106,9 @@ class ContentSeeder extends Seeder
     private function mergeMissingValues(array $current, array $defaults): array
     {
         if (array_is_list($defaults)) {
-            return $current === [] ? $defaults : $current;
+            // Once a repeater exists, an empty array means the editor chose
+            // to remove every row. Only a missing key receives seed defaults.
+            return $current;
         }
 
         foreach ($defaults as $key => $default) {
@@ -130,7 +141,11 @@ class ContentSeeder extends Seeder
             'contact' => [
                 'phone' => '',
                 'phones' => [],
-                'email' => '',
+                // This is the public inbox routed by Cloudflare. It is also
+                // the safe default recipient until an administrator chooses a
+                // different lead inbox in Site settings.
+                'email' => 'info@safetech.ge',
+                'lead_email' => 'info@safetech.ge',
                 'address' => '',
                 'whatsapp' => '',
                 'whatsapp_enabled' => true,

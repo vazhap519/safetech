@@ -24,9 +24,27 @@ final class SystemContentSeeder extends ContentSeeder
 
             if ($contact) {
                 $seededContact = is_array($contact->value) ? $contact->value : [];
+                $mergedContact = array_replace($seededContact, $adminManagedContact);
+
+                // A legacy blank/Gmail address is not a meaningful CMS
+                // override. Keep the public SafeTech address produced by the
+                // current system content, while preserving any other address
+                // the administrator intentionally configured.
+                foreach (['email', 'lead_email'] as $key) {
+                    $adminValue = trim((string) ($adminManagedContact[$key] ?? ''));
+
+                    if ($adminValue === '' || strcasecmp($adminValue, 'safetechgeorgia@gmail.com') === 0) {
+                        $seededValue = trim((string) ($seededContact[$key] ?? ''));
+
+                        $mergedContact[$key] = $seededValue !== ''
+                            && strcasecmp($seededValue, 'safetechgeorgia@gmail.com') !== 0
+                            ? $seededValue
+                            : 'info@safetech.ge';
+                    }
+                }
 
                 $contact->forceFill([
-                    'value' => array_replace($seededContact, $adminManagedContact),
+                    'value' => $mergedContact,
                 ])->save();
             }
         }

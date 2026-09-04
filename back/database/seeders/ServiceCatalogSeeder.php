@@ -7,6 +7,7 @@ use App\Models\Faq;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Support\Calculators\DefaultCalculatorProfiles;
+use App\Support\CanonicalSeedTombstones;
 use App\Support\MultilingualContent;
 use Illuminate\Database\Seeder;
 
@@ -20,6 +21,13 @@ class ServiceCatalogSeeder extends Seeder
         $translationEntries = [];
 
         foreach ($this->services() as $index => $definition) {
+            if (
+                CanonicalSeedTombstones::serviceWasDeleted($definition['slug'])
+                || ! isset($categories[$definition['category']])
+            ) {
+                continue;
+            }
+
             $service = $this->seedService(
                 $definition,
                 $categories[$definition['category']]->getKey(),
@@ -36,12 +44,68 @@ class ServiceCatalogSeeder extends Seeder
         $this->mergePublicTranslations($translationEntries);
     }
 
+    /** @return array<int, string> */
+    public static function canonicalCategorySlugs(): array
+    {
+        $seeder = new self;
+
+        return array_values(array_map(
+            static fn (array $definition): string => $definition['slug'],
+            $seeder->categories(),
+        ));
+    }
+
+    /** @return array<int, string> */
+    public static function canonicalServiceSlugs(): array
+    {
+        $seeder = new self;
+
+        return array_values(array_map(
+            static fn (array $definition): string => $definition['slug'],
+            $seeder->services(),
+        ));
+    }
+
+    /** @return array<int, string> */
+    public static function canonicalFaqContexts(): array
+    {
+        $seeder = new self;
+        $contexts = [];
+
+        foreach ($seeder->services() as $definition) {
+            foreach ($definition['faqs'] as $faq) {
+                $contexts[] = "service:{$definition['slug']}:{$faq['key']}";
+            }
+        }
+
+        return $contexts;
+    }
+
+    /** @return array<int, string> */
+    public static function canonicalTranslationKeys(): array
+    {
+        $seeder = new self;
+        $keys = [];
+
+        foreach ($seeder->services() as $definition) {
+            foreach ($seeder->serviceTranslationEntries($definition) as $entry) {
+                $keys[] = $entry['key'];
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
     /** @return array<string, CategoryForService> */
     private function seedCategories(): array
     {
         $records = [];
 
         foreach ($this->categories() as $definition) {
+            if (CanonicalSeedTombstones::categoryWasDeleted($definition['slug'])) {
+                continue;
+            }
+
             $payload = [
                 'name' => $definition['name']['ka'],
                 'slug' => $definition['slug'],
@@ -157,6 +221,11 @@ class ServiceCatalogSeeder extends Seeder
     {
         foreach ($faqs as $index => $faq) {
             $context = "service:{$service->slug}:{$faq['key']}";
+
+            if (CanonicalSeedTombstones::faqWasDeleted($context)) {
+                continue;
+            }
+
             $record = Faq::query()->firstOrNew([
                 'service_id' => $service->getKey(),
                 'context' => $context,
@@ -190,7 +259,13 @@ class ServiceCatalogSeeder extends Seeder
             $current = $model->getAttribute($field);
 
             if (is_array($default)) {
-                $currentArray = is_array($current) ? $current : [];
+                if (! is_array($current)) {
+                    $model->setAttribute($field, $default);
+
+                    continue;
+                }
+
+                $currentArray = $current;
                 $merged = $this->mergeMissingArrayValues($currentArray, $default);
 
                 if ($merged !== $currentArray) {
@@ -209,7 +284,10 @@ class ServiceCatalogSeeder extends Seeder
     private function mergeMissingArrayValues(array $current, array $defaults): array
     {
         if (array_is_list($defaults)) {
-            return $current === [] ? $defaults : $current;
+            // An empty repeater is an intentional CMS value. New records get
+            // defaults in fillMissing(), while existing records must keep an
+            // administrator's explicit empty list after a deployment.
+            return $current;
         }
 
         foreach ($defaults as $key => $default) {
@@ -236,6 +314,10 @@ class ServiceCatalogSeeder extends Seeder
     /** @param array<int, array<string, mixed>> $entries */
     private function mergePublicTranslations(array $entries): void
     {
+        if (CanonicalSeedTombstones::siteSettingWasDeleted('translations')) {
+            return;
+        }
+
         $setting = SiteSetting::query()->firstOrCreate(
             ['key' => 'translations'],
             [
@@ -250,7 +332,10 @@ class ServiceCatalogSeeder extends Seeder
         foreach ($entries as $entry) {
             $key = trim((string) ($entry['key'] ?? ''));
 
-            if ($key === '') {
+            if (
+                $key === ''
+                || CanonicalSeedTombstones::translationEntryWasDeleted($key)
+            ) {
                 continue;
             }
 

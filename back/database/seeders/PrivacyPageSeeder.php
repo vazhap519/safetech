@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\SeoPage;
 use App\Models\SiteSetting;
+use App\Support\CanonicalSeedTombstones;
 use App\Support\MultilingualContent;
 use Illuminate\Database\Seeder;
 
@@ -15,8 +16,29 @@ class PrivacyPageSeeder extends Seeder
         $this->seedTranslations();
     }
 
+    /** @return array<int, string> */
+    public static function canonicalKeys(): array
+    {
+        return ['privacy'];
+    }
+
+    /** @return array<int, string> */
+    public static function canonicalTranslationKeys(): array
+    {
+        $seeder = new self;
+
+        return array_values(array_map(
+            static fn (array $entry): string => $entry['key'],
+            $seeder->entries(),
+        ));
+    }
+
     private function seedSeo(): void
     {
+        if (CanonicalSeedTombstones::seoPageWasDeleted('privacy')) {
+            return;
+        }
+
         $record = SeoPage::query()->firstOrNew(['key' => 'privacy']);
         $defaults = [
             'slug' => '/privacy',
@@ -74,7 +96,7 @@ class PrivacyPageSeeder extends Seeder
             $current = $record->getAttribute($field);
 
             if (is_array($default)) {
-                if (is_array($current) === false || $current === []) {
+                if ($record->getRawOriginal($field) === null) {
                     $record->setAttribute($field, $default);
                 }
 
@@ -91,6 +113,10 @@ class PrivacyPageSeeder extends Seeder
 
     private function seedTranslations(): void
     {
+        if (CanonicalSeedTombstones::siteSettingWasDeleted('translations')) {
+            return;
+        }
+
         $setting = SiteSetting::query()->firstOrCreate(
             ['key' => 'translations'],
             [
@@ -104,6 +130,11 @@ class PrivacyPageSeeder extends Seeder
 
         foreach ($this->entries() as $entry) {
             $key = $entry['key'];
+
+            if (CanonicalSeedTombstones::translationEntryWasDeleted($key)) {
+                continue;
+            }
+
             $map[$key] ??= ['ka' => '', 'en' => '', 'ru' => ''];
 
             foreach (MultilingualContent::LOCALES as $locale) {

@@ -6,6 +6,7 @@ use App\Filament\Resources\ProjectResource\Pages;
 use App\Filament\Support\AdminIconOptions;
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\NavigationGroup;
+use App\Filament\Support\RelatedProjectDefaults;
 use App\Filament\Support\StableSlug;
 use App\Models\Project;
 use Filament\Actions\BulkActionGroup;
@@ -21,6 +22,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -234,10 +236,22 @@ class ProjectResource extends Resource
                                 })
                                 ->searchable()
                                 ->preload()
-                                ->required(),
+                                ->required()
+                                ->live()
+                                ->afterStateUpdated(function (?string $state, Set $set): void {
+                                    $defaults = RelatedProjectDefaults::forSlug($state);
+
+                                    if ($defaults === null) {
+                                        return;
+                                    }
+
+                                    foreach ($defaults as $path => $value) {
+                                        $set($path, $value);
+                                    }
+                                }),
                             TextInput::make('title')
                                 ->label('Card title (ქართული)')
-                                ->helperText('Optional override for the related project title.'),
+                                ->helperText('Filled from the selected project. You can edit it as an override.'),
                             ...LocalizedContentFields::itemInputs('title', 'Card title'),
                             TextInput::make('category')->label('Category (ქართული)'),
                             ...LocalizedContentFields::itemInputs('category', 'Category'),

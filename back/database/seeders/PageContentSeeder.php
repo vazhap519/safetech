@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Faq;
 use App\Models\SiteSetting;
+use App\Support\CanonicalSeedTombstones;
 use App\Support\MultilingualContent;
 use Illuminate\Database\Seeder;
 
@@ -21,8 +22,57 @@ class PageContentSeeder extends Seeder
         $this->seedFrequentlyAskedQuestions();
     }
 
+    /**
+     * Seeds only the content owned by the public contact page. This is kept
+     * separate from run() so a deployment or support task can restore missing
+     * contact copy without adding unrelated page content.
+     */
+    public function seedContactPageContent(): void
+    {
+        $this->seedContactDetails();
+        $this->seedContactTranslations();
+        $this->seedFrequentlyAskedQuestions();
+    }
+
+    /**
+     * Contact FAQs predate a dedicated immutable seed key. Their stable
+     * identity is therefore the contact context plus the canonical sort order.
+     */
+    public static function contactFaqTombstoneKey(int $sortOrder): string
+    {
+        return "contact:{$sortOrder}";
+    }
+
+    /** @return array<int, string> */
+    public static function canonicalContactFaqTombstoneKeys(): array
+    {
+        $seeder = new self;
+        $keys = [];
+
+        foreach (array_keys($seeder->faqDefinitions()) as $index) {
+            $keys[] = self::contactFaqTombstoneKey(100 + $index);
+        }
+
+        return $keys;
+    }
+
+    /** @return array<int, string> */
+    public static function canonicalTranslationKeys(): array
+    {
+        $seeder = new self;
+
+        return array_values(array_map(
+            static fn (array $entry): string => $entry['key'],
+            $seeder->translationEntries(),
+        ));
+    }
+
     private function seedBranding(): void
     {
+        if (CanonicalSeedTombstones::siteSettingWasDeleted('branding')) {
+            return;
+        }
+
         $setting = SiteSetting::query()->firstOrCreate(
             ['key' => 'branding'],
             [
@@ -49,6 +99,10 @@ class PageContentSeeder extends Seeder
 
     private function seedContactDetails(): void
     {
+        if (CanonicalSeedTombstones::siteSettingWasDeleted('contact')) {
+            return;
+        }
+
         $setting = SiteSetting::query()->firstOrCreate(
             ['key' => 'contact'],
             [
@@ -58,6 +112,7 @@ class PageContentSeeder extends Seeder
             ],
         );
         $value = is_array($setting->value) ? $setting->value : [];
+        $hasConfiguredPrimaryPhone = filled($value['phone'] ?? null);
         $existingPhones = collect(is_array($value['phones'] ?? null) ? $value['phones'] : [])
             ->map(fn (mixed $phone): string => is_array($phone)
                 ? trim((string) ($phone['value'] ?? ''))
@@ -66,12 +121,21 @@ class PageContentSeeder extends Seeder
             ->values()
             ->all();
 
-        $value['phone'] = self::PRIMARY_PHONE;
-        $value['phones'] = collect([
-            self::PRIMARY_PHONE,
-            self::SECONDARY_PHONE,
-            ...$existingPhones,
-        ])->filter()->unique()->values()->all();
+        $value['phone'] = $hasConfiguredPrimaryPhone
+            ? trim((string) $value['phone'])
+            : self::PRIMARY_PHONE;
+
+        if (
+            ! array_key_exists('phones', $value)
+            || ! is_array($value['phones'])
+            || (! $hasConfiguredPrimaryPhone && $existingPhones === [])
+        ) {
+            $value['phones'] = [self::PRIMARY_PHONE, self::SECONDARY_PHONE];
+        } else {
+            // A populated list and an explicit empty list are both editorial
+            // choices. Do not append the canonical phone numbers on deploy.
+            $value['phones'] = $existingPhones;
+        }
         $value['whatsapp'] = filled($value['whatsapp'] ?? null)
             ? trim((string) $value['whatsapp'])
             : '571430169';
@@ -91,6 +155,21 @@ class PageContentSeeder extends Seeder
 
     private function seedTranslations(): void
     {
+        $this->seedTranslationEntries($this->translationEntries());
+    }
+
+    private function seedContactTranslations(): void
+    {
+        $this->seedTranslationEntries($this->contactTranslationEntries());
+    }
+
+    /** @param array<int, array{key:string,ka:string,en:string,ru:string}> $entries */
+    private function seedTranslationEntries(array $entries): void
+    {
+        if (CanonicalSeedTombstones::siteSettingWasDeleted('translations')) {
+            return;
+        }
+
         $setting = SiteSetting::query()->firstOrCreate(
             ['key' => 'translations'],
             [
@@ -102,8 +181,13 @@ class PageContentSeeder extends Seeder
         $value = is_array($setting->value) ? $setting->value : [];
         $map = MultilingualContent::mapFrom($value);
 
-        foreach ($this->translationEntries() as $entry) {
+        foreach ($entries as $entry) {
             $key = $entry['key'];
+
+            if (CanonicalSeedTombstones::translationEntryWasDeleted($key)) {
+                continue;
+            }
+
             $map[$key] ??= ['ka' => '', 'en' => '', 'ru' => ''];
 
             foreach (MultilingualContent::LOCALES as $locale) {
@@ -125,6 +209,12 @@ class PageContentSeeder extends Seeder
     private function seedFrequentlyAskedQuestions(): void
     {
         foreach ($this->faqDefinitions() as $index => $definition) {
+            if (CanonicalSeedTombstones::faqWasDeleted(
+                self::contactFaqTombstoneKey(100 + $index),
+            )) {
+                continue;
+            }
+
             $record = Faq::query()->firstOrNew([
                 'service_id' => null,
                 'context' => 'contact',
@@ -442,6 +532,15 @@ class PageContentSeeder extends Seeder
             self::entry('contact.final.title', 'მზად ხართ ტექნიკური ამოცანის დასაწყებად?', 'Ready to start your technical project?', 'Готовы начать технический проект?'),
             self::entry('contact.final.button', 'მოთხოვნის გაგზავნა', 'Send request', 'Отправить запрос'),
         ];
+    }
+
+    /** @return array<int, array{key:string,ka:string,en:string,ru:string}> */
+    private function contactTranslationEntries(): array
+    {
+        return array_values(array_filter(
+            $this->translationEntries(),
+            static fn (array $entry): bool => str_starts_with($entry['key'], 'contact.'),
+        ));
     }
 
     /** @return array<int, array{question:array{ka:string,en:string,ru:string},answer:array{ka:string,en:string,ru:string}}> */

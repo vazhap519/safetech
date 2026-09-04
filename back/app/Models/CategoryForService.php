@@ -34,6 +34,14 @@ class CategoryForService extends Model
 
     protected static function booted()
     {
+        static::saving(function (self $category): void {
+            $translations = is_array($category->translations) ? $category->translations : [];
+
+            data_set($translations, 'fields.name.ka', trim((string) $category->name));
+
+            $category->translations = $translations;
+        });
+
         static::creating(function ($category) {
             if (! $category->slug) {
                 $category->slug = Str::slug($category->name);

@@ -24,7 +24,7 @@ export default async function FinalSection() {
             actionsClassName="mt-6 flex w-full justify-center md:mt-8"
             contentClassName="mx-auto flex max-w-container-max flex-col items-center justify-center px-4 sm:px-6 lg:px-margin-desktop"
             panelClassName="contents"
-            sectionClassName="bg-gradient-to-b from-surface-container-low to-background py-16 sm:py-20 md:py-24 lg:py-unit-xl"
+            sectionClassName="bg-gradient-to-b from-surface-container-low to-background py-12 sm:py-14 md:py-16 lg:py-20"
             title={title}
             titleClassName="mx-auto max-w-5xl text-balance text-center"
             titleVariant="contact-final-cta"

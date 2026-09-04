@@ -3,11 +3,18 @@
 namespace Database\Seeders;
 
 use App\Models\SiteSetting;
+use App\Support\CanonicalSeedTombstones;
 use App\Support\MultilingualContent;
 use Illuminate\Database\Seeder;
 
 final class ConsultationCopySeeder extends Seeder
 {
+    /** @return array<int, string> */
+    public static function canonicalTranslationKeys(): array
+    {
+        return array_keys((new self)->definitions());
+    }
+
     public function run(): void
     {
         $setting = SiteSetting::query()->where('key', 'translations')->first();
@@ -20,6 +27,10 @@ final class ConsultationCopySeeder extends Seeder
         $map = MultilingualContent::mapFrom($value);
 
         foreach ($this->definitions() as $key => $locales) {
+            if (CanonicalSeedTombstones::translationEntryWasDeleted($key)) {
+                continue;
+            }
+
             $map[$key] ??= ['ka' => '', 'en' => '', 'ru' => ''];
 
             foreach ($locales as $locale => $definition) {

@@ -57,9 +57,9 @@ export default async function Intro() {
     );
 
     return (
-        <section className="bg-background py-unit-xl">
+        <section className="bg-background py-10 sm:py-12 lg:py-16">
             <div
-                className={`container mx-auto grid max-w-container-max grid-cols-1 items-center gap-unit-lg px-margin-desktop lg:gap-unit-xl ${
+                className={`container mx-auto grid max-w-container-max grid-cols-1 items-center gap-6 px-margin-desktop lg:gap-10 ${
                     contactIntro ? "md:grid-cols-2" : ""
                 }`}
             >
@@ -83,7 +83,7 @@ export default async function Intro() {
                     ) : null}
 
                     {badges.length ? (
-                        <div className={`mt-unit-lg flex flex-col gap-unit-md sm:flex-row ${contactIntro ? "" : "justify-center"}`}>
+                        <div className={`mt-6 flex flex-col gap-3 sm:flex-row ${contactIntro ? "" : "justify-center"}`}>
                             {badges.map((badge) => (
                                 <div
                                     className="flex items-center gap-unit-xs"

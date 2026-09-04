@@ -17,7 +17,7 @@ export default async function FaqSection() {
     if (!title && !faqs.length) return null;
 
     return (
-        <section className="bg-surface-container-low py-unit-xl">
+        <section className="bg-surface-container-low py-10 sm:py-12 lg:py-16">
             <div className="mx-auto max-w-container-max px-margin-desktop">
                 {title ? (
                     <Typography

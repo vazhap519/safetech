@@ -45,8 +45,8 @@ final class SiteSettingValueNormalizer
             'whatsapp_message' => self::stringValue($value['whatsapp_message'] ?? ''),
             'hours' => self::stringValue($value['hours'] ?? ''),
             'lead_email' => self::trimmedString(
-                $value['lead_email'] ?? 'safetechgeorgia@gmail.com',
-                'safetechgeorgia@gmail.com',
+                $value['lead_email'] ?? 'info@safetech.ge',
+                'info@safetech.ge',
             ),
         ]);
     }
