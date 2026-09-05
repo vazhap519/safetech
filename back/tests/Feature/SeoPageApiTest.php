@@ -10,6 +10,13 @@ class SeoPageApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        SeoPage::query()->delete();
+    }
+
     public function test_it_returns_localized_admin_managed_metadata(): void
     {
         SeoPage::query()->create([

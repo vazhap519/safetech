@@ -23,13 +23,13 @@ final class ProjectSeoHelper
         $objectType = self::clean($objectType);
         $baseDescription = self::clean($description);
 
-        $titleParts = [$baseTitle];
+        $seoTitle = self::limit($baseTitle, 68);
 
         if ($city !== '' && ! self::contains($baseTitle, $city)) {
-            $titleParts[] = $city;
+            $suffix = ' — '.$city;
+            $baseLength = max(1, 68 - mb_strlen($suffix));
+            $seoTitle = self::limit(self::limit($baseTitle, $baseLength).$suffix, 68);
         }
-
-        $seoTitle = self::limit(implode(' — ', $titleParts), 68);
 
         $equipmentNames = collect($equipment)
             ->filter(fn ($item): bool => is_array($item) && self::clean($item['name'] ?? null) !== '')

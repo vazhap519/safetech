@@ -86,7 +86,27 @@ jobs:
           composer install --no-interaction --prefer-source --no-progress
 
       - name: Audit PHP dependencies
-        run: composer audit --locked --no-interaction
+        run: |
+          set +e
+          for attempt in 1 2 3; do
+            composer audit --locked --no-interaction
+            status=$?
+
+            if [ "${status}" -eq 0 ]; then
+              exit 0
+            fi
+
+            if [ "${status}" -ne 100 ]; then
+              exit "${status}"
+            fi
+
+            if [ "${attempt}" -lt 3 ]; then
+              echo "Composer audit registry request failed; retrying (${attempt}/3)..." >&2
+              sleep 10
+            fi
+          done
+
+          exit 100
 
       - name: Check PHP formatting
         run: vendor/bin/pint --test

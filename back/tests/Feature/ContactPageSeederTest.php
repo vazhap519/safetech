@@ -16,6 +16,11 @@ class ContactPageSeederTest extends TestCase
 
     public function test_it_seeds_only_the_contact_page_in_all_three_languages(): void
     {
+        $translationsBefore = MultilingualContent::mapFrom(
+            SiteSetting::query()->where('key', 'translations')->sole()->value,
+        );
+        $homeSeoBefore = SeoPage::query()->where('key', 'home')->first();
+
         $this->seed(ContactPageSeeder::class);
 
         $contact = SiteSetting::query()->where('key', 'contact')->sole()->value;
@@ -26,19 +31,31 @@ class ContactPageSeederTest extends TestCase
         $this->assertSame('571 430 169', $contact['phone']);
         $this->assertSame(['571 430 169', '557 316 310'], $contact['phones']);
         $this->assertSame(
-            'დაგვიკავშირდით ტექნიკური კონსულტაციისთვის',
+            'მიიღეთ კონსულტაცია და შეთავაზება თქვენი ობიექტისთვის',
             $translationMap['contact.hero.title']['ka'] ?? null,
         );
         $this->assertSame(
-            'Contact us for a technical consultation',
+            'Get a consultation and quote for your property',
             $translationMap['contact.hero.title']['en'] ?? null,
         );
         $this->assertSame(
-            'Свяжитесь с нами для технической консультации',
+            'Получите консультацию и расчет для вашего объекта',
             $translationMap['contact.hero.title']['ru'] ?? null,
         );
-        $this->assertArrayNotHasKey('home.hero.titlePrefix', $translationMap);
-        $this->assertDatabaseMissing('seo_pages', ['key' => 'home']);
+        $this->assertSame(
+            $translationsBefore['home.hero.titlePrefix'] ?? null,
+            $translationMap['home.hero.titlePrefix'] ?? null,
+        );
+
+        if ($homeSeoBefore) {
+            $this->assertSame(
+                $homeSeoBefore->title,
+                SeoPage::query()->where('key', 'home')->value('title'),
+            );
+        } else {
+            $this->assertDatabaseMissing('seo_pages', ['key' => 'home']);
+        }
+
         $this->assertSame(6, Faq::query()->where('context', 'contact')->count());
         $this->assertDatabaseHas('seo_pages', [
             'key' => 'contact',
