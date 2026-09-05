@@ -8,7 +8,8 @@ final class ProjectSeoHelper
 {
     /**
      * @param  array<int, array{name?: mixed, model?: mixed, quantity?: mixed}>  $equipment
-     * @return array{title: string, description: string, imageAlt: string}
+     * @param  array<int, mixed>  $services
+     * @return array{title: string, description: string, imageAlt: string, keywords: array<int, string>}
      */
     public static function suggest(
         ?string $name,
@@ -17,18 +18,29 @@ final class ProjectSeoHelper
         ?string $city,
         ?string $objectType,
         array $equipment = [],
+        array $services = [],
     ): array {
         $baseTitle = self::clean($headline) ?: self::clean($name) ?: 'SafeTech პროექტი';
         $city = self::clean($city);
         $objectType = self::clean($objectType);
         $baseDescription = self::clean($description);
+        $serviceNames = collect($services)
+            ->map(fn ($service): string => self::clean($service))
+            ->filter(fn (string $service): bool => $service !== '')
+            ->unique(fn (string $service): string => Str::lower($service))
+            ->values();
+        $primaryService = $serviceNames->first() ?? '';
 
-        $seoTitle = self::limit($baseTitle, 68);
+        $titleCore = collect([
+            $baseTitle,
+            $primaryService !== '' && ! self::contains($baseTitle, $primaryService) ? $primaryService : null,
+        ])->filter()->implode(' — ');
+        $seoTitle = self::limit($titleCore, 68);
 
-        if ($city !== '' && ! self::contains($baseTitle, $city)) {
+        if ($city !== '' && ! self::contains($titleCore, $city)) {
             $suffix = ' — '.$city;
             $baseLength = max(1, 68 - mb_strlen($suffix));
-            $seoTitle = self::limit(self::limit($baseTitle, $baseLength).$suffix, 68);
+            $seoTitle = self::limit(self::limit($titleCore, $baseLength).$suffix, 68);
         }
 
         $equipmentNames = collect($equipment)
@@ -46,6 +58,7 @@ final class ProjectSeoHelper
             ->values();
 
         $context = collect([
+            $primaryService !== '' ? $primaryService : null,
             $objectType !== '' ? $objectType : null,
             $city !== '' ? $city : null,
         ])->filter()->implode(', ');
@@ -68,16 +81,36 @@ final class ProjectSeoHelper
         $seoDescription = self::limit(implode(' ', $descriptionParts), 170);
 
         $altParts = collect([
+            $primaryService !== '' ? $primaryService : null,
             $objectType !== '' ? $objectType : null,
             $baseTitle,
             $city !== '' ? $city : null,
             'SafeTech',
         ])->filter()->unique()->values();
 
+        $keywords = collect([
+            ...$serviceNames->all(),
+            $city !== '' ? $city : null,
+            $objectType !== '' ? $objectType : null,
+            ...collect($equipment)
+                ->filter(fn ($item): bool => is_array($item))
+                ->map(fn (array $item): string => self::clean($item['name'] ?? null))
+                ->filter()
+                ->take(5)
+                ->all(),
+        ])
+            ->filter(fn ($value): bool => is_string($value) && trim($value) !== '')
+            ->map(fn (string $value): string => trim($value))
+            ->unique(fn (string $value): string => Str::lower($value))
+            ->take(12)
+            ->values()
+            ->all();
+
         return [
             'title' => $seoTitle,
             'description' => $seoDescription,
             'imageAlt' => self::limit($altParts->implode(' — '), 140),
+            'keywords' => $keywords,
         ];
     }
 

@@ -19,6 +19,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -191,7 +192,7 @@ class ProjectResource extends Resource
                 ->columns(3),
 
             Section::make('SEO, cards and featured translations')
-                ->description('SEO Helper ქმნის ქართულ SEO title-ს, meta description-ს და image alt-ს Project name/title, ქალაქის, ობიექტის ტიპისა და ტექნიკის მიხედვით. გენერირებული ტექსტი მხოლოდ ფორმაში ჩაიწერება და შენახვამდე შეგიძლია შეცვალო.')
+                ->description('SEO Helper ქმნის ქართულ SEO title-ს, meta description-ს, image alt-ს და keywords-ს Project-ის რეალური მონაცემებისა და შენ მიერ არჩეული Service / City landing-ების მიხედვით. გენერირებული ტექსტი მხოლოდ ფორმაში ჩაიწერება და შენახვამდე შეგიძლია შეცვალო.')
                 ->headerActions([
                     Action::make('generateProjectSeo')
                         ->label('SEO ტექსტების გენერირება')
@@ -199,8 +200,19 @@ class ProjectResource extends Resource
                         ->color('primary')
                         ->requiresConfirmation()
                         ->modalHeading('SEO ტექსტების გენერირება')
-                        ->modalDescription('მიმდინარე ფორმაში ქართული SEO title, SEO description და image alt შეიცვლება გენერირებული ვერსიებით. მონაცემები ბაზაში მხოლოდ Save-ის შემდეგ შეინახება.')
-                        ->action(function (Get $get, Set $set): void {
+                        ->modalDescription('მიმდინარე ფორმაში ქართული SEO title, SEO description, image alt და keywords შეიცვლება გენერირებული ვერსიებით. Project-ის Service / City კავშირები გამოიყენება მხოლოდ თუ უკვე შენახულია. მონაცემები ბაზაში მხოლოდ Save-ის შემდეგ შეინახება.')
+                        ->action(function (Get $get, Set $set, ?Project $record): void {
+                            $serviceNames = $record
+                                ? $record->localServiceLandings()
+                                    ->with('service')
+                                    ->get()
+                                    ->map(fn ($landing): ?string => $landing->service?->name ?: $landing->service?->title)
+                                    ->filter()
+                                    ->unique()
+                                    ->values()
+                                    ->all()
+                                : [];
+
                             $suggestion = ProjectSeoHelper::suggest(
                                 $get('name'),
                                 $get('title'),
@@ -208,21 +220,29 @@ class ProjectResource extends Resource
                                 $get('city'),
                                 $get('object_type'),
                                 is_array($get('equipment')) ? $get('equipment') : [],
+                                $serviceNames,
                             );
 
                             $set('translations.fields.seoTitle.ka', $suggestion['title']);
                             $set('seo_description', $suggestion['description']);
                             $set('image_alt', $suggestion['imageAlt']);
+                            $set('seo.keywords', $suggestion['keywords']);
 
                             Notification::make()
                                 ->title('SEO ტექსტები ფორმაში ჩაიწერა')
-                                ->body('შეამოწმე და სურვილის შემთხვევაში ჩაასწორე, შემდეგ დააჭირე Save-ს.')
+                                ->body($serviceNames
+                                    ? 'SEO-ში გამოყენებულია შენ მიერ არჩეული Service / City კავშირებიც. შეამოწმე და შემდეგ დააჭირე Save-ს.'
+                                    : 'Service / City კავშირი ჯერ არ არის არჩეული. SEO შეიქმნა პროექტის სხვა რეალური მონაცემებით.')
                                 ->success()
                                 ->send();
                         }),
                 ])
                 ->schema([
                     ...LocalizedContentFields::inputs('seoTitle', 'SEO title'),
+                    TagsInput::make('seo.keywords')
+                        ->label('SEO keywords')
+                        ->helperText('SEO Helper ავტომატურად აერთიანებს არჩეულ სერვისებს, ქალაქს, ობიექტის ტიპსა და ტექნიკას. სურვილის შემთხვევაში შეგიძლია ხელით ჩაასწორო.')
+                        ->columnSpanFull(),
                     ...LocalizedContentFields::inputs('card.title', 'Card title'),
                     ...LocalizedContentFields::inputs('card.description', 'Card description', textarea: true),
                     ...LocalizedContentFields::inputs('featured.title', 'Featured title'),
