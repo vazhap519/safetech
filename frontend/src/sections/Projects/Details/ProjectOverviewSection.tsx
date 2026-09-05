@@ -3,6 +3,12 @@ import type { ProjectDetail } from "@/lib/projectDetails";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
+function localizedLabel(locale: string, ka: string, en: string, ru: string) {
+    if (locale === "en") return en;
+    if (locale === "ru") return ru;
+    return ka;
+}
+
 export default async function ProjectOverviewSection({
     project,
 }: {
@@ -21,8 +27,37 @@ export default async function ProjectOverviewSection({
         locale,
         null,
     );
-    const scope = project.scope.filter((item) => item.label || item.value);
-    const specs = project.specs.filter((item) => item.label || item.value);
+    const structuredFacts = [
+        project.city
+            ? {
+                  label: localizedLabel(locale, "ქალაქი", "City", "Город"),
+                  value: project.city,
+              }
+            : null,
+        project.objectType
+            ? {
+                  label: localizedLabel(
+                      locale,
+                      "ობიექტის ტიპი",
+                      "Object type",
+                      "Тип объекта",
+                  ),
+                  value: project.objectType,
+              }
+            : null,
+    ].filter((item): item is { label: string; value: string } => Boolean(item));
+    const equipmentSpecs = (project.equipment ?? [])
+        .filter((item) => item.name)
+        .map((item) => ({
+            label: item.name,
+            value: [item.quantity, item.model].filter(Boolean).join(" • "),
+        }));
+    const scope = [...structuredFacts, ...project.scope].filter(
+        (item) => item.label || item.value,
+    );
+    const specs = [...equipmentSpecs, ...project.specs].filter(
+        (item) => item.label || item.value,
+    );
 
     if (!scope.length && !specs.length) return null;
 
