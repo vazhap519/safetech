@@ -168,6 +168,12 @@ jobs:
           cat /tmp/safetech-next.log
           exit 1
 
+      - name: Run sitemap-wide Google SEO audit
+        working-directory: frontend
+        env:
+          SEO_REQUIRE_GE_DOMAIN: "false"
+        run: SEO_BASE_URL=http://127.0.0.1:3000 npm run seo:smoke
+
       - name: Run desktop mobile multilingual browser matrix
         working-directory: frontend
         run: npx playwright test
