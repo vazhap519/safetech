@@ -103,7 +103,6 @@ export function createMetadata({
     description,
     path,
     locale = DEFAULT_LOCALE,
-    keywords = [],
     image = DEFAULT_SOCIAL_IMAGE,
     siteName = SITE_NAME,
     type = "website",
@@ -140,7 +139,6 @@ export function createMetadata({
             absolute: fullTitle,
         },
         description: resolvedDescription,
-        keywords,
         alternates: {
             canonical: url,
             languages: {
