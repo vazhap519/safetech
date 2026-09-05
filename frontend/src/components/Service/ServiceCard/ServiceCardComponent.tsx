@@ -32,7 +32,17 @@ export default function ServiceCardComponent({ service }: Props) {
 
             {service.title ? (
                 <h3 className="mb-unit-sm font-headline-md text-headline-md">
-                    {service.title}
+                    {service.slug ? (
+                        <LocalizedLink
+                            className="transition-colors hover:text-secondary"
+                            href={`/services/${service.slug}`}
+                            prefetch={false}
+                        >
+                            {service.title}
+                        </LocalizedLink>
+                    ) : (
+                        service.title
+                    )}
                 </h3>
             ) : null}
 
@@ -44,6 +54,7 @@ export default function ServiceCardComponent({ service }: Props) {
 
             {service.slug && readMoreLabel ? (
                 <LocalizedLink
+                    aria-label={`${readMoreLabel}: ${service.title || service.slug}`}
                     className={`${CARD_ACTION_CLASS} group`}
                     href={`/services/${service.slug}`}
                     prefetch={false}

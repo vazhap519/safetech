@@ -51,7 +51,13 @@ export default async function FeaturedCardComponent({
                         className="mb-2 font-headline-md text-headline-md text-white"
                         variant="why-component-header"
                     >
-                        {service.title}
+                        <LocalizedLink
+                            className="transition-colors hover:text-secondary"
+                            href={`/services/${service.slug}`}
+                            prefetch={false}
+                        >
+                            {service.title}
+                        </LocalizedLink>
                     </Typography>
                 ) : null}
                 {service.description ? (
@@ -65,6 +71,7 @@ export default async function FeaturedCardComponent({
                 ) : null}
                 {detailsLabel ? (
                     <LocalizedLink
+                        aria-label={`${detailsLabel}: ${service.title || service.slug}`}
                         className={`${CARD_ACTION_CLASS} mt-4`}
                         href={`/services/${service.slug}`}
                         prefetch={false}

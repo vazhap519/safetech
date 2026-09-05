@@ -73,10 +73,10 @@ export default function AnalyticsConsentClient({
                             ru: "Мы используем аналитику и рекламные технологии для оценки работы сайта и кампаний.",
                         })}{" "}
                         <LocalizedLink className="text-secondary underline" href="/privacy">
-                            {t("consent.learnMore", {
-                                ka: "დეტალურად",
-                                en: "Learn more",
-                                ru: "Подробнее",
+                            {t("consent.privacyPolicy", {
+                                ka: "კონფიდენციალურობის პოლიტიკა",
+                                en: "Privacy policy",
+                                ru: "Политика конфиденциальности",
                             })}
                         </LocalizedLink>
                     </p>

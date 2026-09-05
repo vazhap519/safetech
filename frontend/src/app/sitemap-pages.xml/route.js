@@ -10,11 +10,13 @@ import { addSitemapStylesheet } from "@/lib/sitemap-style";
 export const dynamic = "force-dynamic";
 
 const LEGAL_PAGE_SLUGS = new Set(["privacy", "terms"]);
+const ALWAYS_NOINDEX_SLUGS = new Set(["privacy"]);
 
 export async function GET() {
   const pages = await fetchAllPaginated("/pages");
   const urls = pages
     .filter(isIndexablePage)
+    .filter((page) => !ALWAYS_NOINDEX_SLUGS.has(page.slug))
     .flatMap((page) => {
       const path = LEGAL_PAGE_SLUGS.has(page.slug)
         ? `/${encodeURIComponent(page.slug)}`

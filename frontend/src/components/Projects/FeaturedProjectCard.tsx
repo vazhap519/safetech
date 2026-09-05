@@ -1,6 +1,7 @@
 import ProjectDetailsLink from "@/components/Projects/ProjectDetailsLink";
 import Icon from "@/components/ui/Icon";
 import Image from "@/components/ui/Image";
+import LocalizedLink from "@/components/ui/LocalizedLink";
 
 import type { FeaturedProject } from "@/lib/projects";
 import { getYouTubeWatchUrl } from "@/lib/youtube";
@@ -16,7 +17,7 @@ export default function FeaturedProjectCard({
         <article className="glass-card group relative overflow-hidden rounded-lg transition-transform duration-300 motion-safe:hover:scale-[1.02]">
             <div className="relative aspect-[16/10] overflow-hidden">
                 <Image
-                    alt={project.imageAlt}
+                    alt={project.imageAlt || project.title}
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -45,34 +46,39 @@ export default function FeaturedProjectCard({
                 ) : null}
                 {project.title ? (
                     <h3 className="mb-4 font-headline-md text-headline-md text-white">
-                        {project.title}
+                        <LocalizedLink
+                            className="transition-colors hover:text-secondary"
+                            href={`/projects/${project.slug}`}
+                            prefetch={false}
+                        >
+                            {project.title}
+                        </LocalizedLink>
                     </h3>
                 ) : null}
                 {project.specs.length ? (
                     <dl className="space-y-3 border-t border-outline-variant/20 pt-4">
-                    {project.specs.filter((spec) => spec.label || spec.value).map((spec) => (
-                        <div
-                            className="flex items-center justify-between gap-4"
-                            key={`${spec.label}-${spec.value}`}
-                        >
-                            {spec.label ? (
-                                <dt className="text-label-md text-on-surface-variant">
-                                    {spec.label}
-                                </dt>
-                            ) : null}
-                            {spec.value ? (
-                                <dd className="text-right font-bold text-white">
-                                    {spec.value}
-                                </dd>
-                            ) : null}
-                        </div>
-                    ))}
+                        {project.specs
+                            .filter((spec) => spec.label || spec.value)
+                            .map((spec) => (
+                                <div
+                                    className="flex items-center justify-between gap-4"
+                                    key={`${spec.label}-${spec.value}`}
+                                >
+                                    {spec.label ? (
+                                        <dt className="text-label-md text-on-surface-variant">
+                                            {spec.label}
+                                        </dt>
+                                    ) : null}
+                                    {spec.value ? (
+                                        <dd className="text-right font-bold text-white">
+                                            {spec.value}
+                                        </dd>
+                                    ) : null}
+                                </div>
+                            ))}
                     </dl>
                 ) : null}
-                <ProjectDetailsLink
-                    className="mt-5"
-                    slug={project.slug}
-                />
+                <ProjectDetailsLink className="mt-5" slug={project.slug} />
             </div>
         </article>
     );

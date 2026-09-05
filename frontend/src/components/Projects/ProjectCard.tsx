@@ -3,6 +3,7 @@
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import ProjectDetailsLink from "@/components/Projects/ProjectDetailsLink";
 import Icon from "@/components/ui/Icon";
+import LocalizedLink from "@/components/ui/LocalizedLink";
 import type { Project } from "@/lib/projects";
 import { getYouTubeWatchUrl } from "@/lib/youtube";
 
@@ -52,7 +53,17 @@ export default function ProjectCard({ project }: { project: Project }) {
             </div>
             {project.title ? (
                 <h3 className="mb-2 font-headline-md text-headline-md text-white">
-                    {project.title}
+                    {project.slug ? (
+                        <LocalizedLink
+                            className="transition-colors hover:text-secondary"
+                            href={`/projects/${project.slug}`}
+                            prefetch={false}
+                        >
+                            {project.title}
+                        </LocalizedLink>
+                    ) : (
+                        project.title
+                    )}
                 </h3>
             ) : null}
             {project.description ? (
