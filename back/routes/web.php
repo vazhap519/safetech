@@ -4,7 +4,7 @@ use App\Http\Controllers\Admin\EstimatePdfController;
 use App\Support\DeploymentInfo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\URL;
+use Livewire\Features\SupportFileUploads\GenerateSignedUploadUrl;
 
 Route::get('/', function () {
     return response()->json([
@@ -42,10 +42,7 @@ Route::get('/_safetech/upload-probe', function (Request $request) {
         'commit' => DeploymentInfo::commit(),
         'request_root' => $request->root(),
         'csrf_token' => csrf_token(),
-        'livewire_upload_url' => URL::temporarySignedRoute(
-            'livewire.upload-file',
-            now()->addMinutes(5),
-        ),
+        'livewire_upload_url' => app(GenerateSignedUploadUrl::class)->forLocal(),
     ])->withHeaders([
         'Cache-Control' => 'no-store, private',
         'X-Robots-Tag' => 'noindex, nofollow, nosnippet',
