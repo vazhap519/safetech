@@ -34,15 +34,15 @@ class PageContentSeederTest extends TestCase
         $translationMap = MultilingualContent::mapFrom($translations->value);
 
         $this->assertSame(
-            'დაგვიკავშირდით ტექნიკური კონსულტაციისთვის',
+            'მიიღეთ კონსულტაცია და შეთავაზება თქვენი ობიექტისთვის',
             $translationMap['contact.hero.title']['ka'] ?? null,
         );
         $this->assertSame(
-            'Contact us for a technical consultation',
+            'Get a consultation and quote for your property',
             $translationMap['contact.hero.title']['en'] ?? null,
         );
         $this->assertSame(
-            'Комплексное техническое обслуживание',
+            'Профессиональные технические услуги',
             $translationMap['services.hero.titlePrefix']['ru'] ?? null,
         );
 

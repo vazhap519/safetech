@@ -185,6 +185,7 @@ class ProjectResource extends Resource
                         ])
                         ->columns(3)
                         ->collapsible()
+                        ->defaultItems(0)
                         ->columnSpanFull(),
                 ])
                 ->columns(3),
