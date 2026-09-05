@@ -27,7 +27,17 @@ export default function Servicecomponent({ service }: { service: ServiceCard }) 
             </div>
             {service.title ? (
                 <h3 className="min-w-0 break-words font-headline-md text-xl leading-snug text-white [overflow-wrap:anywhere] sm:text-headline-md">
-                    {service.title}
+                    {service.slug ? (
+                        <LocalizedLink
+                            className="transition-colors hover:text-secondary"
+                            href={`/services/${service.slug}`}
+                            prefetch={false}
+                        >
+                            {service.title}
+                        </LocalizedLink>
+                    ) : (
+                        service.title
+                    )}
                 </h3>
             ) : null}
             {service.description ? (
@@ -37,6 +47,7 @@ export default function Servicecomponent({ service }: { service: ServiceCard }) 
             ) : null}
             {service.slug && readMoreLabel ? (
                 <LocalizedLink
+                    aria-label={`${readMoreLabel}: ${service.title || service.slug}`}
                     className={`${CARD_ACTION_CLASS} mt-auto max-w-full break-words`}
                     href={`/services/${service.slug}`}
                     prefetch={false}
