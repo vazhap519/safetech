@@ -6,6 +6,7 @@ import ServiceDetailView from "@/features/service-detail/ServiceDetailView";
 import ServiceStructuredData from "@/features/service-detail/components/ServiceStructuredData";
 import { getBackendService } from "@/lib/backend";
 import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
+import { getLocalServiceLandings } from "@/lib/local-service-landings";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
@@ -14,14 +15,35 @@ type ServicePageProps = {
     params: Promise<{ slug: string }>;
 };
 
+function normalizedSeoTitle(value: string | null | undefined, siteName: string) {
+    return (value || "")
+        .replace(new RegExp(`\\s*[|—-]\\s*${siteName}\\s*$`, "i"), "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLocaleLowerCase();
+}
+
+function countryServiceTitle(serviceName: string, locale: string) {
+    switch (locale) {
+        case "en":
+            return `${serviceName} in Georgia`;
+        case "ru":
+            return `${serviceName} в Грузии`;
+        default:
+            return `${serviceName} საქართველოში`;
+    }
+}
+
 export async function generateMetadata({
     params,
 }: ServicePageProps): Promise<Metadata> {
     const { slug } = await params;
-    const [{ branding, locale, translations }, service] = await Promise.all([
-        getSiteSettings(),
-        getBackendService(slug),
-    ]);
+    const [{ branding, locale, translations }, service, localLandings] =
+        await Promise.all([
+            getSiteSettings(),
+            getBackendService(slug),
+            getLocalServiceLandings(slug),
+        ]);
     const siteName = branding.siteName;
 
     if (!service) {
@@ -44,8 +66,20 @@ export async function generateMetadata({
         };
     }
 
+    const configuredTitle = service.seo?.title || service.title || service.name;
+    const normalizedConfiguredTitle = normalizedSeoTitle(configuredTitle, siteName);
+    const duplicatesLocalLanding = localLandings.some((landing) =>
+        [landing.seo?.title, landing.title].some(
+            (candidate) =>
+                normalizedSeoTitle(candidate, siteName) === normalizedConfiguredTitle,
+        ),
+    );
+    const metadataTitle = duplicatesLocalLanding
+        ? countryServiceTitle(service.name || service.title || configuredTitle, locale)
+        : configuredTitle;
+
     return createMetadata({
-        title: service.seo?.title || service.title || service.name,
+        title: metadataTitle,
         description:
             service.seo?.description ||
             service.seoDescription ||
