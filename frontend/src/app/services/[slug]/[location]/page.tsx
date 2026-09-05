@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import LocalServiceLandingView from "@/components/pages/LocalServiceLandingView";
+import LocalServiceSiblingLinks from "@/components/pages/LocalServiceSiblingLinks";
 import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
-import { getLocalServiceLanding } from "@/lib/local-service-landings";
+import {
+    getLocalServiceLanding,
+    getLocalServiceLandings,
+} from "@/lib/local-service-landings";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 
@@ -55,9 +59,10 @@ export default async function LocalServicePage({
     params,
 }: LocalServicePageProps) {
     const { slug, location } = await params;
-    const [{ locale }, landing] = await Promise.all([
+    const [{ locale }, landing, siblings] = await Promise.all([
         getSiteSettings(),
         getLocalServiceLanding(slug, location),
+        getLocalServiceLandings(slug),
     ]);
 
     if (!landing) {
@@ -68,5 +73,15 @@ export default async function LocalServicePage({
         notFound();
     }
 
-    return <LocalServiceLandingView landing={landing} locale={locale} />;
+    return (
+        <>
+            <LocalServiceLandingView landing={landing} locale={locale} />
+            <LocalServiceSiblingLinks
+                currentLocation={landing.locationSlug}
+                locale={locale}
+                serviceSlug={landing.service.slug}
+                siblings={siblings}
+            />
+        </>
+    );
 }
