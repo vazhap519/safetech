@@ -4,6 +4,7 @@ import { runSitewideSeoAudit } from "./seo-sitewide-audit.mjs";
 
 const baseUrl = (process.env.SEO_BASE_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
 const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://safetech.ge").replace(/\/$/, "");
+const requireGeDomain = process.env.SEO_REQUIRE_GE_DOMAIN !== "false";
 const googlebotUserAgent =
     "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
@@ -290,10 +291,12 @@ async function validateLegacyCalculatorRedirect() {
 }
 
 async function main() {
-    assert(
-        new URL(publicSiteUrl).hostname.endsWith(".ge"),
-        "NEXT_PUBLIC_SITE_URL must use Georgia's .ge country-code domain",
-    );
+    if (requireGeDomain) {
+        assert(
+            new URL(publicSiteUrl).hostname.endsWith(".ge"),
+            "NEXT_PUBLIC_SITE_URL must use Georgia's .ge country-code domain",
+        );
+    }
 
     for (const route of coreRoutes) {
         await validateCorePage(route);
