@@ -73,6 +73,18 @@ jobs:
               p.write_text(text)
 
           replace(
+              'tests/Feature/ContactPageSeederTest.php',
+              """    public function test_it_seeds_only_the_contact_page_in_all_three_languages(): void\n    {\n        $this->seed(ContactPageSeeder::class);\n\n        $contact = SiteSetting::query()->where('key', 'contact')->sole()->value;\n""",
+              """    public function test_it_seeds_only_the_contact_page_in_all_three_languages(): void\n    {\n        $translationsBefore = MultilingualContent::mapFrom(\n            SiteSetting::query()->where('key', 'translations')->sole()->value,\n        );\n        $homeSeoBefore = SeoPage::query()->where('key', 'home')->first();\n\n        $this->seed(ContactPageSeeder::class);\n\n        $contact = SiteSetting::query()->where('key', 'contact')->sole()->value;\n""",
+          )
+
+          replace(
+              'tests/Feature/ContactPageSeederTest.php',
+              """        $this->assertArrayNotHasKey('home.hero.titlePrefix', $translationMap);\n        $this->assertDatabaseMissing('seo_pages', ['key' => 'home']);\n        $this->assertSame(6, Faq::query()->where('context', 'contact')->count());\n""",
+              """        $this->assertSame(\n            $translationsBefore['home.hero.titlePrefix'] ?? null,\n            $translationMap['home.hero.titlePrefix'] ?? null,\n        );\n\n        if ($homeSeoBefore) {\n            $this->assertSame(\n                $homeSeoBefore->title,\n                SeoPage::query()->where('key', 'home')->value('title'),\n            );\n        } else {\n            $this->assertDatabaseMissing('seo_pages', ['key' => 'home']);\n        }\n\n        $this->assertSame(6, Faq::query()->where('context', 'contact')->count());\n""",
+          )
+
+          replace(
               'tests/Feature/SeoPageApiTest.php',
               """class SeoPageApiTest extends TestCase\n{\n    use RefreshDatabase;\n""",
               """class SeoPageApiTest extends TestCase\n{\n    use RefreshDatabase;\n\n    protected function setUp(): void\n    {\n        parent::setUp();\n\n        SeoPage::query()->delete();\n    }\n""",
