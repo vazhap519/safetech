@@ -177,7 +177,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             <ChallengesSection project={project} />
             <SolutionsSection project={project} />
             <ProcessSection project={project} />
-            <GallerySection project={project} videoEnabled={false} />
+            <GallerySection project={project} />
             <ResultsSection project={project} />
             {relatedProjects.length ? (
                 <RelatedProjectsSection projects={relatedProjects} />
