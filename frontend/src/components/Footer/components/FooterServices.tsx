@@ -1,11 +1,13 @@
 import TranslatedText from "@/components/i18n/TranslatedText";
 import Typography from "@/components/ui/Typography";
 import FooterServicesList from "@/components/Footer/components/FooterServicesList";
-import { getBackendFooterServices } from "@/lib/backend";
+import type { FooterServiceLink } from "@/lib/backend";
 
-export default async function FooterServices() {
-    const services = await getBackendFooterServices();
-
+export default function FooterServices({
+    services,
+}: {
+    services: FooterServiceLink[];
+}) {
     if (!services.length) return null;
 
     return (

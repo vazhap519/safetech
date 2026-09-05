@@ -2,11 +2,33 @@ import SocialIcon from "@/components/ui/SocialIcon";
 import Image from "@/components/ui/Image";
 import TranslatedText from "@/components/i18n/TranslatedText";
 import LocalizedLink from "@/components/ui/LocalizedLink";
-import { getSiteSettings } from "@/lib/site-settings";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import type { SiteSocialLink } from "@/lib/site-settings";
 
-export default async function FooterDescription() {
-    const { branding, contact, socialLinks } = await getSiteSettings();
+type FooterBranding = {
+    siteName: string;
+    tagline: string;
+    logo: string | null;
+    footerLogo: string | null;
+};
+
+type FooterContactDetails = {
+    whatsapp: string;
+    whatsappEnabled: boolean;
+    whatsappMessage: string;
+};
+
+type FooterDescriptionProps = {
+    branding: FooterBranding;
+    contact: FooterContactDetails;
+    socialLinks: SiteSocialLink[];
+};
+
+export default function FooterDescription({
+    branding,
+    contact,
+    socialLinks,
+}: FooterDescriptionProps) {
     const siteName = branding.siteName;
     const logo = branding.footerLogo || branding.logo;
     const footerSocialLinks = socialLinks.filter(
