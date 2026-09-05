@@ -17,7 +17,7 @@ export default function FeaturedProjectCard({
         <article className="glass-card group relative overflow-hidden rounded-lg transition-transform duration-300 motion-safe:hover:scale-[1.02]">
             <div className="relative aspect-[16/10] overflow-hidden">
                 <Image
-                    alt={project.imageAlt}
+                    alt={project.imageAlt || project.title}
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
