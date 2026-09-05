@@ -25,6 +25,42 @@ type ProjectPageProps = {
     params: Promise<{ slug: string; locale?: string }>;
 };
 
+function projectMetaDescription(project: {
+    description?: string | null;
+    seoDescription?: string | null;
+    seo?: { description?: string | null } | null;
+    title?: string | null;
+    name?: string | null;
+    city?: string | null;
+    objectType?: string | null;
+    equipment?: Array<{ name?: string | null; model?: string | null }> | null;
+}) {
+    const primary =
+        project.seo?.description ||
+        project.seoDescription ||
+        project.description ||
+        "";
+
+    if (primary.trim().length >= 40) return primary.trim();
+
+    const factualContext = [
+        project.title,
+        project.name,
+        project.objectType,
+        project.city,
+        ...(project.equipment ?? []).flatMap((item) => [item.name, item.model]),
+    ]
+        .filter((value): value is string => Boolean(value?.trim()))
+        .filter((value, index, values) =>
+            values.findIndex(
+                (candidate) =>
+                    candidate.toLocaleLowerCase() === value.toLocaleLowerCase(),
+            ) === index,
+        );
+
+    return [primary.trim(), ...factualContext].filter(Boolean).join(" — ");
+}
+
 export async function generateMetadata({
     params,
 }: ProjectPageProps): Promise<Metadata> {
@@ -77,10 +113,7 @@ export async function generateMetadata({
 
     return createMetadata({
         title,
-        description:
-            project.seo?.description ||
-            project.seoDescription ||
-            project.description,
+        description: projectMetaDescription(project),
         path: `/projects/${project.slug}`,
         locale,
         keywords,
