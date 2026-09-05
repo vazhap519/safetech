@@ -20,19 +20,11 @@ function ensureVideoUploadDate(
     uploadDate: string,
 ): StructuredDataValue {
     const enrich = (value: unknown): unknown => {
-        if (Array.isArray(value)) {
-            return value.map(enrich);
-        }
-
-        if (!value || typeof value !== "object") {
-            return value;
-        }
+        if (Array.isArray(value)) return value.map(enrich);
+        if (!value || typeof value !== "object") return value;
 
         const normalized = Object.fromEntries(
-            Object.entries(value).map(([key, nestedValue]) => [
-                key,
-                enrich(nestedValue),
-            ]),
+            Object.entries(value).map(([key, nestedValue]) => [key, enrich(nestedValue)]),
         );
         const type = normalized["@type"];
         const isVideoObject =
@@ -63,17 +55,15 @@ export default async function ProjectDetailSchema({
     const { branding, locale, translations } = await getSiteSettings();
     const t = createTranslator(translations, locale);
     const url = absoluteLocalizedUrl(`/projects/${project.slug}`, locale);
+    const projectId = `${url}#project`;
+    const videoId = `${url}#video`;
     const videoEmbedUrl = getYouTubeEmbedUrl(project.videoUrl);
     const videoWatchUrl = getYouTubeWatchUrl(project.videoUrl);
     const videoUploadDate = project.publishedAt || project.updated_at || "";
     const description = project.seoDescription || project.description;
-    const projectImage =
-        project.image || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
+    const projectImage = project.image || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
     const organizationLogo =
-        branding.logo ||
-        branding.footerLogo ||
-        branding.defaultImage ||
-        DEFAULT_SOCIAL_IMAGE;
+        branding.logo || branding.footerLogo || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
     const serviceTopics = localLandings.map((landing) => ({
         "@type": "Service",
         name: landing.service.name || landing.service.title,
@@ -81,111 +71,81 @@ export default async function ProjectDetailSchema({
             `/services/${landing.service.slug}/${landing.locationSlug}`,
             locale,
         ),
-        areaServed: {
-            "@type": "City",
-            name: landing.locationName,
-        },
+        areaServed: { "@type": "City", name: landing.locationName },
     }));
     const projectTopics = [
-        ...(project.objectType
-            ? [{ "@type": "Thing", name: project.objectType }]
-            : []),
+        ...(project.objectType ? [{ "@type": "Thing", name: project.objectType }] : []),
         ...(project.equipment ?? [])
             .filter((item) => item.name)
             .map((item) => ({
                 "@type": "Product",
                 name: [item.name, item.model].filter(Boolean).join(" "),
-                ...(item.quantity
-                    ? {
-                          description: `${item.quantity} — ${item.name}`,
-                      }
-                    : {}),
+                ...(item.quantity ? { description: `${item.quantity} — ${item.name}` } : {}),
             })),
     ];
     const about = [...serviceTopics, ...projectTopics];
-    const schema = {
-        "@context": "https://schema.org",
-        "@graph": [
-            {
-                "@type": "CreativeWork",
-                "@id": `${url}#project`,
-                name: project.title || project.name,
-                description,
-                image: absoluteSiteUrl(projectImage),
-                url,
-                mainEntityOfPage: url,
-                ...(about.length ? { about } : {}),
-                ...(project.city
-                    ? {
-                          spatialCoverage: {
-                              "@type": "Place",
-                              name: project.city,
-                          },
-                      }
-                    : {}),
-                ...(project.publishedAt
-                    ? { datePublished: project.publishedAt }
-                    : {}),
-                ...(project.updated_at
-                    ? { dateModified: project.updated_at }
-                    : {}),
-                ...(videoWatchUrl && videoUploadDate
-                    ? {
-                          video: {
-                              "@type": "VideoObject",
-                              name: project.title || project.name,
-                              description,
-                              thumbnailUrl: absoluteSiteUrl(projectImage),
-                              uploadDate: videoUploadDate,
-                              url: videoWatchUrl,
-                              ...(videoEmbedUrl
-                                  ? { embedUrl: videoEmbedUrl }
-                                  : {}),
-                          },
-                      }
-                    : {}),
-                creator: {
-                    "@type": "Organization",
-                    name: branding.siteName,
-                    url: absoluteLocalizedUrl("/", locale),
-                    logo: absoluteSiteUrl(organizationLogo),
-                },
-                inLanguage: getLanguageTag(locale),
+    const videoObject =
+        videoEmbedUrl && videoWatchUrl && videoUploadDate
+            ? {
+                  "@type": "VideoObject",
+                  "@id": videoId,
+                  name: project.title || project.name,
+                  description,
+                  thumbnailUrl: absoluteSiteUrl(projectImage),
+                  uploadDate: videoUploadDate,
+                  url: videoWatchUrl,
+                  embedUrl: videoEmbedUrl,
+                  mainEntityOfPage: url,
+                  isPartOf: { "@id": projectId },
+                  inLanguage: getLanguageTag(locale),
+              }
+            : null;
+    const graph: Record<string, unknown>[] = [
+        {
+            "@type": "CreativeWork",
+            "@id": projectId,
+            name: project.title || project.name,
+            description,
+            image: absoluteSiteUrl(projectImage),
+            url,
+            mainEntityOfPage: url,
+            ...(about.length ? { about } : {}),
+            ...(project.city
+                ? { spatialCoverage: { "@type": "Place", name: project.city } }
+                : {}),
+            ...(project.publishedAt ? { datePublished: project.publishedAt } : {}),
+            ...(project.updated_at ? { dateModified: project.updated_at } : {}),
+            ...(videoObject ? { video: { "@id": videoId } } : {}),
+            creator: {
+                "@type": "Organization",
+                name: branding.siteName,
+                url: absoluteLocalizedUrl("/", locale),
+                logo: absoluteSiteUrl(organizationLogo),
             },
-            buildBreadcrumbSchema([
-                {
-                    name: t("nav.home", {
-                        ka: "მთავარი",
-                        en: "Home",
-                        ru: "Главная",
-                    }),
-                    url: absoluteLocalizedUrl("/", locale),
-                },
-                {
-                    name: t("nav.projects", {
-                        ka: "პროექტები",
-                        en: "Projects",
-                        ru: "Проекты",
-                    }),
-                    url: absoluteLocalizedUrl("/projects", locale),
-                },
-                {
-                    name: project.title || project.name,
-                    url,
-                },
-            ]),
-        ],
-    };
+            inLanguage: getLanguageTag(locale),
+        },
+        ...(videoObject ? [videoObject] : []),
+        buildBreadcrumbSchema([
+            {
+                name: t("nav.home", { ka: "მთავარი", en: "Home", ru: "Главная" }),
+                url: absoluteLocalizedUrl("/", locale),
+            },
+            {
+                name: t("nav.projects", {
+                    ka: "პროექტები",
+                    en: "Projects",
+                    ru: "Проекты",
+                }),
+                url: absoluteLocalizedUrl("/projects", locale),
+            },
+            { name: project.title || project.name, url },
+        ]),
+    ];
+    const schema = { "@context": "https://schema.org", "@graph": graph };
 
     if (project.seo?.schema) {
-        const customSchema = ensureVideoUploadDate(
-            project.seo.schema,
-            videoUploadDate,
-        );
-
-        return (
-            <JsonLd data={[schema, ...structuredDataItems(customSchema)]} />
-        );
+        const customSchema = ensureVideoUploadDate(project.seo.schema, videoUploadDate);
+        return <JsonLd data={[schema, ...structuredDataItems(customSchema)]} />;
     }
 
     return <JsonLd data={schema} />;

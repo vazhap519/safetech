@@ -16,6 +16,7 @@ import ProjectCtaSection from "@/sections/Projects/Details/ProjectCtaSection";
 import ProjectHeroSection from "@/sections/Projects/Details/ProjectHeroSection";
 import ProjectLocalSeoLinks from "@/sections/Projects/Details/ProjectLocalSeoLinks";
 import ProjectOverviewSection from "@/sections/Projects/Details/ProjectOverviewSection";
+import ProjectVideoSection from "@/sections/Projects/Details/ProjectVideoSection";
 import RelatedProjectsSection from "@/sections/Projects/Details/RelatedProjectsSection";
 import ResultsSection from "@/sections/Projects/Details/ResultsSection";
 import SolutionsSection from "@/sections/Projects/Details/SolutionsSection";
@@ -56,7 +57,8 @@ export async function generateMetadata({
 
     const baseTitle = project.seo?.title || project.title || project.name;
     const title =
-        project.city && !baseTitle.toLocaleLowerCase().includes(project.city.toLocaleLowerCase())
+        project.city &&
+        !baseTitle.toLocaleLowerCase().includes(project.city.toLocaleLowerCase())
             ? `${baseTitle} — ${project.city}`
             : baseTitle;
     const keywords = Array.from(
@@ -156,6 +158,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                 project={project}
             />
             <ProjectHeroSection project={project} />
+            <ProjectVideoSection project={project} />
             <ProjectOverviewSection project={project} />
             <ProjectLocalSeoLinks
                 landings={projectLocalLandings}
@@ -174,7 +177,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             <ChallengesSection project={project} />
             <SolutionsSection project={project} />
             <ProcessSection project={project} />
-            <GallerySection project={project} />
+            <GallerySection project={project} videoEnabled={false} />
             <ResultsSection project={project} />
             {relatedProjects.length ? (
                 <RelatedProjectsSection projects={relatedProjects} />
