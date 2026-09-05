@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ProjectDetailSchema from "@/components/seo/ProjectDetailSchema";
 import ContentShareButtons from "@/components/social/ContentShareButtons";
 import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
+import { getLocalServiceLandings } from "@/lib/local-service-landings";
 import { getLocalizedProject } from "@/lib/project-api";
 import { createMetadata, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
@@ -13,6 +14,7 @@ import GallerySection from "@/sections/Projects/Details/GallerySection";
 import ProcessSection from "@/sections/Projects/Details/ProcessSection";
 import ProjectCtaSection from "@/sections/Projects/Details/ProjectCtaSection";
 import ProjectHeroSection from "@/sections/Projects/Details/ProjectHeroSection";
+import ProjectLocalSeoLinks from "@/sections/Projects/Details/ProjectLocalSeoLinks";
 import ProjectOverviewSection from "@/sections/Projects/Details/ProjectOverviewSection";
 import RelatedProjectsSection from "@/sections/Projects/Details/RelatedProjectsSection";
 import ResultsSection from "@/sections/Projects/Details/ResultsSection";
@@ -74,9 +76,10 @@ export async function generateMetadata({
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     const { slug, locale: routeLocale } = await params;
-    const [{ locale, socialSharing }, project] = await Promise.all([
+    const [{ locale, socialSharing }, project, allLocalLandings] = await Promise.all([
         getSiteSettings(),
         getLocalizedProject(slug, routeLocale),
+        getLocalServiceLandings(),
     ]);
 
     if (!project) {
@@ -86,6 +89,10 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         );
         notFound();
     }
+
+    const projectLocalLandings = allLocalLandings.filter((landing) =>
+        landing.projects.some((linkedProject) => linkedProject.slug === project.slug),
+    );
 
     const relatedProjects = (
         await Promise.all(
@@ -125,9 +132,16 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
     return (
         <article className="pt-20">
-            <ProjectDetailSchema project={project} />
+            <ProjectDetailSchema
+                localLandings={projectLocalLandings}
+                project={project}
+            />
             <ProjectHeroSection project={project} />
             <ProjectOverviewSection project={project} />
+            <ProjectLocalSeoLinks
+                landings={projectLocalLandings}
+                locale={locale}
+            />
             {socialSharing.enabled &&
             socialSharing.showOnProjects &&
             socialSharing.buttons.length ? (
