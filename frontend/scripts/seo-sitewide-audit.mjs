@@ -73,6 +73,11 @@ function toLocalPath(value, publicSiteUrl) {
     return `${target.pathname}${target.search}`;
 }
 
+function logicalPath(path) {
+    const normalized = path.replace(/^\/(?:en|ru)(?=\/|$)/, "");
+    return normalized || "/";
+}
+
 async function request(baseUrl, path, userAgent, accept = "text/html,application/xhtml+xml") {
     const response = await fetch(`${baseUrl}${path}`, {
         redirect: "follow",
@@ -152,7 +157,10 @@ function findDuplicates(records, key) {
         values.set(value, paths);
     }
 
-    return [...values.entries()].filter(([, paths]) => paths.length > 1);
+    return [...values.entries()].filter(([, paths]) => {
+        if (paths.length < 2) return false;
+        return new Set(paths.map(logicalPath)).size > 1;
+    });
 }
 
 export async function runSitewideSeoAudit({
