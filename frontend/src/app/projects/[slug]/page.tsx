@@ -54,15 +54,34 @@ export async function generateMetadata({
         };
     }
 
+    const baseTitle = project.seo?.title || project.title || project.name;
+    const title =
+        project.city && !baseTitle.toLocaleLowerCase().includes(project.city.toLocaleLowerCase())
+            ? `${baseTitle} — ${project.city}`
+            : baseTitle;
+    const keywords = Array.from(
+        new Set(
+            [
+                ...(project.seo?.keywords ?? []),
+                project.city,
+                project.objectType,
+                ...((project.equipment ?? []).flatMap((item) => [
+                    item.name,
+                    item.model,
+                ])),
+            ].filter((item): item is string => Boolean(item && item.trim())),
+        ),
+    );
+
     return createMetadata({
-        title: project.seo?.title || project.title || project.name,
+        title,
         description:
             project.seo?.description ||
             project.seoDescription ||
             project.description,
         path: `/projects/${project.slug}`,
         locale,
-        keywords: project.seo?.keywords,
+        keywords,
         image:
             project.seo?.image ||
             project.image ||

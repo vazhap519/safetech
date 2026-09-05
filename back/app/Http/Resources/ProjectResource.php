@@ -37,6 +37,8 @@ class ProjectResource extends JsonResource
         );
         $imageAlt = $this->translated('imageAlt', $this->image_alt ?: $this->title ?: $fallbackName, $locale);
         $technology = $this->translated('technology', $this->technology, $locale);
+        $city = $this->translated('city', $this->city, $locale);
+        $objectType = $this->translated('objectType', $this->object_type, $locale);
         $image = $this->cover_url ?: $this->image;
 
         return [
@@ -56,6 +58,17 @@ class ProjectResource extends JsonResource
                 ? $this->translatedModel($category, 'name', $category->name, $locale)
                 : $this->category_name,
             'technology' => $technology,
+            'city' => $city,
+            'objectType' => $objectType,
+            'equipment' => collect($this->equipment ?? [])
+                ->filter(fn ($item): bool => is_array($item) && filled($item['name'] ?? null))
+                ->values()
+                ->map(fn (array $item): array => [
+                    'name' => (string) ($item['name'] ?? ''),
+                    'model' => filled($item['model'] ?? null) ? (string) $item['model'] : null,
+                    'quantity' => filled($item['quantity'] ?? null) ? (string) $item['quantity'] : null,
+                ])
+                ->all(),
             'icon' => $this->icon,
             'accent' => $this->accent,
             'meta' => $this->localizedValueLabelItems($this->meta ?? [], 'meta', $locale),

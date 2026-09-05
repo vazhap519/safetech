@@ -74,7 +74,7 @@ export default async function ProjectDetailSchema({
         branding.footerLogo ||
         branding.defaultImage ||
         DEFAULT_SOCIAL_IMAGE;
-    const about = localLandings.map((landing) => ({
+    const serviceTopics = localLandings.map((landing) => ({
         "@type": "Service",
         name: landing.service.name || landing.service.title,
         url: absoluteLocalizedUrl(
@@ -86,6 +86,23 @@ export default async function ProjectDetailSchema({
             name: landing.locationName,
         },
     }));
+    const projectTopics = [
+        ...(project.objectType
+            ? [{ "@type": "Thing", name: project.objectType }]
+            : []),
+        ...(project.equipment ?? [])
+            .filter((item) => item.name)
+            .map((item) => ({
+                "@type": "Product",
+                name: [item.name, item.model].filter(Boolean).join(" "),
+                ...(item.quantity
+                    ? {
+                          description: `${item.quantity} — ${item.name}`,
+                      }
+                    : {}),
+            })),
+    ];
+    const about = [...serviceTopics, ...projectTopics];
     const schema = {
         "@context": "https://schema.org",
         "@graph": [
@@ -98,6 +115,14 @@ export default async function ProjectDetailSchema({
                 url,
                 mainEntityOfPage: url,
                 ...(about.length ? { about } : {}),
+                ...(project.city
+                    ? {
+                          spatialCoverage: {
+                              "@type": "Place",
+                              name: project.city,
+                          },
+                      }
+                    : {}),
                 ...(project.publishedAt
                     ? { datePublished: project.publishedAt }
                     : {}),

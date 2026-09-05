@@ -5,6 +5,12 @@ export type ProjectDetailCard = {
     featured?: boolean;
 };
 
+export type ProjectEquipmentItem = {
+    name: string;
+    model?: string | null;
+    quantity?: string | null;
+};
+
 export type ProjectDetail = {
     slug: string;
     name: string;
@@ -16,6 +22,9 @@ export type ProjectDetail = {
     videoUrl?: string | null;
     publishedAt?: string | null;
     updated_at?: string | null;
+    city?: string | null;
+    objectType?: string | null;
+    equipment: ProjectEquipmentItem[];
     meta: Array<{ label: string; value: string }>;
     scope: Array<{ value: string; label: string }>;
     specs: Array<{ value: string; label: string }>;

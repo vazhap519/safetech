@@ -145,6 +145,46 @@ class ProjectResource extends Resource
                 ])
                 ->columns(3),
 
+            Section::make('Local SEO and project facts')
+                ->description('ეს ველები გამოიყენება პროექტის Local SEO-ში, metadata-ში და structured data/schema-ში. შეავსეთ მხოლოდ რეალური ინფორმაცია.')
+                ->schema([
+                    TextInput::make('city')
+                        ->label('ქალაქი')
+                        ->placeholder('მაგ. ბაკურიანი')
+                        ->maxLength(120)
+                        ->helperText('ქალაქი ან დასახლება, სადაც პროექტი რეალურად შესრულდა.'),
+                    ...LocalizedContentFields::secondaryInputs('city', 'City', maxLength: 120),
+
+                    TextInput::make('object_type')
+                        ->label('ობიექტის ტიპი')
+                        ->placeholder('მაგ. კერძო სახლი, კოტეჯი, მაღაზია')
+                        ->maxLength(160),
+                    ...LocalizedContentFields::secondaryInputs('objectType', 'Object type', maxLength: 160),
+
+                    Repeater::make('equipment')
+                        ->label('ტექნიკა / აღჭურვილობა')
+                        ->helperText('დაამატეთ პროექტში რეალურად გამოყენებული მოწყობილობები. ეს მონაცემები SEO/schema-შიც გამოჩნდება.')
+                        ->schema([
+                            TextInput::make('name')
+                                ->label('დასახელება')
+                                ->placeholder('მაგ. TVT Full Color კამერა')
+                                ->required()
+                                ->maxLength(180),
+                            TextInput::make('model')
+                                ->label('მოდელი')
+                                ->placeholder('მაგ. TD-95xx')
+                                ->maxLength(180),
+                            TextInput::make('quantity')
+                                ->label('რაოდენობა')
+                                ->placeholder('მაგ. 6 ცალი')
+                                ->maxLength(80),
+                        ])
+                        ->columns(3)
+                        ->collapsible()
+                        ->columnSpanFull(),
+                ])
+                ->columns(3),
+
             Section::make('SEO, cards and featured translations')
                 ->description('აქ დარჩა მხოლოდ ის თარგმანები, რომლებსაც Main project information-ში საკუთარი ძირითადი ველი არ აქვთ.')
                 ->schema([
@@ -285,6 +325,8 @@ class ProjectResource extends Resource
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('slug')->label('Slug')->searchable(),
+                TextColumn::make('city')->label('City')->searchable()->sortable(),
+                TextColumn::make('object_type')->label('Object type')->searchable(),
                 TextColumn::make('projectCategory.name')->label('Category')->sortable(),
                 IconColumn::make('is_featured')
                     ->label('Featured')

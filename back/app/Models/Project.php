@@ -27,7 +27,7 @@ class Project extends Model implements HasMedia
         return [
             'meta' => 'array', 'scope' => 'array', 'specs' => 'array', 'challenges' => 'array',
             'solutions' => 'array', 'process' => 'array', 'gallery' => 'array', 'results' => 'array',
-            'testimonial' => 'array', 'related' => 'array', 'is_featured' => 'boolean',
+            'testimonial' => 'array', 'related' => 'array', 'equipment' => 'array', 'is_featured' => 'boolean',
             'seo' => 'array', 'translations' => 'array', 'is_published' => 'boolean',
             'published_at' => 'datetime', 'social_shared_at' => 'datetime',
         ];
