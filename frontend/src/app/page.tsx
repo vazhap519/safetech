@@ -7,6 +7,7 @@ import DeferredCta from "@/sections/Home/DeferredCta";
 import Hero from "@/sections/Home/Hero";
 import Industries from "@/sections/Home/Industries";
 import Infrastructure from "@/sections/Home/Infrastructure";
+import LocalSeo from "@/sections/Home/LocalSeo";
 import Projects from "@/sections/Home/Projects";
 import Services from "@/sections/Home/Services";
 import Testimonials from "@/sections/Home/Testimonials";
@@ -28,6 +29,7 @@ export default function HomePage() {
                 <Services />
                 <Infrastructure />
                 <Projects />
+                <LocalSeo />
                 <Testimonials />
                 <Why />
                 <Industries />
