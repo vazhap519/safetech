@@ -6,9 +6,11 @@ use App\Filament\Resources\ProjectResource\Pages;
 use App\Filament\Support\AdminIconOptions;
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\NavigationGroup;
+use App\Filament\Support\ProjectSeoHelper;
 use App\Filament\Support\RelatedProjectDefaults;
 use App\Filament\Support\StableSlug;
 use App\Models\Project;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -20,8 +22,10 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
@@ -186,7 +190,36 @@ class ProjectResource extends Resource
                 ->columns(3),
 
             Section::make('SEO, cards and featured translations')
-                ->description('აქ დარჩა მხოლოდ ის თარგმანები, რომლებსაც Main project information-ში საკუთარი ძირითადი ველი არ აქვთ.')
+                ->description('SEO Helper ქმნის ქართულ SEO title-ს, meta description-ს და image alt-ს Project name/title, ქალაქის, ობიექტის ტიპისა და ტექნიკის მიხედვით. გენერირებული ტექსტი მხოლოდ ფორმაში ჩაიწერება და შენახვამდე შეგიძლია შეცვალო.')
+                ->headerActions([
+                    Action::make('generateProjectSeo')
+                        ->label('SEO ტექსტების გენერირება')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('primary')
+                        ->requiresConfirmation()
+                        ->modalHeading('SEO ტექსტების გენერირება')
+                        ->modalDescription('მიმდინარე ფორმაში ქართული SEO title, SEO description და image alt შეიცვლება გენერირებული ვერსიებით. მონაცემები ბაზაში მხოლოდ Save-ის შემდეგ შეინახება.')
+                        ->action(function (Get $get, Set $set): void {
+                            $suggestion = ProjectSeoHelper::suggest(
+                                $get('name'),
+                                $get('title'),
+                                $get('description'),
+                                $get('city'),
+                                $get('object_type'),
+                                is_array($get('equipment')) ? $get('equipment') : [],
+                            );
+
+                            $set('translations.fields.seoTitle.ka', $suggestion['title']);
+                            $set('seo_description', $suggestion['description']);
+                            $set('image_alt', $suggestion['imageAlt']);
+
+                            Notification::make()
+                                ->title('SEO ტექსტები ფორმაში ჩაიწერა')
+                                ->body('შეამოწმე და სურვილის შემთხვევაში ჩაასწორე, შემდეგ დააჭირე Save-ს.')
+                                ->success()
+                                ->send();
+                        }),
+                ])
                 ->schema([
                     ...LocalizedContentFields::inputs('seoTitle', 'SEO title'),
                     ...LocalizedContentFields::inputs('card.title', 'Card title'),
