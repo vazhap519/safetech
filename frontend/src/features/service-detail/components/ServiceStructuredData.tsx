@@ -4,6 +4,7 @@ import {
     TARGET_COUNTRY_CODE,
     TARGET_COUNTRY_NAME,
 } from "@/lib/locales";
+import { getLocalServiceLandings } from "@/lib/local-service-landings";
 import {
     absoluteLocalizedUrl,
     absoluteSiteUrl,
@@ -27,7 +28,11 @@ export default async function ServiceStructuredData({
 }: {
     service: ServiceDetail;
 }) {
-    const { contact, branding, locale, translations } = await getSiteSettings();
+    const [{ contact, branding, locale, translations }, localLandings] =
+        await Promise.all([
+            getSiteSettings(),
+            getLocalServiceLandings(service.slug),
+        ]);
     const t = createTranslator(translations, locale);
     const url = absoluteLocalizedUrl(`/services/${service.slug}`, locale);
     const description = service.seoDescription || service.description;
@@ -38,17 +43,31 @@ export default async function ServiceStructuredData({
         DEFAULT_SOCIAL_IMAGE;
     const serviceImage =
         service.heroImage || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
+    const countryArea = {
+        "@type": "Country",
+        name: TARGET_COUNTRY_NAME,
+        identifier: TARGET_COUNTRY_CODE,
+    };
+    const localAreas = localLandings
+        .filter((landing) => landing.locationName?.trim())
+        .map((landing) => ({
+            "@type": "City",
+            name: landing.locationName.trim(),
+            url: absoluteLocalizedUrl(
+                `/services/${service.slug}/${landing.locationSlug}`,
+                locale,
+            ),
+        }));
+    const areaServed = localAreas.length
+        ? [countryArea, ...localAreas]
+        : countryArea;
     const provider: Record<string, unknown> = {
         "@type": "Organization",
         "@id": `${absoluteSiteUrl("/")}#organization`,
         name: branding.siteName,
         url: absoluteLocalizedUrl("/", locale),
         logo: absoluteSiteUrl(organizationLogo),
-        areaServed: {
-            "@type": "Country",
-            name: TARGET_COUNTRY_NAME,
-            identifier: TARGET_COUNTRY_CODE,
-        },
+        areaServed,
         ...(contact.phone ? { telephone: contact.phone } : {}),
         ...(contact.email ? { email: contact.email } : {}),
     };
@@ -65,11 +84,7 @@ export default async function ServiceStructuredData({
             image: absoluteSiteUrl(serviceImage),
             inLanguage: getLanguageTag(locale),
             provider,
-            areaServed: {
-                "@type": "Country",
-                name: TARGET_COUNTRY_NAME,
-                identifier: TARGET_COUNTRY_CODE,
-            },
+            areaServed,
         },
         buildBreadcrumbSchema([
             {
