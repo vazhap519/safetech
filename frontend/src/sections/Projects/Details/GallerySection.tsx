@@ -10,10 +10,12 @@ const AUTO_ADVANCE_MS = 5000;
 
 export default function GallerySection({
     project,
+    videoEnabled = true,
 }: {
     project: ProjectDetail;
+    videoEnabled?: boolean;
 }) {
-    const embedUrl = getYouTubeEmbedUrl(project.videoUrl);
+    const embedUrl = videoEnabled ? getYouTubeEmbedUrl(project.videoUrl) : null;
     const gallery = project.gallery;
     const [activeIndex, setActiveIndex] = useState(0);
     const [videoStarted, setVideoStarted] = useState(false);
