@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { runSitewideSeoAudit } from "./seo-sitewide-audit.mjs";
+
 const baseUrl = (process.env.SEO_BASE_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
 const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://safetech.ge").replace(/\/$/, "");
 const googlebotUserAgent =
@@ -304,6 +306,11 @@ async function main() {
     await validateRobots();
     await validateSitemaps();
     await validateLegacyCalculatorRedirect();
+    await runSitewideSeoAudit({
+        baseUrl,
+        publicSiteUrl,
+        googlebotUserAgent,
+    });
 
     console.log("Google SEO and Georgia targeting smoke checks passed.");
 }
