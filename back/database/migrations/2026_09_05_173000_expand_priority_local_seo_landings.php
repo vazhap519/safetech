@@ -100,7 +100,9 @@ return new class extends Migration
 
         foreach ($services as $serviceSlug => $serviceData) {
             $serviceId = DB::table('services')->where('slug', $serviceSlug)->value('id');
-            if (! $serviceId) continue;
+            if (! $serviceId) {
+                continue;
+            }
 
             foreach ($cities as $sort => $city) {
                 $locationSlug = $sort;
@@ -138,7 +140,9 @@ return new class extends Migration
                 );
 
                 $landingId = DB::table('local_service_landings')->where('service_id', $serviceId)->where('location_slug', $locationSlug)->value('id');
-                if (! $landingId) continue;
+                if (! $landingId) {
+                    continue;
+                }
 
                 $projectIds = DB::table('projects')->where('is_published', true)
                     ->where(fn ($query) => $query->where('title', 'like', "%{$cityName}%")->orWhere('description', 'like', "%{$cityName}%"))
