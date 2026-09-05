@@ -28,7 +28,13 @@ final class EloquentProjectRepository implements ProjectRepository
     {
         return Project::query()
             ->publiclyVisible()
-            ->with(['projectCategory', 'media'])
+            ->with([
+                'projectCategory',
+                'media',
+                'localServiceLandings' => fn ($query) => $query
+                    ->publiclyVisible()
+                    ->with('service'),
+            ])
             ->where('slug', $slug)
             ->first();
     }

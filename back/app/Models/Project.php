@@ -8,6 +8,7 @@ use App\Support\PublicMediaUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -60,6 +61,16 @@ class Project extends Model implements HasMedia
     public function projectCategory(): BelongsTo
     {
         return $this->belongsTo(ProjectCategory::class, 'category_id');
+    }
+
+    public function localServiceLandings(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            LocalServiceLanding::class,
+            'local_service_landing_project',
+            'project_id',
+            'landing_id',
+        )->withTimestamps();
     }
 
     public function scopePublished(Builder $query): Builder
