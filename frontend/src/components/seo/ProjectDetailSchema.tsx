@@ -1,6 +1,7 @@
-import type { ProjectDetail } from "@/lib/projectDetails";
 import JsonLd from "@/components/seo/JsonLd";
+import type { LocalServiceLanding } from "@/lib/local-service-landings";
 import { getLanguageTag } from "@/lib/locales";
+import type { ProjectDetail } from "@/lib/projectDetails";
 import {
     absoluteLocalizedUrl,
     absoluteSiteUrl,
@@ -54,8 +55,10 @@ function structuredDataItems(data: StructuredDataValue) {
 
 export default async function ProjectDetailSchema({
     project,
+    localLandings = [],
 }: {
     project: ProjectDetail;
+    localLandings?: LocalServiceLanding[];
 }) {
     const { branding, locale, translations } = await getSiteSettings();
     const t = createTranslator(translations, locale);
@@ -71,6 +74,18 @@ export default async function ProjectDetailSchema({
         branding.footerLogo ||
         branding.defaultImage ||
         DEFAULT_SOCIAL_IMAGE;
+    const about = localLandings.map((landing) => ({
+        "@type": "Service",
+        name: landing.service.name || landing.service.title,
+        url: absoluteLocalizedUrl(
+            `/services/${landing.service.slug}/${landing.locationSlug}`,
+            locale,
+        ),
+        areaServed: {
+            "@type": "City",
+            name: landing.locationName,
+        },
+    }));
     const schema = {
         "@context": "https://schema.org",
         "@graph": [
@@ -82,6 +97,7 @@ export default async function ProjectDetailSchema({
                 image: absoluteSiteUrl(projectImage),
                 url,
                 mainEntityOfPage: url,
+                ...(about.length ? { about } : {}),
                 ...(project.publishedAt
                     ? { datePublished: project.publishedAt }
                     : {}),
@@ -114,18 +130,18 @@ export default async function ProjectDetailSchema({
             buildBreadcrumbSchema([
                 {
                     name: t("nav.home", {
-                            ka: "მთავარი",
-                            en: "Home",
-                            ru: "Главная",
-                        }),
+                        ka: "მთავარი",
+                        en: "Home",
+                        ru: "Главная",
+                    }),
                     url: absoluteLocalizedUrl("/", locale),
                 },
                 {
                     name: t("nav.projects", {
-                            ka: "პროექტები",
-                            en: "Projects",
-                            ru: "Проекты",
-                        }),
+                        ka: "პროექტები",
+                        en: "Projects",
+                        ru: "Проекты",
+                    }),
                     url: absoluteLocalizedUrl("/projects", locale),
                 },
                 {
