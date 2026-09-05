@@ -1,10 +1,19 @@
 import TranslatedText from "@/components/i18n/TranslatedText";
 import Typography from "@/components/ui/Typography";
 import { toEmailHref, toPhoneHref } from "@/lib/contact-links";
-import { getSiteSettings } from "@/lib/site-settings";
 
-export default async function FooterContact() {
-    const { contact } = await getSiteSettings();
+type FooterContactDetails = {
+    phone: string;
+    phones: string[];
+    email: string;
+    address: string;
+};
+
+export default function FooterContact({
+    contact,
+}: {
+    contact: FooterContactDetails;
+}) {
     const phoneNumbers = contact.phones.length
         ? contact.phones
         : contact.phone
