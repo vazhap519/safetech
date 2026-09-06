@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\AdminDashboard;
 use App\Filament\Support\NavigationGroup;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -40,6 +41,14 @@ class AdminPanelProvider extends PanelProvider
                 Repeater::configureUsing(
                     fn (Repeater $repeater): Repeater => $repeater->collapsible(),
                 );
+
+                TextInput::configureUsing(function (TextInput $input): TextInput {
+                    if ($input->getName() === 'slug') {
+                        $input->readOnly();
+                    }
+
+                    return $input;
+                });
             })
             ->databaseTransactions()
             ->unsavedChangesAlerts()
