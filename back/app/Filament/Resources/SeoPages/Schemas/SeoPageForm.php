@@ -76,7 +76,11 @@ class SeoPageForm
                             ->values()
                             ->all())
                         ->dehydrateStateUsing(fn ($state): array => collect($state ?? [])
-                            ->map(fn ($keyword): array => ['value' => trim((string) $keyword)])
+                            ->map(function ($keyword): array {
+                                $value = is_array($keyword) ? ($keyword['value'] ?? null) : $keyword;
+
+                                return ['value' => trim((string) ($value ?? ''))];
+                            })
                             ->filter(fn (array $keyword): bool => $keyword['value'] !== '')
                             ->values()
                             ->all()),
