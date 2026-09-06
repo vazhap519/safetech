@@ -1,3 +1,4 @@
+import { getBusinessProfileSchemaDetails } from "@/lib/business-profile-schema";
 import { getLanguageTag } from "@/lib/locales";
 import { buildOrganizationEntity } from "@/lib/organization-schema";
 import { absoluteLocalizedUrl, SITE_NAME } from "@/lib/seo";
@@ -5,7 +6,11 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function ContactSchema() {
-    const { contact, branding, locale, translations } = await getSiteSettings();
+    const [{ contact, branding, locale, translations }, businessProfile] =
+        await Promise.all([
+            getSiteSettings(),
+            getBusinessProfileSchemaDetails(),
+        ]);
     const siteName = branding.siteName || SITE_NAME;
     const description = translateText(
         translations,
@@ -24,6 +29,19 @@ export default async function ContactSchema() {
         siteName,
         url: absoluteLocalizedUrl("/", locale),
     });
+
+    if (!contact.address && (businessProfile.city || businessProfile.postalCode)) {
+        mainEntity.address = {
+            "@type": "PostalAddress",
+            ...(businessProfile.city
+                ? { addressLocality: businessProfile.city }
+                : {}),
+            ...(businessProfile.postalCode
+                ? { postalCode: businessProfile.postalCode }
+                : {}),
+            addressCountry: businessProfile.country,
+        };
+    }
 
     const schema = {
         "@context": "https://schema.org",
