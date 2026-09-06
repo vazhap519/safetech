@@ -5,7 +5,6 @@ namespace App\Filament\Resources\SeoPages\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -27,9 +26,13 @@ class SeoPagesTable
                     ->label('SEO სათაური')
                     ->limit(40),
 
-                IconColumn::make('noindex')
-                    ->boolean()
-                    ->label('ინდექსაცია გამორთულია'),
+                TextColumn::make('noindex')
+                    ->label('Google ინდექსაცია')
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'გამორთულია' : 'ჩართულია')
+                    ->badge()
+                    ->color(fn (bool $state): string => $state ? 'danger' : 'success')
+                    ->icon(fn (bool $state): string => $state ? 'heroicon-m-x-circle' : 'heroicon-m-check-circle')
+                    ->sortable(),
 
                 TextColumn::make('updated_at')
                     ->label('განახლდა')
