@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\ProjectResource\Pages\CreateProject;
+use App\Filament\Resources\ProjectResource\Pages\EditProject;
 use App\Filament\Support\RelatedProjectDefaults;
 use App\Models\Project;
 use App\Models\ProjectCategory;
@@ -156,6 +157,49 @@ class RelatedProjectDefaultsTest extends TestCase
             ->assertJsonPath('data.related.0.title', 'Russian project title')
             ->assertJsonPath('data.related.0.category', 'Russian category')
             ->assertJsonPath('data.related.0.imageAlt', 'Russian project image alt');
+    }
+
+    public function test_editing_a_project_can_remove_related_repeater_items_and_persist_the_empty_state(): void
+    {
+        $this->authenticateAdministrator();
+
+        $category = $this->category([
+            'name' => 'Projects',
+            'slug' => 'projects',
+        ]);
+        $related = $this->project([
+            'slug' => 'related-project',
+            'category_id' => $category->id,
+            'title' => 'Related project',
+        ]);
+        $current = $this->project([
+            'slug' => 'current-edit-project',
+            'category_id' => $category->id,
+            'title' => 'Current edit project',
+            'related' => [[
+                'slug' => $related->slug,
+                'title' => 'Related project',
+                'category' => 'Projects',
+                'imageAlt' => 'Related project',
+            ]],
+        ]);
+
+        Livewire::test(EditProject::class, ['record' => $current->getRouteKey()])
+            ->assertFormSet([
+                'related' => [[
+                    'slug' => $related->slug,
+                    'title' => 'Related project',
+                    'category' => 'Projects',
+                    'imageAlt' => 'Related project',
+                ]],
+            ])
+            ->fillForm(['related' => []])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $current->refresh();
+
+        $this->assertSame([], $current->related);
     }
 
     public function test_clearing_a_related_project_clears_its_generated_overrides(): void
