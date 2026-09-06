@@ -42,7 +42,11 @@ class PageResource extends Resource
             Section::make('Page')
                 ->schema([
                     TextInput::make('title')->required()->maxLength(255)->live(onBlur: true)->afterStateUpdated(StableSlug::syncOnCreate()),
-                    TextInput::make('slug')->required()->unique(ignoreRecord: true)->helperText('Public URL is /pages/{slug}. Reserved legal slugs privacy and terms are exposed at /privacy and /terms.'),
+                    TextInput::make('slug')
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->readOnly()
+                        ->helperText('ავტომატურად გენერირდება სათაურიდან. Public URL არის /pages/{slug}; privacy და terms გამოდის /privacy და /terms-ზე.'),
                     Textarea::make('excerpt')->rows(3),
                     Textarea::make('content')->required()->rows(14)->helperText('Plain paragraphs are supported. Legal pages also support section headings beginning with ## and bullet lists beginning with -.'),
                     SpatieMediaLibraryFileUpload::make('cover')->label('Cover image')->collection('cover')->conversion('webp')->image()->imageEditor()->maxSize(10240),
