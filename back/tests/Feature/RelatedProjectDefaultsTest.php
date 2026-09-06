@@ -155,7 +155,7 @@ class RelatedProjectDefaultsTest extends TestCase
         $this->getJson("/api/projects/{$current->slug}?locale=ru")
             ->assertOk()
             ->assertJsonPath('data.related.0.title', 'Russian project title')
-            ->assertJsonPath('data.related.0.category', 'Russian project category')
+            ->assertJsonPath('data.related.0.category', 'Russian category')
             ->assertJsonPath('data.related.0.imageAlt', 'Russian project image alt');
     }
 
