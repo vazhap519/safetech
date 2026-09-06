@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SeoPages\Schemas;
 
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\StructuredDataJsonField;
+use App\Models\SeoPage;
 use App\Support\Seo\SeoAudit;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
@@ -53,7 +54,8 @@ class SeoPageForm
                         ->label('Canonical URL-ის გზა')
                         ->disabled()
                         ->dehydrated()
-                        ->required(),
+                        ->required()
+                        ->helperText('ავტომატურად იქმნება არჩეული გვერდის მიხედვით.'),
                     TextInput::make('title')
                         ->label('SEO სათაური (ქართული სათადარიგო ტექსტი)')
                         ->required()
@@ -93,10 +95,16 @@ class SeoPageForm
                         ])
                         ->required()
                         ->default('WebPage')
-                        ->live(),
+                        ->disabled()
+                        ->dehydrated()
+                        ->helperText('ავტომატურად განისაზღვრება გვერდის ტიპის მიხედვით.'),
                     StructuredDataJsonField::make(
-                        'ცარიელი დატოვეთ ავტომატური, მონაცემებზე მიბმული schema-სთვის. შეავსეთ მხოლოდ სპეციალური ჩანაცვლებისას.',
+                        'ცარიელი დატოვეთ ავტომატური, მონაცემებზე მიბმული schema-სთვის. შეავსეთ მხოლოდ მაშინ, როცა ავტომატური Schema მთლიანად უნდა ჩაანაცვლოთ.',
                     ),
+                    Placeholder::make('generated_schema_preview')
+                        ->label('ავტომატურად გენერირებული Schema JSON-LD')
+                        ->content(fn (Get $get, ?SeoPage $record): HtmlString => self::generatedSchemaHtml($get, $record))
+                        ->columnSpanFull(),
                     Toggle::make('noindex')
                         ->label('საძიებო სისტემებში არ გამოჩნდეს')
                         ->helperText('ჩართეთ მხოლოდ staging, დროებითი ან განზრახ დახურული გვერდისთვის.')
@@ -111,7 +119,7 @@ class SeoPageForm
                         ->maxSize(10240),
                     SpatieMediaLibraryFileUpload::make('share_image')
                         ->label('სოციალურ ქსელში გასაზიარებელი სურათი')
-                        ->helperText('თუ ცარიელია, გამოიყენება Open Graph სურათი.')
+                        ->helperText('თუ ცარიელია, ავტომატურად გამოიყენება Open Graph სურათი.')
                         ->collection('share_image')
                         ->conversion('og')
                         ->image()
@@ -167,6 +175,31 @@ class SeoPageForm
         ]);
     }
 
+    private static function generatedSchemaHtml(Get $get, ?SeoPage $record): HtmlString
+    {
+        $preview = $record ? clone $record : new SeoPage;
+        $preview->forceFill([
+            'key' => $get('key'),
+            'slug' => $get('slug'),
+            'title' => $get('title'),
+            'description' => $get('description'),
+            'schema_type' => $get('schema_type') ?: 'WebPage',
+            'translations' => $get('translations') ?? [],
+            'schema' => null,
+            'canonical' => null,
+        ]);
+
+        $json = json_encode(
+            $preview->generatedSchemaDataForLocale('ka'),
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
+        ) ?: '{}';
+
+        return new HtmlString(
+            '<pre style="max-height:32rem;overflow:auto;white-space:pre-wrap;word-break:break-word;padding:1rem;border:1px solid #d1d5db;border-radius:.75rem;background:#0f172a;color:#e2e8f0;font-size:.78rem;line-height:1.45">'.e($json).'</pre>'.
+            '<p style="margin-top:.5rem;color:#6b7280">ეს preview მხოლოდ წასაკითხია. Site Settings ან მიმდინარე ფორმის ცვლილებები ავტომატურ Schema-ში აისახება.</p>',
+        );
+    }
+
     /** @return array<string, mixed> */
     private static function auditState(Get $get): array
     {
@@ -192,12 +225,13 @@ class SeoPageForm
                 ->implode('').'</ul>'
             : '<p style="margin-top:.5rem">ძირითადი ტექნიკური და სარედაქციო შემოწმებები გავლილია.</p>';
 
-        $notes = '<ul style="margin-top:.5rem;color:#6b7280;list-style:disc;padding-left:1.25rem">'.collect($audit['notes'])
+        $notes = collect($audit['notes'])
             ->map(fn (string $note): string => '<li>'.e($note).'</li>')
-            ->implode('').'</ul>';
+            ->implode('');
 
         return new HtmlString(
-            '<div><strong>შიდა SEO QA: '.e((string) $audit['score']).'/100</strong>'.$issues.$notes.'</div>',
+            '<div><strong>შიდა SEO QA: '.e((string) $audit['score']).'/100</strong>'.$issues.
+            ($notes ? '<ul style="margin-top:.5rem;list-style:disc;padding-left:1.25rem;color:#6b7280">'.$notes.'</ul>' : '').'</div>',
         );
     }
 }

@@ -92,7 +92,9 @@ class ProjectResource extends Resource
                     Textarea::make('seo_description')
                         ->label('SEO description (ქართული)')
                         ->required()
-                        ->maxLength(320),
+                        ->maxLength(320)
+                        ->readOnly()
+                        ->helperText('SEO Helper ავტომატურად ავსებს ამ ველს.'),
                     ...LocalizedContentFields::secondaryInputs(
                         'seoDescription',
                         'SEO description',
@@ -102,7 +104,9 @@ class ProjectResource extends Resource
 
                     TextInput::make('image_alt')
                         ->label('Image alt (ქართული)')
-                        ->requiredWith('cover'),
+                        ->requiredWith('cover')
+                        ->readOnly()
+                        ->helperText('SEO Helper ავტომატურად ავსებს ამ ველს.'),
                     ...LocalizedContentFields::secondaryInputs('imageAlt', 'Image alt'),
 
                     TextInput::make('technology')->label('Technology (ქართული)'),
@@ -112,7 +116,8 @@ class ProjectResource extends Resource
                         ->label('Slug')
                         ->required()
                         ->unique(ignoreRecord: true)
-                        ->helperText('Generated automatically from the Georgian project name, but still editable.'),
+                        ->readOnly()
+                        ->helperText('ავტომატურად გენერირდება ქართული პროექტის სახელიდან.'),
                     SpatieMediaLibraryFileUpload::make('cover')
                         ->label('Cover image')
                         ->collection('cover')
@@ -192,7 +197,7 @@ class ProjectResource extends Resource
                 ->columns(3),
 
             Section::make('SEO, cards and featured translations')
-                ->description('SEO Helper ქმნის ქართულ SEO title-ს, meta description-ს, image alt-ს და keywords-ს Project-ის რეალური მონაცემებისა და შენ მიერ არჩეული Service / City landing-ების მიხედვით. გენერირებული ტექსტი მხოლოდ ფორმაში ჩაიწერება და შენახვამდე შეგიძლია შეცვალო.')
+                ->description('SEO Helper ავტომატურად ქმნის ქართულ SEO title-ს, meta description-ს, image alt-ს და keywords-ს Project-ის რეალური მონაცემებისა და არჩეული Service / City landing-ების მიხედვით. ავტომატური ველები მხოლოდ წასაკითხია.')
                 ->headerActions([
                     Action::make('generateProjectSeo')
                         ->label('SEO ტექსტების გენერირება')
@@ -200,7 +205,7 @@ class ProjectResource extends Resource
                         ->color('primary')
                         ->requiresConfirmation()
                         ->modalHeading('SEO ტექსტების გენერირება')
-                        ->modalDescription('მიმდინარე ფორმაში ქართული SEO title, SEO description, image alt და keywords შეიცვლება გენერირებული ვერსიებით. Project-ის Service / City კავშირები გამოიყენება მხოლოდ თუ უკვე შენახულია. მონაცემები ბაზაში მხოლოდ Save-ის შემდეგ შეინახება.')
+                        ->modalDescription('ქართული SEO title, SEO description, image alt და keywords ავტომატურად განახლდება. Project-ის Service / City კავშირები გამოიყენება მხოლოდ თუ უკვე შენახულია. მონაცემები ბაზაში მხოლოდ Save-ის შემდეგ შეინახება.')
                         ->action(function (Get $get, Set $set, ?Project $record): void {
                             $serviceNames = $record
                                 ? $record->localServiceLandings()
@@ -229,19 +234,21 @@ class ProjectResource extends Resource
                             $set('seo.keywords', $suggestion['keywords']);
 
                             Notification::make()
-                                ->title('SEO ტექსტები ფორმაში ჩაიწერა')
+                                ->title('SEO ტექსტები ავტომატურად განახლდა')
                                 ->body($serviceNames
-                                    ? 'SEO-ში გამოყენებულია შენ მიერ არჩეული Service / City კავშირებიც. შეამოწმე და შემდეგ დააჭირე Save-ს.'
+                                    ? 'SEO-ში გამოყენებულია არჩეული Service / City კავშირებიც. ცვლილებების შესანახად დააჭირე Save-ს.'
                                     : 'Service / City კავშირი ჯერ არ არის არჩეული. SEO შეიქმნა პროექტის სხვა რეალური მონაცემებით.')
                                 ->success()
                                 ->send();
                         }),
                 ])
                 ->schema([
-                    ...LocalizedContentFields::inputs('seoTitle', 'SEO title'),
+                    ...LocalizedContentFields::inputs('seoTitle', 'SEO title', readOnlyLocales: ['ka']),
                     TagsInput::make('seo.keywords')
                         ->label('SEO keywords')
-                        ->helperText('SEO Helper ავტომატურად აერთიანებს არჩეულ სერვისებს, ქალაქს, ობიექტის ტიპსა და ტექნიკას. სურვილის შემთხვევაში შეგიძლია ხელით ჩაასწორო.')
+                        ->disabled()
+                        ->dehydrated()
+                        ->helperText('SEO Helper ავტომატურად აერთიანებს სერვისებს, ქალაქს, ობიექტის ტიპსა და ტექნიკას.')
                         ->columnSpanFull(),
                     ...LocalizedContentFields::inputs('card.title', 'Card title'),
                     ...LocalizedContentFields::inputs('card.description', 'Card description', textarea: true),
@@ -345,12 +352,19 @@ class ProjectResource extends Resource
                                 }),
                             TextInput::make('title')
                                 ->label('Card title (ქართული)')
-                                ->helperText('Filled from the selected project. You can edit it as an override.'),
-                            ...LocalizedContentFields::itemInputs('title', 'Card title'),
-                            TextInput::make('category')->label('Category (ქართული)'),
-                            ...LocalizedContentFields::itemInputs('category', 'Category'),
-                            TextInput::make('imageAlt')->label('Image alt (ქართული)'),
-                            ...LocalizedContentFields::itemInputs('imageAlt', 'Image alt'),
+                                ->readOnly()
+                                ->helperText('არჩეული პროექტიდან ავტომატურად ივსება.'),
+                            ...LocalizedContentFields::itemInputs('title', 'Card title', readOnly: true),
+                            TextInput::make('category')
+                                ->label('Category (ქართული)')
+                                ->readOnly()
+                                ->helperText('არჩეული პროექტიდან ავტომატურად ივსება.'),
+                            ...LocalizedContentFields::itemInputs('category', 'Category', readOnly: true),
+                            TextInput::make('imageAlt')
+                                ->label('Image alt (ქართული)')
+                                ->readOnly()
+                                ->helperText('არჩეული პროექტიდან ავტომატურად ივსება.'),
+                            ...LocalizedContentFields::itemInputs('imageAlt', 'Image alt', readOnly: true),
                         ])
                         ->columns(3),
                 ]),

@@ -198,9 +198,15 @@ class SeoPage extends Model implements HasMedia
         return $this->schemaDataForLocale('ka');
     }
 
-    private function schemaDataForLocale(string $locale): array
+    /** @return array<string, mixed> */
+    public function generatedSchemaDataForLocale(string $locale = 'ka'): array
     {
-        if ($this->schema) {
+        return $this->schemaDataForLocale($locale, false);
+    }
+
+    private function schemaDataForLocale(string $locale, bool $allowOverride = true): array
+    {
+        if ($allowOverride && $this->schema) {
             $schema = is_array($this->schema)
                 ? $this->schema
                 : json_decode($this->schema, true);
@@ -263,6 +269,7 @@ class SeoPage extends Model implements HasMedia
                         'description' => $siteDescription,
                         'telephone' => $settings->phone,
                         'email' => $settings->email,
+                        'address' => $postalAddress,
                         'sameAs' => $sameAs ?: null,
                         'areaServed' => $settings->country ?: 'GE',
                     ], fn ($value): bool => $value !== null && $value !== '' && $value !== []),

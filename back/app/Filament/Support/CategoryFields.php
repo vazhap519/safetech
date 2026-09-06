@@ -33,7 +33,9 @@ final class CategoryFields
                     ->label('URL slug')
                     ->required()
                     ->maxLength(255)
-                    ->unique(ignoreRecord: true),
+                    ->unique(ignoreRecord: true)
+                    ->readOnly()
+                    ->helperText('ავტომატურად გენერირდება ქართული კატეგორიის სახელიდან.'),
                 ...($withAppearance ? [
                     ColorPicker::make('color')
                         ->label('Color')

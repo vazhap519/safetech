@@ -27,6 +27,7 @@ final class LocalizedContentFields
         int $rows = 3,
         ?int $maxLength = null,
         bool $live = false,
+        array $readOnlyLocales = [],
     ): array {
         return collect(self::LOCALE_LABELS)
             ->map(function (string $localeLabel, string $locale) use (
@@ -36,6 +37,7 @@ final class LocalizedContentFields
                 $rows,
                 $maxLength,
                 $live,
+                $readOnlyLocales,
             ): TextInput|Textarea {
                 $component = $textarea
                     ? Textarea::make("translations.fields.{$field}.{$locale}")->rows($rows)
@@ -55,6 +57,12 @@ final class LocalizedContentFields
 
                 if ($live) {
                     $component->live(onBlur: true);
+                }
+
+                if (in_array($locale, $readOnlyLocales, true)) {
+                    $component
+                        ->readOnly()
+                        ->helperText('ავტომატურად გენერირდება და ხელით არ რედაქტირდება.');
                 }
 
                 return $component;
@@ -121,6 +129,7 @@ final class LocalizedContentFields
         bool $textarea = false,
         int $rows = 3,
         ?int $maxLength = null,
+        bool $readOnly = false,
     ): array {
         return collect(self::SECONDARY_LOCALE_LABELS)
             ->map(function (string $localeLabel, string $locale) use (
@@ -129,6 +138,7 @@ final class LocalizedContentFields
                 $textarea,
                 $rows,
                 $maxLength,
+                $readOnly,
             ): TextInput|Textarea {
                 $component = $textarea
                     ? Textarea::make("translations.{$locale}.{$field}")->rows($rows)
@@ -140,6 +150,12 @@ final class LocalizedContentFields
 
                 if ($maxLength !== null) {
                     $component->maxLength($maxLength);
+                }
+
+                if ($readOnly) {
+                    $component
+                        ->readOnly()
+                        ->helperText('არჩეული ჩანაწერიდან ავტომატურად ივსება.');
                 }
 
                 return $component;
