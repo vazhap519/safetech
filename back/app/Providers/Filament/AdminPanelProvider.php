@@ -2,13 +2,13 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\AdminDashboard;
 use App\Filament\Support\NavigationGroup;
 use Filament\Forms\Components\Repeater;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -38,9 +38,7 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->bootUsing(function (): void {
                 Repeater::configureUsing(
-                    fn (Repeater $repeater): Repeater => $repeater
-                        ->collapsible()
-                        ->collapsed(),
+                    fn (Repeater $repeater): Repeater => $repeater->collapsible(),
                 );
             })
             ->databaseTransactions()
@@ -51,7 +49,7 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups(NavigationGroup::class)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([Dashboard::class])
+            ->pages([AdminDashboard::class])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->middleware([
                 EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class,
