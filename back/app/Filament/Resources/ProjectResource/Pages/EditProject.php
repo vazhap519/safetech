@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\ProjectResource\Pages;
 
 use App\Filament\Resources\ProjectResource;
+use App\Filament\Support\RelatedProjectDefaults;
 use App\Models\LocalServiceLanding;
+use App\Models\Project;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
@@ -17,6 +19,74 @@ class EditProject extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('manageRelatedProjects')
+                ->label('Related Projects')
+                ->icon('heroicon-o-link')
+                ->color('gray')
+                ->modalHeading('Related Projects მართვა')
+                ->modalDescription('აქედან შეგიძლია პირდაპირ მონიშნო ან მოხსნა დაკავშირებული პროექტები. ცვლილება ინახება პირდაპირ Project-ში და არ არის დამოკიდებული repeater-ის წაშლის ღილაკზე.')
+                ->schema([
+                    Select::make('related_slugs')
+                        ->label('დაკავშირებული პროექტები')
+                        ->multiple()
+                        ->searchable()
+                        ->preload()
+                        ->options(fn (): array => Project::query()
+                            ->whereKeyNot($this->record->getKey())
+                            ->orderBy('name')
+                            ->pluck('name', 'slug')
+                            ->all())
+                        ->helperText('ყველას მოსახსნელად დატოვე სია ცარიელი და დააჭირე Save-ს.'),
+                ])
+                ->fillForm(fn (): array => [
+                    'related_slugs' => collect($this->record->related ?? [])
+                        ->pluck('slug')
+                        ->filter()
+                        ->values()
+                        ->all(),
+                ])
+                ->action(function (array $data): void {
+                    $slugs = collect($data['related_slugs'] ?? [])
+                        ->map(fn ($slug): string => trim((string) $slug))
+                        ->filter()
+                        ->unique()
+                        ->values();
+
+                    $allowedSlugs = Project::query()
+                        ->whereKeyNot($this->record->getKey())
+                        ->whereIn('slug', $slugs)
+                        ->pluck('slug')
+                        ->all();
+
+                    $related = collect($allowedSlugs)
+                        ->map(function (string $slug): ?array {
+                            $defaults = RelatedProjectDefaults::forSlug($slug);
+
+                            if ($defaults === null) {
+                                return null;
+                            }
+
+                            $item = ['slug' => $slug];
+
+                            foreach ($defaults as $path => $value) {
+                                data_set($item, $path, $value);
+                            }
+
+                            return $item;
+                        })
+                        ->filter()
+                        ->values()
+                        ->all();
+
+                    $this->record->forceFill(['related' => $related])->save();
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title('Related Projects განახლდა')
+                        ->body($related ? 'არჩეული პროექტები შეინახა.' : 'ყველა Related Project მოიხსნა.')
+                        ->success()
+                        ->send();
+                }),
             Action::make('manageLocalServiceLandings')
                 ->label('Service / City კავშირები')
                 ->icon('heroicon-o-map-pin')
