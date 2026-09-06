@@ -55,6 +55,7 @@ const siteFont = localFont({
 
 const GOOGLE_TAG_MANAGER_ID_PATTERN = /^GTM-[A-Z0-9]+$/i;
 const GOOGLE_ANALYTICS_ID_PATTERN = /^G-[A-Z0-9]+$/i;
+const FACEBOOK_APP_ID = "2104123086847903";
 
 function withDynamicSiteTitle(title: string, siteName: string) {
     const cleanTitle = title.trim();
@@ -275,6 +276,7 @@ export default async function RootLayout({
             suppressHydrationWarning
         >
             <head>
+                <meta property="fb:app_id" content={FACEBOOK_APP_ID} />
                 {googleConsentEnabled ? (
                     <script
                         id="google-consent-default"
