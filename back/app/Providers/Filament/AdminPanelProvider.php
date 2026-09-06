@@ -38,9 +38,7 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->bootUsing(function (): void {
                 Repeater::configureUsing(
-                    fn (Repeater $repeater): Repeater => $repeater
-                        ->collapsible()
-                        ->collapsed(),
+                    fn (Repeater $repeater): Repeater => $repeater->collapsible(),
                 );
             })
             ->databaseTransactions()
