@@ -9,7 +9,7 @@ final class StructuredDataJsonField
     public static function make(string $helperText): Textarea
     {
         return Textarea::make('schema')
-            ->label('ინდივიდუალური Schema JSON-LD')
+            ->label('Custom Schema JSON-LD override')
             ->helperText($helperText)
             ->rows(10)
             ->formatStateUsing(fn ($state) => is_array($state)
