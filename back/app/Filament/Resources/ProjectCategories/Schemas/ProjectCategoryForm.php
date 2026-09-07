@@ -14,7 +14,7 @@ class ProjectCategoryForm
             ->components([
                 CategoryFields::core(withAppearance: true),
 
-                ...CategorySeoFields::sections(),
+                ...CategorySeoFields::sections('project'),
             ]);
     }
 }

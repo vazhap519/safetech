@@ -21,6 +21,7 @@ class LocalServiceLanding extends Model
             'benefits' => 'array',
             'faq' => 'array',
             'keywords' => 'array',
+            'schema' => 'array',
             'translations' => 'array',
             'is_published' => 'boolean',
             'noindex' => 'boolean',
