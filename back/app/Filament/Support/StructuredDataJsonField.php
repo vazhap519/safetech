@@ -8,8 +8,16 @@ final class StructuredDataJsonField
 {
     public static function make(string $helperText): Textarea
     {
-        return Textarea::make('schema')
-            ->label('Custom Schema JSON-LD override')
+        return self::makeAt('schema', $helperText);
+    }
+
+    public static function makeAt(
+        string $name,
+        string $helperText,
+        string $label = 'Custom Schema JSON-LD override',
+    ): Textarea {
+        return Textarea::make($name)
+            ->label($label)
             ->helperText($helperText)
             ->rows(10)
             ->formatStateUsing(fn ($state) => is_array($state)
@@ -20,13 +28,17 @@ final class StructuredDataJsonField
                     return null;
                 }
 
+                if (is_array($state)) {
+                    return $state;
+                }
+
                 $decoded = json_decode((string) $state, true);
 
                 return is_array($decoded) ? $decoded : null;
             })
             ->rules([
                 fn () => function (string $attribute, $value, $fail): void {
-                    if (blank($value)) {
+                    if (blank($value) || is_array($value)) {
                         return;
                     }
 
