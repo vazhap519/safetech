@@ -13,11 +13,11 @@ use Filament\Schemas\Components\Section;
 final class CategorySeoFields
 {
     /** @return array<int, Section> */
-    public static function sections(): array
+    public static function sections(string $kind = 'service'): array
     {
         return [
             Section::make('SEO და ინდექსაცია')
-                ->description('ძირითადი ქართული მნიშვნელობები გამოიყენება მაშინაც, როცა კონკრეტული ენის ველი ცარიელია.')
+                ->description('ძირითადი ქართული მნიშვნელობები გამოიყენება მაშინაც, როცა კონკრეტული ენის ველი ცარიელია. ავტომატური Schema ქვემოთ პირდაპირ ჩანს.')
                 ->schema([
                     TextInput::make('seo_title')
                         ->label('SEO სათაური')
@@ -39,8 +39,11 @@ final class CategorySeoFields
                         ->columnSpanFull(),
                     self::faq('faq', 'ხშირად დასმული კითხვები')
                         ->columnSpanFull(),
-                    self::json('schema', 'Custom Schema JSON-LD')
-                        ->columnSpanFull(),
+                    StructuredDataJsonField::makeAt(
+                        'schema',
+                        'ცარიელი დატოვეთ ავტომატური Schema-სთვის. შეავსეთ მხოლოდ მაშინ, როცა ამ კატეგორიის ავტომატური JSON-LD მთლიანად უნდა ჩაანაცვლოთ ან გააფართოოთ.',
+                    ),
+                    GeneratedSchemaPreview::category($kind),
                     Toggle::make('noindex')
                         ->label('საძიებო სისტემებში არ გამოჩნდეს')
                         ->helperText('ჩართეთ მხოლოდ დროებითი, დუბლირებული ან ძალიან მცირე შინაარსის მქონე გვერდისთვის.')
@@ -77,8 +80,11 @@ final class CategorySeoFields
                     ->columnSpanFull(),
                 self::faq("translations.faq.{$locale}", 'ხშირად დასმული კითხვები')
                     ->columnSpanFull(),
-                self::json("translations.schema.{$locale}", 'Custom Schema JSON-LD')
-                    ->columnSpanFull(),
+                StructuredDataJsonField::makeAt(
+                    "translations.schema.{$locale}",
+                    'სავალდებულო არ არის. ენობრივი override შეავსეთ მხოლოდ მაშინ, როცა ამ ენის ავტომატური schema უნდა შეიცვალოს.',
+                    "Custom Schema JSON-LD override — {$label}",
+                ),
             ])
             ->columns(2);
     }
@@ -94,39 +100,6 @@ final class CategorySeoFields
             ->collapsible()
             ->cloneable()
             ->default([]);
-    }
-
-    private static function json(string $name, string $label): Textarea
-    {
-        return Textarea::make($name)
-            ->label($label)
-            ->rows(8)
-            ->helperText('სავალდებულო არ არის. შეავსეთ მხოლოდ ვალიდური JSON ობიექტით.')
-            ->formatStateUsing(fn (mixed $state): mixed => is_array($state)
-                ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                : $state)
-            ->dehydrateStateUsing(function (mixed $state): mixed {
-                if (blank($state) || is_array($state)) {
-                    return blank($state) ? null : $state;
-                }
-
-                $decoded = json_decode((string) $state, true);
-
-                return json_last_error() === JSON_ERROR_NONE ? $decoded : $state;
-            })
-            ->rules([
-                fn (): callable => function (string $attribute, mixed $value, callable $fail): void {
-                    if (blank($value) || is_array($value)) {
-                        return;
-                    }
-
-                    json_decode((string) $value, true);
-
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        $fail('Schema JSON არასწორი ფორმატითაა შევსებული.');
-                    }
-                },
-            ]);
     }
 
     /** @return array<string, string> */
