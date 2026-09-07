@@ -20,6 +20,17 @@ class AdminStructuredDataControlsTest extends TestCase
         $this->assertStringContainsString($overridePath, $source);
     }
 
+    public function test_shared_schema_controls_use_clear_override_and_generated_preview_labels(): void
+    {
+        $preview = file_get_contents(base_path('app/Filament/Support/GeneratedSchemaPreview.php'));
+        $override = file_get_contents(base_path('app/Filament/Support/StructuredDataJsonField.php'));
+
+        $this->assertIsString($preview);
+        $this->assertIsString($override);
+        $this->assertStringContainsString('ავტომატურად გენერირებული Schema JSON-LD', $preview);
+        $this->assertStringContainsString('Custom Schema JSON-LD override', $override);
+    }
+
     public static function editorSourceProvider(): array
     {
         return [
