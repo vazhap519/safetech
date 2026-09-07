@@ -44,6 +44,7 @@ export type LocalServiceLanding = {
         keywords?: string[];
         image?: string | null;
         noindex?: boolean;
+        schema?: Record<string, unknown> | Array<Record<string, unknown>>;
     };
     updated_at?: string;
 };

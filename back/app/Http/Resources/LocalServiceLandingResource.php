@@ -88,6 +88,7 @@ class LocalServiceLandingResource extends JsonResource
                 'keywords' => $keywords,
                 'image' => $service->social_image_url ?: $service->image,
                 'noindex' => $this->noindex,
+                'schema' => $this->schema,
             ],
             'updated_at' => $this->updated_at?->toAtomString(),
         ];

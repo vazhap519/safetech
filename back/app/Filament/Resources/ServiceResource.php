@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ServiceResource\Pages;
 use App\Filament\Support\AdminIconOptions;
+use App\Filament\Support\GeneratedSchemaPreview;
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\NavigationGroup;
+use App\Filament\Support\StructuredDataJsonField;
 use App\Filament\Support\StableSlug;
 use App\Models\Service;
 use Filament\Actions\BulkActionGroup;
@@ -359,6 +361,16 @@ class ServiceResource extends Resource
                         ->rows(2),
                 ])
                 ->columns(3),
+
+            Section::make('Schema JSON-LD')
+                ->description('სერვისის structured data ავტომატურად გენერირდება. Custom override გამოიყენეთ მხოლოდ მაშინ, როცა ავტომატური schema მთლიანად უნდა ჩაანაცვლოთ ან გააფართოოთ.')
+                ->schema([
+                    StructuredDataJsonField::makeAt(
+                        'seo.schema',
+                        'ცარიელი დატოვეთ ავტომატური Schema-სთვის. აქ შეყვანილი JSON frontend-ზე ემატება სერვისის structured data-ს.',
+                    ),
+                    GeneratedSchemaPreview::service(),
+                ]),
 
             Section::make('Publishing')
                 ->schema([

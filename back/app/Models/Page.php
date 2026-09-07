@@ -23,6 +23,7 @@ class Page extends Model implements HasMedia
     {
         return [
             'keywords' => 'array',
+            'schema' => 'array',
             'translations' => 'array',
             'is_published' => 'boolean',
             'noindex' => 'boolean',

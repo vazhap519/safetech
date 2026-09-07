@@ -3,8 +3,10 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PageResource\Pages;
+use App\Filament\Support\GeneratedSchemaPreview;
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\NavigationGroup;
+use App\Filament\Support\StructuredDataJsonField;
 use App\Filament\Support\StableSlug;
 use App\Models\Page;
 use Filament\Actions\BulkActionGroup;
@@ -64,6 +66,11 @@ class PageResource extends Resource
                     TextInput::make('seo_title')->label('SEO title')->maxLength(255),
                     Textarea::make('seo_description')->label('SEO description')->rows(3)->maxLength(320),
                     TagsInput::make('keywords')->label('Keywords'),
+                    StructuredDataJsonField::makeAt(
+                        'schema',
+                        'ცარიელი დატოვეთ ავტომატური WebPage schema-სთვის. Custom override შეავსეთ მხოლოდ მაშინ, როცა generated JSON-LD უნდა შეიცვალოს.',
+                    ),
+                    GeneratedSchemaPreview::page(),
                     Toggle::make('is_published')->label('Published')->default(false),
                     Toggle::make('noindex')->label('Exclude from search and sitemap')->default(false),
                     DateTimePicker::make('published_at')->label('Published at'),

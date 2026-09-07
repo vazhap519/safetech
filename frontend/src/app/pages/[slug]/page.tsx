@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import DynamicPage from "@/components/pages/DynamicPage";
+import JsonLd from "@/components/seo/JsonLd";
 import { getBackendPage } from "@/lib/backend";
 import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
 import { localizePath } from "@/lib/locales";
@@ -67,5 +68,19 @@ export default async function DynamicPageRoute({ params }: DynamicPageProps) {
         notFound();
     }
 
-    return <DynamicPage locale={locale} page={page} />;
+    const generatedSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        name: page.seo?.title || page.title,
+        description: page.seo?.description || page.excerpt || page.content,
+        url: `https://safetech.ge/pages/${page.slug}`,
+        isPartOf: { '@type': 'WebSite', name: 'SafeTech', url: 'https://safetech.ge/' },
+    };
+
+    return (
+        <>
+            <JsonLd data={page.seo?.schema || generatedSchema} />
+            <DynamicPage locale={locale} page={page} />
+        </>
+    );
 }

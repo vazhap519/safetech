@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectResource\Pages;
 use App\Filament\Support\AdminIconOptions;
+use App\Filament\Support\GeneratedSchemaPreview;
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\NavigationGroup;
+use App\Filament\Support\StructuredDataJsonField;
 use App\Filament\Support\ProjectSeoHelper;
 use App\Filament\Support\RelatedProjectDefaults;
 use App\Filament\Support\StableSlug;
@@ -367,6 +369,16 @@ class ProjectResource extends Resource
                             ...LocalizedContentFields::itemInputs('imageAlt', 'Image alt', readOnly: true),
                         ])
                         ->columns(3),
+                ]),
+
+            Section::make('Schema JSON-LD')
+                ->description('Project-ის structured data ავტომატურად იქმნება რეალური პროექტის მონაცემებიდან. Override შეავსეთ მხოლოდ სპეციალური შემთხვევისთვის.')
+                ->schema([
+                    StructuredDataJsonField::makeAt(
+                        'seo.schema',
+                        'ცარიელი დატოვეთ ავტომატური Schema-სთვის. Custom JSON frontend-ზე ემატება პროექტის generated structured data-ს.',
+                    ),
+                    GeneratedSchemaPreview::project(),
                 ]),
 
             Section::make('Publishing')

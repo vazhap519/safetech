@@ -32,6 +32,7 @@ class PageResource extends JsonResource
                 'keywords' => $this->keywords ?? [],
                 'image' => $this->cover_image,
                 'noindex' => $this->noindex,
+                'schema' => $this->schema,
             ],
             'updated_at' => $this->updated_at?->toAtomString(),
         ];

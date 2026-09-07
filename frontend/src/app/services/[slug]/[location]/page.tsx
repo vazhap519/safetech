@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import LocalServiceLandingView from "@/components/pages/LocalServiceLandingView";
 import LocalServiceSiblingLinks from "@/components/pages/LocalServiceSiblingLinks";
+import JsonLd from "@/components/seo/JsonLd";
 import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
 import {
     getLocalServiceLanding,
@@ -73,8 +74,25 @@ export default async function LocalServicePage({
         notFound();
     }
 
+    const generatedSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: landing.seo?.title || landing.title,
+        description: landing.seo?.description || landing.excerpt || landing.content,
+        url: `https://safetech.ge/services/${landing.service.slug}/${landing.locationSlug}`,
+        provider: {
+            '@type': 'Organization',
+            '@id': 'https://safetech.ge/#organization',
+            name: 'SafeTech',
+            url: 'https://safetech.ge/',
+        },
+        areaServed: { '@type': 'City', name: landing.locationName },
+    };
+    const schema = landing.seo?.schema || generatedSchema;
+
     return (
         <>
+            <JsonLd data={schema} />
             <LocalServiceLandingView landing={landing} locale={locale} />
             <LocalServiceSiblingLinks
                 currentLocation={landing.locationSlug}

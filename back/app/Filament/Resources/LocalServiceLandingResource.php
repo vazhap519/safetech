@@ -3,8 +3,10 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\LocalServiceLandingResource\Pages;
+use App\Filament\Support\GeneratedSchemaPreview;
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\NavigationGroup;
+use App\Filament\Support\StructuredDataJsonField;
 use App\Models\LocalServiceLanding;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -136,6 +138,11 @@ class LocalServiceLandingResource extends Resource
                     ...LocalizedContentFields::secondaryInputs('seoTitle', 'SEO title', maxLength: 255),
                     Textarea::make('seo_description')->label('SEO description (ქართული)')->rows(3)->maxLength(320),
                     ...LocalizedContentFields::secondaryInputs('seoDescription', 'SEO description', textarea: true, maxLength: 320),
+                    StructuredDataJsonField::makeAt(
+                        'schema',
+                        'ცარიელი დატოვეთ ავტომატური Local Service schema-სთვის. Custom JSON გამოიყენეთ მხოლოდ მაშინ, როცა generated schema უნდა ჩაანაცვლოთ ან გააფართოოთ.',
+                    ),
+                    GeneratedSchemaPreview::localService(),
                     Toggle::make('noindex')
                         ->label('Noindex')
                         ->default(true)
