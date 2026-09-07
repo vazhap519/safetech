@@ -14,19 +14,21 @@ export default async function FeaturedSection({
     const selected = selectedService
         ? services.find((service) => service.slug === selectedService)
         : undefined;
-    const selectedCategory = selected?.category?.slug;
+    const selectedCategory = selected?.category;
     const related = selectedCategory
         ? services.filter(
               (service) =>
                   service.slug !== selectedService &&
-                  service.category?.slug === selectedCategory,
+                  service.category === selectedCategory,
           )
         : [];
-    const fallback = services.filter((service) => service.slug !== selectedService);
-    const visibleServices = [...related, ...fallback.filter((service) => !related.includes(service))].slice(
-        0,
-        3,
+    const fallback = services.filter(
+        (service) => service.slug !== selectedService,
     );
+    const visibleServices = [
+        ...related,
+        ...fallback.filter((service) => !related.includes(service)),
+    ].slice(0, 3);
 
     if (!visibleServices.length) return null;
 
