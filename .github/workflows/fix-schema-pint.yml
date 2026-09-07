@@ -1,0 +1,36 @@
+name: Fix schema Pint formatting
+
+on:
+  push:
+    branches:
+      - sitewide-schema-admin-phase-15
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: sitewide-schema-admin-phase-15
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Format changed PHP files
+        run: vendor/bin/pint app/Filament/Resources/PageResource.php app/Filament/Resources/ProjectResource.php app/Filament/Resources/ServiceResource.php app/Filament/Support/GeneratedSchemaPreview.php app/Filament/Support/CategorySeoFields.php app/Filament/Support/StructuredDataJsonField.php tests/Feature/AdminStructuredDataControlsTest.php database/migrations/2026_09_07_001000_add_schema_overrides_to_content_pages.php
+      - name: Remove temporary workflow
+        working-directory: ${{ github.workspace }}
+        run: rm .github/workflows/fix-schema-pint.yml
+      - name: Commit formatting
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Format sitewide schema admin changes"
+          git push origin HEAD:sitewide-schema-admin-phase-15
