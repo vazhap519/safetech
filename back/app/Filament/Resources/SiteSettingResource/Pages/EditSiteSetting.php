@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SiteSettingResource\Pages;
 
+use App\Filament\Concerns\HasAiContentGenerator;
 use App\Filament\Resources\SiteSettingResource;
 use App\Filament\Support\ManagedPageTranslationFields;
 use App\Support\SiteSettingValueNormalizer;
@@ -10,11 +11,14 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditSiteSetting extends EditRecord
 {
+    use HasAiContentGenerator;
+
     protected static string $resource = SiteSettingResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->aiContentAction(),
             DeleteAction::make()
                 ->label('წაშლა')
                 ->requiresConfirmation(),
