@@ -84,8 +84,8 @@ trait HasAiContentGenerator
             str_contains($resource, 'serviceresource') => 'service',
             str_contains($resource, 'aboutpageresource') => 'about',
             str_contains($resource, 'faqresource') => 'faq',
-            str_contains($resource, 'seopageresource') => 'seo',
-            str_contains($resource, 'pagesetting'), str_contains($resource, 'sitesettingresource') => 'settings',
+            str_contains($resource, 'seopageresource'), str_contains($resource, 'localservicelandingresource') => 'seo',
+            str_contains($resource, 'sitesettingresource') => 'settings',
             str_contains($resource, 'pageresource') => 'page',
             default => 'generic',
         };
