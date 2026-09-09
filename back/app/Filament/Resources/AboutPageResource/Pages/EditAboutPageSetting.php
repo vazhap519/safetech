@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AboutPageResource\Pages;
 
+use App\Filament\Concerns\HasAiContentGenerator;
 use App\Filament\Resources\AboutPageResource;
 use App\Filament\Support\AboutPageTranslationFields;
 use Filament\Actions\Action;
@@ -10,6 +11,8 @@ use Filament\Schemas\Schema;
 
 class EditAboutPageSetting extends EditRecord
 {
+    use HasAiContentGenerator;
+
     protected static string $resource = AboutPageResource::class;
 
     public string $section = 'hero-story';
@@ -23,16 +26,19 @@ class EditAboutPageSetting extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return array_map(
-            fn (array $section): Action => Action::make("about_section_{$section['id']}")
-                ->label($section['label'])
-                ->color($section['id'] === $this->section ? 'primary' : 'gray')
-                ->url(fn (): string => AboutPageResource::getUrl('edit', [
-                    'record' => $this->getRecord(),
-                    'section' => $section['id'],
-                ])),
-            AboutPageTranslationFields::navigation(),
-        );
+        return [
+            $this->aiContentAction(),
+            ...array_map(
+                fn (array $section): Action => Action::make("about_section_{$section['id']}")
+                    ->label($section['label'])
+                    ->color($section['id'] === $this->section ? 'primary' : 'gray')
+                    ->url(fn (): string => AboutPageResource::getUrl('edit', [
+                        'record' => $this->getRecord(),
+                        'section' => $section['id'],
+                    ])),
+                AboutPageTranslationFields::navigation(),
+            ),
+        ];
     }
 
     public function form(Schema $schema): Schema
