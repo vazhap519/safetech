@@ -204,7 +204,7 @@ PROMPT;
 
         $blockedTokens = [
             'slug','url','email','phone','whatsapp','telegram','facebook','instagram','linkedin','youtube',
-            'password','token','secret','api','key','id','icon','accent','media','cover','image_file','file',
+            'password','token','secret','api','key','id','icon','accent','media','cover','image','file',
             'published','noindex','sort','order','date','time','currency','price','cost','amount','lat','lng',
             'latitude','longitude','schema','featured','recommended','enabled','quantity','model',
         ];
@@ -284,11 +284,11 @@ PROMPT;
 
     private function pathContainsAny(string $path, array $tokens): bool
     {
-        $normalized = Str::lower(str_replace(['-', ' '], '_', $path));
+        $segments = preg_split('/[._\-\s]+/', Str::lower($path)) ?: [];
 
         foreach ($tokens as $token) {
             $token = Str::lower((string) $token);
-            if ($token !== '' && str_contains($normalized, $token)) {
+            if ($token !== '' && in_array($token, $segments, true)) {
                 return true;
             }
         }
