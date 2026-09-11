@@ -79,12 +79,12 @@ class AboutPageResourceTest extends TestCase
             ],
         ])->save();
 
-        $this->get("/admin/about-pages/{$setting->id}/edit/identity")->assertOk();
+        $this->get("/admin/about-pages/{$setting->id}/edit?section=identity")->assertOk();
 
-        Livewire::test(EditAboutPageSetting::class, [
-            'record' => $setting->getRouteKey(),
-            'section' => 'identity',
-        ])
+        Livewire::withQueryParams(['section' => 'identity'])
+            ->test(EditAboutPageSetting::class, [
+                'record' => $setting->getRouteKey(),
+            ])
             ->fillForm([
                 'about_page_translations' => [
                     'about_who_title' => [

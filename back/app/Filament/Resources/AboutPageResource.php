@@ -66,7 +66,7 @@ class AboutPageResource extends Resource
         return [
             'index' => Pages\ListAboutPageSettings::route('/'),
             'create' => Pages\CreateAboutPageSetting::route('/create'),
-            'edit' => Pages\EditAboutPageSetting::route('/{record}/edit/{section?}'),
+            'edit' => Pages\EditAboutPageSetting::route('/{record}/edit'),
         ];
     }
 }

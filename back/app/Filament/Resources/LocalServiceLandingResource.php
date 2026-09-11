@@ -24,6 +24,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class LocalServiceLandingResource extends Resource
 {
@@ -110,7 +111,12 @@ class LocalServiceLandingResource extends Resource
                 ->schema([
                     Select::make('projects')
                         ->label('დაკავშირებული რეალური პროექტები')
-                        ->relationship('projects', 'name')
+                        ->relationship(
+                            'projects',
+                            'name',
+                            modifyQueryUsing: fn (Builder $query): Builder => $query
+                                ->select(['projects.id', 'projects.name']),
+                        )
                         ->multiple()
                         ->searchable()
                         ->preload(),

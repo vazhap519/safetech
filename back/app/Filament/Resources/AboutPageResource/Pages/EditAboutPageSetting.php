@@ -17,9 +17,12 @@ class EditAboutPageSetting extends EditRecord
 
     public string $section = 'hero-story';
 
-    public function mount(int|string $record, ?string $section = null): void
+    public function mount(int|string $record): void
     {
-        $this->section = AboutPageTranslationFields::normalizeSection($section);
+        $section = request()->query('section');
+        $this->section = AboutPageTranslationFields::normalizeSection(
+            is_string($section) ? $section : null,
+        );
 
         parent::mount($record);
     }
