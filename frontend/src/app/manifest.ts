@@ -30,11 +30,16 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     }
 
     return {
+        id: "/",
         name: siteName,
         short_name: siteName,
         description: branding.tagline || siteName,
         start_url: "/",
+        scope: "/",
         display: "standalone",
+        lang: "ka-GE",
+        categories: ["business", "productivity", "utilities"],
+        prefer_related_applications: false,
         background_color: "#070B14",
         theme_color: "#070B14",
         icons,

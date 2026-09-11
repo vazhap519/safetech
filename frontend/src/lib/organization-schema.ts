@@ -74,7 +74,9 @@ export function buildOrganizationEntity({
             : undefined;
 
     return {
-        "@type": "Organization",
+        "@type": contact.address
+            ? ["Organization", "LocalBusiness", "ProfessionalService"]
+            : "Organization",
         name: siteName,
         url,
         logo,

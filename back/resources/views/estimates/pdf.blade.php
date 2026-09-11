@@ -208,7 +208,7 @@
             @forelse($lineItems as $index => $item)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $item['label'] }}</td>
+                    <td>{{ $item['label'] ?? '—' }}</td>
                     <td class="text-right">{{ $quantity($item['quantity'] ?? 0) }}</td>
                     <td>{{ $item['unit'] ?? 'pcs' }}</td>
                     <td class="text-right">{{ $money($item['sell_unit'] ?? 0) }}</td>

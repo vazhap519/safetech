@@ -141,4 +141,69 @@ class AdminRepeaterDeletionRuntimeTest extends TestCase
         $this->assertSame(['Keep'], array_column($project->meta ?? [], 'value'));
         $this->assertSame([], $project->related ?? null);
     }
+
+    public function test_project_can_be_updated_with_current_seo_and_local_project_fields(): void
+    {
+        $category = ProjectCategory::query()->create([
+            'name' => 'Current project category',
+            'slug' => 'current-project-category',
+        ]);
+        $project = Project::query()->create([
+            'category_id' => $category->id,
+            'name' => 'Project before update',
+            'title' => 'Project before update',
+            'slug' => 'project-current-fields-update',
+            'description' => 'Description before update.',
+            'seo_description' => 'SEO description before update.',
+            'image_alt' => 'Image alt before update.',
+            'icon' => 'business',
+            'accent' => 'primary',
+            'seo' => ['keywords' => ['old keyword']],
+            'translations' => [
+                'fields' => [
+                    'name' => ['en' => 'Old English name'],
+                ],
+            ],
+            'equipment' => [],
+            'is_published' => true,
+        ]);
+
+        Livewire::test(EditProject::class, ['record' => $project->getRouteKey()])
+            ->fillForm([
+                'name' => 'Project after update',
+                'title' => 'Updated project headline',
+                'description' => 'Description after update.',
+                'seo_description' => 'SEO description after update.',
+                'image_alt' => 'Image alt after update.',
+                'city' => 'თბილისი',
+                'object_type' => 'ოფისი',
+                'equipment' => [
+                    [
+                        'name' => 'Network switch',
+                        'model' => 'SW-24',
+                        'quantity' => '1',
+                    ],
+                ],
+                'seo.keywords' => ['network installation', 'თბილისი'],
+                'translations.fields.name.en' => 'Project after update',
+                'translations.fields.name.ru' => 'Проект после обновления',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $project->refresh();
+
+        $this->assertSame('Project after update', $project->name);
+        $this->assertSame('თბილისი', $project->city);
+        $this->assertSame('ოფისი', $project->object_type);
+        $this->assertSame('Network switch', data_get($project->equipment, '0.name'));
+        $this->assertSame(
+            ['network installation', 'თბილისი'],
+            data_get($project->seo, 'keywords'),
+        );
+        $this->assertSame(
+            'Project after update',
+            data_get($project->translations, 'fields.name.en'),
+        );
+    }
 }

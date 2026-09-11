@@ -3,8 +3,9 @@
 import dynamic from "next/dynamic";
 
 type FloatingWhatsAppSlotProps = {
-    phone?: string;
+    callPhone?: string;
     message?: string;
+    whatsappPhone?: string;
 };
 
 const FloatingWhatsApp = dynamic(

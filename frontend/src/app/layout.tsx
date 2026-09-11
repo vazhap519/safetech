@@ -340,7 +340,14 @@ export default async function RootLayout({
                         metaPixelId={metaPixelId}
                     />
                     <ConsultationProvider>
-                        <div className="relative flex min-h-screen flex-col">
+                        <div
+                            className={`relative flex min-h-screen flex-col ${
+                                contact.phone ||
+                                (contact.whatsappEnabled && contact.whatsapp)
+                                    ? "pb-20 sm:pb-0"
+                                    : ""
+                            }`}
+                        >
                             <a
                                 href="#main-content"
                                 className="sr-only z-[100] rounded-lg bg-primary-container px-4 py-3 text-on-primary-container focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
@@ -356,7 +363,8 @@ export default async function RootLayout({
                             <Footer marketingEnabled={marketingEnabled} />
                         </div>
                         <FloatingWhatsAppSlot
-                            phone={
+                            callPhone={contact.phone}
+                            whatsappPhone={
                                 contact.whatsappEnabled ? contact.whatsapp : ""
                             }
                             message={contact.whatsappMessage}

@@ -20,18 +20,33 @@ type ApiProject = ProjectDetail & {
 };
 
 async function fetchProjectData<T>(path: string): Promise<T | undefined> {
-    try {
-        const response = await fetch(`${serverApiBase}${path}`, {
-            next: { revalidate: 300, tags: ["cms"] },
-            signal: AbortSignal.timeout(3000),
-        });
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+            const response = await fetch(`${serverApiBase}${path}`, {
+                // Successful CMS revalidation remains immediate. A short TTL
+                // bounds staleness when its queue job fails while allowing
+                // metadata and page rendering to share the same API response.
+                next: {
+                    revalidate: 15,
+                    tags: ["cms", "projects"],
+                },
+                signal: AbortSignal.timeout(7000),
+            });
 
-        if (!response.ok) return undefined;
+            if (response.ok) {
+                return ((await response.json()) as { data: T }).data;
+            }
 
-        return ((await response.json()) as { data: T }).data;
-    } catch {
-        return undefined;
+            if (response.status !== 429 && response.status < 500) {
+                return undefined;
+            }
+        } catch {
+            // Retry one transient API timeout/network failure. Project pages
+            // must not become false 404/500 responses during brief load spikes.
+        }
     }
+
+    return undefined;
 }
 
 function asset(path?: string | null): string {

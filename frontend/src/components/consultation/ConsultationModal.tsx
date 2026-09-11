@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import ConsultationFormSlot from "@/components/consultation/ConsultationFormSlot";
 import {
     CONSULTATION_CLOSE_EVENT,
     CONSULTATION_MODAL_ID,
     CONSULTATION_OPEN_EVENT,
+    type ConsultationPrefill,
 } from "@/components/consultation/constants";
 import { trackConsultationOpen } from "@/lib/analytics-events";
 import { trackEvent } from "@/lib/analytics";
@@ -32,9 +33,18 @@ export default function ConsultationModal({
     closeLabel,
 }: ConsultationModalProps) {
     const [open, setOpen] = useState(false);
+    const [prefill, setPrefill] = useState<ConsultationPrefill>({});
+    const dialogRef = useRef<HTMLElement>(null);
+    const returnFocusRef = useRef<HTMLElement | null>(null);
 
     useEffect(() => {
-        function handleOpen() {
+        function handleOpen(event: Event) {
+            const detail = (event as CustomEvent<ConsultationPrefill>).detail;
+            returnFocusRef.current =
+                document.activeElement instanceof HTMLElement
+                    ? document.activeElement
+                    : null;
+            setPrefill(detail && typeof detail === "object" ? detail : {});
             setOpen(true);
             trackEvent("consultation_open");
             trackConsultationOpen();
@@ -62,6 +72,31 @@ export default function ConsultationModal({
         function handleKeyDown(event: KeyboardEvent) {
             if (event.key === "Escape") {
                 setOpen(false);
+                return;
+            }
+
+            if (event.key !== "Tab") return;
+
+            const dialog = dialogRef.current;
+            if (!dialog) return;
+
+            const focusable = Array.from(
+                dialog.querySelectorAll<HTMLElement>(
+                    'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+                ),
+            ).filter((element) => !element.hasAttribute("hidden"));
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (!first || !last) {
+                event.preventDefault();
+                dialog.focus();
+            } else if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
             }
         }
 
@@ -70,6 +105,8 @@ export default function ConsultationModal({
         return () => {
             document.body.style.overflow = previousOverflow;
             window.removeEventListener("keydown", handleKeyDown);
+            returnFocusRef.current?.focus();
+            returnFocusRef.current = null;
         };
     }, [open]);
 
@@ -89,7 +126,9 @@ export default function ConsultationModal({
                 aria-modal="true"
                 className="max-h-[100dvh] w-full overscroll-contain overflow-y-auto rounded-t-3xl border border-outline-variant/30 bg-surface-container text-on-surface shadow-2xl sm:max-h-[90dvh] sm:w-[min(92vw,42rem)] sm:rounded-3xl"
                 id={CONSULTATION_MODAL_ID}
+                ref={dialogRef}
                 role="dialog"
+                tabIndex={-1}
             >
                 <div className="relative px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-6 sm:p-unit-xl">
                     <button
@@ -126,7 +165,10 @@ export default function ConsultationModal({
                         </header>
                     ) : null}
 
-                    <ConsultationFormSlot serviceOptions={serviceOptions} />
+                    <ConsultationFormSlot
+                        prefill={prefill}
+                        serviceOptions={serviceOptions}
+                    />
                 </div>
             </section>
         </div>

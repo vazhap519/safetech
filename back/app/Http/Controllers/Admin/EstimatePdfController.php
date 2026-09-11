@@ -30,6 +30,11 @@ class EstimatePdfController extends Controller
             'contact' => $contact,
         ])->setPaper('a4');
 
-        return $pdf->download("{$estimate->estimate_number}.pdf");
+        $response = $pdf->download("{$estimate->estimate_number}.pdf");
+        $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+
+        return $response;
     }
 }

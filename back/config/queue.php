@@ -12,6 +12,8 @@ return [
 
     // A queued job older than this threshold is surfaced as delayed by /api/health.
     'health_stale_seconds' => (int) env('QUEUE_HEALTH_STALE_SECONDS', 300),
+    'health_heartbeat_interval_seconds' => (int) env('QUEUE_HEALTH_HEARTBEAT_INTERVAL_SECONDS', 30),
+    'health_heartbeat_stale_seconds' => (int) env('QUEUE_HEALTH_HEARTBEAT_STALE_SECONDS', 120),
 
     /*
     |--------------------------------------------------------------------------

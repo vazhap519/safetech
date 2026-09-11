@@ -7,11 +7,17 @@ use App\Filament\Resources\ContactLeadResource;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-final class NotifyAdminsOfNewLead
+final class NotifyAdminsOfNewLead implements ShouldQueue
 {
+    public int $tries = 3;
+
+    /** @var array<int, int> */
+    public array $backoff = [10, 60, 180];
+
     public function handle(LeadCreated $event): void
     {
         $lead = $event->lead;

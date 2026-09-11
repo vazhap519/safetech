@@ -5,6 +5,7 @@ import {
     useState,
     type ComponentType,
 } from "react";
+import type { ConsultationPrefill } from "@/components/consultation/constants";
 
 type ServiceOption = {
     slug: string;
@@ -12,12 +13,15 @@ type ServiceOption = {
 };
 
 type ConsultationFormComponent = ComponentType<{
+    prefill?: ConsultationPrefill;
     serviceOptions: ServiceOption[];
 }>;
 
 export default function ConsultationFormSlot({
+    prefill,
     serviceOptions,
 }: {
+    prefill?: ConsultationPrefill;
     serviceOptions: ServiceOption[];
 }) {
     const [Form, setForm] = useState<ConsultationFormComponent | null>(null);
@@ -47,7 +51,7 @@ export default function ConsultationFormSlot({
     }, []);
 
     return Form ? (
-        <Form serviceOptions={serviceOptions} />
+        <Form prefill={prefill} serviceOptions={serviceOptions} />
     ) : (
         <div
             aria-hidden="true"

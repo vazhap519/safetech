@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AttachRequestId;
 use App\Http\Middleware\EnsureAllowedCountry;
 use App\Http\Middleware\ForceCanonicalHttpsScheme;
 use Illuminate\Foundation\Application;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(ForceCanonicalHttpsScheme::class);
+        $middleware->prepend(AttachRequestId::class);
 
         $middleware->trustProxies(
             at: array_values(array_filter(array_map(

@@ -22,7 +22,7 @@ class ServiceCatalogSeederTest extends TestCase
 
         $this->assertDatabaseCount('category_for_services', 4);
         $this->assertDatabaseCount('services', 12);
-        $this->assertDatabaseCount('faqs', 36);
+        $this->assertDatabaseCount('faqs', 42);
 
         $service = Service::query()
             ->with(['category', 'faqs'])
@@ -144,6 +144,6 @@ class ServiceCatalogSeederTest extends TestCase
         $this->assertTrue($services->every(fn (Service $service): bool => is_array($service->keywords) && count($service->keywords) >= 3));
 
         $this->assertSame(4, CategoryForService::query()->count());
-        $this->assertSame(36, Faq::query()->count());
+        $this->assertSame(42, Faq::query()->count());
     }
 }

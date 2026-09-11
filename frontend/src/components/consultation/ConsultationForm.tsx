@@ -1,6 +1,7 @@
 "use client";
 
 import { CONSULTATION_CLOSE_EVENT } from "@/components/consultation/constants";
+import type { ConsultationPrefill } from "@/components/consultation/constants";
 import PrivacyConsent from "@/components/forms/PrivacyConsent";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import { useLeadForm } from "@/hooks/useLeadForm";
@@ -11,8 +12,10 @@ type ServiceOption = {
 };
 
 export default function ConsultationForm({
+    prefill,
     serviceOptions,
 }: {
+    prefill?: ConsultationPrefill;
     serviceOptions: ServiceOption[];
 }) {
     const { status, message, submit } = useLeadForm("consultation-popup");
@@ -93,6 +96,25 @@ export default function ConsultationForm({
 
     return (
         <form className="space-y-unit-md" onSubmit={submit}>
+            {(prefill?.details ?? []).map((detail) => (
+                <span key={detail.key}>
+                    <input
+                        name={`details__${detail.key}`}
+                        type="hidden"
+                        value={detail.value}
+                    />
+                    <input
+                        name={`details_label__${detail.key}`}
+                        type="hidden"
+                        value={detail.label}
+                    />
+                    <input
+                        name={`details_type__${detail.key}`}
+                        type="hidden"
+                        value={detail.type}
+                    />
+                </span>
+            ))}
             <input
                 aria-hidden="true"
                 autoComplete="off"
@@ -172,7 +194,7 @@ export default function ConsultationForm({
                 <span>{serviceLabel} *</span>
                 <select
                     className={`${inputClassName} cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
-                    defaultValue=""
+                    defaultValue={prefill?.serviceSlug ?? ""}
                     disabled={!hasServices}
                     name="serviceSlug"
                     required
@@ -199,6 +221,7 @@ export default function ConsultationForm({
                     maxLength={3000}
                     minLength={10}
                     name="message"
+                    defaultValue={prefill?.message ?? ""}
                     required
                     rows={5}
                 />

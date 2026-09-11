@@ -21,8 +21,9 @@ return [
         'Origin',
         'X-Requested-With',
         'Idempotency-Key',
+        'X-Request-ID',
     ],
-    'exposed_headers' => [],
+    'exposed_headers' => ['X-Request-ID'],
     'max_age' => 3600,
     'supports_credentials' => false,
 ];

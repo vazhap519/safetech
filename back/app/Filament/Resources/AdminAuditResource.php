@@ -58,11 +58,13 @@ class AdminAuditResource extends Resource
                         'created' => 'შექმნა',
                         'updated' => 'განახლება',
                         'deleted' => 'წაშლა',
+                        'login' => 'შესვლა',
                         default => $state,
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'created' => 'success',
                         'deleted' => 'danger',
+                        'login' => 'info',
                         default => 'warning',
                     }),
                 TextColumn::make('auditable_type')
@@ -89,6 +91,7 @@ class AdminAuditResource extends Resource
                         'created' => 'შექმნა',
                         'updated' => 'განახლება',
                         'deleted' => 'წაშლა',
+                        'login' => 'შესვლა',
                     ]),
             ])
             ->defaultSort('created_at', 'desc')

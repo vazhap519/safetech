@@ -33,7 +33,17 @@ final class SendLeadNotification implements ShouldQueue
                 ? $configuredRecipient
                 : (string) config('mail.from.address'));
 
-        Notification::route('mail', $recipient)
-            ->notify(new NewContactLeadNotification($event->lead));
+        $recipients = [$recipient];
+        $priorityRecipient = trim((string) config('leads.high_priority_email'));
+
+        if ($event->lead->lead_score >= (int) config('leads.high_priority_threshold', 70)
+            && filter_var($priorityRecipient, FILTER_VALIDATE_EMAIL)) {
+            $recipients[] = $priorityRecipient;
+        }
+
+        foreach (array_unique($recipients) as $email) {
+            Notification::route('mail', $email)
+                ->notify(new NewContactLeadNotification($event->lead));
+        }
     }
 }

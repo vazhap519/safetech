@@ -21,7 +21,10 @@ final class ForwardLeadToCrm implements ShouldQueue
             return;
         }
 
-        $request = Http::acceptJson()->timeout(10)->retry(2, 250);
+        $request = Http::acceptJson()
+            ->connectTimeout((int) config('leads.crm_connect_timeout', 3))
+            ->timeout((int) config('leads.crm_timeout', 10))
+            ->retry(2, 250);
 
         if ($token = config('leads.crm_webhook_token')) {
             $request = $request->withToken($token);

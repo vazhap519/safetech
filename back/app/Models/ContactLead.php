@@ -28,6 +28,8 @@ class ContactLead extends Model
         'message',
         'source',
         'status',
+        'lead_score',
+        'priority',
         'ip_hash',
         'user_agent',
         'privacy_accepted_at',
@@ -54,6 +56,7 @@ class ContactLead extends Model
     {
         return [
             'details' => 'array',
+            'lead_score' => 'integer',
             'privacy_accepted_at' => 'datetime',
         ];
     }

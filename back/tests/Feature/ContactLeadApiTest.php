@@ -149,6 +149,20 @@ class ContactLeadApiTest extends TestCase
             ->assertJsonValidationErrors(['source']);
     }
 
+    public function test_it_rejects_unusable_phone_numbers(): void
+    {
+        foreach (['abcdefghi', '12345', '+995-ABC-123456'] as $index => $phone) {
+            $this->postJson('/api/contact-leads', $this->validPayload([
+                'email' => "invalid-phone-{$index}@example.com",
+                'phone' => $phone,
+            ]))
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors(['phone']);
+        }
+
+        $this->assertDatabaseCount('contact_leads', 0);
+    }
+
     public function test_it_localizes_responses_and_limits_dynamic_details(): void
     {
         Event::fake([LeadCreated::class]);

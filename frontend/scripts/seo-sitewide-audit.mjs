@@ -1,6 +1,9 @@
 const REQUIRED_HREFLANGS = ["ka-GE", "en-GE", "ru-GE", "x-default"];
 const MAX_SITEMAP_PAGES = 250;
-const CONCURRENCY = 6;
+// Keep the audit representative of a resource-constrained production host.
+// Six simultaneous SSR page renders can turn a healthy 2 GB deployment into
+// a load test and obscure the URL that actually failed.
+const CONCURRENCY = 2;
 
 function fail(message) {
     throw new Error(message);
@@ -79,16 +82,22 @@ function logicalPath(path) {
 }
 
 async function request(baseUrl, path, userAgent, accept = "text/html,application/xhtml+xml") {
-    const response = await fetch(`${baseUrl}${path}`, {
-        redirect: "follow",
-        signal: AbortSignal.timeout(15000),
-        headers: {
-            "user-agent": userAgent,
-            accept,
-        },
-    });
-    const body = await response.text();
-    return { response, body };
+    try {
+        const response = await fetch(`${baseUrl}${path}`, {
+            redirect: "follow",
+            signal: AbortSignal.timeout(20000),
+            headers: {
+                "user-agent": userAgent,
+                accept,
+            },
+        });
+        const body = await response.text();
+        return { response, body };
+    } catch (error) {
+        throw new Error(`${path}: request failed (${error instanceof Error ? error.message : String(error)})`, {
+            cause: error,
+        });
+    }
 }
 
 function auditHtmlPage(body, path, publicSiteUrl) {

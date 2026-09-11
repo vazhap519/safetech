@@ -3,8 +3,12 @@
 import { useMemo, useState } from "react";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
+import {
+    CONSULTATION_OPEN_EVENT,
+    type ConsultationPrefill,
+} from "@/components/consultation/constants";
 import Icon from "@/components/ui/Icon";
-import LocalizedLink from "@/components/ui/LocalizedLink";
+import { trackEvent } from "@/lib/analytics";
 import {
     calculateConfiguratorTotals,
     calculateEstimateBreakdown,
@@ -138,7 +142,20 @@ function DynamicField({
                         className={`${inputClass} ${field.unit ? "pr-16" : ""}`}
                         max={field.max ?? undefined}
                         min={field.min ?? undefined}
-                        onChange={(event) => onChange(event.target.value)}
+                        onChange={(event) => {
+                            if (field.type !== "number" || event.target.value === "") {
+                                onChange(event.target.value);
+                                return;
+                            }
+
+                            const numericValue = Number(event.target.value);
+                            onChange(
+                                Math.min(
+                                    field.max ?? Number.POSITIVE_INFINITY,
+                                    Math.max(field.min ?? 0, numericValue),
+                                ),
+                            );
+                        }}
                         placeholder={field.placeholder}
                         required={field.required}
                         step={field.step ?? undefined}
@@ -467,6 +484,50 @@ export default function ServiceCalculator({
     const selectedComponents = compatibleComponents.filter(
         (item) => selectionFor(item).selected,
     );
+    const requestExactQuote = () => {
+        const componentSummary = selectedComponents
+            .map((item) => {
+                const selection = selectionFor(item);
+                return `${item.component.title} × ${selection.quantity}`;
+            })
+            .join("; ");
+        const estimateSummary = estimate.lines
+            .map((line) => `${line.label}: ${line.detail || money(line.oneTime, profile.currency, locale)}`)
+            .join("; ");
+        const total = money(totals.total, profile.currency, locale);
+        const message = t("calculator.quote.prefill", {
+            ka: `მსურს ზუსტი შეთავაზება არჩეულ კონფიგურაციაზე. საორიენტაციო ჯამი: ${total}.`,
+            en: `I would like an exact quote for this configuration. Indicative total: ${total}.`,
+            ru: `Мне нужно точное предложение по выбранной конфигурации. Ориентировочная сумма: ${total}.`,
+        });
+        const detail: ConsultationPrefill = {
+            serviceSlug: profile.slug,
+            message,
+            details: [
+                {
+                    key: "calculator_estimate",
+                    label: copy.total,
+                    type: "calculator",
+                    value: total,
+                },
+                ...(estimateSummary
+                    ? [{ key: "calculator_parameters", label: copy.configuration, type: "calculator", value: estimateSummary }]
+                    : []),
+                ...(componentSummary
+                    ? [{ key: "calculator_components", label: copy.componentsTitle, type: "calculator", value: componentSummary }]
+                    : []),
+            ],
+        };
+
+        trackEvent("customize_product", {
+            service_slug: profile.slug,
+            value: totals.total,
+            currency: profile.currency,
+        });
+        window.dispatchEvent(
+            new CustomEvent<ConsultationPrefill>(CONSULTATION_OPEN_EVENT, { detail }),
+        );
+    };
 
     return (
         <section className="scroll-mt-28 pt-unit-2xl" id="service-calculator">
@@ -844,13 +905,14 @@ export default function ServiceCalculator({
                             </p>
                         ) : null}
 
-                        <LocalizedLink
+                        <button
                             className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-on-primary hover:bg-primary/90"
-                            href="/contact"
+                            onClick={requestExactQuote}
+                            type="button"
                         >
                             <Icon name="mail" />
                             {copy.exactQuote}
-                        </LocalizedLink>
+                        </button>
                     </aside>
                 </div>
             </div>

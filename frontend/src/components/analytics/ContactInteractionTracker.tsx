@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import {
     getCurrentPagePath,
+    trackContactClick,
     trackWhatsAppClick,
 } from "@/lib/analytics-events";
 import { trackEvent } from "@/lib/analytics";
@@ -52,6 +53,7 @@ export default function ContactInteractionTracker() {
             }
 
             trackEvent("contact", { method });
+            trackContactClick(method, getCurrentPagePath());
         }
 
         document.addEventListener("click", handleClick);

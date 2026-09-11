@@ -90,6 +90,10 @@ class ContactLeadResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            // Keep the sales inbox fresh without requiring a WebSocket daemon.
+            // This remains reliable on the current single-server deployment and
+            // can be replaced by Echo/Reverb when that infrastructure is enabled.
+            ->poll('5s')
             ->columns([
                 TextColumn::make('created_at')
                     ->label('თარიღი')
@@ -105,6 +109,21 @@ class ContactLeadResource extends Resource
                 TextColumn::make('address')->label('მისამართი')->searchable()->toggleable(),
                 TextColumn::make('email')->label('ელფოსტა')->searchable()->toggleable(),
                 TextColumn::make('service')->label('სერვისი'),
+                TextColumn::make('priority')
+                    ->label('პრიორიტეტი')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'high' => 'მაღალი',
+                        'medium' => 'საშუალო',
+                        default => 'სტანდარტული',
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'high' => 'danger',
+                        'medium' => 'warning',
+                        default => 'gray',
+                    })
+                    ->sortable(),
+                TextColumn::make('lead_score')->label('ქულა')->numeric()->sortable(),
                 TextColumn::make('status')
                     ->label('სტატუსი')
                     ->formatStateUsing(fn (string $state): string => self::statusOptions()[$state] ?? $state)
@@ -113,6 +132,11 @@ class ContactLeadResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 SelectFilter::make('status')->options(self::statusOptions()),
+                SelectFilter::make('priority')->options([
+                    'high' => 'მაღალი',
+                    'medium' => 'საშუალო',
+                    'normal' => 'სტანდარტული',
+                ]),
             ])
             ->recordActions([
                 EditAction::make()->label('ნახვა / სტატუსი'),

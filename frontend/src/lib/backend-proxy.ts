@@ -8,6 +8,7 @@ export async function forwardBackendRequest(
 ) {
     const body = await request.text();
     const idempotencyKey = request.headers.get("idempotency-key");
+    const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
 
     try {
         const response = await fetch(buildServerApiUrl(path), {
@@ -22,6 +23,7 @@ export async function forwardBackendRequest(
                 ...(idempotencyKey
                     ? { "Idempotency-Key": idempotencyKey }
                     : {}),
+                "X-Request-ID": requestId,
                 ...(request.headers.get("x-forwarded-for")
                     ? {
                           "X-Forwarded-For":
@@ -42,12 +44,13 @@ export async function forwardBackendRequest(
                 "Content-Type":
                     response.headers.get("content-type") ||
                     "application/json; charset=utf-8",
+                "X-Request-ID": response.headers.get("x-request-id") || requestId,
             },
         });
     } catch {
         return Response.json(
             { error: "backend_unavailable" },
-            { status: 502 },
+            { status: 502, headers: { "X-Request-ID": requestId } },
         );
     }
 }

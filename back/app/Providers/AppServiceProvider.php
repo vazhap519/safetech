@@ -9,6 +9,7 @@ use App\Filament\Support\CmsMediaUpload;
 use App\Infrastructure\Persistence\EloquentLeadRepository;
 use App\Infrastructure\Persistence\EloquentProjectRepository;
 use App\Infrastructure\Persistence\EloquentServiceRepository;
+use App\Listeners\RecordAdminLogin;
 use App\Models\AiKnowledgeCandidate;
 use App\Models\AiKnowledgeItem;
 use App\Models\CategoryForService;
@@ -29,9 +30,14 @@ use App\Models\User;
 use App\Observers\AdminAuditObserver;
 use App\Observers\ProjectSocialAutomationObserver;
 use App\Support\CanonicalSeedTombstones;
+use App\Support\Observability\SlowQueryLogger;
+use App\Support\QueueWorkerHeartbeat;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\Looping;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -72,6 +78,11 @@ class AppServiceProvider extends ServiceProvider
         Project::observe(ProjectSocialAutomationObserver::class);
 
         $this->registerPublicContentMediaInvalidation();
+        $this->registerSlowQueryLogging();
+        Event::listen(Looping::class, function (): void {
+            QueueWorkerHeartbeat::record();
+        });
+        Event::listen(Login::class, RecordAdminLogin::class);
 
         RateLimiter::for('contact-leads', function (Request $request): Limit {
             return Limit::perMinute(5)->by($request->ip());
@@ -107,6 +118,18 @@ class AppServiceProvider extends ServiceProvider
                 ),
             ];
         });
+    }
+
+    private function registerSlowQueryLogging(): void
+    {
+        if (! config('observability.slow_queries.enabled')) {
+            return;
+        }
+
+        $thresholdMs = (float) config('observability.slow_queries.threshold_ms', 100);
+        $channel = (string) config('observability.slow_queries.channel', 'slow_queries');
+
+        DB::listen(new SlowQueryLogger($thresholdMs, $channel));
     }
 
     private function registerPublicContentMediaInvalidation(): void

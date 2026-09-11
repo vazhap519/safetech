@@ -211,6 +211,8 @@ export function trackEvent(name: string, parameters?: EventParameters) {
 
     if (name === "generate_lead") {
         window.fbq?.("track", "Lead", eventParameters);
+    } else if (name === "customize_product") {
+        window.fbq?.("track", "CustomizeProduct", eventParameters);
     } else if (name === "contact") {
         window.fbq?.("track", "Contact", eventParameters);
     }

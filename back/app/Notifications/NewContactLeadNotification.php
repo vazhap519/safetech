@@ -28,6 +28,7 @@ final class NewContactLeadNotification extends Notification
             ->greeting('ახალი საკონსულტაციო მოთხოვნა')
             ->lines(array_filter([
                 'წყარო: '.$this->sourceLabel(),
+                'პრიორიტეტი: '.strtoupper((string) $this->lead->priority).' ('.$this->lead->lead_score.'/100)',
                 $fullName !== '' ? 'სახელი: '.$fullName : null,
                 filled($this->lead->company) ? 'კომპანია: '.$this->lead->company : null,
                 filled($this->lead->phone) ? 'ტელეფონი: '.$this->lead->phone : null,

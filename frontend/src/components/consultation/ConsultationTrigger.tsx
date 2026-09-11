@@ -3,7 +3,6 @@
 import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from "react";
 
 import { CONSULTATION_OPEN_EVENT } from "@/components/consultation/constants";
-import { trackEvent } from "@/lib/analytics";
 
 type ConsultationTriggerProps = {
     children: ReactNode;
@@ -19,7 +18,6 @@ export default function ConsultationTrigger({
 
         if (event.defaultPrevented) return;
 
-        trackEvent("consultation_open");
         window.dispatchEvent(new Event(CONSULTATION_OPEN_EVENT));
     }
 
