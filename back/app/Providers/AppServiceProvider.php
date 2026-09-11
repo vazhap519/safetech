@@ -129,7 +129,7 @@ class AppServiceProvider extends ServiceProvider
         $thresholdMs = (float) config('observability.slow_queries.threshold_ms', 100);
         $channel = (string) config('observability.slow_queries.channel', 'slow_queries');
 
-        DB::listen(new SlowQueryLogger($thresholdMs, $channel));
+        DB::listen((new SlowQueryLogger($thresholdMs, $channel))->listener());
     }
 
     private function registerPublicContentMediaInvalidation(): void

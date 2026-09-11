@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Support\Observability\SlowQueryLogger;
+use Closure;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Log\LogManager;
@@ -13,6 +14,13 @@ use Tests\TestCase;
 
 class SlowQueryLoggerTest extends TestCase
 {
+    public function test_it_exposes_the_closure_required_by_laravel_database_listeners(): void
+    {
+        $listener = (new SlowQueryLogger(100, 'slow_queries'))->listener();
+
+        $this->assertInstanceOf(Closure::class, $listener);
+    }
+
     public function test_it_logs_only_the_sql_template_without_sensitive_bindings(): void
     {
         $connection = Mockery::mock(Connection::class);

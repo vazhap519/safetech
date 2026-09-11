@@ -2,6 +2,7 @@
 
 namespace App\Support\Observability;
 
+use Closure;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Log;
 
@@ -25,5 +26,12 @@ final readonly class SlowQueryLogger
             'duration_ms' => round($query->time, 2),
             'sql_template' => $query->sql,
         ]);
+    }
+
+    public function listener(): Closure
+    {
+        return function (QueryExecuted $query): void {
+            $this($query);
+        };
     }
 }
