@@ -96,6 +96,9 @@ class AdminAdditionalRepeaterDeletionRuntimeTest extends TestCase
             'noindex' => true,
         ]);
 
+        $this->get("/admin/local-service-landings/{$landing->getRouteKey()}/edit")
+            ->assertOk();
+
         Livewire::test(EditLocalServiceLanding::class, ['record' => $landing->getRouteKey()])
             ->fillForm([
                 'benefits' => [

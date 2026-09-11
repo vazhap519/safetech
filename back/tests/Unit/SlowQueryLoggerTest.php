@@ -61,4 +61,22 @@ class SlowQueryLoggerTest extends TestCase
         $logger = new SlowQueryLogger(100, 'slow_queries');
         $logger(new QueryExecuted('select 1', [], 99.99, $connection));
     }
+
+    public function test_logging_failure_never_breaks_the_request(): void
+    {
+        $connection = Mockery::mock(Connection::class);
+        $connection->shouldReceive('getName')->once()->andReturn('production');
+
+        $manager = Mockery::mock(LogManager::class);
+        $manager->shouldReceive('channel')
+            ->once()
+            ->with('slow_queries')
+            ->andThrow(new \RuntimeException('Log path is not writable.'));
+        Log::swap($manager);
+
+        $logger = new SlowQueryLogger(100, 'slow_queries');
+        $logger(new QueryExecuted('select * from site_settings', [], 150, $connection));
+
+        $this->addToAssertionCount(1);
+    }
 }

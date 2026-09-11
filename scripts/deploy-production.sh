@@ -376,6 +376,23 @@ composer --working-dir="${BACKEND_DIR}" install \
     --no-dev --no-interaction --prefer-dist --optimize-autoloader
 composer --working-dir="${BACKEND_DIR}" audit --locked --no-dev --no-interaction
 
+# Laravel writes logs, sessions, compiled views and cache metadata at runtime.
+# Deployment runs as root, so normalize ownership both before and after Artisan
+# commands to prevent root-owned files from causing production-only HTTP 500s.
+install -d -o "${WEB_USER}" -g "${WEB_GROUP}" -m 0775 \
+    "${BACKEND_DIR}/storage/framework/cache/data" \
+    "${BACKEND_DIR}/storage/framework/sessions" \
+    "${BACKEND_DIR}/storage/framework/views" \
+    "${BACKEND_DIR}/storage/logs" \
+    "${BACKEND_DIR}/bootstrap/cache"
+chown -R "${WEB_USER}:${WEB_GROUP}" \
+    "${BACKEND_DIR}/storage" \
+    "${BACKEND_DIR}/bootstrap/cache"
+find "${BACKEND_DIR}/storage" "${BACKEND_DIR}/bootstrap/cache" \
+    -type d -exec chmod 0775 {} +
+find "${BACKEND_DIR}/storage" "${BACKEND_DIR}/bootstrap/cache" \
+    -type f -exec chmod 0664 {} +
+
 log "Updating Laravel"
 php "${BACKEND_DIR}/artisan" config:clear
 php "${BACKEND_DIR}/artisan" route:clear
@@ -390,6 +407,9 @@ php "${BACKEND_DIR}/artisan" cache:clear
 php "${BACKEND_DIR}/artisan" storage:link --force
 php "${BACKEND_DIR}/artisan" optimize
 php "${BACKEND_DIR}/artisan" queue:restart
+chown -R "${WEB_USER}:${WEB_GROUP}" \
+    "${BACKEND_DIR}/storage" \
+    "${BACKEND_DIR}/bootstrap/cache"
 restart_service_if_present "${PHP_FPM_SERVICE}"
 
 log "Preparing isolated frontend build"
