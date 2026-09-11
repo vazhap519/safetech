@@ -33,7 +33,7 @@ final class CmsContentGenerator
             throw new RuntimeException('OpenAI API key is not configured.');
         }
 
-        $model = trim((string) config('services.openai.model', 'gpt-5.6')) ?: 'gpt-5.6';
+        $model = trim((string) config('services.openai.model', 'gpt-5.6-luna')) ?: 'gpt-5.6-luna';
         $safeState = $this->safeContext($currentState);
 
         $payload = [
@@ -171,6 +171,7 @@ PROMPT;
                     }
                     $out[$key] = $walk($item, $next);
                 }
+
                 return $out;
             }
 
@@ -185,28 +186,28 @@ PROMPT;
     }
 
     /**
-     * @param array<string, mixed> $updates
-     * @param array<string, mixed> $currentState
+     * @param  array<string, mixed>  $updates
+     * @param  array<string, mixed>  $currentState
      * @return array<string, mixed>
      */
     private function sanitizeUpdates(string $profile, array $updates, array $currentState, bool $overwrite): array
     {
         $allowedRoots = match ($profile) {
-            'project' => ['name','title','description','seo_description','image_alt','technology','city','object_type','translations','meta','scope','specs','challenges','solutions','process','results'],
-            'service' => ['name','eyebrow','title','description','seo_description','keywords','highlights','industries','brands','translations','benefits','solutions','process','warranty','sla','lead_form'],
-            'page' => ['title','excerpt','content','seo_title','seo_description','keywords','translations'],
+            'project' => ['name', 'title', 'description', 'seo_description', 'image_alt', 'technology', 'city', 'object_type', 'translations', 'meta', 'scope', 'specs', 'challenges', 'solutions', 'process', 'results'],
+            'service' => ['name', 'eyebrow', 'title', 'description', 'seo_description', 'keywords', 'highlights', 'industries', 'brands', 'translations', 'benefits', 'solutions', 'process', 'warranty', 'sla', 'lead_form'],
+            'page' => ['title', 'excerpt', 'content', 'seo_title', 'seo_description', 'keywords', 'translations'],
             'about' => ['about_page_translations'],
-            'faq' => ['question','answer','title','description','translations'],
-            'seo' => ['title','heading','description','content','seo_title','seo_description','keywords','translations','location_name'],
-            'settings' => ['value','translations','contact','footer','hero','cta'],
+            'faq' => ['question', 'answer', 'title', 'description', 'translations'],
+            'seo' => ['title', 'heading', 'description', 'content', 'seo_title', 'seo_description', 'keywords', 'translations', 'location_name'],
+            'settings' => ['value', 'translations', 'contact', 'footer', 'hero', 'cta'],
             default => array_keys($currentState),
         };
 
         $blockedTokens = [
-            'slug','url','email','phone','whatsapp','telegram','facebook','instagram','linkedin','youtube',
-            'password','token','secret','api','key','id','icon','accent','media','cover','image','file',
-            'published','noindex','sort','order','date','time','currency','price','cost','amount','lat','lng',
-            'latitude','longitude','schema','featured','recommended','enabled','quantity','model',
+            'slug', 'url', 'email', 'phone', 'whatsapp', 'telegram', 'facebook', 'instagram', 'linkedin', 'youtube',
+            'password', 'token', 'secret', 'api', 'key', 'id', 'icon', 'accent', 'media', 'cover', 'image', 'file',
+            'published', 'noindex', 'sort', 'order', 'date', 'time', 'currency', 'price', 'cost', 'amount', 'lat', 'lng',
+            'latitude', 'longitude', 'schema', 'featured', 'recommended', 'enabled', 'quantity', 'model',
         ];
 
         $filter = function (mixed $value, string $path = '') use (&$filter, $allowedRoots, $blockedTokens, $currentState, $overwrite): mixed {
@@ -228,6 +229,7 @@ PROMPT;
                         $out[$key] = $clean;
                     }
                 }
+
                 return $out;
             }
 
@@ -273,6 +275,7 @@ PROMPT;
 
             if (is_array($value) && ! array_is_list($value)) {
                 $flat += $this->flatten($value, $path);
+
                 continue;
             }
 

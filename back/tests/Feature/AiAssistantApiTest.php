@@ -77,7 +77,7 @@ class AiAssistantApiTest extends TestCase
             'privacy' => true,
         ])->assertOk();
 
-        Http::assertSent(fn ($request): bool => $request['model'] === 'gpt-5.6');
+        Http::assertSent(fn ($request): bool => $request['model'] === 'gpt-5.6-luna');
     }
 
     public function test_an_incomplete_openai_response_returns_a_safe_unavailable_response(): void
