@@ -32,6 +32,7 @@ FRONTEND_UNIT_SOURCE="${SAFETECH_FRONTEND_UNIT_SOURCE:-${FRONTEND_DIR}/deploy/sy
 QUEUE_UNIT_SOURCE="${SAFETECH_QUEUE_UNIT_SOURCE:-${FRONTEND_DIR}/deploy/systemd/safetech-queue.service}"
 SYSTEMD_DIR="${SAFETECH_SYSTEMD_DIR:-/etc/systemd/system}"
 STAGE_ROOT="${SAFETECH_STAGE_ROOT:-${PROJECT_DIR}/.deploy}"
+COMPOSER_HOME_DIR="${SAFETECH_COMPOSER_HOME_DIR:-${STAGE_ROOT}/composer-home}"
 FRONTEND_STAGE_DIR="${STAGE_ROOT}/frontend-stage"
 FRONTEND_ROLLBACK_DIR="${STAGE_ROOT}/frontend-rollback"
 FRONTEND_SWAPPED=0
@@ -61,9 +62,9 @@ show_frontend_diagnostics() {
     journalctl -u "${FRONTEND_SERVICE}" --no-pager -n 200 >&2 || true
     printf '%s\n' '--- port listener ---' >&2
     ss -ltnp "sport = :${FRONTEND_PORT}" >&2 || true
-    printf '%s\n' '--- local response ---' >&2
+    printf '%s\n' '--- local response headers ---' >&2
     curl --silent --show-error --location --max-time 15 \
-        -D - "${FRONTEND_READY_URL}" >&2 || true
+        -D - --output /dev/null "${FRONTEND_READY_URL}" >&2 || true
 }
 
 wait_for_http_200() {
@@ -346,6 +347,8 @@ require_supported_node
 [[ "${PROJECT_DIR}" == /* && "${PROJECT_DIR}" != "/" ]] || fail "project path must be absolute"
 [[ "${STATIC_DIR}" == /* && "${STATIC_DIR}" != "/" ]] || fail "static path must be absolute"
 [[ "${STAGE_ROOT}" == "${PROJECT_DIR}"/* ]] || fail "stage path must be inside the project directory"
+[[ "${COMPOSER_HOME_DIR}" == "${STAGE_ROOT}"/* ]] \
+    || fail "Composer home must be inside the deployment stage directory"
 
 install -d -o root -g root -m 0755 "$(dirname -- "${DEPLOY_LOCK_FILE}")"
 exec 9>"${DEPLOY_LOCK_FILE}"
@@ -372,8 +375,11 @@ log "Installing current systemd service definitions"
 install_systemd_units
 
 log "Installing and validating backend dependencies"
+install -d -o root -g root -m 0700 "${COMPOSER_HOME_DIR}"
+COMPOSER_HOME="${COMPOSER_HOME_DIR}" COMPOSER_ALLOW_SUPERUSER=1 \
 composer --working-dir="${BACKEND_DIR}" install \
     --no-dev --no-interaction --prefer-dist --optimize-autoloader
+COMPOSER_HOME="${COMPOSER_HOME_DIR}" COMPOSER_ALLOW_SUPERUSER=1 \
 composer --working-dir="${BACKEND_DIR}" audit --locked --no-dev --no-interaction
 
 # Laravel writes logs, sessions, compiled views and cache metadata at runtime.

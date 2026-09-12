@@ -7,3 +7,12 @@ Run it through the repository root entrypoint:
 ```bash
 sudo bash deploy.sh
 ```
+
+For a deployment that survives SSH disconnects, use the same root entrypoint
+through a transient systemd service:
+
+```bash
+sudo systemd-run --unit=safetech-deploy --collect \
+  --property=WorkingDirectory=/var/www/safetech \
+  /usr/bin/bash /var/www/safetech/deploy.sh
+```

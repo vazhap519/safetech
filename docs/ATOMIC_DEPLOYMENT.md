@@ -8,6 +8,23 @@ sudo bash /var/www/safetech/deploy.sh
 
 `deploy.sh` delegates to `scripts/deploy-production.sh`.
 
+For a deployment that must survive an SSH disconnect, run the same entrypoint
+as a transient systemd service:
+
+```bash
+sudo systemd-run \
+  --unit=safetech-deploy \
+  --collect \
+  --property=WorkingDirectory=/var/www/safetech \
+  /usr/bin/bash /var/www/safetech/deploy.sh
+
+sudo journalctl -u safetech-deploy -f
+```
+
+The deployment provides Composer with a private persistent home below
+`.deploy/`, because transient systemd services do not necessarily define
+`HOME`. Pressing `Ctrl+C` only stops the journal view; the deployment continues.
+
 ## Why the deployment is staged
 
 The live Next.js service must never lose its active `.next` directory while a new release is being built. The deployment therefore:
@@ -44,6 +61,6 @@ The script prints:
 - systemd frontend status;
 - the latest frontend journal entries;
 - the process listening on port 3000;
-- the local HTTP response body and headers.
+- the local HTTP response headers.
 
 If the new release fails after the atomic swap, the previous `.next` and `node_modules` are restored and the frontend service is restarted automatically.
