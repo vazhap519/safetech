@@ -45,6 +45,7 @@ return [
         'enabled' => env('AI_ASSISTANT_ENABLED', false),
         'api_key' => env('OPENAI_API_KEY'),
         'model' => $openAiModel,
+        'max_output_tokens' => env('OPENAI_MAX_OUTPUT_TOKENS', 12000),
     ],
 
 ];

@@ -53,6 +53,7 @@ trait HasAiContentGenerator
                             ->body('შეამოწმე საწყისი ფაქტები ან აირჩიე „გააუმჯობესე არსებული ტექსტებიც“ რეჟიმი.')
                             ->warning()
                             ->send();
+
                         return;
                     }
 
@@ -60,7 +61,7 @@ trait HasAiContentGenerator
 
                     Notification::make()
                         ->title('AI კონტენტი მომზადდა')
-                        ->body('KA / EN / RU ველები განახლდა ფორმაში. გადაამოწმე შედეგი და შემდეგ დააჭირე Save-ს — ავტომატურად ბაზაში არ ინახება.')
+                        ->body('ყველა მოთხოვნილი შევსებადი KA / EN / RU ველი განახლდა და სისრულე გადამოწმდა. გადაამოწმე შედეგი და შემდეგ დააჭირე Save-ს — ავტომატურად ბაზაში არ ინახება.')
                         ->success()
                         ->send();
                 } catch (Throwable $e) {
@@ -80,12 +81,17 @@ trait HasAiContentGenerator
         $resource = strtolower((string) static::$resource);
 
         return match (true) {
+            str_contains($resource, 'localservicelandingresource') => 'local-seo',
+            str_contains($resource, 'categoryforserviceresource'), str_contains($resource, 'projectcategoryresource') => 'category',
             str_contains($resource, 'projectresource') => 'project',
             str_contains($resource, 'serviceresource') => 'service',
             str_contains($resource, 'aboutpageresource') => 'about',
             str_contains($resource, 'faqresource') => 'faq',
-            str_contains($resource, 'seopageresource'), str_contains($resource, 'localservicelandingresource') => 'seo',
+            str_contains($resource, 'seopageresource') => 'seo-page',
             str_contains($resource, 'sitesettingresource') => 'settings',
+            str_contains($resource, 'teammemberresource') => 'team-member',
+            str_contains($resource, 'testimonialresource') => 'testimonial',
+            str_contains($resource, 'partnerresource') => 'partner',
             str_contains($resource, 'pageresource') => 'page',
             default => 'generic',
         };
