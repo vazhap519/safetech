@@ -97,16 +97,32 @@ class SiteSettingResource extends Resource
                         ->placeholder('+995 599 123 456')
                         ->helperText('Use an international number. Spaces and the + sign are accepted.'),
                     Textarea::make('value.whatsapp_message')
-                        ->label('Pre-filled WhatsApp message')
+                        ->label('Pre-filled WhatsApp message — KA')
                         ->rows(3)
                         ->columnSpanFull()
                         ->helperText('Visitors can edit this message before sending it.'),
+                    Textarea::make('value.whatsapp_message_en')
+                        ->label('Pre-filled WhatsApp message — EN')
+                        ->rows(3),
+                    Textarea::make('value.whatsapp_message_ru')
+                        ->label('Pre-filled WhatsApp message — RU')
+                        ->rows(3),
                     TextInput::make('value.hours')
-                        ->label('Working hours'),
+                        ->label('Working hours — KA'),
+                    TextInput::make('value.hours_en')
+                        ->label('Working hours — EN'),
+                    TextInput::make('value.hours_ru')
+                        ->label('Working hours — RU'),
                     Textarea::make('value.address')
-                        ->label('Address')
+                        ->label('Address — KA')
                         ->rows(2)
                         ->required(),
+                    Textarea::make('value.address_en')
+                        ->label('Address — EN')
+                        ->rows(2),
+                    Textarea::make('value.address_ru')
+                        ->label('Address — RU')
+                        ->rows(2),
                 ])
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'contact'),
@@ -216,8 +232,10 @@ class SiteSettingResource extends Resource
                         ->label('Site name')
                         ->required(),
                     TextInput::make('value.tagline')
-                        ->label('Tagline')
+                        ->label('Tagline — KA')
                         ->helperText('Displayed as footer copy.'),
+                    TextInput::make('value.tagline_en')->label('Tagline — EN'),
+                    TextInput::make('value.tagline_ru')->label('Tagline — RU'),
                     SpatieMediaLibraryFileUpload::make('branding_logo')
                         ->label('Header logo')
                         ->collection('logo')
@@ -254,10 +272,14 @@ class SiteSettingResource extends Resource
             Section::make('Site and LocalBusiness SEO')
                 ->schema([
                     TextInput::make('value.site_name')->label('Site name')->default('SafeTech'),
-                    Textarea::make('value.site_description')->label('Organization description')->rows(3),
+                    Textarea::make('value.site_description')->label('Organization description — KA')->rows(3),
+                    Textarea::make('value.site_description_en')->label('Organization description — EN')->rows(3),
+                    Textarea::make('value.site_description_ru')->label('Organization description — RU')->rows(3),
                     TagsInput::make('value.default_keywords')
-                        ->label('Default SEO keywords')
+                        ->label('Default SEO keywords — KA')
                         ->helperText('Used as a site-wide fallback when a page does not define its own keywords.'),
+                    TagsInput::make('value.default_keywords_en')->label('Default SEO keywords — EN'),
+                    TagsInput::make('value.default_keywords_ru')->label('Default SEO keywords — RU'),
                     Toggle::make('value.robots_index')
                         ->label('Allow search engines to index the site')
                         ->default(true),

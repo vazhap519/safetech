@@ -53,6 +53,9 @@ export async function generateMetadata({
             undefined,
         siteName: branding.siteName,
         noindex: Boolean(landing.seo?.noindex),
+        canonical: landing.seo?.canonical,
+        ogTitle: landing.seo?.og?.title,
+        ogDescription: landing.seo?.og?.description,
     });
 }
 
@@ -76,7 +79,7 @@ export default async function LocalServicePage({
 
     const generatedSchema = {
         '@context': 'https://schema.org',
-        '@type': 'Service',
+        '@type': landing.seo?.schemaType || 'Service',
         name: landing.seo?.title || landing.title,
         description: landing.seo?.description || landing.excerpt || landing.content,
         url: `https://safetech.ge/services/${landing.service.slug}/${landing.locationSlug}`,

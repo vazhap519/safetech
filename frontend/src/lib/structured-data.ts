@@ -7,6 +7,12 @@ export type SeoConfiguration = {
     keywords?: string[];
     image?: string;
     noindex?: boolean;
+    canonical?: string;
+    schemaType?: string;
+    og?: {
+        title?: string;
+        description?: string;
+    };
     schema?: StructuredDataValue;
 };
 

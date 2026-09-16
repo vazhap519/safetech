@@ -102,7 +102,7 @@ export default async function ProjectDetailSchema({
             : null;
     const graph: Record<string, unknown>[] = [
         {
-            "@type": "CreativeWork",
+            "@type": project.seo?.schemaType || "Article",
             "@id": projectId,
             name: project.title || project.name,
             description,

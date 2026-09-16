@@ -35,6 +35,8 @@ class ProjectResource extends JsonResource
             $this->seo_description ?: data_get($this->seo, 'description', $description),
             $locale,
         );
+        $ogTitle = $this->translated('ogTitle', $seoTitle ?: $title, $locale);
+        $ogDescription = $this->translated('ogDescription', $seoDescription ?: $description, $locale);
         $imageAlt = $this->translated('imageAlt', $this->image_alt ?: $this->title ?: $fallbackName, $locale);
         $technology = $this->translated('technology', $this->technology, $locale);
         $city = $this->translated('city', $this->city, $locale);
@@ -88,6 +90,9 @@ class ProjectResource extends JsonResource
                 'keywords' => data_get($this->seo, 'keywords', []),
                 'image' => data_get($this->seo, 'image', $image),
                 'noindex' => (bool) data_get($this->seo, 'noindex', false),
+                'canonical' => data_get($this->seo, 'canonical'),
+                'schemaType' => data_get($this->seo, 'schema_type', 'Article'),
+                'og' => ['title' => $ogTitle, 'description' => $ogDescription],
                 'schema' => data_get($this->seo, 'schema'),
             ],
         ];

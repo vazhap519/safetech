@@ -242,9 +242,10 @@ RULES,
             'service' => <<<'RULES'
 SERVICE profile:
 - Produce conversion-focused, technically credible service copy in KA/EN/RU.
-- benefits/solutions arrays use {"title":"...","description":"..."}; process uses {"title":"...","description":"..."}.
+- benefits/solutions/process arrays use {"title":"...","description":"...","translations":{"en":{"title":"...","description":"..."},"ru":{"title":"...","description":"..."}}}.
 - translations.entries is the legacy locale map for service repeaters. Each item must be {"key":"benefit.0.title","ka":"...","en":"...","ru":"..."}; cover every generated repeater title/description using its zero-based index.
 - Tags/keywords/highlights/industries are JSON arrays of plain strings.
+- In lead_form, edit only human-facing fields whose names are language-specific (_ka, _en, _ru, or ka/en/ru). Never alter keys, types, rules, options values, pricing, quantities, categories or compatibility logic.
 - If overview is targeted, its value must be a JSON-encoded string containing valid structured JSON suitable for the existing Overview JSON field.
 - Never invent prices, discounts, warranty periods, response times, package prices, brands, technical limits or availability.
 RULES,
@@ -365,10 +366,28 @@ PROMPT;
 
         $paths = [...$paths, ...match ((string) ($state['key'] ?? '')) {
             'translations' => ['value.entries'],
-            'branding' => ['value.site_name', 'value.tagline'],
-            'seo' => ['value.site_name', 'value.site_description', 'value.default_keywords'],
+            'branding' => ['value.site_name', 'value.tagline', 'value.tagline_en', 'value.tagline_ru'],
+            'seo' => [
+                'value.site_name',
+                'value.site_description',
+                'value.site_description_en',
+                'value.site_description_ru',
+                'value.default_keywords',
+                'value.default_keywords_en',
+                'value.default_keywords_ru',
+            ],
             'socials' => ['value.share_title_ka', 'value.share_title_en', 'value.share_title_ru'],
-            'contact' => ['value.whatsapp_message'],
+            'contact' => [
+                'value.whatsapp_message',
+                'value.whatsapp_message_en',
+                'value.whatsapp_message_ru',
+                'value.hours',
+                'value.hours_en',
+                'value.hours_ru',
+                'value.address',
+                'value.address_en',
+                'value.address_ru',
+            ],
             default => [],
         }];
 
@@ -378,7 +397,11 @@ PROMPT;
         foreach ($paths as $path) {
             $value = data_get($state, $path, $missing);
             if ($value === $missing) {
-                continue;
+                if ($path === 'managed_page_translations' || str_ends_with($path, '.entries')) {
+                    continue;
+                }
+
+                $value = str_contains($path, 'keywords') ? [] : null;
             }
 
             $this->collectTargetPaths('settings', $value, $path, $overwrite, $targets);
@@ -449,12 +472,12 @@ PROMPT;
     {
         $allowed = match ($profile) {
             'project' => ['meta', 'scope', 'specs', 'challenges', 'solutions', 'process', 'results', 'seo.keywords'],
-            'service' => ['keywords', 'highlights', 'industries', 'benefits', 'solutions', 'process', 'translations.entries'],
-            'page' => ['keywords'],
+            'service' => ['keywords', 'highlights', 'industries', 'benefits', 'solutions', 'process', 'translations.entries', 'translations.keywords.en', 'translations.keywords.ru', 'translations.highlights.en', 'translations.highlights.ru', 'translations.industries.en', 'translations.industries.ru'],
+            'page' => ['keywords', 'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru'],
             'local-seo' => ['benefits', 'faq', 'keywords', 'translations.keywords.en', 'translations.keywords.ru'],
             'category' => ['seo_keywords', 'faq', 'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru', 'translations.faq.ka', 'translations.faq.en', 'translations.faq.ru'],
             'seo-page' => ['keywords', 'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru'],
-            'settings' => ['value.default_keywords'],
+            'settings' => ['value.default_keywords', 'value.default_keywords_en', 'value.default_keywords_ru'],
             default => [],
         };
 
@@ -477,7 +500,7 @@ PROMPT;
             $profile === 'project' && in_array($path, ['meta', 'scope', 'specs'], true) => ['value', 'label', 'translations.en.value', 'translations.en.label', 'translations.ru.value', 'translations.ru.label'],
             $profile === 'project' && in_array($path, ['challenges', 'solutions', 'process'], true) => ['title', 'description', 'translations.en.title', 'translations.en.description', 'translations.ru.title', 'translations.ru.description'],
             $profile === 'project' && $path === 'results' => ['value', 'title', 'description', 'translations.en.value', 'translations.en.title', 'translations.en.description', 'translations.ru.value', 'translations.ru.title', 'translations.ru.description'],
-            $profile === 'service' && in_array($path, ['benefits', 'solutions', 'process'], true) => ['title', 'description'],
+            $profile === 'service' && in_array($path, ['benefits', 'solutions', 'process'], true) => ['title', 'description', 'translations.en.title', 'translations.en.description', 'translations.ru.title', 'translations.ru.description'],
             $profile === 'service' && $path === 'translations.entries' => ['key', 'ka', 'en', 'ru'],
             $profile === 'category' && ($path === 'faq' || str_starts_with($path, 'translations.faq.')) => ['question', 'answer'],
             default => [],
@@ -634,7 +657,17 @@ PROMPT;
             return false;
         }
 
-        if ($profile === 'settings' && $path === 'value.whatsapp_message') {
+        if ($profile === 'settings' && in_array($path, [
+            'value.whatsapp_message',
+            'value.whatsapp_message_en',
+            'value.whatsapp_message_ru',
+            'value.hours',
+            'value.hours_en',
+            'value.hours_ru',
+            'value.address',
+            'value.address_en',
+            'value.address_ru',
+        ], true)) {
             return false;
         }
 
@@ -648,9 +681,8 @@ PROMPT;
 
         if ($profile === 'service' && str_contains($path, 'lead_form')) {
             $leaf = Str::afterLast($path, '.');
-            if (in_array($leaf, ['key', 'type', 'required', 'min', 'max', 'step', 'default', 'value'], true)) {
-                return true;
-            }
+
+            return preg_match('/(?:^|_)(ka|en|ru)$/', $leaf) !== 1;
         }
 
         return $this->pathContainsAny($path, [

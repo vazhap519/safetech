@@ -95,9 +95,9 @@ export async function generateMetadata(): Promise<Metadata> {
         siteName,
     );
     const siteDescription = t("meta.default.description", {
-        ka: "SafeTech უზრუნველყოფს ვიდეომეთვალყურეობის, დაშვების კონტროლის, ქსელური და სერვერული ინფრასტრუქტურის პროფესიონალურ გადაწყვეტილებებს ბიზნესისთვის.",
-        en: "Professional CCTV, access control, networking, and server infrastructure solutions for businesses.",
-        ru: "Профессиональные решения для видеонаблюдения, контроля доступа, сетевой и серверной инфраструктуры для бизнеса.",
+        ka: seo.siteDescription || "SafeTech უზრუნველყოფს ვიდეომეთვალყურეობის, დაშვების კონტროლის, ქსელური და სერვერული ინფრასტრუქტურის პროფესიონალურ გადაწყვეტილებებს ბიზნესისთვის.",
+        en: seo.siteDescription || "Professional CCTV, access control, networking, and server infrastructure solutions for businesses.",
+        ru: seo.siteDescription || "Профессиональные решения для видеонаблюдения, контроля доступа, сетевой и серверной инфраструктуры для бизнеса.",
     });
     const socialImage = branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
     const alternateLocales = supportedLocales

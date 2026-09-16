@@ -21,6 +21,9 @@ export async function generateMetadata(): Promise<Metadata> {
         keywords: page.seo?.keywords || siteSeo.defaultKeywords,
         siteName: branding.siteName,
         noindex: !backendPage || Boolean(page.seo?.noindex),
+        canonical: page.seo?.canonical,
+        ogTitle: page.seo?.og?.title,
+        ogDescription: page.seo?.og?.description,
         robotsIndex: siteSeo.robotsIndex,
         robotsFollow: backendPage ? siteSeo.robotsFollow : false,
     });

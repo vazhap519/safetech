@@ -21,10 +21,17 @@ class SiteSettingsApiTest extends TestCase
                 ],
                 'email' => 'info@example.com',
                 'address' => 'Tbilisi',
+                'address_en' => 'Tbilisi, Georgia',
+                'address_ru' => 'Тбилиси, Грузия',
                 'lead_email' => 'private@example.com',
                 'whatsapp' => '+995 599 12 34 56',
                 'whatsapp_enabled' => false,
                 'whatsapp_message' => 'Hello from SafeTech',
+                'whatsapp_message_en' => 'Contact SafeTech',
+                'whatsapp_message_ru' => 'Связаться с SafeTech',
+                'hours' => 'ორშ–შაბ, 09:00–18:00',
+                'hours_en' => 'Mon–Sat, 09:00–18:00',
+                'hours_ru' => 'Пн–Сб, 09:00–18:00',
             ],
             'branding' => ['site_name' => 'SafeTech', 'tagline' => 'Secure infrastructure'],
             'seo' => ['city' => 'Tbilisi', 'country' => 'GE', 'open_time' => '09:00', 'close_time' => '18:00'],
@@ -51,6 +58,12 @@ class SiteSettingsApiTest extends TestCase
             ->assertJsonPath('contact.phones.1', '+995 577 11 22 33')
             ->assertJsonPath('contact.whatsapp_enabled', false)
             ->assertJsonPath('contact.whatsapp_message', 'Hello from SafeTech')
+            ->assertJsonPath('contact.whatsapp_message_en', 'Contact SafeTech')
+            ->assertJsonPath('contact.whatsapp_message_ru', 'Связаться с SafeTech')
+            ->assertJsonPath('contact.address_en', 'Tbilisi, Georgia')
+            ->assertJsonPath('contact.address_ru', 'Тбилиси, Грузия')
+            ->assertJsonPath('contact.hours_en', 'Mon–Sat, 09:00–18:00')
+            ->assertJsonPath('contact.hours_ru', 'Пн–Сб, 09:00–18:00')
             ->assertJsonPath('seo.local_business.city', 'Tbilisi')
             ->assertJsonPath('seo.local_business.phones.1', '+995 577 11 22 33')
             ->assertJsonPath('seo.same_as.0', 'https://facebook.com/safetech')
@@ -59,6 +72,8 @@ class SiteSettingsApiTest extends TestCase
             ->assertJsonPath('share.buttons.0.type', 'facebook')
             ->assertJsonPath('contact_page.whatsapp_enabled', false)
             ->assertJsonPath('contact_page.whatsapp_message', 'Hello from SafeTech')
+            ->assertJsonPath('contact_page.whatsapp_message_en', 'Contact SafeTech')
+            ->assertJsonPath('contact_page.address_ru', 'Тбилиси, Грузия')
             ->assertJsonMissingPath('contact.lead_email');
     }
 }

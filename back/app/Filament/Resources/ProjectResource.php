@@ -246,12 +246,22 @@ class ProjectResource extends Resource
                 ])
                 ->schema([
                     ...LocalizedContentFields::inputs('seoTitle', 'SEO title', readOnlyLocales: ['ka']),
+                    ...LocalizedContentFields::inputs('ogTitle', 'Open Graph title'),
+                    ...LocalizedContentFields::inputs('ogDescription', 'Open Graph description', textarea: true),
                     TagsInput::make('seo.keywords')
                         ->label('SEO keywords')
                         ->disabled()
                         ->dehydrated()
                         ->helperText('SEO Helper ავტომატურად აერთიანებს სერვისებს, ქალაქს, ობიექტის ტიპსა და ტექნიკას.')
                         ->columnSpanFull(),
+                    TextInput::make('seo.canonical')->label('Canonical URL override')->url(),
+                    Select::make('seo.schema_type')->label('Schema.org type')->options([
+                        'Article' => 'Article',
+                        'CreativeWork' => 'CreativeWork',
+                        'WebPage' => 'WebPage',
+                    ])->default('Article'),
+                    TextInput::make('seo.image')->label('Open Graph image URL')->url(),
+                    Toggle::make('seo.noindex')->label('Noindex')->default(false),
                     ...LocalizedContentFields::inputs('card.title', 'Card title'),
                     ...LocalizedContentFields::inputs('card.description', 'Card description', textarea: true),
                     ...LocalizedContentFields::inputs('featured.title', 'Featured title'),

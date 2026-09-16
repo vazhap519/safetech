@@ -96,6 +96,9 @@ export async function generateMetadata({
             undefined,
         siteName,
         noindex: Boolean(service.seo?.noindex),
+        canonical: service.seo?.canonical,
+        ogTitle: service.seo?.og?.title,
+        ogDescription: service.seo?.og?.description,
     });
 }
 

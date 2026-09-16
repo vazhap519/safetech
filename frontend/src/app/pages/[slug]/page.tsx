@@ -46,6 +46,9 @@ export async function generateMetadata({ params }: DynamicPageProps): Promise<Me
         image: page.seo?.image || page.coverImage || undefined,
         siteName: branding.siteName,
         noindex: Boolean(page.seo?.noindex),
+        canonical: page.seo?.canonical,
+        ogTitle: page.seo?.og?.title,
+        ogDescription: page.seo?.og?.description,
         robotsIndex: siteSeo.robotsIndex,
         robotsFollow: siteSeo.robotsFollow,
     });
@@ -70,7 +73,7 @@ export default async function DynamicPageRoute({ params }: DynamicPageProps) {
 
     const generatedSchema = {
         '@context': 'https://schema.org',
-        '@type': 'WebPage',
+        '@type': page.seo?.schemaType || 'WebPage',
         name: page.seo?.title || page.title,
         description: page.seo?.description || page.excerpt || page.content,
         url: `https://safetech.ge/pages/${page.slug}`,

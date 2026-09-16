@@ -23,6 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
         // Privacy is intentionally excluded from search results and the sitemap.
         // Do not let a nullable/false CMS SEO flag override that route contract.
         noindex: true,
+        canonical: page.seo?.canonical,
+        ogTitle: page.seo?.og?.title,
+        ogDescription: page.seo?.og?.description,
         robotsIndex: siteSeo.robotsIndex,
         robotsFollow: false,
     });

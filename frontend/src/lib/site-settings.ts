@@ -73,6 +73,7 @@ type SiteBranding = {
 };
 
 type SiteSeoSettings = {
+    siteDescription: string;
     defaultKeywords: string[];
     robotsIndex: boolean;
     robotsFollow: boolean;
@@ -324,6 +325,18 @@ function pickString(
     return trim ? value.trim() : value;
 }
 
+function pickLocalizedString(
+    contact: Record<string, unknown>,
+    key: string,
+    locale: Locale,
+    fallback = "",
+    options?: { trim?: boolean },
+) {
+    const localizedKey = locale === "ka" ? key : `${key}_${locale}`;
+
+    return pickString(contact[localizedKey], pickString(contact[key], fallback, options), options);
+}
+
 function pickHttpUrl(value: unknown): string {
     const candidate = pickString(value);
     if (!candidate) return "";
@@ -380,6 +393,7 @@ const defaultSiteBranding: SiteBranding = {
 };
 
 const defaultSiteSeo: SiteSeoSettings = {
+    siteDescription: "",
     defaultKeywords: [],
     robotsIndex: true,
     robotsFollow: true,
@@ -421,17 +435,29 @@ export const getSiteSettings = cache(async () => {
         phone: phones[0] ?? defaultSiteContact.phone,
         phones,
         email: pickString(configuredContact.email, defaultSiteContact.email),
-        address: pickString(configuredContact.address, defaultSiteContact.address),
+        address: pickLocalizedString(
+            configuredContact,
+            "address",
+            locale,
+            defaultSiteContact.address,
+        ),
         whatsapp,
         whatsappEnabled: whatsapp
             ? normalizeBoolean(configuredContact.whatsapp_enabled, true)
             : false,
-        whatsappMessage: pickString(
-            configuredContact.whatsapp_message,
+        whatsappMessage: pickLocalizedString(
+            configuredContact,
+            "whatsapp_message",
+            locale,
             defaultSiteContact.whatsappMessage,
             { trim: false },
         ),
-        hours: pickString(configuredContact.hours, defaultSiteContact.hours),
+        hours: pickLocalizedString(
+            configuredContact,
+            "hours",
+            locale,
+            defaultSiteContact.hours,
+        ),
         leadEmail:
             pickString(configuredContact.lead_email, defaultSiteContact.leadEmail) ||
             defaultSiteContact.leadEmail,
@@ -443,7 +469,11 @@ export const getSiteSettings = cache(async () => {
             pickString(configuredBranding.site_name) ||
             pickString(configuredSeo.site_name) ||
             defaultSiteBranding.siteName,
-        tagline: pickString(configuredBranding.tagline),
+        tagline: pickLocalizedString(
+            configuredBranding,
+            "tagline",
+            locale,
+        ),
         logo: maybeBackendAsset(pickString(configuredBranding.logo) || null),
         footerLogo: maybeBackendAsset(
             pickString(configuredBranding.footer_logo) ||
@@ -483,7 +513,17 @@ export const getSiteSettings = cache(async () => {
     } satisfies SiteIntegrations;
 
     const seo = {
-        defaultKeywords: normalizeStringList(configuredSeo.default_keywords),
+        siteDescription: pickLocalizedString(
+            configuredSeo,
+            "site_description",
+            locale,
+            defaultSiteSeo.siteDescription,
+        ),
+        defaultKeywords: normalizeStringList(
+            locale === "ka"
+                ? configuredSeo.default_keywords
+                : configuredSeo[`default_keywords_${locale}`] ?? configuredSeo.default_keywords,
+        ),
         robotsIndex:
             configuredSeo.robots_index === undefined
                 ? defaultSiteSeo.robotsIndex

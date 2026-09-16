@@ -13,10 +13,10 @@ final class GeneratedSchemaPreview
     {
         return self::placeholder('service', fn (Get $get): array => self::clean([
             '@context' => 'https://schema.org',
-            '@type' => 'Service',
+            '@type' => $get('seo.schema_type') ?: 'Service',
             'name' => $get('translations.fields.seoTitle.ka') ?: $get('title') ?: $get('name'),
             'description' => $get('seo_description') ?: $get('description'),
-            'url' => self::url('/services/'.trim((string) $get('slug'), '/')),
+            'url' => $get('seo.canonical') ?: self::url('/services/'.trim((string) $get('slug'), '/')),
             'provider' => self::organization(),
             'areaServed' => [
                 '@type' => 'Country',
@@ -30,10 +30,10 @@ final class GeneratedSchemaPreview
     {
         return self::placeholder('project', fn (Get $get): array => self::clean([
             '@context' => 'https://schema.org',
-            '@type' => 'CreativeWork',
+            '@type' => $get('seo.schema_type') ?: 'Article',
             'name' => $get('translations.fields.seoTitle.ka') ?: $get('title') ?: $get('name'),
             'description' => $get('seo_description') ?: $get('description'),
-            'url' => self::url('/projects/'.trim((string) $get('slug'), '/')),
+            'url' => $get('seo.canonical') ?: self::url('/projects/'.trim((string) $get('slug'), '/')),
             'creator' => self::organization(),
             'locationCreated' => filled($get('city')) ? [
                 '@type' => 'Place',
@@ -63,10 +63,10 @@ final class GeneratedSchemaPreview
 
         return self::placeholder("{$kind}-category", fn (Get $get): array => self::clean([
             '@context' => 'https://schema.org',
-            '@type' => 'CollectionPage',
+            '@type' => $get('translations.seo.schema_type') ?: 'CollectionPage',
             'name' => $get('seo_title') ?: $get('name'),
             'description' => $get('seo_description') ?: strip_tags((string) $get('intro_text')),
-            'url' => self::url($prefix.trim((string) $get('slug'), '/')),
+            'url' => $get('translations.seo.canonical') ?: self::url($prefix.trim((string) $get('slug'), '/')),
             'isPartOf' => [
                 '@type' => 'WebSite',
                 'name' => 'SafeTech',
@@ -80,9 +80,10 @@ final class GeneratedSchemaPreview
     {
         return self::placeholder('local-service', fn (Get $get): array => self::clean([
             '@context' => 'https://schema.org',
-            '@type' => 'Service',
+            '@type' => $get('translations.seo.schema_type') ?: 'Service',
             'name' => $get('seo_title') ?: $get('title'),
             'description' => $get('seo_description') ?: $get('excerpt') ?: $get('content'),
+            'url' => $get('translations.seo.canonical'),
             'provider' => self::organization(),
             'areaServed' => filled($get('location_name')) ? [
                 '@type' => 'City',
@@ -97,10 +98,10 @@ final class GeneratedSchemaPreview
     {
         return self::placeholder('page', fn (Get $get): array => self::clean([
             '@context' => 'https://schema.org',
-            '@type' => 'WebPage',
+            '@type' => $get('translations.seo.schema_type') ?: 'WebPage',
             'name' => $get('seo_title') ?: $get('title'),
             'description' => $get('seo_description') ?: $get('excerpt'),
-            'url' => self::url('/'.trim((string) $get('slug'), '/')),
+            'url' => $get('translations.seo.canonical') ?: self::url('/'.trim((string) $get('slug'), '/')),
             'isPartOf' => [
                 '@type' => 'WebSite',
                 'name' => 'SafeTech',

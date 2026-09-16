@@ -35,6 +35,11 @@ class ServiceResource extends JsonResource
             $this->seo_description ?: data_get($this->seo, 'description', $description),
             $locale,
         );
+        $ogTitle = $this->translated('ogTitle', $seoTitle ?: $title, $locale);
+        $ogDescription = $this->translated('ogDescription', $seoDescription ?: $description, $locale);
+        $keywords = $this->translatedStringArray('keywords', $this->keywords ?? [], $locale);
+        $highlights = $this->translatedStringArray('highlights', $this->highlights ?? [], $locale);
+        $industries = $this->translatedStringArray('industries', $this->industries ?? [], $locale);
         $configuredSeoImage = trim((string) data_get($this->seo, 'image', ''));
         $socialImage = $configuredSeoImage !== ''
             ? $configuredSeoImage
@@ -64,21 +69,21 @@ class ServiceResource extends JsonResource
             'heroImage' => $this->image,
             'socialImage' => $socialImage,
             'image' => $this->image,
-            'keywords' => $this->keywords ?? [],
-            'highlights' => $this->highlights ?? [],
+            'keywords' => $keywords,
+            'highlights' => $highlights,
             'overview' => $this->overview ?: [
                 'title' => $this->title ?: $name,
                 'paragraphs' => array_values(array_filter([$description])),
                 'stats' => [],
             ],
-            'benefits' => $this->benefits ?? [],
-            'solutions' => $this->solutions ?? [],
-            'industries' => $this->industries ?? [],
-            'process' => $this->process ?? [],
+            'benefits' => $this->localizedItems('benefit', $this->benefits ?? [], $locale),
+            'solutions' => $this->localizedItems('solution', $this->solutions ?? [], $locale),
+            'industries' => $industries,
+            'process' => $this->localizedItems('process', $this->process ?? [], $locale),
             'brands' => $this->brands ?? [],
             'features' => $this->features ?? [],
-            'warranty' => $this->warranty,
-            'sla' => $this->sla,
+            'warranty' => $this->translated('warranty', $this->warranty, $locale),
+            'sla' => $this->translated('sla', $this->sla, $locale),
             'leadForm' => $this->lead_form ?? null,
             'faqs' => $faqs,
             'category' => $this->whenLoaded('category', fn () => [
@@ -90,12 +95,52 @@ class ServiceResource extends JsonResource
             'seo' => [
                 'title' => $seoTitle ?: $title,
                 'description' => $seoDescription ?: $description,
-                'keywords' => data_get($this->seo, 'keywords', $this->keywords ?? []),
+                'keywords' => $keywords,
                 'image' => $socialImage,
                 'noindex' => (bool) data_get($this->seo, 'noindex', false),
+                'canonical' => data_get($this->seo, 'canonical'),
+                'schemaType' => data_get($this->seo, 'schema_type', 'Service'),
+                'og' => ['title' => $ogTitle, 'description' => $ogDescription],
                 'schema' => data_get($this->seo, 'schema'),
             ],
             'related' => [],
         ];
+    }
+
+    /** @param array<int, mixed> $fallback */
+    private function translatedStringArray(string $field, array $fallback, string $locale): array
+    {
+        $translated = data_get($this->translations, "{$field}.{$locale}");
+
+        if (! is_array($translated) || $translated === []) {
+            return array_values(array_filter($fallback, fn (mixed $value): bool => is_string($value) && trim($value) !== ''));
+        }
+
+        return array_values(array_filter(
+            array_map(fn (mixed $value): string => trim((string) $value), $translated),
+            fn (string $value): bool => $value !== '',
+        ));
+    }
+
+    /** @param array<int, mixed> $items */
+    private function localizedItems(string $root, array $items, string $locale): array
+    {
+        return collect($items)
+            ->filter(fn (mixed $item): bool => is_array($item))
+            ->values()
+            ->map(function (array $item, int $index) use ($root, $locale): array {
+                foreach (['title', 'description'] as $field) {
+                    $fallback = $item[$field] ?? '';
+                    $nested = data_get($item, "translations.{$locale}.{$field}");
+                    $item[$field] = is_string($nested) && trim($nested) !== ''
+                        ? trim($nested)
+                        : $this->translatedEntry($this->resource, "{$root}.{$index}.{$field}", $fallback, $locale);
+                }
+
+                unset($item['translations']);
+
+                return $item;
+            })
+            ->all();
     }
 }

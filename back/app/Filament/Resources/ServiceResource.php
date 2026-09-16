@@ -51,7 +51,9 @@ class ServiceResource extends Resource
                 ->searchable()
                 ->preload(),
             TextInput::make('title')->label('Title')->required(),
+            ...LocalizedContentFields::itemInputs('title', 'Title'),
             Textarea::make('description')->label('Description')->required(),
+            ...LocalizedContentFields::itemInputs('description', 'Description', textarea: true),
             ...($featured ? [Toggle::make('featured')->label('Featured')] : []),
         ];
     }
@@ -136,8 +138,14 @@ class ServiceResource extends Resource
                         ->maxSize(10240)
                         ->imagePreviewHeight('150'),
                     TagsInput::make('keywords')->label('SEO keywords'),
+                    TagsInput::make('translations.keywords.en')->label('SEO keywords (EN)'),
+                    TagsInput::make('translations.keywords.ru')->label('SEO keywords (RU)'),
                     TagsInput::make('highlights')->label('Highlights'),
+                    TagsInput::make('translations.highlights.en')->label('Highlights (EN)'),
+                    TagsInput::make('translations.highlights.ru')->label('Highlights (RU)'),
                     TagsInput::make('industries')->label('Industries'),
+                    TagsInput::make('translations.industries.en')->label('Industries (EN)'),
+                    TagsInput::make('translations.industries.ru')->label('Industries (RU)'),
                     TagsInput::make('brands')->label('Brands'),
                 ])
                 ->columns(2),
@@ -151,11 +159,26 @@ class ServiceResource extends Resource
                     ...LocalizedContentFields::inputs('description', 'Short description', textarea: true),
                     ...LocalizedContentFields::inputs('seoTitle', 'SEO title'),
                     ...LocalizedContentFields::inputs('seoDescription', 'SEO description', textarea: true),
+                    ...LocalizedContentFields::inputs('ogTitle', 'Open Graph title'),
+                    ...LocalizedContentFields::inputs('ogDescription', 'Open Graph description', textarea: true),
                     ...LocalizedContentFields::inputs('card.title', 'Card title'),
                     ...LocalizedContentFields::inputs('card.description', 'Card description', textarea: true),
                     LocalizedContentFields::customEntries('Examples: benefit.0.title, process.0.description, keyword.0, highlight.0'),
                 ])
                 ->columns(3),
+
+            Section::make('Technical SEO')
+                ->description('Canonical, robots, Schema.org and social preview settings for this service page.')
+                ->schema([
+                    TextInput::make('seo.canonical')->label('Canonical URL override')->url(),
+                    Select::make('seo.schema_type')->label('Schema.org type')->options([
+                        'Service' => 'Service',
+                        'Product' => 'Product',
+                        'WebPage' => 'WebPage',
+                    ])->default('Service'),
+                    TextInput::make('seo.image')->label('Open Graph image URL')->url(),
+                    Toggle::make('seo.noindex')->label('Noindex')->default(false),
+                ])->columns(2),
 
             Section::make('Service blocks')
                 ->schema([
@@ -173,9 +196,11 @@ class ServiceResource extends Resource
                         ->label('Process')
                         ->schema([
                             TextInput::make('title')->label('Step')->required(),
+                            ...LocalizedContentFields::itemInputs('title', 'Step'),
                             Textarea::make('description')->label('Description')->required(),
+                            ...LocalizedContentFields::itemInputs('description', 'Description', textarea: true),
                         ])
-                        ->columns(2)
+                        ->columns(3)
                         ->collapsible(),
                     Textarea::make('overview')
                         ->label('Overview JSON')
@@ -189,8 +214,10 @@ class ServiceResource extends Resource
                             fn ($state) => is_string($state) ? json_decode($state, true) : $state,
                         )
                         ->helperText('Use structured JSON when you need custom overview blocks.'),
-                    Textarea::make('warranty')->label('Warranty'),
-                    Textarea::make('sla')->label('SLA terms'),
+                    Textarea::make('warranty')->label('Warranty (KA)'),
+                    ...LocalizedContentFields::secondaryInputs('warranty', 'Warranty', textarea: true),
+                    Textarea::make('sla')->label('SLA terms (KA)'),
+                    ...LocalizedContentFields::secondaryInputs('sla', 'SLA terms', textarea: true),
                 ]),
 
             Section::make('Lead form and advanced calculator')
