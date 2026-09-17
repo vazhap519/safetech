@@ -33,6 +33,10 @@ class SiteSetting extends Model implements HasMedia
                     $setting->value,
                 );
             }
+
+            if ($setting->key === 'ai') {
+                $setting->is_public = false;
+            }
         });
     }
 

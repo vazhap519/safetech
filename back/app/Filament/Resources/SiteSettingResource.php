@@ -50,6 +50,7 @@ class SiteSettingResource extends Resource
                     'branding' => 'Branding',
                     'seo' => 'SEO',
                     'integrations' => 'Analytics and verification',
+                    'ai' => 'AI assistant',
                     'translations' => 'Translations',
                 ])
                 ->required()
@@ -308,6 +309,18 @@ class SiteSettingResource extends Resource
                 ])
                 ->visible(fn (Get $get): bool => $get('key') === 'integrations'),
 
+            Section::make('AI system prompt')
+                ->description('Private server-side instructions for the SafeTech AI consultant. These instructions are never exposed through the public content API.')
+                ->schema([
+                    Textarea::make('value.system_prompt')
+                        ->label('System Prompt / AI Instructions')
+                        ->rows(24)
+                        ->columnSpanFull()
+                        ->helperText('Leave empty to use the built-in SafeTech prompt. Critical runtime safety, tool and privacy rules are always enforced by the application.'),
+                ])
+                ->columnSpanFull()
+                ->visible(fn (Get $get): bool => $get('key') === 'ai'),
+
             Section::make('Analytics, pixels and verification')
                 ->description('IDs are only exposed publicly when marketing integrations are enabled.')
                 ->schema([
@@ -367,7 +380,8 @@ class SiteSettingResource extends Resource
 
             Toggle::make('is_public')
                 ->label('Expose through the public API')
-                ->default(true),
+                ->default(true)
+                ->visible(fn (Get $get): bool => $get('key') !== 'ai'),
         ]);
     }
 
