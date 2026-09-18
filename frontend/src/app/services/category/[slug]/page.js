@@ -17,8 +17,12 @@ export default async function CategoryPage({ params }) {
 
   return (
     <>
-      <ServicesPageContent searchParams={{ category: slug }} showPageSchema={false} />
       <CategorySeoContent category={category} locale={locale} path={path} />
+      <ServicesPageContent
+        searchParams={{ category: slug }}
+        showHero={false}
+        showPageSchema={false}
+      />
     </>
   );
 }
