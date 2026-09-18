@@ -198,6 +198,7 @@ class ContentSeeder extends Seeder
                 'bing_site_verification' => '',
                 'yandex_site_verification' => '',
                 'indexnow_key' => '',
+                'footer_counter_code' => "<!-- TOP.GE ASYNC COUNTER CODE -->\n<div id=\"top-ge-counter-container\" data-site-id=\"118960\"></div>\n<script async src=\"//counter.top.ge/counter.js\"></script>\n<!-- / END OF TOP.GE COUNTER CODE -->",
             ],
             'translations' => [
                 'entries' => [],
