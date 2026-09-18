@@ -89,6 +89,7 @@ type SiteIntegrations = {
     bingSiteVerification: string;
     yandexSiteVerification: string;
     indexNowKey: string;
+    footerCounterCode: string;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -510,6 +511,10 @@ export const getSiteSettings = cache(async () => {
             configuredIntegrations.yandex_site_verification,
         ),
         indexNowKey: pickString(configuredIntegrations.indexnow_key),
+        footerCounterCode:
+            typeof configuredIntegrations.footer_counter_code === "string"
+                ? configuredIntegrations.footer_counter_code.trim()
+                : "",
     } satisfies SiteIntegrations;
 
     const seo = {
