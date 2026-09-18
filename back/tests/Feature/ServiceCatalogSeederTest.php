@@ -22,7 +22,7 @@ class ServiceCatalogSeederTest extends TestCase
 
         $this->assertDatabaseCount('category_for_services', 4);
         $this->assertDatabaseCount('services', 12);
-        $this->assertDatabaseCount('faqs', 42);
+        $this->assertDatabaseCount('faqs', 46);
 
         $service = Service::query()
             ->with(['category', 'faqs'])
@@ -143,7 +143,27 @@ class ServiceCatalogSeederTest extends TestCase
         $this->assertTrue($services->every(fn (Service $service): bool => filled($service->seo_description)));
         $this->assertTrue($services->every(fn (Service $service): bool => is_array($service->keywords) && count($service->keywords) >= 3));
 
+        $itSupport = Service::query()->where('slug', 'business-it-support')->firstOrFail();
+        $this->assertSame(
+            'IT მხარდაჭერა და IT მომსახურება ბიზნესისთვის | SafeTech',
+            data_get($itSupport->seo, 'title'),
+        );
+        $this->assertSame(
+            'Business IT Support and IT Services | SafeTech',
+            data_get($itSupport->translations, 'fields.seoTitle.en'),
+        );
+
+        $barrier = Service::query()->with('faqs')->where('slug', 'barrier-gate-installation')->firstOrFail();
+        $this->assertSame(
+            'შლაგბაუმის მონტაჟი — LPR, GSM და ავტომატური მართვა | SafeTech',
+            data_get($barrier->seo, 'title'),
+        );
+        $this->assertCount(7, $barrier->faqs);
+
+        $businessIt = CategoryForService::query()->where('slug', 'business-it')->firstOrFail();
+        $this->assertSame('ბიზნეს IT სისტემები და IT ინფრასტრუქტურა', $businessIt->seo_title);
+
         $this->assertSame(4, CategoryForService::query()->count());
-        $this->assertSame(42, Faq::query()->count());
+        $this->assertSame(46, Faq::query()->count());
     }
 }
