@@ -21,18 +21,22 @@ export default async function CategorySeoContent({
     return (
         <>
             <JsonLd data={categorySchemas({ category, path, locale })} />
-            {category.intro_text ? (
-                <section className="border-t border-outline-variant/20 bg-surface py-12">
-                    <div className="mx-auto max-w-3xl px-4">
-                        {category.name ? (
-                            <h2 className="mb-4 text-xl font-semibold text-on-surface md:text-2xl">
-                                {category.name}
-                            </h2>
-                        ) : null}
-                        <div
-                            className="prose max-w-none text-on-surface-variant prose-a:text-secondary"
-                            dangerouslySetInnerHTML={{ __html: category.intro_text }}
-                        />
+            {category.name || category.intro_text ? (
+                <section className="relative overflow-hidden border-b border-outline-variant/20 bg-surface px-5 pb-12 pt-28 md:px-8 md:pb-16 md:pt-32 xl:px-14">
+                    <div className="mx-auto max-w-container-max">
+                        <div className="max-w-4xl">
+                            {category.name ? (
+                                <h1 className="text-[36px] font-semibold leading-[1.12] text-on-surface sm:text-[44px] md:text-[54px]">
+                                    {category.name}
+                                </h1>
+                            ) : null}
+                            {category.intro_text ? (
+                                <div
+                                    className="prose mt-6 max-w-3xl text-base leading-8 text-on-surface-variant prose-a:text-secondary md:text-lg"
+                                    dangerouslySetInnerHTML={{ __html: category.intro_text }}
+                                />
+                            ) : null}
+                        </div>
                     </div>
                 </section>
             ) : null}
