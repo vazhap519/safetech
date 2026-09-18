@@ -352,6 +352,12 @@ class SiteSettingResource extends Resource
                     TextInput::make('value.indexnow_key')
                         ->label('IndexNow key')
                         ->helperText('Used for faster URL notifications to Bing and Yandex.'),
+                    Textarea::make('value.footer_counter_code')
+                        ->label('Footer counter / trusted script code')
+                        ->rows(8)
+                        ->columnSpanFull()
+                        ->placeholder('<!-- TOP.GE counter code -->')
+                        ->helperText('Trusted HTML/JavaScript rendered in the public footer next to the copyright. Clear this field and save to remove it.'),
                 ])
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'integrations'),
