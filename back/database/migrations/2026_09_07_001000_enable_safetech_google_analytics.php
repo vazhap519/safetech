@@ -27,7 +27,9 @@ return new class extends Migration
             $value['google_analytics_id'] = self::GOOGLE_ANALYTICS_ID;
         }
 
-        $value['marketing_enabled'] = true;
+        if (! array_key_exists('marketing_enabled', $value)) {
+            $value['marketing_enabled'] = true;
+        }
 
         DB::table('site_settings')->updateOrInsert(
             ['key' => 'integrations'],
