@@ -1,0 +1,20 @@
+name: Temporary Pint formatting diff
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  show-pint-diff:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install backend dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Print exact migration formatter diff
+        run: |
+          vendor/bin/pint database/migrations/2026_09_19_000001_refine_it_support_and_barrier_seo.php
+          git diff -- database/migrations/2026_09_19_000001_refine_it_support_and_barrier_seo.php
