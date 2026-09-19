@@ -78,7 +78,7 @@ test("AI plan requires opt-in, suggests edit-ready geometry and preserves measur
         });
     });
     await page.goto("/en/camera-planner");
-    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9ZAoW0MAAAAASUVORK5CYII=", "base64");
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGM8ceIEAwwwMSAB3BwAdjQCYKaF12gAAAAASUVORK5CYII=", "base64");
     await page.locator('input[type="file"][accept*="image/png"]').setInputFiles({
         name: "simple.png", mimeType: "image/png", buffer: png,
     });
