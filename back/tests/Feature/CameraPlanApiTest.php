@@ -90,7 +90,7 @@ class CameraPlanApiTest extends TestCase
             ->get(route('admin.camera-plans.layout', $plan))
             ->assertOk()
             ->assertJsonPath('cameras.0.kind', 'bullet')
-            ->assertHeader('Cache-Control', 'private, no-store');
+            ->assertHeader('Cache-Control', 'no-store, private');
     }
 
     public function test_photo_is_private_and_deleted_with_plan(): void
