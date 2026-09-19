@@ -7,6 +7,7 @@ use App\Filament\Support\NavigationGroup;
 use App\Models\CameraPlan;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -15,6 +16,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 
 class CameraPlanResource extends Resource
 {
@@ -51,10 +53,10 @@ class CameraPlanResource extends Resource
                 ])->required(),
             ])->columns(2),
             Section::make('დაცული გეგმა')->schema([
-                \Filament\Forms\Components\Placeholder::make('planner_link')
+                Placeholder::make('planner_link')
                     ->label('ფონის ფოტოს სანახავად / პროექტის JSON ფაილი')
                     ->content(fn (?CameraPlan $record) => $record
-                        ? new \Illuminate\Support\HtmlString(
+                        ? new HtmlString(
                             '<a target="_blank" rel="noopener" href="'.e(route('admin.camera-plans.layout', $record)).'">გეგმის JSON</a>'
                             .($record->background_path
                                 ? ' · <a target="_blank" rel="noopener" href="'.e(route('admin.camera-plans.background', $record)).'">ობიექტის ფოტო</a>'
