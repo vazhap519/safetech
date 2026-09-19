@@ -58,10 +58,11 @@ class CameraPlanApiTest extends TestCase
 
         $this->postJson('/api/camera-plans', array_replace($this->payload(), [
             'privacy' => '0',
+        ]))->assertUnprocessable()->assertJsonValidationErrors(['privacy']);
+
+        $this->postJson('/api/camera-plans', array_replace($this->payload(), [
             'layout' => json_encode($data, JSON_THROW_ON_ERROR),
-        ]))->assertUnprocessable()->assertJsonValidationErrors([
-            'privacy', 'cameras.0.x',
-        ]);
+        ]))->assertUnprocessable()->assertJsonValidationErrors(['cameras.0.x']);
 
         $this->assertDatabaseCount('camera_plans', 0);
     }
@@ -80,7 +81,7 @@ class CameraPlanApiTest extends TestCase
         Storage::disk('local')->assertExists($plan->background_path);
         $this->withHeaders(['Accept' => 'application/json'])
             ->get(route('admin.camera-plans.background', $plan))
-            ->assertUnauthorized();
+            ->assertForbidden();
 
         $path = $plan->background_path;
         $plan->delete();
