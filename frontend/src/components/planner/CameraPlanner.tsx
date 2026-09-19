@@ -575,7 +575,7 @@ export default function CameraPlanner() {
                         )}
                     </section>
                     <div className="flex flex-wrap gap-2">
-                        {(["camera", "select", "wall", "area"] as Mode[].map((item) => (
+                        {(["camera", "select", "wall", "area"] as Mode[]).map((item) => (
                             <button key={item} type="button" onClick={() => { setMode(item); setWallStart(null); }}
                                 className={button + (mode === item ? " border-amber-400 bg-amber-500/20 text-amber-300" : "")}>
                                 {t[item]}</button>
@@ -591,7 +591,7 @@ export default function CameraPlanner() {
                                 setHistory((v) => v.slice(0, -1)); setLayout(prev); setWallStart(null); setAreaDraft([]); }}>
                             {t.undo}</button>
                         <button type="button" className={button} onClick={() => {
-                            if (window.confirm(t.clearConfirm)) { pushHistory(); setLayout(initial);
+                            if (window.confirm(t.clearConfirm)) { pushHistory(); setAiDraft(null); setLayout(initial);
                                 setBackground(""); setAreaDraft([]); setWallStart(null); setSelected(null); }
                         }}>{t.clear}</button>
                     </div>
