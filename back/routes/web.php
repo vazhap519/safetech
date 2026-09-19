@@ -59,24 +59,24 @@ Route::get('/admin/estimates/{estimate}/pdf', EstimatePdfController::class)
 // The reference photo is never exposed through a public storage symlink.
 // Only a logged-in admin session can inspect saved layout JSON and private images.
 Route::get('/admin/camera-plans/{cameraPlan}/layout.json', function (CameraPlan $cameraPlan) {
-        $user = request()->user();
-        abort_unless($user instanceof User && $user->canAccessPanel(Filament::getPanel('admin')), 403);
+    $user = request()->user();
+    abort_unless($user instanceof User && $user->canAccessPanel(Filament::getPanel('admin')), 403);
 
-        return response()->json($cameraPlan->layout)
-            ->header('Cache-Control', 'private, no-store')
-            ->header('X-Robots-Tag', 'noindex, nofollow');
+    return response()->json($cameraPlan->layout)
+        ->header('Cache-Control', 'private, no-store')
+        ->header('X-Robots-Tag', 'noindex, nofollow');
 })->name('admin.camera-plans.layout');
 
 Route::get('/admin/camera-plans/{cameraPlan}/background', function (CameraPlan $cameraPlan) {
-        $user = request()->user();
-        abort_unless($user instanceof User && $user->canAccessPanel(Filament::getPanel('admin')), 403);
+    $user = request()->user();
+    abort_unless($user instanceof User && $user->canAccessPanel(Filament::getPanel('admin')), 403);
 
-        abort_unless($cameraPlan->background_path, 404);
+    abort_unless($cameraPlan->background_path, 404);
 
-        return Storage::disk('local')
-            ->response($cameraPlan->background_path, null, [
-                'Cache-Control' => 'private, no-store',
-                'X-Robots-Tag' => 'noindex, nofollow',
-                'X-Content-Type-Options' => 'nosniff',
-            ]);
+    return Storage::disk('local')
+        ->response($cameraPlan->background_path, null, [
+            'Cache-Control' => 'private, no-store',
+            'X-Robots-Tag' => 'noindex, nofollow',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
 })->name('admin.camera-plans.background');
