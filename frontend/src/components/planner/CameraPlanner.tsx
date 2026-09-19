@@ -5,6 +5,7 @@ import { useLocalization } from "@/components/providers/LocalizationProvider";
 
 type Point = { x: number; y: number };
 type Wall = { ax: number; ay: number; bx: number; by: number };
+type Room = { name: string; polygon: Point[] };
 type Kind = "bullet" | "dome" | "ptz" | "turret";
 type Camera = Point & {
     id: string; direction: number; fov: number; range: number;
@@ -12,11 +13,19 @@ type Camera = Point & {
 };
 type Layout = {
     version: 1; widthMeters: number; cameras: Camera[];
-    walls: Wall[]; area: Point[];
+    walls: Wall[]; area: Point[]; rooms?: Room[];
 };
 type Mode = "select" | "camera" | "wall" | "area";
+type AiDraft = {
+    image_type: "floor_plan" | "site_plan" | "photo" | "unclear";
+    confidence: "low" | "medium" | "high";
+    summary: string; caution: string; scale_confirmed: boolean;
+    walls: Wall[]; area: Point[]; rooms: Room[];
+    cameras: Array<Point & { direction: number; kind: "bullet" | "dome" | "turret"; reason: string }>;
+    notes: string[]; suggested_count: number;
+};
 const W = 900, H = 600;
-const initial: Layout = { version: 1, widthMeters: 20, cameras: [], walls: [], area: [] };
+const initial: Layout = { version: 1, widthMeters: 20, cameras: [], walls: [], area: [], rooms: [] };
 const kinds: Kind[] = ["bullet", "dome", "ptz", "turret"];
 const copy = {
     ka: {
@@ -32,12 +41,22 @@ const copy = {
         project: "ობიექტის დასახელება", privacy: "თანახმა ვარ, რომ SafeTech დამიკავშირდეს პროექტის შესახებ.",
         submit: "გეგმის გაგზავნა SafeTech-ში", sending: "იგზავნება...", sent: "გეგმა წარმატებით გაიგზავნა!",
         error: "ვერ გაიგზავნა. შეამოწმეთ ინტერნეტი და სცადეთ თავიდან.",
-        disclaimer: "მნიშვნელოვანი: ეს არის 2D მიახლოებითი დაგეგმვა და არა კომპიუტერული ხედვით ავტომატური ამოცნობა. მხოლოდ ფოტოდან მასშტაბი, კედლის სიმაღლე, ოპტიკა ან რეალური ბრმა ზონები არ განისაზღვრება. მიუთითეთ რეალური სიგანე და ადგილზე გადაამოწმეთ შედეგი.",
+        disclaimer: "მნიშვნელოვანი: AI მხოლოდ მონახაზს გვთავაზობს, ხოლო ეს არის 2D მიახლოებითი დაგეგმვა. მხოლოდ ფოტოდან მასშტაბი, კედლის სიმაღლე, ოპტიკა ან რეალური ბრმა ზონები არ განისაზღვრება. მიუთითეთ რეალური სიგანე და ადგილზე გადაამოწმეთ შედეგი.",
         tip: "აირჩიეთ რეჟიმი და დააჭირეთ ნახაზზე. კედელს სჭირდება ორი წერტილი. არის დასასრულებლად დააჭირეთ „არის დასრულება“. კამერა გადაათრიეთ თითით ან მაუსით.",
         fov: "ხედვის კუთხე (°)", range: "ხილვადობის მანძილი (მ)", angle: "მიმართულება (°)",
         height: "მონტაჟის სიმაღლე (მ)", lens: "ობიექტივი (მმ)", sensor: "სენსორის სიგანე (მმ)",
         clearConfirm: "გსურთ ამ გეგმის მთლიანად წაშლა?", cameraType: "კამერის ტიპი",
-        view: "მიახლოებითი ხედვა", photograph: "ფოტო ინახება მხოლოდ მოთხოვნის გაგზავნისას ან JSON ფაილში.",
+        view: "მიახლოებითი ხედვა", aiTitle: "AI-ით განლაგების შეთავაზება",
+        aiRun: "AI-მ შემომთავაზოს კამერები", aiWorking: "AI აანალიზებს ფოტოს...",
+        aiConsent: "ვეთანხმები ატვირთული გეგმის/ფოტოს OpenAI-ში დამუშავებას მხოლოდ წინასწარი პროექტის შესადგენად.",
+        scaleConfirmed: "გეგმის სიგანე რეალურად გაზომილია (თუ არა, შედეგი მხოლოდ კონცეპტუალურია)",
+        aiApply: "შეთავაზების გეგმაზე გადატანა", aiDiscard: "შეთავაზების უარყოფა",
+        aiReplace: "არსებული კამერები, კედლები და არე ჩანაცვლდება AI შეთავაზებით. გავაგრძელო?",
+        aiCount: "შეთავაზებული კამერები", aiReliability: "AI-ს შეფასება",
+        aiUnavailable: "AI დროებით მიუწვდომელია ან არ არის ჩართული. ხელით დაგეგმვა მუშაობს.",
+        aiError: "AI-ს პასუხი ვერ დამუშავდა. ატვირთეთ უფრო მკაფიო გეგმა ან გააგრძელეთ ხელით.",
+        aiOnly: "AI ქმნის მხოლოდ შესასწორებელ მონახაზს. ფოტო, ბნელი ადგილები, სიმაღლე და რეალური ხედვა ადგილზე გადაამოწმეთ.",
+        photograph: "ფოტო ბრაუზერში ინახება ლოკალურად; AI-ში იგზავნება მხოლოდ მონიშვნისა და ღილაკზე დაჭერის შემდეგ.",
     },
     en: {
         title: "CCTV camera layout planner",
@@ -51,11 +70,21 @@ const copy = {
         privacy: "I agree that SafeTech may contact me about this project.",
         submit: "Send design to SafeTech", sending: "Sending...", sent: "Design submitted successfully!",
         error: "Submission failed. Check your connection and retry.",
-        disclaimer: "Important: this is approximate 2D planning, not automated photo interpretation. A photograph alone cannot determine scale, wall height, optics or true blind spots. Enter measured width and verify on site.",
+        disclaimer: "Important: AI only suggests an editable draft. This is approximate 2D planning. A photograph alone cannot determine scale, wall height, optics or true blind spots. Enter measured width and verify on site.",
         tip: "Select a tool and tap the plan. A wall uses two points. Finish your inspection polygon with “Finish area”. Drag cameras with mouse or touch.",
         fov: "Field of view (°)", range: "View range (m)", angle: "Direction (°)", height: "Mount height (m)",
         lens: "Lens (mm)", sensor: "Sensor width (mm)", clearConfirm: "Delete the entire plan?",
-        cameraType: "Camera type", view: "Approximate field of view", photograph: "Photo is only stored when submitting or exporting JSON.",
+        cameraType: "Camera type", view: "Approximate field of view", aiTitle: "AI camera placement draft",
+        aiRun: "Suggest cameras with AI", aiWorking: "AI is analyzing the image...",
+        aiConsent: "I agree to send my uploaded plan/photo to OpenAI for the sole purpose of a draft design.",
+        scaleConfirmed: "I measured the actual plan width (otherwise results are conceptual)",
+        aiApply: "Apply suggested layout", aiDiscard: "Discard draft",
+        aiReplace: "This replaces existing cameras, walls and inspection area. Continue?",
+        aiCount: "Suggested cameras", aiReliability: "AI confidence",
+        aiUnavailable: "AI is disabled or unavailable. Manual planning still works.",
+        aiError: "AI draft could not be processed. Try a clearer plan or continue manually.",
+        aiOnly: "AI produces an editable draft only. Verify visibility, lighting, heights and coverage on site.",
+        photograph: "Photo stays local until you explicitly consent and request AI analysis or submit a quote.",
     },
     ru: {
         title: "Планировщик размещения камер",
@@ -70,12 +99,22 @@ const copy = {
         project: "Название объекта", privacy: "Согласен на связь с SafeTech по проекту.",
         submit: "Отправить проект SafeTech", sending: "Отправка...", sent: "Проект отправлен!",
         error: "Ошибка отправки. Проверьте соединение.",
-        disclaimer: "Важно: это приблизительное 2D-планирование, а не автоматический анализ фотографии. По фото нельзя определить масштаб, высоту стен, оптику или реальные слепые зоны. Укажите измеренную ширину и проверьте на объекте.",
+        disclaimer: "Важно: AI предлагает лишь редактируемый черновик. Это приблизительное 2D-планирование. По фото нельзя определить масштаб, высоту стен, оптику или реальные слепые зоны. Укажите измеренную ширину и проверьте на объекте.",
         tip: "Выберите инструмент и нажмите на план. Стена строится по двум точкам. Завершите контур кнопкой «Завершить зону». Перетаскивайте камеры пальцем или мышью.",
         fov: "Угол обзора (°)", range: "Дальность (м)", angle: "Направление (°)",
         height: "Высота монтажа (м)", lens: "Объектив (мм)", sensor: "Ширина сенсора (мм)",
         clearConfirm: "Удалить весь проект?", cameraType: "Тип камеры",
-        view: "Приблизительный угол обзора", photograph: "Фото сохраняется только при отправке или экспорте JSON.",
+        view: "Приблизительный угол обзора", aiTitle: "AI-проект размещения камер",
+        aiRun: "Предложить камеры с AI", aiWorking: "AI анализирует изображение...",
+        aiConsent: "Согласен передать план/фото в OpenAI только для подготовки чернового проекта.",
+        scaleConfirmed: "Фактическая ширина плана измерена (иначе результат концептуальный)",
+        aiApply: "Применить предложенную схему", aiDiscard: "Отклонить проект",
+        aiReplace: "Существующие камеры, стены и зона будут заменены. Продолжить?",
+        aiCount: "Предложено камер", aiReliability: "Оценка AI",
+        aiUnavailable: "AI недоступен или отключён. Ручное планирование продолжает работать.",
+        aiError: "Не удалось обработать ответ AI. Загрузите более чёткий план или продолжите вручную.",
+        aiOnly: "AI создаёт только редактируемый черновик. Проверяйте освещение, высоты и покрытие на объекте.",
+        photograph: "Фото хранится локально, пока вы не дадите согласие на AI-анализ или отправку заявки.",
     },
 } as const;
 
@@ -148,6 +187,16 @@ function readFile(file: File): Promise<string> {
         reader.readAsDataURL(file);
     });
 }
+function imageDataToBlob(dataUrl: string): Blob {
+    // fetch(data:) is blocked by the site CSP connect-src; decode locally.
+    const separator = dataUrl.indexOf(",");
+    const match = /^data:(image\/(?:png|jpeg|webp));base64$/i.exec(dataUrl.slice(0, separator));
+    if (separator < 0 || !match) throw new Error("Invalid image data");
+    const binary = atob(dataUrl.slice(separator + 1));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: match[1].toLowerCase() });
+}
 function download(name: string, blob: Blob) {
     const url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
@@ -176,6 +225,8 @@ function cleanLayout(data: unknown): Layout {
             bx: point({ x: w.bx, y: w.by }).x, by: point({ x: w.bx, y: w.by }).y,
         })),
         area: p.area.slice(0, 80).map(point),
+        rooms: Array.isArray(p.rooms) ? p.rooms.slice(0, 20).filter((room) => Array.isArray(room.polygon))
+            .map((room) => ({ name: String(room.name || "").slice(0, 70), polygon: room.polygon.slice(0, 20).map(point) })) : [],
     };
 }
 
@@ -200,6 +251,10 @@ export default function CameraPlanner() {
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [privacy, setPrivacy] = useState(false);
+    const [aiConsent, setAiConsent] = useState(false);
+    const [scaleConfirmed, setScaleConfirmed] = useState(false);
+    const [aiWorking, setAiWorking] = useState(false);
+    const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
     const analysis = useMemo(() => analyse(layout), [layout]);
     const active = layout.cameras.find((c) => c.id === selected) || null;
     const button = "rounded-xl border border-slate-600 px-4 py-3 text-sm font-semibold transition hover:border-amber-400";
@@ -268,6 +323,16 @@ export default function CameraPlanner() {
                 ctx.fillStyle = "#ef444459";
                 for (const point of analysis.blind) ctx.fillRect(point.x - 12, point.y - 12, 24, 24);
             }
+        }
+        for (const room of layout.rooms || []) {
+            if (room.polygon.length < 3) continue;
+            polygon(room.polygon);
+            ctx.strokeStyle = "#0d9488"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+            ctx.stroke(); ctx.setLineDash([]);
+            const center = room.polygon.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+            ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillStyle = "#0f766e";
+            ctx.fillText(room.name, center.x / room.polygon.length, center.y / room.polygon.length, 140);
         }
         for (const c of layout.cameras) {
             const steps = 36, begin = (c.direction - c.fov / 2) * Math.PI / 180;
@@ -364,7 +429,7 @@ export default function CameraPlanner() {
         if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
             setStatus("PNG / JPEG / WebP · max 5 MB"); return;
         }
-        try { setBackground(await readFile(file)); setStatus(""); }
+        try { setBackground(await readFile(file)); setAiDraft(null); setAiConsent(false); setStatus(""); }
         catch { setStatus(t.error); }
     }
     async function handleJSON(file?: File) {
@@ -374,7 +439,7 @@ export default function CameraPlanner() {
             pushHistory(); setLayout(cleanLayout(parsed.layout || parsed));
             setBackground(typeof parsed.background === "string" && parsed.background.startsWith("data:image/")
                 ? parsed.background : "");
-            setWallStart(null); setAreaDraft([]); setSelected(null); setStatus("");
+            setWallStart(null); setAreaDraft([]); setSelected(null); setAiDraft(null); setStatus("");
         } catch { setStatus("Invalid JSON design"); }
     }
     function exportJSON() {
@@ -390,6 +455,71 @@ export default function CameraPlanner() {
         const markup = '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600"><image width="900" height="600" href="' + picture + '"/></svg>';
         download("safetech-camera-plan.svg", new Blob([markup], { type: "image/svg+xml" }));
     }
+    // The model uses normalized SOURCE-IMAGE points. Preserve the contain fit
+    // used by render(): positions must account for letterboxing on Canvas.
+    function imageToCanvas(p: Point): Point {
+        if (!bgImage) return { x: clamp(p.x * W / 1000, 0, W), y: clamp(p.y * H / 1000, 0, H) };
+        const ratio = Math.min(W / bgImage.width, H / bgImage.height);
+        const iw = bgImage.width * ratio, ih = bgImage.height * ratio;
+        return {
+            x: clamp((W - iw) / 2 + p.x * iw / 1000, 0, W),
+            y: clamp((H - ih) / 2 + p.y * ih / 1000, 0, H),
+        };
+    }
+    async function runAi() {
+        if (!background || !bgImage || !aiConsent || aiWorking) return;
+        setAiWorking(true); setAiDraft(null); setStatus("");
+        try {
+            const blob = imageDataToBlob(background);
+            if (blob.size > 5 * 1024 * 1024) throw new Error("Image too large");
+            const form = new FormData();
+            const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+            form.set("image", blob, "floorplan." + ext);
+            form.set("width_meters", String(layout.widthMeters));
+            form.set("scale_confirmed", scaleConfirmed ? "1" : "0");
+            form.set("ai_consent", "1");
+            form.set("locale", locale === "en" || locale === "ru" ? locale : "ka");
+            const res = await fetch("/api/camera-plans/vision", {
+                method: "POST", body: form, signal: AbortSignal.timeout(90000),
+            });
+            if (!res.ok) {
+                setStatus(res.status === 503 || res.status === 429 ? t.aiUnavailable : t.aiError);
+                return;
+            }
+            const payload: { data?: AiDraft } = await res.json();
+            if (!payload.data || !Array.isArray(payload.data.cameras)
+                || !Array.isArray(payload.data.walls) || !Array.isArray(payload.data.area)
+                || !Array.isArray(payload.data.rooms)) {
+                setStatus(t.aiError); return;
+            }
+            setAiDraft(payload.data);
+        } catch {
+            setStatus(t.aiError);
+        } finally {
+            setAiWorking(false);
+        }
+    }
+    function applyAiDraft() {
+        if (!aiDraft || !bgImage) return;
+        if ((layout.cameras.length || layout.walls.length || layout.area.length)
+            && !window.confirm(t.aiReplace)) return;
+        pushHistory();
+        const walls = aiDraft.walls.map((wall) => {
+            const a = imageToCanvas({ x: wall.ax, y: wall.ay });
+            const b = imageToCanvas({ x: wall.bx, y: wall.by });
+            return { ax: a.x, ay: a.y, bx: b.x, by: b.y };
+        });
+        const area = aiDraft.area.map(imageToCanvas);
+        const rooms = aiDraft.rooms.map((room) => ({ name: room.name, polygon: room.polygon.map(imageToCanvas) }));
+        const cameras: Camera[] = aiDraft.cameras.map((camera) => ({
+            ...imageToCanvas(camera),
+            id: crypto.randomUUID(), direction: clamp(camera.direction, 0, 360),
+            fov: 90, range: 18, kind: camera.kind, height: 3, lens: 2.8, sensor: 5.6,
+        }));
+        setLayout((current) => ({ ...current, cameras, walls, area, rooms }));
+        setAiDraft(null); setSelected(null); setAreaDraft([]); setWallStart(null);
+        setMode("select"); setStatus(t.aiOnly);
+    }
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setSending(true); setStatus("");
@@ -400,7 +530,7 @@ export default function CameraPlanner() {
             data.set("privacy", privacy ? "1" : "0");
             data.set("layout", JSON.stringify(layout));
             if (background.startsWith("data:image/")) {
-                const blob = await (await fetch(background)).blob();
+                const blob = imageDataToBlob(background);
                 const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
                 data.set("image", blob, "floorplan." + extension);
             }
@@ -430,6 +560,46 @@ export default function CameraPlanner() {
                                 onChange={(e) => { void handleJSON(e.target.files?.[0]); e.target.value = ""; }} />
                         </label>
                     </div>
+                    <section className="space-y-3 rounded-2xl border border-amber-500/40 bg-slate-800/80 p-5">
+                        <h2 className="text-lg font-bold text-amber-300">{t.aiTitle}</h2>
+                        <p className="text-sm text-slate-300">{t.aiOnly}</p>
+                        <label className="flex gap-3 text-sm leading-relaxed">
+                            <input type="checkbox" checked={scaleConfirmed}
+                                onChange={(e) => setScaleConfirmed(e.target.checked)} />
+                            <span>{t.scaleConfirmed}</span>
+                        </label>
+                        <label className="flex gap-3 text-sm leading-relaxed">
+                            <input type="checkbox" checked={aiConsent}
+                                onChange={(e) => setAiConsent(e.target.checked)} />
+                            <span>{t.aiConsent}</span>
+                        </label>
+                        <button type="button" disabled={!bgImage || !aiConsent || aiWorking}
+                            className="w-full rounded-xl bg-amber-500 p-3 font-bold text-slate-950 disabled:opacity-40"
+                            onClick={() => { void runAi(); }}>
+                            {aiWorking ? t.aiWorking : t.aiRun}
+                        </button>
+                        {aiDraft && (
+                            <div className="space-y-3 rounded-xl border border-amber-500/40 p-4" aria-live="polite">
+                                <p className="font-semibold">{t.aiCount}: {aiDraft.suggested_count}</p>
+                                <p className="text-sm">{t.aiReliability}: {aiDraft.confidence} · {aiDraft.image_type}</p>
+                                <p className="text-sm">{aiDraft.summary}</p>
+                                <p className="text-sm text-teal-300">{aiDraft.rooms.map((r) => r.name).join(" · ")}</p>
+                                <p className="text-sm text-amber-300">{aiDraft.caution}</p>
+                                <ul className="list-inside list-disc text-sm text-slate-300">
+                                    {aiDraft.notes.map((note, index) => <li key={index}>{note}</li>)}
+                                </ul>
+                                <ol className="list-inside list-decimal text-sm text-slate-300">
+                                    {aiDraft.cameras.map((cam, index) => <li key={index}>{cam.reason}</li>)}
+                                </ol>
+                                <div className="flex flex-wrap gap-2">
+                                    <button type="button" className={button + " border-amber-400 text-amber-300"}
+                                        onClick={applyAiDraft}>{t.aiApply}</button>
+                                    <button type="button" className={button}
+                                        onClick={() => setAiDraft(null)}>{t.aiDiscard}</button>
+                                </div>
+                            </div>
+                        )}
+                    </section>
                     <div className="flex flex-wrap gap-2">
                         {(["camera", "select", "wall", "area"] as Mode[]).map((item) => (
                             <button key={item} type="button" onClick={() => { setMode(item); setWallStart(null); }}
@@ -447,7 +617,7 @@ export default function CameraPlanner() {
                                 setHistory((v) => v.slice(0, -1)); setLayout(prev); setWallStart(null); setAreaDraft([]); }}>
                             {t.undo}</button>
                         <button type="button" className={button} onClick={() => {
-                            if (window.confirm(t.clearConfirm)) { pushHistory(); setLayout(initial);
+                            if (window.confirm(t.clearConfirm)) { pushHistory(); setAiDraft(null); setLayout(initial);
                                 setBackground(""); setAreaDraft([]); setWallStart(null); setSelected(null); }
                         }}>{t.clear}</button>
                     </div>
