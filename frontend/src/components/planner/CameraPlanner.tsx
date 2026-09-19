@@ -187,6 +187,16 @@ function readFile(file: File): Promise<string> {
         reader.readAsDataURL(file);
     });
 }
+function imageDataToBlob(dataUrl: string): Blob {
+    // fetch(data:) is blocked by the site CSP connect-src; decode locally.
+    const separator = dataUrl.indexOf(",");
+    const match = /^data:(image\\/(?:png|jpeg|webp));base64$/i.exec(dataUrl.slice(0, separator));
+    if (separator < 0 || !match) throw new Error("Invalid image data");
+    const binary = atob(dataUrl.slice(separator + 1));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: match[1].toLowerCase() });
+}
 function download(name: string, blob: Blob) {
     const url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
@@ -460,7 +470,7 @@ export default function CameraPlanner() {
         if (!background || !bgImage || !aiConsent || aiWorking) return;
         setAiWorking(true); setAiDraft(null); setStatus("");
         try {
-            const blob = await (await fetch(background)).blob();
+            const blob = imageDataToBlob(background);
             if (blob.size > 5 * 1024 * 1024) throw new Error("Image too large");
             const form = new FormData();
             const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
@@ -520,7 +530,7 @@ export default function CameraPlanner() {
             data.set("privacy", privacy ? "1" : "0");
             data.set("layout", JSON.stringify(layout));
             if (background.startsWith("data:image/")) {
-                const blob = await (await fetch(background)).blob();
+                const blob = imageDataToBlob(background);
                 const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
                 data.set("image", blob, "floorplan." + extension);
             }
