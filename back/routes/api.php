@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AiFeedbackController;
 use App\Http\Controllers\Api\AnalyticsEventController;
 use App\Http\Controllers\Api\ContactLeadController;
+use App\Http\Controllers\Api\CameraPlanController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LocalServiceLandingController;
 use App\Http\Controllers\Api\PageController;
@@ -20,6 +21,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class)->name('api.health');
 Route::get('/v1/health', HealthController::class)->name('api.v1.health');
+
+Route::post('/camera-plans', CameraPlanController::class)
+    ->middleware('throttle:contact-leads')
+    ->name('api.camera-plans.store');
 
 Route::post('/contact-leads', ContactLeadController::class)
     ->middleware('throttle:contact-leads')
