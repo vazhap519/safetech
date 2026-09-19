@@ -190,7 +190,7 @@ function readFile(file: File): Promise<string> {
 function imageDataToBlob(dataUrl: string): Blob {
     // fetch(data:) is blocked by the site CSP connect-src; decode locally.
     const separator = dataUrl.indexOf(",");
-    const match = /^data:(image\\/(?:png|jpeg|webp));base64$/i.exec(dataUrl.slice(0, separator));
+    const match = /^data:(image\/(?:png|jpeg|webp));base64$/i.exec(dataUrl.slice(0, separator));
     if (separator < 0 || !match) throw new Error("Invalid image data");
     const binary = atob(dataUrl.slice(separator + 1));
     const bytes = new Uint8Array(binary.length);
