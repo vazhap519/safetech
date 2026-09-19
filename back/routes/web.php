@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Admin\EstimatePdfController;
 use App\Models\CameraPlan;
+use App\Models\User;
 use App\Support\DeploymentInfo;
+use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -58,12 +60,18 @@ Route::get('/admin/estimates/{estimate}/pdf', EstimatePdfController::class)
 // Only a logged-in admin session can inspect saved layout JSON and private images.
 Route::middleware('auth')->group(function (): void {
     Route::get('/admin/camera-plans/{cameraPlan}/layout.json', function (CameraPlan $cameraPlan) {
+        $user = request()->user();
+        abort_unless($user instanceof User && $user->canAccessPanel(Filament::getPanel('admin')), 403);
+
         return response()->json($cameraPlan->layout)
             ->header('Cache-Control', 'private, no-store')
             ->header('X-Robots-Tag', 'noindex, nofollow');
     })->name('admin.camera-plans.layout');
 
     Route::get('/admin/camera-plans/{cameraPlan}/background', function (CameraPlan $cameraPlan) {
+        $user = request()->user();
+        abort_unless($user instanceof User && $user->canAccessPanel(Filament::getPanel('admin')), 403);
+
         abort_unless($cameraPlan->background_path, 404);
 
         return Storage::disk('local')
