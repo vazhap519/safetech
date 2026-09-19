@@ -45,6 +45,7 @@ class CameraPlanVisionApiTest extends TestCase
                 ['x' => 700, 'y' => 500],
                 ['x' => 100, 'y' => 500],
             ],
+            'rooms' => [['name' => 'მისაღები', 'polygon' => [['x' => 100, 'y' => 100], ['x' => 700, 'y' => 100], ['x' => 700, 'y' => 500]]]],
             'cameras' => [
                 ['x' => $x, 'y' => 250, 'direction' => 90, 'kind' => 'bullet', 'reason' => 'შესასვლელი'],
             ],
@@ -96,7 +97,8 @@ class CameraPlanVisionApiTest extends TestCase
             ->assertJsonPath('data.suggested_count', 1)
             ->assertJsonPath('data.cameras.0.x', 250)
             ->assertJsonPath('data.scale_confirmed', false)
-            ->assertJsonCount(4, 'data.area');
+            ->assertJsonCount(4, 'data.area')
+            ->assertJsonPath('data.rooms.0.name', 'მისაღები');
 
         $this->assertSame([], Storage::disk('local')->allFiles('camera-plans'));
         Http::assertSent(fn (OutboundRequest $request): bool => $request->url() === 'https://api.openai.com/v1/responses'
@@ -114,7 +116,8 @@ class CameraPlanVisionApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.image_type', 'photo')
             ->assertJsonPath('data.walls', [])
-            ->assertJsonPath('data.area', []);
+            ->assertJsonPath('data.area', [])
+            ->assertJsonPath('data.rooms', []);
     }
 
     public function test_provider_coordinates_outside_image_are_rejected_not_clamped_silently(): void
@@ -157,5 +160,6 @@ class CameraPlanVisionApiTest extends TestCase
         $this->assertSame(0, $result['suggested_count']);
         $this->assertSame([], $result['walls']);
         $this->assertSame([], $result['area']);
+        $this->assertSame([], $result['rooms']);
     }
 }
