@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from "react";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 
 type Point = { x: number; y: number };
@@ -307,14 +307,14 @@ export default function CameraPlanner() {
         if (ctx) render(ctx, true);
     }, [render]);
 
-    function coords(event: React.PointerEvent<HTMLCanvasElement>): Point {
+    function coords(event: PointerEvent<HTMLCanvasElement>): Point {
         const box = event.currentTarget.getBoundingClientRect();
         return {
             x: clamp((event.clientX - box.left) * W / box.width, 0, W),
             y: clamp((event.clientY - box.top) * H / box.height, 0, H),
         };
     }
-    function pointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
+    function pointerDown(event: PointerEvent<HTMLCanvasElement>) {
         const p = coords(event);
         const near = [...layout.cameras].reverse().find((c) => Math.hypot(c.x - p.x, c.y - p.y) < 20);
         if (near && (mode === "select" || mode === "camera")) {
@@ -341,7 +341,7 @@ export default function CameraPlanner() {
         }
         if (mode === "area" && areaDraft.length < 80) setAreaDraft((value) => [...value, p]);
     }
-    function pointerMove(event: React.PointerEvent<HTMLCanvasElement>) {
+    function pointerMove(event: PointerEvent<HTMLCanvasElement>) {
         if (!dragging) return;
         const p = coords(event);
         setLayout((value) => ({ ...value, cameras: value.cameras.map((c) =>
@@ -384,7 +384,7 @@ export default function CameraPlanner() {
         const markup = '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600"><image width="900" height="600" href="' + picture + '"/></svg>';
         download("safetech-camera-plan.svg", new Blob([markup], { type: "image/svg+xml" }));
     }
-    async function submit(event: React.FormEvent<HTMLFormElement>) {
+    async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setSending(true); setStatus("");
         try {
