@@ -104,6 +104,18 @@ test("AI plan requires opt-in, suggests edit-ready geometry and preserves measur
     // Square uploaded image is letterboxed into 900x600 canvas: midpoint stays centered.
     expect(design.layout.cameras[0].x).toBe(450);
     expect(design.layout.cameras[0].y).toBe(300);
+
+    // Real Laravel submission confirms uploaded photo conversion is CSP-safe.
+    const quoteForm = page.locator("aside form");
+    await quoteForm.locator("input").nth(0).fill("AI vision QA");
+    await quoteForm.locator("input").nth(1).fill("Automated QA");
+    await quoteForm.locator("input").nth(2).fill("+995555001235");
+    await quoteForm.locator('input[type="checkbox"]').check();
+    const savedQuote = page.waitForResponse((res) => res.url().endsWith("/api/camera-plans")
+        && res.request().method() === "POST");
+    await quoteForm.locator('button[type="submit"]').click();
+    expect((await savedQuote).status()).toBe(201);
+
     await page.getByRole("button", { name: "Undo" }).click();
 
     const secondDownload = page.waitForEvent("download");
