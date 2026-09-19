@@ -207,15 +207,18 @@ export default function CameraPlanner() {
     const pushHistory = useCallback(() => setHistory((previous) => [...previous.slice(-29), layout]), [layout]);
 
     useEffect(() => {
-        try {
-            const saved = localStorage.getItem("safetech-camera-planner-v1");
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                setLayout(cleanLayout(parsed.layout));
-                if (typeof parsed.background === "string") setBackground(parsed.background);
-            }
-        } catch { /* Corrupt/quota-limited browser storage must never block the planner. */ }
-        setHydrated(true);
+        const timer = window.setTimeout(() => {
+            try {
+                const saved = localStorage.getItem("safetech-camera-planner-v1");
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    setLayout(cleanLayout(parsed.layout));
+                    if (typeof parsed.background === "string") setBackground(parsed.background);
+                }
+            } catch { /* Corrupt/quota-limited browser storage must not block the planner. */ }
+            setHydrated(true);
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, []);
     useEffect(() => {
         if (!hydrated) return;
@@ -226,7 +229,10 @@ export default function CameraPlanner() {
         } catch { /* Large photos belong in explicit JSON exports. */ }
     }, [layout, background, hydrated]);
     useEffect(() => {
-        if (!background) { setBgImage(null); return; }
+        if (!background) {
+            const timer = window.setTimeout(() => setBgImage(null), 0);
+            return () => window.clearTimeout(timer);
+        }
         const image = new window.Image();
         image.onload = () => setBgImage(image);
         image.onerror = () => setBgImage(null);
