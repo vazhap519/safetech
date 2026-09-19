@@ -69,6 +69,7 @@ test("AI plan requires opt-in, suggests edit-ready geometry and preserves measur
                     image_type: "floor_plan", confidence: "medium",
                     summary: "Approximate placement only", caution: "Verify onsite",
                     scale_confirmed: true, suggested_count: 1,
+                    rooms: [{ name: "Entrance hall", polygon: [{ x: 100, y: 100 }, { x: 900, y: 100 }, { x: 900, y: 900 }] }],
                     walls: [{ ax: 100, ay: 100, bx: 900, by: 100 }],
                     area: [{ x: 100, y: 100 }, { x: 900, y: 100 }, { x: 900, y: 900 }, { x: 100, y: 900 }],
                     cameras: [{ x: 500, y: 500, direction: 90, kind: "bullet", reason: "Front entrance" }],
@@ -98,6 +99,7 @@ test("AI plan requires opt-in, suggests edit-ready geometry and preserves measur
     const design = JSON.parse(await readFile(await file.path(), "utf8"));
     expect(design.layout.cameras).toHaveLength(1);
     expect(design.layout.walls).toHaveLength(1);
+    expect(design.layout.rooms).toHaveLength(1);
     expect(design.layout.area).toHaveLength(4);
     // Square uploaded image is letterboxed into 900x600 canvas: midpoint stays centered.
     expect(design.layout.cameras[0].x).toBe(450);
