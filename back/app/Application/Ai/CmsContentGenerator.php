@@ -679,7 +679,16 @@ PROMPT;
             return false;
         }
 
-        if ($profile === 'service' && str_contains($path, 'lead_form')) {
+        if ($profile === 'service' && (
+            $path === 'lead_form'
+            || preg_match('/^lead_form\.(?:extra_fields|components)(?:\.\d+)?(?:\.options(?:\.\d+)?)?$/', $path) === 1
+        )) {
+            // A nested container is traversable; only its locale-specific
+            // editorial leaves may become AI targets (never prices or keys).
+            return false;
+        }
+
+        if ($profile === 'service' && str_starts_with($path, 'lead_form.')) {
             $leaf = Str::afterLast($path, '.');
 
             return preg_match('/(?:^|_)(ka|en|ru)$/', $leaf) !== 1;
