@@ -50,7 +50,7 @@ dimensions, room names, mounting surfaces, camera specifications, actual range, 
 If you cannot reliably locate cameras return an empty camera list and explain which drawing or measurements are needed.
 Use normalized source IMAGE coordinates 0..1000 for EACH axis, origin top-left, +x right, +y down.
 Direction degrees: 0 right, 90 down, 180 left, 270 up. Polygon has 3–20 points if visible.
-Walls are line segments only. Approximate placement should favor entrances/critical circulation and minimize overlap.
+Walls are line segments only. Return legible rooms as labeled polygons only when boundaries are clear; never invent room labels. Approximate placement should favor entrances/critical circulation and minimize overlap.
 Do not guess behind opaque walls. NEVER assume pixels imply meters. Mention scene lighting, obstructions,
 privacy/neighbors and onsite lens/FOV checks in the short caution/notes.
 Return comments in the requested language. Numeric confidence is only a coarse self-reported label.
@@ -127,6 +127,11 @@ PROMPT;
             'walls.*.bx' => ['required', 'numeric', 'between:0,1000'],
             'walls.*.by' => ['required', 'numeric', 'between:0,1000'],
             'area' => ['present', 'array', 'max:20'],
+            'rooms' => ['present', 'array', 'max:20'],
+            'rooms.*.name' => ['required', 'string', 'max:70'],
+            'rooms.*.polygon' => ['required', 'array', 'min:3', 'max:20'],
+            'rooms.*.polygon.*.x' => ['required', 'numeric', 'between:0,1000'],
+            'rooms.*.polygon.*.y' => ['required', 'numeric', 'between:0,1000'],
             'area.*.x' => ['required', 'numeric', 'between:0,1000'],
             'area.*.y' => ['required', 'numeric', 'between:0,1000'],
             'cameras' => ['present', 'array', 'max:24'],
@@ -143,6 +148,7 @@ PROMPT;
             // Do not present imagined floor-plan geometry extracted from a 3D photograph.
             $validated['walls'] = [];
             $validated['area'] = [];
+            $validated['rooms'] = [];
         } elseif (count($validated['area']) < 3) {
             $validated['area'] = [];
         }
@@ -167,6 +173,11 @@ PROMPT;
             'properties' => ['ax' => $number, 'ay' => $number, 'bx' => $number, 'by' => $number],
             'required' => ['ax', 'ay', 'bx', 'by'],
         ];
+        $room = [
+            'type' => 'object', 'additionalProperties' => false,
+            'properties' => ['name' => ['type' => 'string'], 'polygon' => ['type' => 'array', 'items' => $point]],
+            'required' => ['name', 'polygon'],
+        ];
         $camera = [
             'type' => 'object', 'additionalProperties' => false,
             'properties' => [
@@ -187,10 +198,11 @@ PROMPT;
                 'caution' => ['type' => 'string'],
                 'walls' => ['type' => 'array', 'items' => $wall],
                 'area' => ['type' => 'array', 'items' => $point],
+                'rooms' => ['type' => 'array', 'items' => $room],
                 'cameras' => ['type' => 'array', 'items' => $camera],
                 'notes' => ['type' => 'array', 'items' => ['type' => 'string']],
             ],
-            'required' => ['image_type', 'confidence', 'summary', 'caution', 'walls', 'area', 'cameras', 'notes'],
+            'required' => ['image_type', 'confidence', 'summary', 'caution', 'walls', 'area', 'rooms', 'cameras', 'notes'],
         ];
     }
 }
