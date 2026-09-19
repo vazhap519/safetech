@@ -7,6 +7,9 @@ on:
       - "back/app/Support/Calculators/CctvEngineeringCalculator.php"
       - "back/app/Http/Controllers/Api/CameraPlanController.php"
       - "back/app/Models/CameraPlan.php"
+      - "back/app/Application/Ai/CameraPlanVisionService.php"
+      - "back/app/Http/Controllers/Api/CameraPlanVisionController.php"
+      - "back/tests/Feature/CameraPlanVisionApiTest.php"
       - "back/database/migrations/*camera_plans*"
       - "back/tests/Unit/CctvEngineeringCalculatorTest.php"
       - "back/tests/Feature/CameraPlanApiTest.php"
@@ -41,4 +44,4 @@ jobs:
       - name: Verify migrations and isolated CCTV unit/API tests
         run: |
           php artisan migrate:fresh --force
-          php artisan test tests/Unit/CctvEngineeringCalculatorTest.php tests/Feature/CameraPlanApiTest.php
+          php artisan test tests/Unit/CctvEngineeringCalculatorTest.php tests/Feature/CameraPlanApiTest.php tests/Feature/CameraPlanVisionApiTest.php
