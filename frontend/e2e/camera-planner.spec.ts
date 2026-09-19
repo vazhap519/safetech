@@ -35,7 +35,7 @@ for (const locale of locales) {
         await expect(percentage).toContainText("%");
 
         const downloadPromise = page.waitForEvent("download");
-        await page.getByRole("button", { name: /JSON/ }).click();
+        await page.locator('button[type="button"]').filter({ hasText: /JSON/ }).first().click();
         const saved = await downloadPromise;
         expect(saved.suggestedFilename()).toBe("safetech-camera-plan.json");
         const design = JSON.parse(await readFile(await saved.path(), "utf8"));
