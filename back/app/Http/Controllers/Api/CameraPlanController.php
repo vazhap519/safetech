@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\CameraPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 final class CameraPlanController extends Controller
 {
@@ -62,9 +64,9 @@ final class CameraPlanController extends Controller
                 'background_path' => $backgroundPath,
                 'privacy_accepted_at' => now(),
             ]);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             if ($backgroundPath) {
-                \Illuminate\Support\Facades\Storage::disk('local')->delete($backgroundPath);
+                Storage::disk('local')->delete($backgroundPath);
             }
             throw $exception;
         }
