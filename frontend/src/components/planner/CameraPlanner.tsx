@@ -5,6 +5,7 @@ import { useLocalization } from "@/components/providers/LocalizationProvider";
 
 type Point = { x: number; y: number };
 type Wall = { ax: number; ay: number; bx: number; by: number };
+type Room = { name: string; polygon: Point[] };
 type Kind = "bullet" | "dome" | "ptz" | "turret";
 type Camera = Point & {
     id: string; direction: number; fov: number; range: number;
@@ -12,19 +13,19 @@ type Camera = Point & {
 };
 type Layout = {
     version: 1; widthMeters: number; cameras: Camera[];
-    walls: Wall[]; area: Point[];
+    walls: Wall[]; area: Point[]; rooms?: Room[];
 };
 type Mode = "select" | "camera" | "wall" | "area";
 type AiDraft = {
     image_type: "floor_plan" | "site_plan" | "photo" | "unclear";
     confidence: "low" | "medium" | "high";
     summary: string; caution: string; scale_confirmed: boolean;
-    walls: Wall[]; area: Point[];
+    walls: Wall[]; area: Point[]; rooms: Room[];
     cameras: Array<Point & { direction: number; kind: "bullet" | "dome" | "turret"; reason: string }>;
     notes: string[]; suggested_count: number;
 };
 const W = 900, H = 600;
-const initial: Layout = { version: 1, widthMeters: 20, cameras: [], walls: [], area: [] };
+const initial: Layout = { version: 1, widthMeters: 20, cameras: [], walls: [], area: [], rooms: [] };
 const kinds: Kind[] = ["bullet", "dome", "ptz", "turret"];
 const copy = {
     ka: {
@@ -214,6 +215,8 @@ function cleanLayout(data: unknown): Layout {
             bx: point({ x: w.bx, y: w.by }).x, by: point({ x: w.bx, y: w.by }).y,
         })),
         area: p.area.slice(0, 80).map(point),
+        rooms: Array.isArray(p.rooms) ? p.rooms.slice(0, 20).filter((room) => Array.isArray(room.polygon))
+            .map((room) => ({ name: String(room.name || "").slice(0, 70), polygon: room.polygon.slice(0, 20).map(point) })) : [],
     };
 }
 
@@ -310,6 +313,16 @@ export default function CameraPlanner() {
                 ctx.fillStyle = "#ef444459";
                 for (const point of analysis.blind) ctx.fillRect(point.x - 12, point.y - 12, 24, 24);
             }
+        }
+        for (const room of layout.rooms || []) {
+            if (room.polygon.length < 3) continue;
+            polygon(room.polygon);
+            ctx.strokeStyle = "#0d9488"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+            ctx.stroke(); ctx.setLineDash([]);
+            const center = room.polygon.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+            ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillStyle = "#0f766e";
+            ctx.fillText(room.name, center.x / room.polygon.length, center.y / room.polygon.length, 140);
         }
         for (const c of layout.cameras) {
             const steps = 36, begin = (c.direction - c.fov / 2) * Math.PI / 180;
@@ -465,7 +478,8 @@ export default function CameraPlanner() {
             }
             const payload: { data?: AiDraft } = await res.json();
             if (!payload.data || !Array.isArray(payload.data.cameras)
-                || !Array.isArray(payload.data.walls) || !Array.isArray(payload.data.area)) {
+                || !Array.isArray(payload.data.walls) || !Array.isArray(payload.data.area)
+                || !Array.isArray(payload.data.rooms)) {
                 setStatus(t.aiError); return;
             }
             setAiDraft(payload.data);
@@ -486,12 +500,13 @@ export default function CameraPlanner() {
             return { ax: a.x, ay: a.y, bx: b.x, by: b.y };
         });
         const area = aiDraft.area.map(imageToCanvas);
+        const rooms = aiDraft.rooms.map((room) => ({ name: room.name, polygon: room.polygon.map(imageToCanvas) }));
         const cameras: Camera[] = aiDraft.cameras.map((camera) => ({
             ...imageToCanvas(camera),
             id: crypto.randomUUID(), direction: clamp(camera.direction, 0, 360),
             fov: 90, range: 18, kind: camera.kind, height: 3, lens: 2.8, sensor: 5.6,
         }));
-        setLayout((current) => ({ ...current, cameras, walls, area }));
+        setLayout((current) => ({ ...current, cameras, walls, area, rooms }));
         setAiDraft(null); setSelected(null); setAreaDraft([]); setWallStart(null);
         setMode("select"); setStatus(t.aiOnly);
     }
@@ -558,6 +573,7 @@ export default function CameraPlanner() {
                                 <p className="font-semibold">{t.aiCount}: {aiDraft.suggested_count}</p>
                                 <p className="text-sm">{t.aiReliability}: {aiDraft.confidence} · {aiDraft.image_type}</p>
                                 <p className="text-sm">{aiDraft.summary}</p>
+                                <p className="text-sm text-teal-300">{aiDraft.rooms.map((r) => r.name).join(" · ")}</p>
                                 <p className="text-sm text-amber-300">{aiDraft.caution}</p>
                                 <ul className="list-inside list-disc text-sm text-slate-300">
                                     {aiDraft.notes.map((note, index) => <li key={index}>{note}</li>)}
