@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin\EstimatePdfController;
+use App\Models\CameraPlan;
 use App\Support\DeploymentInfo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\GenerateSignedUploadUrl;
 
 Route::get('/', function () {
@@ -52,20 +54,19 @@ Route::get('/_safetech/upload-probe', function (Request $request) {
 Route::get('/admin/estimates/{estimate}/pdf', EstimatePdfController::class)
     ->name('admin.estimates.pdf');
 
-
 // The reference photo is never exposed through a public storage symlink.
 // Only a logged-in admin session can inspect saved layout JSON and private images.
 Route::middleware('auth')->group(function (): void {
-    Route::get('/admin/camera-plans/{cameraPlan}/layout.json', function (\App\Models\CameraPlan $cameraPlan) {
+    Route::get('/admin/camera-plans/{cameraPlan}/layout.json', function (CameraPlan $cameraPlan) {
         return response()->json($cameraPlan->layout)
             ->header('Cache-Control', 'private, no-store')
             ->header('X-Robots-Tag', 'noindex, nofollow');
     })->name('admin.camera-plans.layout');
 
-    Route::get('/admin/camera-plans/{cameraPlan}/background', function (\App\Models\CameraPlan $cameraPlan) {
+    Route::get('/admin/camera-plans/{cameraPlan}/background', function (CameraPlan $cameraPlan) {
         abort_unless($cameraPlan->background_path, 404);
 
-        return \Illuminate\Support\Facades\Storage::disk('local')
+        return Storage::disk('local')
             ->response($cameraPlan->background_path, null, [
                 'Cache-Control' => 'private, no-store',
                 'X-Robots-Tag' => 'noindex, nofollow',
