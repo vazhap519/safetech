@@ -28,9 +28,9 @@ final class CameraPlanController extends Controller
         $rules = [
             'version' => ['required', 'integer', 'in:1'],
             'widthMeters' => ['required', 'numeric', 'between:1,500'],
-            'cameras' => ['required', 'array', 'max:128'],
-            'walls' => ['required', 'array', 'max:256'],
-            'area' => ['required', 'array', 'max:80'],
+            'cameras' => ['present', 'array', 'min:1', 'max:128'],
+            'walls' => ['present', 'array', 'max:256'],
+            'area' => ['present', 'array', 'max:80'],
             'cameras.*.x' => ['required', 'numeric', 'between:0,900'],
             'cameras.*.y' => ['required', 'numeric', 'between:0,600'],
             'cameras.*.direction' => ['required', 'numeric', 'between:0,360'],
