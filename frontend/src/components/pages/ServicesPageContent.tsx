@@ -50,7 +50,7 @@ export default async function ServicesPageContent({
                 category={category || undefined}
                 initialService={selectedService || undefined}
             />
-            <FeaturedSection />
+            <FeaturedSection selectedService={selectedService || undefined} />
             <WhySection />
             <WorkSection />
             <FaqSeqAction />
