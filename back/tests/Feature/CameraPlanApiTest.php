@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CameraPlan;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -65,6 +66,31 @@ class CameraPlanApiTest extends TestCase
         ]))->assertUnprocessable()->assertJsonValidationErrors(['cameras.0.x']);
 
         $this->assertDatabaseCount('camera_plans', 0);
+    }
+
+    public function test_saved_plan_is_only_readable_by_authorized_filament_admin(): void
+    {
+        config()->set('cms.admin.email', 'qa-admin@safetech.test');
+        $this->postJson('/api/camera-plans', $this->payload())->assertCreated();
+        $plan = CameraPlan::query()->firstOrFail();
+
+        $regular = User::factory()->create([
+            'email' => 'qa-other@safetech.test',
+            'is_admin' => true,
+        ]);
+        $this->actingAs($regular)
+            ->get(route('admin.camera-plans.layout', $plan))
+            ->assertForbidden();
+
+        $admin = User::factory()->create([
+            'email' => 'qa-admin@safetech.test',
+            'is_admin' => true,
+        ]);
+        $this->actingAs($admin)
+            ->get(route('admin.camera-plans.layout', $plan))
+            ->assertOk()
+            ->assertJsonPath('cameras.0.kind', 'bullet')
+            ->assertHeader('Cache-Control', 'no-store, private');
     }
 
     public function test_photo_is_private_and_deleted_with_plan(): void

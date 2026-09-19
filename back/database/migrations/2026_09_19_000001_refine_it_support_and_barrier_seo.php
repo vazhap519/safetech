@@ -414,7 +414,7 @@ return new class extends Migration
     }
 
     /**
-     * @param array<int, array{key:string,sort:int,q:array<string,string>,a:array<string,string>}> $items
+     * @param  array<int, array{key:string,sort:int,q:array<string,string>,a:array<string,string>}>  $items
      */
     private function upsertFaqs(int $serviceId, string $slug, array $items): void
     {

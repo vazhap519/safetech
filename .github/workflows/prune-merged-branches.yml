@@ -1,0 +1,103 @@
+name: Prune fully merged branches
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/prune-merged-branches.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: safetech-prune-merged-branches
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    name: Delete refs already fully contained in main
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Remove fully merged, unprotected, inactive branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const defaultBranch = context.payload.repository?.default_branch || 'main';
+            if (defaultBranch !== 'main') {
+              throw new Error('Unexpected default branch; cleanup stopped.');
+            }
+
+            const main = await github.rest.repos.getBranch({ owner, repo, branch: defaultBranch });
+            // Stop if main moved while the cleanup run was queued.
+            if (main.data.commit.sha !== context.sha) {
+              core.notice('Main moved since this run started. No branches deleted.');
+              return;
+            }
+
+            const branches = await github.paginate(github.rest.repos.listBranches, {
+              owner, repo, per_page: 100,
+            });
+            const openPrs = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const activeHeads = new Set(
+              openPrs
+                .filter((pr) => pr.head.repo?.full_name === context.repo.owner + '/' + context.repo.repo)
+                .map((pr) => pr.head.ref),
+            );
+
+            const removed = [], retained = [], failed = [];
+            const reserved = new Set(['main', 'master', 'production', 'staging', 'develop', 'development']);
+            for (const branch of branches) {
+              const name = branch.name;
+              if (reserved.has(name) || branch.protected || activeHeads.has(name)) {
+                retained.push(name + ' (reserved, protected, or active PR)');
+                continue;
+              }
+
+              try {
+                const comparison = await github.rest.repos.compareCommits({
+                  owner, repo, base: defaultBranch, head: name,
+                });
+                if (comparison.data.ahead_by !== 0) {
+                  retained.push(name + ' (contains ' + comparison.data.ahead_by + ' unique commits)');
+                  continue;
+                }
+
+                // Re-read the branch immediately before deletion to avoid racing a fresh push.
+                const fresh = await github.rest.repos.getBranch({ owner, repo, branch: name });
+                if (fresh.data.protected || fresh.data.commit.sha !== branch.commit.sha) {
+                  retained.push(name + ' (changed during scan or protected)');
+                  continue;
+                }
+
+                await github.rest.git.deleteRef({ owner, repo, ref: 'heads/' + name });
+                removed.push(name);
+                core.info('Deleted fully merged branch: ' + name);
+              } catch (error) {
+                // GitHub refusals or comparisons that time out must not result in deletion.
+                failed.push(name + ': ' + String(error.message || error));
+                core.warning('Preserved ' + name + ': ' + String(error.message || error));
+              }
+            }
+
+            core.summary
+              .addHeading('SafeTech merged-branch cleanup')
+              .addRaw('Main commit: ' + context.sha + '\n\n')
+              .addRaw('Deleted merged refs: ' + removed.length + '\n\n')
+              .addRaw('Preserved branches with unique commits or open PRs: ' + retained.length + '\n\n')
+              .addRaw('Skipped because of GitHub/API errors: ' + failed.length + '\n\n')
+              .addCodeBlock(removed.join('\n') || '(none)', 'text')
+              .addHeading('Preserved branch details')
+              .addCodeBlock(retained.join('\n') || '(none)', 'text')
+              .addHeading('Skipped/API errors')
+              .addCodeBlock(failed.join('\n') || '(none)', 'text');
+            await core.summary.write();
+
+            // Fail to flag incomplete cleanups while keeping all unmerged work intact.
+            if (failed.length) core.setFailed('Some branches could not be verified or deleted; see summary.');
