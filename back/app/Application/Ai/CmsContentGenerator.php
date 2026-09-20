@@ -245,8 +245,12 @@ SERVICE profile:
 - benefits/solutions/process arrays use {"title":"...","description":"...","translations":{"en":{"title":"...","description":"..."},"ru":{"title":"...","description":"..."}}}.
 - translations.entries is the legacy locale map for service repeaters. Each item must be {"key":"benefit.0.title","ka":"...","en":"...","ru":"..."}; cover every generated repeater title/description using its zero-based index.
 - Tags/keywords/highlights/industries are JSON arrays of plain strings.
-- In lead_form, edit only human-facing fields whose names are language-specific (_ka, _en, _ru, or ka/en/ru). Never alter keys, types, rules, options values, pricing, quantities, categories or compatibility logic.
-- If overview is targeted, its value must be a JSON-encoded string containing valid structured JSON suitable for the existing Overview JSON field.
+- In lead_form, fill human-facing labels, placeholders, help/unit text, existing project-size/property-type option labels, existing extra-field option labels, existing package titles/descriptions, and disclaimer texts in KA/EN/RU. Never change option values, IDs, types, prices, quantities, rules, categories or compatibility logic. No new calculator choices or packages may be invented.
+- For existing benefits/solutions/process repeater rows, fill or improve KA/EN/RU title and description without changing the icon or featured flags. New repeater lists use complete nested EN/RU translation objects.
+- For service translation fields, fill KA/EN/RU name, eyebrow, headline, description, SEO title/description, Open Graph title/description and card title/description. Keep localized keywords/highlights/industries consistent with the corresponding visible copy.
+- SEO and Open Graph descriptions should be readable editorial summaries no longer than 320 characters. Avoid keyword stuffing.
+- If overview is targeted, value_json MUST contain a JSON string holding an object with nonempty "title", nonempty "paragraphs" list of strings and optional "stats" array. Do not invent numeric claims.
+- Warranty and SLA are factual terms: when the editor has provided no verified terms, use neutral consultation wording without promising durations or response deadlines.
 - Never invent prices, discounts, warranty periods, response times, package prices, brands, technical limits or availability.
 RULES,
             'page' => <<<'RULES'
@@ -392,6 +396,18 @@ PROMPT;
             'seoTitle', 'seoDescription', 'ogTitle', 'ogDescription',
             'card.title', 'card.description',
         ] as $field) {
+            // Do not introduce unrelated fields into targeted partial forms.
+            $source = match ($field) {
+                'seoTitle', 'seoDescription', 'ogTitle', 'ogDescription' => 'title',
+                'card.title' => 'name',
+                'card.description' => 'description',
+                default => $field,
+            };
+            if (! array_key_exists($source, $state)
+                && data_get($state, "translations.fields.{$field}") === null) {
+                continue;
+            }
+
             foreach (['ka', 'en', 'ru'] as $locale) {
                 $offer("translations.fields.{$field}.{$locale}");
             }
@@ -607,6 +623,29 @@ PROMPT;
 
     private function isGeneratedValueComplete(string $profile, string $path, mixed $value): bool
     {
+        if ($profile === 'service' && $path === 'overview') {
+            $overview = is_string($value) ? json_decode($value, true) : $value;
+
+            if (! is_array($overview) || ! is_string($overview['title'] ?? null)
+                || trim($overview['title']) === ''
+                || ! is_array($overview['paragraphs'] ?? null)
+                || ($overview['paragraphs'] ?? []) === []
+                || ! collect($overview['paragraphs'])->every(
+                    fn (mixed $paragraph): bool => is_string($paragraph) && trim($paragraph) !== '',
+                )) {
+                return false;
+            }
+
+            return ! isset($overview['stats']) || is_array($overview['stats']);
+        }
+
+        if ($profile === 'service' && (
+            $path === 'seo_description'
+            || preg_match('/^translations\\.fields\\.(?:seoDescription|ogDescription)\\.(?:ka|en|ru)$/', $path) === 1
+        ) && is_string($value)) {
+            return trim($value) !== '' && mb_strlen($value) <= 320;
+        }
+
         if (is_string($value)) {
             return trim($value) !== '';
         }
@@ -622,7 +661,6 @@ PROMPT;
             $profile === 'project' && in_array($path, ['challenges', 'solutions', 'process'], true) => ['title', 'description', 'translations.en.title', 'translations.en.description', 'translations.ru.title', 'translations.ru.description'],
             $profile === 'project' && $path === 'results' => ['value', 'title', 'description', 'translations.en.value', 'translations.en.title', 'translations.en.description', 'translations.ru.value', 'translations.ru.title', 'translations.ru.description'],
             $profile === 'service' && in_array($path, ['benefits', 'solutions', 'process'], true) => ['title', 'description', 'translations.en.title', 'translations.en.description', 'translations.ru.title', 'translations.ru.description'],
-            $profile === 'service' && $path === 'translations.entries' => ['key', 'ka', 'en', 'ru'],
             $profile === 'category' && ($path === 'faq' || str_starts_with($path, 'translations.faq.')) => ['question', 'answer'],
             default => [],
         };
@@ -802,7 +840,7 @@ PROMPT;
 
         if ($profile === 'service' && (
             $path === 'lead_form'
-            || preg_match('/^lead_form\.(?:extra_fields|components)(?:\.\d+)?(?:\.options(?:\.\d+)?)?$/', $path) === 1
+            || preg_match('/^lead_form\.(?:extra_fields|components|project_size_options|property_type_options|packages)(?:\.\d+)?(?:\.options(?:\.\d+)?)?$/', $path) === 1
         )) {
             // A nested container is traversable; only its locale-specific
             // editorial leaves may become AI targets (never prices or keys).
