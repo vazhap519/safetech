@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\AiKnowledgeItem;
 use App\Models\CategoryForService;
 use App\Models\Faq;
 use App\Models\SeedDeletionTombstone;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Schema;
  */
 final class CanonicalSeedTombstones
 {
+    public const AI_KNOWLEDGE = 'ai-knowledge';
+
     public const CATEGORY = 'service-category';
 
     public const FAQ = 'faq';
@@ -59,6 +62,17 @@ final class CanonicalSeedTombstones
      */
     public static function register(): void
     {
+        AiKnowledgeItem::deleted(function (AiKnowledgeItem $item): void {
+            if (str_starts_with((string) $item->source_reference, 'safetech-kb:v1:')) {
+                self::remember(self::AI_KNOWLEDGE, (string) $item->source_reference);
+            }
+        });
+        AiKnowledgeItem::created(function (AiKnowledgeItem $item): void {
+            if (str_starts_with((string) $item->source_reference, 'safetech-kb:v1:')) {
+                self::forget(self::AI_KNOWLEDGE, (string) $item->source_reference);
+            }
+        });
+
         CategoryForService::deleted(fn (CategoryForService $category) => self::rememberCategory($category));
         CategoryForService::created(fn (CategoryForService $category) => self::forgetCategory($category));
 
