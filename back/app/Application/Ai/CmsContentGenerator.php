@@ -371,7 +371,7 @@ PROMPT;
      * explicitly cover the entire safe editable service form without adding
      * invented calculator options, media, SKUs, prices or legacy routing keys.
      *
-     * @param array<string, mixed> $state
+     * @param  array<string, mixed>  $state
      * @return array<int, string>
      */
     private function serviceMissingEditorialPaths(array $state, bool $overwrite): array
