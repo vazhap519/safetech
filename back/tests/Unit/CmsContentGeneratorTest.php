@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Application\Ai\CmsContentGenerator;
+use RuntimeException;
 use App\Filament\Concerns\HasAiContentGenerator;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -668,7 +669,7 @@ class CmsContentGeneratorTest extends TestCase
                 'path' => 'overview', 'value_json' => json_encode('still not JSON'),
             ]]));
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('AI-მ ყველა მოთხოვნილი ველი სრულად ვერ შეავსო');
 
         app(CmsContentGenerator::class)->generate('service', 'დადასტურებული სერვისი', [
