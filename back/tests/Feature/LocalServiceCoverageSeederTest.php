@@ -128,7 +128,6 @@ class LocalServiceCoverageSeederTest extends TestCase
         $this->assertDatabaseCount('local_service_landings', 6);
     }
 
-
     public function test_it_localizes_missing_existing_city_copy_without_overriding_admin_text_or_indexability(): void
     {
         $this->seed(ServiceCatalogSeeder::class);
@@ -165,7 +164,6 @@ class LocalServiceCoverageSeederTest extends TestCase
         $this->assertGreaterThan(250, mb_strlen(data_get($landing->translations, 'fields.content.en')));
         $this->assertNotEmpty(data_get($landing->translations, 'fields.seoDescription.ru'));
     }
-
 
     public function test_legacy_local_blocks_gain_matching_translations_without_changing_georgian_or_admin_copy(): void
     {
