@@ -109,13 +109,7 @@ jobs:
           exit 100
 
       - name: Check PHP formatting
-        run: |
-          if vendor/bin/pint --test; then
-            exit 0
-          fi
-          vendor/bin/pint
-          git diff -- app/Application/Ai/CmsContentGenerator.php tests/Unit/CmsContentGeneratorTest.php
-          exit 1
+        run: vendor/bin/pint --test
 
       - name: Verify fresh database and seeders
         run: php artisan migrate:fresh --seed --force
