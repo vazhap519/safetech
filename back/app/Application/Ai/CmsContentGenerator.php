@@ -377,6 +377,9 @@ PROMPT;
     private function serviceMissingEditorialPaths(array $state, bool $overwrite): array
     {
         $paths = [];
+        $fullServiceForm = array_key_exists('name', $state)
+            || array_key_exists('title', $state)
+            || array_key_exists('description', $state);
 
         $offer = function (string $path) use ($state, $overwrite, &$paths): void {
             if ($this->pathIsBlocked('service', $path)) {
@@ -414,6 +417,11 @@ PROMPT;
         }
 
         foreach (['keywords', 'highlights', 'industries'] as $field) {
+            if (! $fullServiceForm && ! array_key_exists($field, $state)
+                && data_get($state, "translations.{$field}") === null) {
+                continue;
+            }
+
             foreach (['en', 'ru'] as $locale) {
                 $path = "translations.{$field}.{$locale}";
                 $value = data_get($state, $path);
@@ -426,7 +434,9 @@ PROMPT;
         foreach (['benefits', 'solutions', 'process'] as $field) {
             $items = data_get($state, $field);
             if ($items === null || $items === []) {
-                $paths[] = $field;
+                if ($fullServiceForm) {
+                    $paths[] = $field;
+                }
 
                 continue;
             }
