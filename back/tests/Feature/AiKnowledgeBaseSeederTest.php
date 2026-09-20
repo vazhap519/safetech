@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Application\Ai\SafeTechAiAgent;
 use App\Models\AiKnowledgeItem;
-use App\Models\SeedDeletionTombstone;
 use Database\Seeders\AiKnowledgeBaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -85,7 +84,6 @@ class AiKnowledgeBaseSeederTest extends TestCase
         $results = $this->knowledgeSearch('HDD retention', 'en');
         $this->assertNotEmpty($results);
         $this->assertContains('en', array_column($results, 'locale'));
-        $this->assertContains('ai', ['ai', 'kb']);
         $this->assertContains(
             'safetech-kb:v1:disk-retention:en',
             AiKnowledgeItem::query()
