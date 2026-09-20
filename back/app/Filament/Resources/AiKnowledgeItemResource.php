@@ -47,7 +47,7 @@ class AiKnowledgeItemResource extends Resource
                 ->required(),
             Select::make('source_type')
                 ->label('წყარო')
-                ->options(['manual' => 'ხელით დამატებული', 'learned' => 'საუბრიდან დამტკიცებული'])
+                ->options(['manual' => 'ხელით დამატებული', 'curated' => 'Seeder — SafeTech ტექნიკური ბაზა', 'learned' => 'საუბრიდან დამტკიცებული'])
                 ->default('manual')
                 ->required(),
             TextInput::make('source_reference')->label('წყაროს მითითება')->maxLength(255),
