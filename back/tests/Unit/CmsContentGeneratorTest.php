@@ -482,6 +482,200 @@ class CmsContentGeneratorTest extends TestCase
         $this->assertNull(data_get($updates, 'lead_form.extra_fields.0.default'));
     }
 
+    public function test_service_full_form_targets_every_existing_localized_editorial_group_but_not_operational_values(): void
+    {
+        $state = [
+            'name' => 'კამერების მონტაჟი',
+            'title' => 'კამერების მონტაჟი',
+            'description' => 'სერვისი',
+            'seo_description' => '',
+            'slug' => 'security-camera-installation',
+            'icon' => 'video-camera',
+            'brands' => ['TVT'],
+            'benefits' => [[
+                'title' => 'დაფარვა',
+                'description' => 'ძირითადი ზონები',
+                'icon' => 'shield',
+            ]],
+            'solutions' => [[
+                'title' => 'სისტემა',
+                'description' => 'პროფესიონალური პროექტი',
+                'featured' => true,
+            ]],
+            'process' => [['title' => 'მონტაჟი', 'description' => 'კამერის დაყენება']],
+            'overview' => '',
+            'lead_form' => [
+                'pricing' => ['base_price' => 300],
+                'project_size_options' => [[
+                    'value' => 'small', 'ka' => 'პატარა', 'en' => '', 'ru' => '',
+                    'one_time_price' => 30,
+                ]],
+                'property_type_options' => [[
+                    'value' => 'home', 'ka' => 'სახლი', 'en' => '', 'ru' => '',
+                ]],
+                'extra_fields' => [[
+                    'key' => 'camera_count', 'type' => 'select', 'ka' => 'კამერები',
+                    'en' => '', 'ru' => '', 'unit_price' => 75,
+                    'options' => [[
+                        'value' => 'two', 'ka' => 'ორი', 'en' => '', 'ru' => '',
+                        'one_time_price' => 0,
+                    ]],
+                ]],
+                'packages' => [[
+                    'key' => 'standard', 'title_ka' => 'სტანდარტული',
+                    'title_en' => '', 'title_ru' => '',
+                    'description_ka' => 'საბაზისო',
+                    'description_en' => '', 'description_ru' => '',
+                    'one_time_price' => 1200, 'recommended' => false,
+                ]],
+            ],
+            'translations' => ['fields' => ['title' => ['ka' => 'მონტაჟი']]],
+            'seo' => ['noindex' => false, 'canonical' => 'https://safetech.ge/services/security-camera-installation'],
+        ];
+
+        $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
+            ->invoke(app(CmsContentGenerator::class), 'service', $state, false);
+
+        foreach ([
+            'translations.fields.title.en',
+            'translations.fields.seoTitle.ru',
+            'translations.fields.ogDescription.en',
+            'translations.fields.card.title.ru',
+            'benefits.0.translations.en.title',
+            'solutions.0.translations.ru.description',
+            'process.0.translations.en.description',
+            'lead_form.project_size_options.0.en',
+            'lead_form.property_type_options.0.ru',
+            'lead_form.extra_fields.0.options.0.en',
+            'lead_form.packages.0.title_en',
+            'lead_form.packages.0.description_ru',
+            'overview',
+        ] as $expected) {
+            $this->assertContains($expected, $targets);
+        }
+
+        foreach ([
+            'slug', 'icon', 'brands', 'seo.noindex', 'seo.canonical',
+            'lead_form.pricing.base_price',
+            'lead_form.packages.0.one_time_price',
+            'lead_form.packages.0.key',
+            'lead_form.extra_fields.0.options.0.value',
+            'translations.entries',
+        ] as $forbidden) {
+            $this->assertNotContains($forbidden, $targets);
+        }
+    }
+
+    public function test_service_generated_missing_translations_merge_without_erasing_existing_repeater_configuration(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+
+            $patches = collect($targets)->map(function (string $path): array {
+                $value = 'generated:'.$path;
+                if (preg_match('/^(?:keywords|highlights|industries|translations\\.(?:keywords|highlights|industries)\\.(?:en|ru))$/', $path) === 1) {
+                    $value = ['sample'];
+                }
+                if ($path === 'overview') {
+                    $value = json_encode([
+                        'title' => 'კამერების მონტაჟი',
+                        'paragraphs' => ['სერვისის აღწერა'],
+                        'stats' => [],
+                    ], JSON_UNESCAPED_UNICODE);
+                }
+
+                return ['path' => $path, 'value_json' => json_encode($value, JSON_UNESCAPED_UNICODE)];
+            })->all();
+
+            return Http::response($this->responseWithPatches($patches));
+        });
+
+        $original = [
+            'name' => 'კამერების მონტაჟი',
+            'title' => 'მონტაჟი',
+            'description' => 'აღწერა',
+            'seo_description' => 'სერვისის აღწერა',
+            'benefits' => [[
+                'title' => 'უსაფრთხოება',
+                'description' => 'მონტაჟი',
+                'icon' => 'shield-check',
+                'translations' => ['en' => ['title' => 'Safety']],
+            ]],
+            'solutions' => [[
+                'title' => 'სისტემა',
+                'description' => 'კამერები',
+                'featured' => true,
+            ]],
+            'process' => [[
+                'title' => 'დაგეგმვა',
+                'description' => 'გეგმა',
+            ]],
+            'lead_form' => [
+                'project_size_options' => [[
+                    'value' => 'small', 'ka' => 'მცირე', 'en' => '',
+                    'ru' => '', 'one_time_price' => 30,
+                ]],
+                'extra_fields' => [[
+                    'key' => 'rooms', 'type' => 'select', 'ka' => 'ოთახი',
+                    'unit_price' => 50, 'options' => [[
+                        'value' => 'one', 'ka' => 'ერთი', 'en' => '',
+                        'ru' => '', 'one_time_price' => 100,
+                    ]],
+                ]],
+                'packages' => [[
+                    'key' => 'starter',
+                    'title_ka' => 'საწყისი',
+                    'title_en' => '',
+                    'title_ru' => '',
+                    'one_time_price' => 800,
+                    'recommended' => true,
+                ]],
+            ],
+            'translations' => ['fields' => ['title' => ['ka' => 'მონტაჟი']]],
+        ];
+
+        $generator = app(CmsContentGenerator::class);
+        $updates = $generator->generate('service', 'უსაფრთხოების კამერების მონტაჟის რეალური მომსახურება', $original);
+        $merged = $generator->mergeIntoState($original, $updates);
+
+        $this->assertSame('shield-check', data_get($merged, 'benefits.0.icon'));
+        $this->assertSame('Safety', data_get($merged, 'benefits.0.translations.en.title'));
+        $this->assertSame('generated:benefits.0.translations.en.description',
+            data_get($merged, 'benefits.0.translations.en.description'));
+        $this->assertSame('generated:benefits.0.translations.ru.title',
+            data_get($merged, 'benefits.0.translations.ru.title'));
+        $this->assertTrue(data_get($merged, 'solutions.0.featured'));
+        $this->assertSame('small', data_get($merged, 'lead_form.project_size_options.0.value'));
+        $this->assertSame(30, data_get($merged, 'lead_form.project_size_options.0.one_time_price'));
+        $this->assertSame('one', data_get($merged, 'lead_form.extra_fields.0.options.0.value'));
+        $this->assertSame(100, data_get($merged, 'lead_form.extra_fields.0.options.0.one_time_price'));
+        $this->assertSame('starter', data_get($merged, 'lead_form.packages.0.key'));
+        $this->assertSame(800, data_get($merged, 'lead_form.packages.0.one_time_price'));
+        $this->assertTrue(data_get($merged, 'lead_form.packages.0.recommended'));
+        $this->assertSame('generated:lead_form.packages.0.title_en',
+            data_get($merged, 'lead_form.packages.0.title_en'));
+        $this->assertSame('generated:translations.fields.ogTitle.ru',
+            data_get($merged, 'translations.fields.ogTitle.ru'));
+    }
+
+    public function test_service_overview_rejects_invalid_json_even_if_non_empty(): void
+    {
+        Http::fakeSequence()
+            ->push($this->responseWithPatches([[
+                'path' => 'overview', 'value_json' => json_encode('not a JSON overview'),
+            ]]))
+            ->push($this->responseWithPatches([[
+                'path' => 'overview', 'value_json' => json_encode('still not JSON'),
+            ]]));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('AI-მ ყველა მოთხოვნილი ველი სრულად ვერ შეავსო');
+
+        app(CmsContentGenerator::class)->generate('service', 'დადასტურებული სერვისი', [
+            'overview' => '',
+        ]);
+    }
+
     /** @param array<int, array{path: string, value_json: string}> $patches
      * @return array<string, mixed>
      */
