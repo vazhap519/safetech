@@ -3,7 +3,6 @@
 namespace Tests\Unit;
 
 use App\Application\Ai\CmsContentGenerator;
-use RuntimeException;
 use App\Filament\Concerns\HasAiContentGenerator;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
