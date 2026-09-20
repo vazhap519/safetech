@@ -100,6 +100,7 @@ jobs:
           rm -f /tmp/safetech-e2e.sqlite
           touch /tmp/safetech-e2e.sqlite
           php artisan migrate:fresh --seed --force
+          php artisan safetech:local-seo-audit --strict
           php artisan tinker --execute="\
           \$category = App\\Models\\ProjectCategory::query()->updateOrCreate(['slug' => 'qa-project-category'], ['name' => 'QA Project Category', 'sort_order' => 999]); \
           App\\Models\\Project::query()->updateOrCreate(['slug' => 'qa-release-project'], ['title' => 'QA Release Project', 'excerpt' => 'Release candidate project route probe.', 'content' => 'Release candidate project route probe content.', 'category_id' => \$category->id, 'is_published' => true, 'published_at' => now(), 'sort_order' => 999]); \
