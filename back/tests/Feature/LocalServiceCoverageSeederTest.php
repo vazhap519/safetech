@@ -84,7 +84,6 @@ class LocalServiceCoverageSeederTest extends TestCase
             'content' => 'ეს არის CMS-ში ადმინისტრატორის მიერ დაწერილი გვერდი.',
             'noindex' => true,
             'is_published' => false,
-            'projects' => null,
         ]);
 
         $this->seed(LocalServiceCoverageSeeder::class);
