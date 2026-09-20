@@ -25,10 +25,7 @@ class LocalLandingPerformanceTable extends TableWidget
             ->query(
                 LocalServiceLanding::query()
                     ->with('service')
-                    ->withCount([
-                        'projects as published_projects_count' => fn ($query) => $query
-                            ->where('projects.is_published', true),
-                    ])
+                    ->withCount('publicProjects as published_projects_count')
                     ->publiclyVisible(),
             )
             ->defaultSort('updated_at', 'desc')
@@ -41,10 +38,10 @@ class LocalLandingPerformanceTable extends TableWidget
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('indexing_status')
-                    ->label('Google')
-                    ->getStateUsing(fn (LocalServiceLanding $record): string => $record->noindex ? 'Noindex' : 'Index')
+                    ->label('Indexing ნებართვა')
+                    ->getStateUsing(fn (LocalServiceLanding $record): string => $record->noindex ? 'Noindex' : 'Indexable')
                     ->badge()
-                    ->color(fn (string $state): string => $state === 'Index' ? 'success' : 'warning'),
+                    ->color(fn (string $state): string => $state === 'Indexable' ? 'success' : 'warning'),
                 Tables\Columns\TextColumn::make('published_projects_count')
                     ->label('რეალური პროექტები')
                     ->numeric()
