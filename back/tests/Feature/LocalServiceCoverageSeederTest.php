@@ -8,6 +8,7 @@ use Database\Seeders\ExistingLocalLandingTranslationsSeeder;
 use Database\Seeders\LegacyLocalLandingItemsSeeder;
 use Database\Seeders\LocalServiceCoverageSeeder;
 use Database\Seeders\ServiceCatalogSeeder;
+use Database\Seeders\SystemContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,6 +24,37 @@ class LocalServiceCoverageSeederTest extends TestCase
         'pos-system-installation',
         'patch-panel-network-outlet-installation',
     ];
+
+    public function test_clean_system_install_seeds_all_twelve_services_and_thirty_six_local_pages(): void
+    {
+        $this->seed(SystemContentSeeder::class);
+        $this->seed(SystemContentSeeder::class);
+
+        $this->assertDatabaseCount('services', 12);
+        $this->assertDatabaseCount('local_service_landings', 36);
+        $this->assertDatabaseCount('local_service_landing_project', 0);
+        $this->assertSame(
+            36,
+            LocalServiceLanding::query()->publiclyVisible()->where('noindex', false)->count(),
+        );
+
+        $covered = Service::query()->publiclyVisible()
+            ->whereHas('localServiceLandings',
+                fn ($query) => $query->publiclyVisible()->where('noindex', false))
+            ->count();
+        $this->assertSame(12, $covered);
+
+        $legacy = LocalServiceLanding::query()->where('location_slug', 'bakuriani')
+            ->whereHas('service', fn ($query) => $query->where('slug', 'security-camera-installation'))
+            ->sole();
+        $this->assertStringContainsString('Bakuriani',
+            data_get($legacy->translations, 'fields.content.en'));
+        $this->assertStringContainsString('Бакуриани',
+            data_get($legacy->translations, 'fields.content.ru'));
+        $this->assertNotEmpty(data_get($legacy->faq, '1.translations.en.question'));
+        $this->assertNotEmpty(data_get($legacy->benefits, '0.translations.ru.title'));
+        $this->assertSame(0, $legacy->projects()->count());
+    }
 
     public function test_it_completes_each_missing_service_with_editorial_trilingual_tbilisi_content(): void
     {
