@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\LocalServiceLanding;
 use App\Models\Service;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 
 final class LocalSeoAudit extends Command
