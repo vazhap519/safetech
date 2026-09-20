@@ -1,0 +1,19 @@
+name: Temporary Local SEO Pint diagnosis
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - uses: actions/checkout@v7
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Print exact Pint diff
+        run: |
+          vendor/bin/pint tests/Feature/LocalServiceCoverageSeederTest.php
+          git diff -- tests/Feature/LocalServiceCoverageSeederTest.php
