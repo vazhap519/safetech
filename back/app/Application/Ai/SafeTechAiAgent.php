@@ -352,8 +352,8 @@ PROMPT;
             ->values();
 
         if ($items->isNotEmpty()) {
-            AiKnowledgeItem::query()->whereKey($items->modelKeys())->increment('usage_count');
-            AiKnowledgeItem::query()->whereKey($items->modelKeys())->update(['last_used_at' => now()]);
+            AiKnowledgeItem::query()->whereKey($items->pluck('id')->all())->increment('usage_count');
+            AiKnowledgeItem::query()->whereKey($items->pluck('id')->all())->update(['last_used_at' => now()]);
         }
 
         return $items->map->only(['id', 'title', 'content', 'category', 'locale'])->all();
