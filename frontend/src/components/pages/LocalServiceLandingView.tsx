@@ -69,9 +69,9 @@ export default function LocalServiceLandingView({
         (faq) => faq.question?.trim() && faq.answer?.trim(),
     );
     const schemas = [
-        {
+        ...(Array.isArray(landing.seo?.schema) ? landing.seo.schema : [landing.seo?.schema || {
             "@context": "https://schema.org",
-            "@type": "Service",
+            "@type": landing.seo?.schemaType || "Service",
             "@id": `${pageUrl}#service`,
             name: landing.title,
             serviceType: landing.service.name || landing.service.title,
@@ -85,7 +85,7 @@ export default function LocalServiceLandingView({
             provider: {
                 "@id": organizationId,
             },
-        },
+        }]),
         {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
