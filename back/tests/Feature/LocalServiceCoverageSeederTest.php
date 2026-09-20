@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\LocalServiceLanding;
-use App\Models\Project;
 use App\Models\Service;
 use Database\Seeders\LocalServiceCoverageSeeder;
 use Database\Seeders\ServiceCatalogSeeder;
