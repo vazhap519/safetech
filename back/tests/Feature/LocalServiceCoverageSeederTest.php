@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\LocalServiceLanding;
 use App\Models\Service;
+use Database\Seeders\ExistingLocalLandingTranslationsSeeder;
 use Database\Seeders\LocalServiceCoverageSeeder;
 use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -92,6 +93,44 @@ class LocalServiceCoverageSeederTest extends TestCase
         $this->assertTrue($manual->noindex);
         $this->assertFalse($manual->is_published);
         $this->assertDatabaseCount('local_service_landings', 6);
+    }
+
+
+    public function test_it_localizes_missing_existing_city_copy_without_overriding_admin_text_or_indexability(): void
+    {
+        $this->seed(ServiceCatalogSeeder::class);
+
+        $service = Service::query()->where('slug', 'business-it-support')->firstOrFail();
+        $landing = LocalServiceLanding::query()->create([
+            'service_id' => $service->id,
+            'location_slug' => 'bakuriani',
+            'location_name' => 'ბაკურიანი',
+            'title' => 'IT დახმარება ბაკურიანში',
+            'content' => 'ქართულენოვანი ლოკალური გვერდი.',
+            'seo_title' => 'IT ბაკურიანი | SafeTech',
+            'seo_description' => 'IT დახმარება ბაკურიანში.',
+            'is_published' => true,
+            'noindex' => true,
+            'translations' => ['fields' => ['seoTitle' => ['en' => 'My custom SEO headline']]],
+        ]);
+
+        $this->seed(ExistingLocalLandingTranslationsSeeder::class);
+        $this->seed(ExistingLocalLandingTranslationsSeeder::class);
+
+        $landing->refresh();
+        $this->assertTrue($landing->noindex);
+        $this->assertSame('ქართულენოვანი ლოკალური გვერდი.', $landing->content);
+        $this->assertSame('My custom SEO headline', data_get($landing->translations, 'fields.seoTitle.en'));
+        $this->assertStringContainsString(
+            'Bakuriani',
+            data_get($landing->translations, 'fields.content.en'),
+        );
+        $this->assertStringContainsString(
+            'Бакуриани',
+            data_get($landing->translations, 'fields.content.ru'),
+        );
+        $this->assertGreaterThan(250, mb_strlen(data_get($landing->translations, 'fields.content.en')));
+        $this->assertNotEmpty(data_get($landing->translations, 'fields.seoDescription.ru'));
     }
 
     public function test_coverage_is_complete_when_other_existing_service_pages_are_indexable(): void
