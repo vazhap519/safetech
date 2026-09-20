@@ -310,18 +310,45 @@ PROMPT;
     /** @return array<int, array<string, mixed>> */
     private function searchKnowledge(string $query, string $locale): array
     {
+        // Do not truncate by newest 150: a growing curated knowledge base
+        // otherwise makes valid older answers invisible. Score relevance first.
+        $tokens = $this->knowledgeTokens($query);
         $items = AiKnowledgeItem::query()
             ->approved()
             ->whereIn('locale', array_values(array_unique([$locale, 'ka'])))
-            ->latest('updated_at')
-            ->limit(150)
             ->get()
-            ->filter(fn (AiKnowledgeItem $item): bool => $this->matchesQuery($query, [
-                $item->title,
-                $item->content,
-                $item->category,
-            ]))
+            ->map(function (AiKnowledgeItem $item) use ($tokens, $query, $locale): array {
+                $title = $this->normalizeKnowledgeText($item->title);
+                $body = $this->normalizeKnowledgeText($item->content);
+                $category = $this->normalizeKnowledgeText($item->category);
+                $phrase = $this->normalizeKnowledgeText($query);
+                $score = 0;
+
+                foreach ($tokens as $token) {
+                    if (str_contains($title, $token)) {
+                        $score += 8;
+                    }
+                    if (str_contains($body, $token)) {
+                        $score += 1;
+                    }
+                    if (str_contains($category, $token)) {
+                        $score += 3;
+                    }
+                }
+
+                if ($phrase !== '' && str_contains($title, $phrase)) {
+                    $score += 20;
+                }
+                if ($score > 0 && $item->locale === $locale) {
+                    $score += 2;
+                }
+
+                return ['item' => $item, 'score' => $score];
+            })
+            ->filter(fn (array $result): bool => $result['score'] > 0)
+            ->sortByDesc('score')
             ->take(5)
+            ->pluck('item')
             ->values();
 
         if ($items->isNotEmpty()) {
@@ -330,6 +357,31 @@ PROMPT;
         }
 
         return $items->map->only(['id', 'title', 'content', 'category', 'locale'])->all();
+    }
+
+    /** @return array<int, string> */
+    private function knowledgeTokens(string $query): array
+    {
+        $normalized = $this->normalizeKnowledgeText($query);
+        preg_match_all('/[\p{L}\p{N}]{2,}/u', $normalized, $matches);
+        $stop = [
+            'მინდა', 'როგორ', 'რა', 'რის', 'არის', 'რომ', 'თუ', 'რამდენი', 'შეიძლება',
+            'თქვენ', 'საჭიროა', 'უნდა', 'სად', 'მაქვს', 'მჭირდება', 'მითხარი', 'გამარჯობა',
+            'the', 'and', 'for', 'how', 'can', 'you', 'please', 'what', 'with', 'need',
+            'does', 'from', 'about', 'not', 'get', 'have', 'which', 'there', 'are',
+            'как', 'для', 'что', 'мне', 'нужно', 'можно', 'где', 'есть', 'это', 'или',
+            'сколько', 'подскажите',
+        ];
+
+        return array_values(array_slice(array_unique(array_filter(
+            $matches[0] ?? [],
+            fn (string $token): bool => ! in_array($token, $stop, true),
+        )), 0, 12));
+    }
+
+    private function normalizeKnowledgeText(string $value): string
+    {
+        return str_replace(['wi-fi', 'wi‑fi', 'wi–fi'], 'wifi', Str::lower(trim($value)));
     }
 
     /** @return array<string, mixed> */
