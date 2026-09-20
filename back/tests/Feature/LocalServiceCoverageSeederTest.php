@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LocalServiceLanding;
 use App\Models\Service;
 use Database\Seeders\ExistingLocalLandingTranslationsSeeder;
+use Database\Seeders\LegacyLocalLandingItemsSeeder;
 use Database\Seeders\LocalServiceCoverageSeeder;
 use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -131,6 +132,40 @@ class LocalServiceCoverageSeederTest extends TestCase
         );
         $this->assertGreaterThan(250, mb_strlen(data_get($landing->translations, 'fields.content.en')));
         $this->assertNotEmpty(data_get($landing->translations, 'fields.seoDescription.ru'));
+    }
+
+
+    public function test_legacy_local_blocks_gain_matching_translations_without_changing_georgian_or_admin_copy(): void
+    {
+        $this->seed(ServiceCatalogSeeder::class);
+        $service = Service::query()->where('slug', 'network-cable-installation')->firstOrFail();
+        $landing = LocalServiceLanding::query()->create([
+            'service_id' => $service->id,
+            'location_slug' => 'khashuri',
+            'location_name' => 'ხაშური',
+            'title' => 'ქსელი ხაშურში',
+            'content' => 'არსებული ლოკალური ტექსტი.',
+            'is_published' => true,
+            'noindex' => false,
+            'benefits' => [
+                ['title' => 'სწორი მარშრუტი', 'description' => 'მარშრუტის დაგეგმვა.'],
+                ['title' => 'Custom CMS title', 'description' => 'Do not guess a translation.'],
+            ],
+            'faq' => [
+                ['question' => 'CAT6 კაბელის გაყვანის ფასი როგორ ითვლება?',
+                    'answer' => 'არსებული პასუხი.'],
+            ],
+        ]);
+
+        $this->seed(LegacyLocalLandingItemsSeeder::class);
+        $this->seed(LegacyLocalLandingItemsSeeder::class);
+        $landing->refresh();
+
+        $this->assertSame('სწორი მარშრუტი', $landing->benefits[0]['title']);
+        $this->assertSame('Planned cable routes', data_get($landing->benefits, '0.translations.en.title'));
+        $this->assertSame('Как рассчитывается цена прокладки CAT6?',
+            data_get($landing->faq, '0.translations.ru.question'));
+        $this->assertNull(data_get($landing->benefits, '1.translations.en.title'));
     }
 
     public function test_coverage_is_complete_when_other_existing_service_pages_are_indexable(): void
