@@ -354,7 +354,128 @@ PROMPT;
             $this->collectTargetPaths($profile, $state[$root], $root, $overwrite, $targets);
         }
 
+        if ($profile === 'service') {
+            $targets = array_merge($targets, $this->serviceMissingEditorialPaths($state, $overwrite));
+        }
+
         return array_values(array_unique($targets));
+    }
+
+    /**
+     * Filament does not always hydrate absent locale leaves for an existing
+     * repeater row. The general walker only sees keys that already exist, so
+     * explicitly cover the entire safe editable service form without adding
+     * invented calculator options, media, SKUs, prices or legacy routing keys.
+     *
+     * @param array<string, mixed> $state
+     * @return array<int, string>
+     */
+    private function serviceMissingEditorialPaths(array $state, bool $overwrite): array
+    {
+        $paths = [];
+
+        $offer = function (string $path) use ($state, $overwrite, &$paths): void {
+            if ($this->pathIsBlocked('service', $path)) {
+                return;
+            }
+
+            $value = data_get($state, $path);
+            if ($overwrite || ! is_string($value) || trim($value) === '') {
+                if ($value === null || is_string($value)) {
+                    $paths[] = $path;
+                }
+            }
+        };
+
+        foreach ([
+            'name', 'eyebrow', 'title', 'description',
+            'seoTitle', 'seoDescription', 'ogTitle', 'ogDescription',
+            'card.title', 'card.description',
+        ] as $field) {
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $offer("translations.fields.{$field}.{$locale}");
+            }
+        }
+
+        foreach (['keywords', 'highlights', 'industries'] as $field) {
+            foreach (['en', 'ru'] as $locale) {
+                $path = "translations.{$field}.{$locale}";
+                $value = data_get($state, $path);
+                if ($overwrite || ! is_array($value) || $value === []) {
+                    $paths[] = $path;
+                }
+            }
+        }
+
+        foreach (['benefits', 'solutions', 'process'] as $field) {
+            $items = data_get($state, $field);
+            if ($items === null || $items === []) {
+                $paths[] = $field;
+
+                continue;
+            }
+
+            if (! is_array($items)) {
+                continue;
+            }
+
+            foreach ($items as $index => $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                foreach (['title', 'description'] as $leaf) {
+                    foreach (['en', 'ru'] as $locale) {
+                        $offer("{$field}.{$index}.translations.{$locale}.{$leaf}");
+                    }
+                }
+            }
+        }
+
+        // A service may have existing calculator choices but lack EN/RU or
+        // even Georgian display labels. Never invent option IDs/price values.
+        foreach (['project_size_options', 'property_type_options'] as $field) {
+            foreach (data_get($state, "lead_form.{$field}", []) ?: [] as $index => $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offer("lead_form.{$field}.{$index}.{$locale}");
+                }
+            }
+        }
+        foreach (data_get($state, 'lead_form.extra_fields', []) ?: [] as $index => $field) {
+            if (! is_array($field)) {
+                continue;
+            }
+            foreach (data_get($field, 'options', []) ?: [] as $optionIndex => $option) {
+                if (! is_array($option)) {
+                    continue;
+                }
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offer("lead_form.extra_fields.{$index}.options.{$optionIndex}.{$locale}");
+                }
+            }
+        }
+        foreach (data_get($state, 'lead_form.packages', []) ?: [] as $index => $package) {
+            if (! is_array($package)) {
+                continue;
+            }
+            foreach (['title', 'description'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offer("lead_form.packages.{$index}.{$field}_{$locale}");
+                }
+            }
+        }
+        foreach (data_get($state, 'translations.entries', []) ?: [] as $index => $entry) {
+            if (! is_array($entry) || blank($entry['key'] ?? null)) {
+                continue;
+            }
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $offer("translations.entries.{$index}.{$locale}");
+            }
+        }
+
+        return $paths;
     }
 
     /** @param array<string, mixed> $state
@@ -472,7 +593,7 @@ PROMPT;
     {
         $allowed = match ($profile) {
             'project' => ['meta', 'scope', 'specs', 'challenges', 'solutions', 'process', 'results', 'seo.keywords'],
-            'service' => ['keywords', 'highlights', 'industries', 'benefits', 'solutions', 'process', 'translations.entries', 'translations.keywords.en', 'translations.keywords.ru', 'translations.highlights.en', 'translations.highlights.ru', 'translations.industries.en', 'translations.industries.ru'],
+            'service' => ['keywords', 'highlights', 'industries', 'benefits', 'solutions', 'process', 'translations.keywords.en', 'translations.keywords.ru', 'translations.highlights.en', 'translations.highlights.ru', 'translations.industries.en', 'translations.industries.ru'],
             'page' => ['keywords', 'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru'],
             'local-seo' => ['benefits', 'faq', 'keywords', 'translations.keywords.en', 'translations.keywords.ru'],
             'category' => ['seo_keywords', 'faq', 'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru', 'translations.faq.ka', 'translations.faq.en', 'translations.faq.ru'],
@@ -705,11 +826,29 @@ PROMPT;
     /** @param array<string, mixed> $updates */
     public function mergeIntoState(array $currentState, array $updates): array
     {
-        foreach ($this->flatten($updates) as $path => $value) {
-            data_set($currentState, $path, $value);
+        // Do not replace an existing Repeater list with sparse generated rows:
+        // that used to erase icons, featured flags and calculator option IDs.
+        // Entire plain-string lists (keywords etc.) are deliberately replaced.
+        return $this->mergeEditorialValues($currentState, $updates);
+    }
+
+    private function mergeEditorialValues(mixed $original, mixed $patch): mixed
+    {
+        if (! is_array($original) || ! is_array($patch)) {
+            return $patch;
         }
 
-        return $currentState;
+        if (array_is_list($patch) && ($patch === [] || ! is_array($patch[0]))) {
+            return $patch;
+        }
+
+        foreach ($patch as $key => $value) {
+            $original[$key] = array_key_exists($key, $original)
+                ? $this->mergeEditorialValues($original[$key], $value)
+                : $value;
+        }
+
+        return $original;
     }
 
     /** @return array<string, mixed> */
