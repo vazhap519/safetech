@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import LocalServiceLinks from "@/components/seo/LocalServiceLinks";
@@ -7,7 +8,7 @@ import ServiceStructuredData from "@/features/service-detail/components/ServiceS
 import { getBackendService } from "@/lib/backend";
 import { confirmBackendResourceNotFound } from "@/lib/backend-resource-status";
 import { getLocalServiceLandings } from "@/lib/local-service-landings";
-import { createMetadata, withSiteTitle } from "@/lib/seo";
+import { createMetadata, localizeHref, withSiteTitle } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -125,6 +126,36 @@ export default async function ServicePage({ params }: ServicePageProps) {
                 service={service}
                 sharing={socialSharing}
             />
+            {service.slug === "security-camera-installation" ? (
+                <section className="mx-auto max-w-container-max px-5 py-12 md:px-8 xl:px-14">
+                    <div className="rounded-3xl border border-primary/20 bg-primary/10 p-7 sm:p-10">
+                        <h2 className="text-2xl font-semibold text-on-surface md:text-3xl">
+                            {{
+                                ka: "დაგეგმეთ კამერების განლაგება მონტაჟამდე",
+                                en: "Plan camera placement before installation",
+                                ru: "Спланируйте размещение камер до монтажа",
+                            }[locale]}
+                        </h2>
+                        <p className="mt-4 max-w-3xl leading-8 text-on-surface-variant">
+                            {{
+                                ka: "ატვირთეთ ობიექტის გეგმა, მონიშნეთ კამერები და ბრმა ზონები და გამოგვიგზავნეთ წინასწარი პროექტი. საბოლოო ხედვა და მოწყობილობები ადგილზე მოწმდება.",
+                                en: "Upload a property plan, mark cameras and potential blind spots, then send an initial design. Final coverage and equipment are verified on site.",
+                                ru: "Загрузите план объекта, отметьте камеры и возможные слепые зоны и отправьте предварительный проект. Итоговое покрытие и оборудование проверяются на объекте.",
+                            }[locale]}
+                        </p>
+                        <Link
+                            className="mt-7 inline-flex rounded-xl bg-primary-container px-6 py-4 font-semibold text-on-primary-container"
+                            href={localizeHref("/camera-planner", locale)}
+                        >
+                            {{
+                                ka: "გახსენით კამერების პლანერი",
+                                en: "Open camera placement planner",
+                                ru: "Открыть планировщик камер",
+                            }[locale]}
+                        </Link>
+                    </div>
+                </section>
+            ) : null}
             <LocalServiceLinks locale={locale} serviceSlug={service.slug} />
         </>
     );
