@@ -120,6 +120,7 @@ export async function generateMetadata(): Promise<Metadata> {
         description: copy.description,
         path: "/guides/how-many-cameras-for-a-house",
         locale,
+        type: "article",
     });
 }
 
