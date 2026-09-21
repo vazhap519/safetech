@@ -117,8 +117,10 @@ class CameraPlanApiTest extends TestCase
 
         $plan = CameraPlan::query()->sole();
         Queue::assertPushed(SendCameraPlanNotification::class, 1);
-        Queue::assertPushed(SendCameraPlanNotification::class,
-            fn (SendCameraPlanNotification $job): bool => $job->cameraPlanId === $plan->id);
+        Queue::assertPushed(
+            SendCameraPlanNotification::class,
+            fn (SendCameraPlanNotification $job): bool => $job->cameraPlanId === $plan->id,
+        );
 
         (new SendCameraPlanNotification($plan->id))->handle();
 
@@ -130,7 +132,7 @@ class CameraPlanApiTest extends TestCase
                 AnonymousNotifiable $notifiable,
             ) use ($plan): bool {
                 $mail = $notification->toMail($notifiable);
-                $body = implode("\\n", array_map('strval', $mail->introLines));
+                $body = implode("\n", array_map('strval', $mail->introLines));
 
                 return $channels === ['mail']
                     && $notifiable->routeNotificationFor('mail') === 'business@safetech.test'
