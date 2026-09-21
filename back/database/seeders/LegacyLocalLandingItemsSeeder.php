@@ -12,9 +12,18 @@ use Illuminate\Support\Arr;
  */
 final class LegacyLocalLandingItemsSeeder extends Seeder
 {
+    private const CCTV_CITY_CASES = [
+        'tbilisi' => ['თბილისი', 'თბილისში'],
+        'khashuri' => ['ხაშური', 'ხაშურში'],
+        'bakuriani' => ['ბაკურიანი', 'ბაკურიანში'],
+        'borjomi' => ['ბორჯომი', 'ბორჯომში'],
+        'surami' => ['სურამი', 'სურამში'],
+    ];
+
     public function run(): void
     {
         foreach (LocalServiceLanding::query()
+            ->with('service')
             ->whereIn('location_slug', ['tbilisi', 'khashuri', 'bakuriani', 'borjomi', 'surami'])
             ->get() as $landing) {
             $dirty = false;
@@ -32,6 +41,17 @@ final class LegacyLocalLandingItemsSeeder extends Seeder
 
             foreach ($faq as &$item) {
                 $georgian = $item['question'] ?? '';
+
+                // Correct only the exact legacy generator output. Never replace
+                // a question rewritten by an editor or any custom translation.
+                $cases = self::CCTV_CITY_CASES[$landing->location_slug] ?? null;
+                if ($landing->service?->slug === 'security-camera-installation' && $cases
+                    && $georgian === "რა ღირს კამერების მონტაჟი {$cases[0]}-ში?") {
+                    $georgian = "რა ღირს კამერების მონტაჟი {$cases[1]}?";
+                    $item['question'] = $georgian;
+                    $dirty = true;
+                }
+
                 $localized = $this->faqs()[$georgian] ?? null;
 
                 if (! $localized && str_starts_with($georgian, 'რა ღირს კამერების მონტაჟი ')) {

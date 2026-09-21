@@ -85,6 +85,24 @@ for (const { code, prefix, lang } of locales) {
     });
 }
 
+for (const { code, prefix } of locales) {
+    test(code + " CCTV Tbilisi landing links to the localized camera planner", async ({ page }) => {
+        const response = await page.goto(
+            prefix + "/services/security-camera-installation/tbilisi",
+            { waitUntil: "domcontentloaded" },
+        );
+        expect(response?.status()).toBe(200);
+        const link = page.getByRole("link", {
+            name: {
+                ka: "კამერების განლაგების დაგეგმვა",
+                en: "Plan your camera layout",
+                ru: "Спланировать размещение камер",
+            }[code as "ka" | "en" | "ru"],
+        });
+        await expect(link).toHaveAttribute("href", prefix + "/camera-planner");
+    });
+}
+
 test("Local sitemap includes every additional indexable Tbilisi service", async ({ request }) => {
     const response = await request.get("/sitemap-local-services.xml");
     expect(response.status()).toBe(200);

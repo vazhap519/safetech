@@ -190,6 +190,18 @@ export default function LocalServiceLandingView({
                             >
                                 {copy.servicePage}
                             </LocalizedLink>
+                            {landing.service.slug === "security-camera-installation" ? (
+                                <LocalizedLink
+                                    className="rounded-xl px-5 py-4 text-center font-medium text-primary hover:underline"
+                                    href="/camera-planner"
+                                >
+                                    {{
+                                        ka: "კამერების განლაგების დაგეგმვა",
+                                        en: "Plan your camera layout",
+                                        ru: "Спланировать размещение камер",
+                                    }[locale]}
+                                </LocalizedLink>
+                            ) : null}
                         </div>
                     </div>
 

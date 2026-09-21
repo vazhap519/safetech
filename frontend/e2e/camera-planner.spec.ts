@@ -19,6 +19,16 @@ for (const locale of locales) {
         expect(response?.status()).toBe(200);
         await expect(page.locator("html")).toHaveAttribute("lang", locale.lang);
         await expect(page.getByRole("heading", { level: 1, name: locale.title })).toHaveCount(1);
+        const installationLink = page.getByRole("link", {
+            name: {
+                ka: "უსაფრთხოების კამერების მონტაჟი და გამართვა",
+                en: "Security camera installation and setup",
+                ru: "Монтаж и настройка камер видеонаблюдения",
+            }[locale.lang.slice(0, 2) as "ka" | "en" | "ru"],
+        });
+        await expect(installationLink).toHaveAttribute(
+            "href", locale.prefix + "/services/security-camera-installation",
+        );
 
         const canvas = page.locator("canvas[role='img']");
         await expect(canvas).toBeVisible();
