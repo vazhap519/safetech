@@ -5,10 +5,10 @@ namespace App\Jobs;
 use App\Models\CameraPlan;
 use App\Models\SiteSetting;
 use App\Notifications\NewCameraPlanNotification;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -22,7 +22,9 @@ final class SendCameraPlanNotification implements ShouldQueue
     /** @var array<int, int> */
     public array $backoff = [10, 60, 180];
 
-    public function __construct(public readonly int $cameraPlanId) {}
+    public function __construct(public readonly int $cameraPlanId)
+    {
+    }
 
     public function handle(): void
     {
