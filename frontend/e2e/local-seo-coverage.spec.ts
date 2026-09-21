@@ -97,7 +97,7 @@ for (const { code, prefix } of locales) {
                 ka: "კამერების განლაგების დაგეგმვა",
                 en: "Plan your camera layout",
                 ru: "Спланировать размещение камер",
-            }[code],
+            }[code as "ka" | "en" | "ru"],
         });
         await expect(link).toHaveAttribute("href", prefix + "/camera-planner");
     });
