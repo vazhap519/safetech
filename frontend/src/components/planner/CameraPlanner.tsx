@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent } from "react";
 import { useLocalization } from "@/components/providers/LocalizationProvider";
+import { trackEvent } from "@/lib/analytics";
+import { trackLeadCreated } from "@/lib/analytics-events";
 
 type Point = { x: number; y: number };
 type Wall = { ax: number; ay: number; bx: number; by: number };
@@ -536,6 +538,15 @@ export default function CameraPlanner() {
             }
             const response = await fetch("/api/camera-plans", { method: "POST", body: data });
             if (!response.ok) throw new Error("Submission error " + response.status);
+            // Count only a successfully accepted plan, never a button click or
+            // failed request. Analytics helpers respect marketing consent and
+            // send no contact details or uploaded plan to tracking providers.
+            trackEvent("generate_lead", {
+                form_source: "camera-planner",
+                service_slug: "security-camera-installation",
+                camera_count: layout.cameras.length,
+            });
+            trackLeadCreated("camera-planner", "security-camera-installation");
             setStatus(t.sent); setPrivacy(false);
         } catch { setStatus(t.error); }
         finally { setSending(false); }
