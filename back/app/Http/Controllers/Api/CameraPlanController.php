@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendCameraPlanNotification;
 use App\Models\CameraPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -74,6 +76,18 @@ final class CameraPlanController extends Controller
                 Storage::disk('local')->delete($backgroundPath);
             }
             throw $exception;
+        }
+
+        // Email dispatch is a business alert, not a prerequisite for storing
+        // an accepted request. If the queue is unavailable the plan remains
+        // visible in Filament and the customer must not resubmit accidentally.
+        try {
+            SendCameraPlanNotification::dispatch($plan->getKey());
+        } catch (Throwable $exception) {
+            Log::warning('Camera plan saved but notification could not be queued.', [
+                'plan_id' => $plan->getKey(),
+                'exception_type' => $exception::class,
+            ]);
         }
 
         return response()->json([
