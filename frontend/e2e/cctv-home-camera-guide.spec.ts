@@ -33,7 +33,7 @@ for (const item of cases) {
         await expect(page.getByRole("heading", { level: 1, name: item.title })).toHaveCount(1);
         await expect(page.locator("h1")).toHaveCount(1);
         await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
-            "href", "https://safetech.ge" + path,
+            "href", new URL(path, page.url()).toString(),
         );
         await expect(page.getByRole("link", { name: item.plannerLink })).toHaveAttribute(
             "href", item.prefix + "/camera-planner",
@@ -56,6 +56,8 @@ test("main XML sitemap includes all three localized camera-count guide URLs", as
     expect(response.status()).toBe(200);
     const xml = await response.text();
     for (const prefix of ["", "/en", "/ru"]) {
-        expect(xml).toContain("https://safetech.ge" + prefix + "/guides/how-many-cameras-for-a-house");
+        expect(xml).toContain(
+            new URL(prefix + "/guides/how-many-cameras-for-a-house", response.url()).toString(),
+        );
     }
 });
