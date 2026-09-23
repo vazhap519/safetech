@@ -108,6 +108,12 @@ jobs:
 
           exit 100
 
+      - name: Show formatter changes for catalog implementation
+        run: |
+          vendor/bin/pint
+          git diff -- app/Support/CanonicalSeedTombstones.php database/seeders/GoogleBusinessServicesSeeder.php
+          exit 1
+
       - name: Check PHP formatting
         run: vendor/bin/pint --test
 
