@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(SystemContentSeeder::class);
+        $this->call(GoogleBusinessServicesSeeder::class);
         $this->call(SeoPageSeeder::class);
         $this->call(AdminUserSeeder::class);
     }
