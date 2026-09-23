@@ -407,6 +407,7 @@ php "${BACKEND_DIR}/artisan" cms:production-check
 php "${BACKEND_DIR}/artisan" migrate --force
 php "${BACKEND_DIR}/artisan" db:seed --class=AdminUserSeeder --force
 php "${BACKEND_DIR}/artisan" db:seed --class=SystemContentSeeder --force
+php "${BACKEND_DIR}/artisan" db:seed --class=GoogleBusinessServicesSeeder --force
 php "${BACKEND_DIR}/artisan" db:seed --class=SeoPageSeeder --force
 php "${BACKEND_DIR}/artisan" cms:remove-demo-content --force
 php "${BACKEND_DIR}/artisan" cache:clear
