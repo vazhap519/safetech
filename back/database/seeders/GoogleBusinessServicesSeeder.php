@@ -64,7 +64,7 @@ final class GoogleBusinessServicesSeeder extends Seeder
 
         $sort = 0;
         foreach ($this->services() as $definition) {
-            ++$sort;
+            $sort++;
             $slug = $definition['slug'];
             $category = $categories[$definition['category']] ?? null;
             if ($category === null || CanonicalSeedTombstones::serviceWasDeleted($slug)) {
@@ -220,6 +220,7 @@ final class GoogleBusinessServicesSeeder extends Seeder
                         }
                     }
                 }
+
                 continue;
             }
             foreach (['ka', 'en', 'ru'] as $locale) {
@@ -228,6 +229,7 @@ final class GoogleBusinessServicesSeeder extends Seeder
                 }
             }
         }
+
         return $translations;
     }
 
