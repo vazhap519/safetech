@@ -8,6 +8,7 @@ use App\Models\SiteSetting;
 use App\Support\MultilingualContent;
 use Database\Seeders\GoogleBusinessServicesSeeder;
 use Database\Seeders\ServiceCatalogSeeder;
+use Database\Seeders\SystemContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -85,6 +86,16 @@ class GoogleBusinessServicesSeederTest extends TestCase
             $map['service.security-camera-installation.name']['en']);
         $this->assertSame('ვიდეომეთვალყურეობის სისტემების მონტაჟი',
             $map['service.security-camera-installation.card.title']['ka']);
+    }
+
+    public function test_unindexed_catalog_cards_do_not_fail_strict_local_seo_coverage(): void
+    {
+        $this->seed(SystemContentSeeder::class);
+        $this->seed(GoogleBusinessServicesSeeder::class);
+
+        $this->artisan('safetech:local-seo-audit', ['--strict' => true])
+            ->expectsOutputToContain('12/12 indexable published services')
+            ->assertExitCode(0);
     }
 
     public function test_deleted_google_catalog_services_stay_deleted_after_reseeding(): void
