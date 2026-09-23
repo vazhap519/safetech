@@ -10,11 +10,11 @@ use App\Models\SeoPage;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use Database\Seeders\ConsultationCopySeeder;
+use Database\Seeders\GoogleBusinessServicesSeeder;
 use Database\Seeders\PageContentSeeder;
 use Database\Seeders\PrivacyPageSeeder;
 use Database\Seeders\SeoPageSeeder;
 use Database\Seeders\ServiceCatalogSeeder;
-use Database\Seeders\GoogleBusinessServicesSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 
