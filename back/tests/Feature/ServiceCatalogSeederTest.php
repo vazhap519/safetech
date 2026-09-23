@@ -7,6 +7,7 @@ use App\Models\Faq;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Support\MultilingualContent;
+use Database\Seeders\GoogleBusinessServiceDefinitions;
 use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -20,9 +21,9 @@ class ServiceCatalogSeederTest extends TestCase
         $this->seed(ServiceCatalogSeeder::class);
         $this->seed(ServiceCatalogSeeder::class);
 
-        $this->assertDatabaseCount('category_for_services', 4);
-        $this->assertDatabaseCount('services', 12);
-        $this->assertDatabaseCount('faqs', 42);
+        $this->assertDatabaseCount('category_for_services', 5);
+        $this->assertDatabaseCount('services', 57);
+        $this->assertDatabaseCount('faqs', 132);
 
         $service = Service::query()
             ->with(['category', 'faqs'])
@@ -120,7 +121,7 @@ class ServiceCatalogSeederTest extends TestCase
     {
         $this->seed(ServiceCatalogSeeder::class);
 
-        $expectedSlugs = [
+        $coreSlugs = [
             'operating-system-installation',
             'custom-computer-build',
             'computer-cleaning-maintenance',
@@ -134,6 +135,11 @@ class ServiceCatalogSeederTest extends TestCase
             'patch-panel-network-outlet-installation',
             'barrier-gate-installation',
         ];
+        $googleBusinessSlugs = array_column(
+            GoogleBusinessServiceDefinitions::all(),
+            'slug',
+        );
+        $expectedSlugs = [...$coreSlugs, ...$googleBusinessSlugs];
 
         $services = Service::query()->whereIn('slug', $expectedSlugs)->get();
 
@@ -143,7 +149,88 @@ class ServiceCatalogSeederTest extends TestCase
         $this->assertTrue($services->every(fn (Service $service): bool => filled($service->seo_description)));
         $this->assertTrue($services->every(fn (Service $service): bool => is_array($service->keywords) && count($service->keywords) >= 3));
 
-        $this->assertSame(4, CategoryForService::query()->count());
-        $this->assertSame(42, Faq::query()->count());
+        $this->assertSame(5, CategoryForService::query()->count());
+        $this->assertSame(132, Faq::query()->count());
+    }
+
+    public function test_google_business_profile_services_are_fully_localized_in_all_three_languages(): void
+    {
+        $this->seed(ServiceCatalogSeeder::class);
+
+        $expected = collect(GoogleBusinessServiceDefinitions::all())->keyBy('slug');
+        $services = Service::query()
+            ->whereIn('slug', $expected->keys())
+            ->get()
+            ->keyBy('slug');
+
+        $this->assertCount($expected->count(), $services);
+
+        foreach ($expected as $slug => $definition) {
+            $service = $services->get($slug);
+
+            $this->assertNotNull($service, "Missing Google Business service: {$slug}");
+
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $this->assertSame(
+                    $definition['name'][$locale],
+                    data_get($service->translations, "fields.name.{$locale}"),
+                    "{$slug} is missing the {$locale} name.",
+                );
+                $this->assertNotEmpty(
+                    data_get($service->translations, "fields.description.{$locale}"),
+                    "{$slug} is missing the {$locale} description.",
+                );
+                $this->assertNotEmpty(
+                    data_get($service->translations, "fields.seoTitle.{$locale}"),
+                    "{$slug} is missing the {$locale} SEO title.",
+                );
+                $this->assertNotEmpty(
+                    data_get($service->translations, "fields.seoDescription.{$locale}"),
+                    "{$slug} is missing the {$locale} SEO description.",
+                );
+            }
+        }
+
+        $telecommunications = CategoryForService::query()
+            ->where('slug', 'telecommunications-infrastructure')
+            ->firstOrFail();
+
+        $this->assertSame(
+            'Telecommunications Infrastructure',
+            data_get($telecommunications->translations, 'fields.name.en'),
+        );
+        $this->assertSame(
+            'Телекоммуникационная инфраструктура',
+            data_get($telecommunications->translations, 'fields.name.ru'),
+        );
+    }
+
+    public function test_google_business_services_and_categories_are_localized_by_the_public_api(): void
+    {
+        $this->seed(ServiceCatalogSeeder::class);
+
+        $this->getJson('/api/services/ip-camera-installation?locale=en')
+            ->assertOk()
+            ->assertJsonPath('data.name', 'IP Camera Installation')
+            ->assertJsonPath('data.category.name', 'Security and Access Automation');
+
+        $this->getJson('/api/services/ip-camera-installation?locale=ru')
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Монтаж IP-камер')
+            ->assertJsonPath('data.category.name', 'Безопасность и автоматизация доступа');
+
+        $this->getJson('/api/service-categories?locale=en')
+            ->assertOk()
+            ->assertJsonFragment([
+                'slug' => 'telecommunications-infrastructure',
+                'name' => 'Telecommunications Infrastructure',
+            ]);
+
+        $this->getJson('/api/service-categories?locale=ru')
+            ->assertOk()
+            ->assertJsonFragment([
+                'slug' => 'telecommunications-infrastructure',
+                'name' => 'Телекоммуникационная инфраструктура',
+            ]);
     }
 }

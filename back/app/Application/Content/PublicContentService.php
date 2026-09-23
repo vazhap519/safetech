@@ -34,6 +34,7 @@ final class PublicContentService
                     'position' => $member->position,
                     'image' => $member->image,
                     'bio' => $member->bio,
+                    'certificates' => $member->certificate_images,
                     'socials' => TeamMemberSocialLinks::normalize($member->socials),
                 ])->values()->all(),
                 'partners' => Partner::query()->active()->get()->map->only([

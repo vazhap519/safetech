@@ -10,8 +10,14 @@ import { addSitemapStylesheet } from "@/lib/sitemap-style";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const response = await safeFetchJson(buildSitemapApiUrl("/seo"));
+  const [response, contentResponse] = await Promise.all([
+    safeFetchJson(buildSitemapApiUrl("/seo")),
+    safeFetchJson(buildSitemapApiUrl("/content")),
+  ]);
   const seoPages = Array.isArray(response?.data) ? response.data : [];
+  const team = Array.isArray(contentResponse?.data?.team)
+    ? contentResponse.data.team
+    : [];
   const seoByKey = new Map(seoPages.map((page) => [page.key, page]));
   const pages = [
     { key: "home", path: "/", changefreq: "daily", priority: "1.0" },
@@ -22,17 +28,29 @@ export async function GET() {
   ];
 
   const xml = urlset(
-    pages
-      .filter((page) => seoByKey.get(page.key)?.noindex !== true)
-      .flatMap((page) => {
-        const seoPage = seoByKey.get(page.key);
+    [
+      ...pages
+        .filter((page) => seoByKey.get(page.key)?.noindex !== true)
+        .flatMap((page) => {
+          const seoPage = seoByKey.get(page.key);
 
-        return localizedUrlEntries(page.path, {
-          ...(seoPage?.updated_at ? { lastmod: seoPage.updated_at } : {}),
-          changefreq: page.changefreq,
-          priority: page.priority,
+          return localizedUrlEntries(page.path, {
+            ...(seoPage?.updated_at ? { lastmod: seoPage.updated_at } : {}),
+            changefreq: page.changefreq,
+            priority: page.priority,
+          });
+        }),
+      ...team.flatMap((member) => {
+        const id = String(member?.id ?? "").trim();
+
+        if (!/^\d+$/.test(id)) return [];
+
+        return localizedUrlEntries(`/about/team/${id}`, {
+          changefreq: "monthly",
+          priority: "0.5",
         });
       }),
+    ],
   );
 
   return xmlResponse(addSitemapStylesheet(xml));

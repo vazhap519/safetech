@@ -517,6 +517,11 @@ class ServiceCatalogSeeder extends Seeder
                 self::t('სასტუმროები და კოტეჯები', 'Hotels and cottages', 'Отели и коттеджи'),
                 self::t('საწყობები და საწარმოები', 'Warehouses and industrial sites', 'Склады и производства'),
             ],
+            'telecommunications-infrastructure' => [
+                self::t('ოფისები და ბიზნესცენტრები', 'Offices and business centers', 'Офисы и бизнес-центры'),
+                self::t('საწყობები და საწარმოები', 'Warehouses and industrial sites', 'Склады и производства'),
+                self::t('მრავალფუნქციური ობიექტები', 'Multi-purpose properties', 'Многофункциональные объекты'),
+            ],
             default => [
                 self::t('კერძო სახლები', 'Private homes', 'Частные дома'),
                 self::t('კომერციული ობიექტები', 'Commercial properties', 'Коммерческие объекты'),
@@ -573,6 +578,17 @@ class ServiceCatalogSeeder extends Seeder
                     self::t('შლაგბაუმის მონტაჟი', 'barrier gate installation', 'монтаж шлагбаума'),
                 ],
             ),
+            $this->category(
+                'telecommunications-infrastructure',
+                self::t('სატელეკომუნიკაციო ინფრასტრუქტურა', 'Telecommunications Infrastructure', 'Телекоммуникационная инфраструктура'),
+                self::t('სატელეკომუნიკაციო ქსელების პროექტირება და მონტაჟი', 'Telecommunications Network Design and Installation', 'Проектирование и монтаж телекоммуникационных сетей'),
+                self::t('სტრუქტურირებული კაბელირება, ოპტიკური და კომერციული ქსელები, სუსტი დენების პროექტირება და ბიზნესობიექტების ციფრული ინფრასტრუქტურის მოწყობა.', 'Structured cabling, fiber-optic and commercial networks, low-voltage design, and digital infrastructure for business properties.', 'Структурированные кабельные системы, оптоволоконные и коммерческие сети, проектирование слаботочных систем и цифровая инфраструктура бизнес-объектов.'),
+                [
+                    self::t('სტრუქტურირებული კაბელირება', 'structured cabling', 'структурированная кабельная система'),
+                    self::t('ოპტიკური ქსელი', 'fiber-optic network', 'оптоволоконная сеть'),
+                    self::t('სატელეკომუნიკაციო ინფრასტრუქტურა', 'telecommunications infrastructure', 'телекоммуникационная инфраструктура'),
+                ],
+            ),
         ];
     }
 
@@ -601,7 +617,7 @@ class ServiceCatalogSeeder extends Seeder
     /** @return array<int, array<string, mixed>> */
     private function services(): array
     {
-        return [
+        $services = [
             $this->service('operating-system-installation', 'computer-services', 'desktop_windows', 'it-support',
                 self::t('ოპერაციული სისტემების ინსტალაცია', 'Operating System Installation', 'Установка операционных систем'),
                 self::t('Windows-ის და ოპერაციული სისტემების ინსტალაცია და გამართვა', 'Windows and Operating System Installation and Setup', 'Установка и настройка Windows и операционных систем'),
@@ -777,6 +793,57 @@ class ServiceCatalogSeeder extends Seeder
                     $this->faq('control', self::t('ტელეფონით გახსნა შეიძლება?', 'Can it be opened by phone?', 'Можно открывать с телефона?'), self::t('დიახ. შესაძლებელია GSM კონტროლერი, აპლიკაცია ან დაშვების სისტემასთან ინტეგრაცია.', 'Yes. A GSM controller, mobile app, or access control integration can be used.', 'Да. Можно использовать GSM-контроллер, приложение или интеграцию с контролем доступа.')),
                 ]),
         ];
+
+        return [...$services, ...$this->googleBusinessServices()];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function googleBusinessServices(): array
+    {
+        return array_map(function (array $definition): array {
+            $name = $definition['name'];
+            $description = $definition['description'];
+
+            return [
+                ...$definition,
+                'eyebrow' => $this->categoryEyebrow($definition['category']),
+                'title' => $name,
+                'seo_title' => [
+                    'ka' => "{$name['ka']} | SafeTech",
+                    'en' => "{$name['en']} | SafeTech",
+                    'ru' => "{$name['ru']} | SafeTech",
+                ],
+                'seo_description' => $description,
+                'overview_title' => $name,
+                'overview_text' => self::t(
+                    'სამუშაო სრულდება წინასწარ შეთანხმებული გეგმით, უსაფრთხოების მოთხოვნების დაცვით და საბოლოო ფუნქციური ტესტირებით.',
+                    'Work follows an agreed plan, applicable safety requirements, and final functional testing.',
+                    'Работы выполняются по согласованному плану, с соблюдением требований безопасности и итоговым функциональным тестированием.',
+                ),
+                'highlights' => [
+                    self::t('მოთხოვნებზე მორგებული დაგეგმვა', 'Requirements-based planning', 'Планирование под требования'),
+                    self::t('სტანდარტებზე დაფუძნებული შესრულება', 'Standards-based delivery', 'Выполнение по стандартам'),
+                    self::t('ტესტირება და ჩაბარება', 'Testing and handover', 'Тестирование и сдача'),
+                ],
+                'scope' => [
+                    self::t('მოთხოვნისა და ობიექტის შეფასება', 'Requirements and site assessment', 'Оценка требований и объекта'),
+                    self::t('მონტაჟი ან კონფიგურაცია', 'Installation or configuration', 'Монтаж или настройка'),
+                    self::t('შემოწმება და გამოყენების ინსტრუქცია', 'Verification and usage guidance', 'Проверка и инструкция по использованию'),
+                ],
+                'faqs' => [
+                    $this->faq(
+                        'price',
+                        self::t('როგორ განისაზღვრება მომსახურების ფასი?', 'How is the service price determined?', 'Как определяется стоимость услуги?'),
+                        self::t('ფასი განისაზღვრება სამუშაოს მოცულობის, ობიექტის პირობების, მასალებისა და არჩეული მოწყობილობების მიხედვით. ზუსტ შეთავაზებას ვამზადებთ მოთხოვნის შეფასების შემდეგ.', 'Pricing depends on scope, site conditions, materials, and selected equipment. An exact quotation is prepared after assessing the requirements.', 'Стоимость зависит от объема работ, условий объекта, материалов и выбранного оборудования. Точное предложение готовится после оценки требований.'),
+                    ),
+                    $this->faq(
+                        'warranty',
+                        self::t('მომსახურებას ახლავს გარანტია?', 'Does the service include a warranty?', 'Предоставляется ли гарантия?'),
+                        self::t('დიახ. სამუშაოსა და მოწყობილობების საგარანტიო პირობები წინასწარ განისაზღვრება შეთავაზებაში და ჩაბარების დოკუმენტაციაში.', 'Yes. Warranty terms for work and equipment are defined in the quotation and handover documentation.', 'Да. Гарантийные условия на работы и оборудование указываются в предложении и документации при сдаче.'),
+                    ),
+                ],
+            ];
+        }, GoogleBusinessServiceDefinitions::all());
     }
 
     private function service(
@@ -800,12 +867,7 @@ class ServiceCatalogSeeder extends Seeder
             'icon' => $icon,
             'calculator_profile' => $calculatorProfile,
             'name' => $name,
-            'eyebrow' => match ($category) {
-                'computer-services' => self::t('კომპიუტერული სერვისები', 'Computer services', 'Компьютерные услуги'),
-                'business-it' => self::t('ბიზნეს IT სისტემები', 'Business IT systems', 'IT-системы для бизнеса'),
-                'network-infrastructure' => self::t('ქსელური ინფრასტრუქტურა', 'Network infrastructure', 'Сетевая инфраструктура'),
-                default => self::t('უსაფრთხოება და ავტომატიკა', 'Security and automation', 'Безопасность и автоматизация'),
-            },
+            'eyebrow' => $this->categoryEyebrow($category),
             'title' => $title,
             'description' => $description,
             'seo_title' => $seoTitle,
@@ -821,6 +883,18 @@ class ServiceCatalogSeeder extends Seeder
             'keywords' => array_map(fn (string $value): array => self::t($value, $value, $value), $keywords),
             'faqs' => $faqs,
         ];
+    }
+
+    /** @return array{ka: string, en: string, ru: string} */
+    private function categoryEyebrow(string $category): array
+    {
+        return match ($category) {
+            'computer-services' => self::t('კომპიუტერული სერვისები', 'Computer services', 'Компьютерные услуги'),
+            'business-it' => self::t('ბიზნეს IT სისტემები', 'Business IT systems', 'IT-системы для бизнеса'),
+            'network-infrastructure' => self::t('ქსელური ინფრასტრუქტურა', 'Network infrastructure', 'Сетевая инфраструктура'),
+            'telecommunications-infrastructure' => self::t('სატელეკომუნიკაციო ინფრასტრუქტურა', 'Telecommunications infrastructure', 'Телекоммуникационная инфраструктура'),
+            default => self::t('უსაფრთხოება და ავტომატიკა', 'Security and automation', 'Безопасность и автоматизация'),
+        };
     }
 
     /**

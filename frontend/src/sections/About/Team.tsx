@@ -6,18 +6,24 @@ import { translateText } from "@/lib/translations";
 
 function TeamList({
     members,
+    profileLabel,
     duplicate = false,
 }: {
     members: TeamMember[];
+    profileLabel: string;
     duplicate?: boolean;
 }) {
     return (
-        <ul aria-hidden={duplicate || undefined} className="team-marquee-group">
+        <ul
+            aria-hidden={duplicate || undefined}
+            className="team-marquee-group"
+            inert={duplicate || undefined}
+        >
             {members.map((member) => (
                 <li
                     key={`${duplicate ? "duplicate-" : ""}${member.id ?? `${member.firstName}-${member.lastName}`}`}
                 >
-                    <TeamMemberCard member={member} />
+                    <TeamMemberCard member={member} profileLabel={profileLabel} />
                 </li>
             ))}
         </ul>
@@ -39,6 +45,7 @@ export default async function TeamSection() {
             description:
                 "გაიცანით გუნდი, რომელიც პასუხისმგებელია ტექნიკურ დაგეგმვაზე, მონტაჟზე, კონფიგურაციასა და მხარდაჭერაზე.",
             regionLabel: "SafeTech-ის გუნდის წევრები",
+            profileLabel: "პროფილის ნახვა",
         },
         en: {
             eyebrow: "SafeTech team",
@@ -46,6 +53,7 @@ export default async function TeamSection() {
             description:
                 "Meet the team responsible for technical planning, installation, configuration, and support.",
             regionLabel: "SafeTech team members",
+            profileLabel: "View profile",
         },
         ru: {
             eyebrow: "Команда SafeTech",
@@ -53,6 +61,7 @@ export default async function TeamSection() {
             description:
                 "Познакомьтесь с командой, отвечающей за техническое планирование, монтаж, настройку и поддержку.",
             regionLabel: "Члены команды SafeTech",
+            profileLabel: "Открыть профиль",
         },
     }[locale];
 
@@ -68,6 +77,9 @@ export default async function TeamSection() {
     const regionLabel =
         translateText(translations, "about.team.regionLabel", locale, null) ||
         fallback.regionLabel;
+    const profileLabel =
+        translateText(translations, "about.team.profileLabel", locale, null) ||
+        fallback.profileLabel;
 
     const useMarquee = teamMembers.length >= 4;
 
@@ -98,8 +110,8 @@ export default async function TeamSection() {
                     role="region"
                 >
                     <div className="team-marquee-track">
-                        <TeamList members={teamMembers} />
-                        <TeamList duplicate members={teamMembers} />
+                        <TeamList members={teamMembers} profileLabel={profileLabel} />
+                        <TeamList duplicate members={teamMembers} profileLabel={profileLabel} />
                     </div>
                 </div>
             ) : (
@@ -112,6 +124,7 @@ export default async function TeamSection() {
                         <TeamMemberCard
                             key={member.id ?? `${member.firstName}-${member.lastName}`}
                             member={member}
+                            profileLabel={profileLabel}
                         />
                     ))}
                 </div>

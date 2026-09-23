@@ -91,6 +91,27 @@ class TeamMemberResource extends Resource
                 ])
                 ->columns(2),
 
+            Section::make('თანამშრომლის სერტიფიკატები')
+                ->description('ატვირთეთ თანამშრომლის სერტიფიკატების სურათები. შესაძლებელია მაქსიმუმ 50 სურათის დამატება და სასურველი თანმიმდევრობით დალაგება.')
+                ->schema([
+                    SpatieMediaLibraryFileUpload::make('certificates')
+                        ->label('სერტიფიკატების გალერია')
+                        ->helperText('დაშვებულია JPG, PNG და WebP. თითოეული ფაილის მაქსიმალური ზომაა 10 MB.')
+                        ->collection('certificates')
+                        ->conversion('certificate-thumb')
+                        ->multiple()
+                        ->maxFiles(50)
+                        ->appendFiles()
+                        ->reorderable()
+                        ->image()
+                        ->imageEditor()
+                        ->openable()
+                        ->downloadable()
+                        ->panelLayout('grid')
+                        ->maxSize(10240)
+                        ->columnSpanFull(),
+                ]),
+
             Section::make('გუნდის კონტენტი 3 ენაზე')
                 ->description('ფრონტი გამოიყენებს team.{id}.firstName/lastName/position/bio key-ებს.')
                 ->schema([

@@ -798,9 +798,32 @@ export async function getBackendTeam(): Promise<TeamMember[]> {
         firstName: t(`team.${member.id}.firstName`, member.firstName),
         lastName: t(`team.${member.id}.lastName`, member.lastName),
         position: t(`team.${member.id}.position`, member.position),
+        bio: t(`team.${member.id}.bio`, member.bio || ""),
         image: resolveBackendAsset(member.image, "/team-avatar.svg"),
+        certificates: (member.certificates ?? [])
+            .map((certificate) => ({
+                ...certificate,
+                src: resolveBackendAsset(certificate.src, ""),
+                thumbnail: resolveBackendAsset(
+                    certificate.thumbnail || certificate.src,
+                    "",
+                ),
+            }))
+            .filter((certificate) => Boolean(certificate.src)),
         socials: member.socials ?? {},
     }));
+}
+
+export async function getBackendTeamMember(
+    id: string | number,
+): Promise<TeamMember | undefined> {
+    const normalizedId = String(id).trim();
+
+    if (!/^\d+$/.test(normalizedId)) return undefined;
+
+    const members = await getBackendTeam();
+
+    return members.find((member) => String(member.id) === normalizedId);
 }
 
 const getRawBackendContent = cache(async (): Promise<BackendContent> => {
