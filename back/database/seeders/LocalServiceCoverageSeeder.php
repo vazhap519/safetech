@@ -137,6 +137,8 @@ final class LocalServiceCoverageSeeder extends Seeder
             // editorial verification of both city and service. Never attach by
             // city substring alone merely to improve a dashboard counter.
         }
+
+        $this->call(CanonicalServiceLocalSeoSeeder::class);
     }
 
     private function definitions(): array
