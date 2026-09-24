@@ -368,7 +368,151 @@ PROMPT;
             $targets = array_merge($targets, $this->projectMissingEditorialPaths($state, $overwrite));
         }
 
+        if (! in_array($profile, ['service', 'project'], true)) {
+            $targets = array_merge($targets, $this->profileMissingEditorialPaths($profile, $state, $overwrite));
+        }
+
         return array_values(array_unique($targets));
+    }
+
+    /**
+     * Existing records created before all multilingual fields were added may
+     * not hydrate absent JSON leaves in Filament. Describe each admin form's
+     * complete editorial surface so a successful AI action always fills KA,
+     * EN and RU instead of only the keys already present in the database.
+     *
+     * @param  array<string, mixed>  $state
+     * @return array<int, string>
+     */
+    private function profileMissingEditorialPaths(string $profile, array $state, bool $overwrite): array
+    {
+        $paths = [];
+        $offerText = function (string $path) use ($profile, $state, $overwrite, &$paths): void {
+            if ($this->pathIsBlocked($profile, $path)) {
+                return;
+            }
+
+            $value = data_get($state, $path);
+            if (($overwrite || ! is_string($value) || trim($value) === '')
+                && ($value === null || is_string($value))) {
+                $paths[] = $path;
+            }
+        };
+        $offerCollection = function (string $path) use ($state, $overwrite, &$paths): void {
+            $value = data_get($state, $path);
+            if ($overwrite || ! is_array($value) || $value === []) {
+                $paths[] = $path;
+            }
+        };
+
+        if ($profile === 'page' && (array_key_exists('title', $state) || array_key_exists('content', $state))) {
+            foreach (['title', 'excerpt', 'content', 'seoTitle', 'seoDescription', 'ogTitle', 'ogDescription'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offerText("translations.fields.{$field}.{$locale}");
+                }
+            }
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $offerCollection("translations.keywords.{$locale}");
+            }
+        }
+
+        if ($profile === 'faq' && (array_key_exists('question', $state) || array_key_exists('answer', $state))) {
+            foreach (['question', 'answer'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offerText("translations.fields.{$field}.{$locale}");
+                }
+            }
+        }
+
+        if ($profile === 'local-seo' && array_key_exists('location_name', $state)) {
+            foreach ([
+                'locationName', 'eyebrow', 'title', 'excerpt', 'content',
+                'ctaTitle', 'ctaText', 'primaryKeyword', 'seoTitle', 'seoDescription',
+            ] as $field) {
+                foreach (['en', 'ru'] as $locale) {
+                    $offerText("translations.fields.{$field}.{$locale}");
+                }
+            }
+            foreach (['ogTitle', 'ogDescription'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offerText("translations.fields.{$field}.{$locale}");
+                }
+            }
+            foreach (['en', 'ru'] as $locale) {
+                $offerCollection("translations.keywords.{$locale}");
+            }
+            foreach (['benefits' => ['title', 'description'], 'faq' => ['question', 'answer']] as $field => $leaves) {
+                $items = data_get($state, $field);
+                if (! is_array($items) || $items === []) {
+                    continue;
+                }
+                foreach ($items as $index => $item) {
+                    if (! is_array($item)) {
+                        continue;
+                    }
+                    foreach ($leaves as $leaf) {
+                        foreach (['en', 'ru'] as $locale) {
+                            $offerText("{$field}.{$index}.translations.{$locale}.{$leaf}");
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($profile === 'category' && (array_key_exists('name', $state) || array_key_exists('seo_title', $state))) {
+            foreach (['en', 'ru'] as $locale) {
+                $offerText("translations.fields.name.{$locale}");
+            }
+            foreach (['seo_title', 'seo_description', 'ogTitle', 'ogDescription', 'intro_text'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offerText("translations.fields.{$field}.{$locale}");
+                }
+            }
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $offerCollection("translations.keywords.{$locale}");
+                $offerCollection("translations.faq.{$locale}");
+            }
+        }
+
+        if ($profile === 'seo-page' && (array_key_exists('title', $state) || array_key_exists('description', $state))) {
+            foreach (['title', 'description', 'og_title', 'og_description'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offerText("translations.fields.{$field}.{$locale}");
+                }
+            }
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $offerCollection("translations.keywords.{$locale}");
+            }
+        }
+
+        if ($profile === 'team-member' && (array_key_exists('first_name', $state) || array_key_exists('position', $state))) {
+            foreach (['firstName', 'lastName', 'position', 'bio'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offerText("translations.fields.{$field}.{$locale}");
+                }
+            }
+        }
+
+        if ($profile === 'testimonial' && (array_key_exists('quote', $state) || array_key_exists('author', $state))) {
+            foreach (['quote', 'author', 'role', 'company'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offerText("translations.fields.{$field}.{$locale}");
+                }
+            }
+        }
+
+        if ($profile === 'about') {
+            foreach (data_get($state, 'about_page_translations', []) ?: [] as $field => $translations) {
+                if (! is_array($translations)) {
+                    continue;
+                }
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offerText("about_page_translations.{$field}.{$locale}");
+                }
+            }
+        }
+
+        return $paths;
     }
 
     /**
@@ -479,6 +623,11 @@ PROMPT;
             if (! is_array($field)) {
                 continue;
             }
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                foreach (['', 'placeholder_', 'help_', 'unit_'] as $prefix) {
+                    $offer("lead_form.extra_fields.{$index}.{$prefix}{$locale}");
+                }
+            }
             foreach (data_get($field, 'options', []) ?: [] as $optionIndex => $option) {
                 if (! is_array($option)) {
                     continue;
@@ -495,6 +644,16 @@ PROMPT;
             foreach (['title', 'description'] as $field) {
                 foreach (['ka', 'en', 'ru'] as $locale) {
                     $offer("lead_form.packages.{$index}.{$field}_{$locale}");
+                }
+            }
+        }
+        foreach (data_get($state, 'lead_form.components', []) ?: [] as $index => $component) {
+            if (! is_array($component)) {
+                continue;
+            }
+            foreach (['title', 'description'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offer("lead_form.components.{$index}.{$field}_{$locale}");
                 }
             }
         }

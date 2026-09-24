@@ -2,9 +2,9 @@ import { expect, test, type Locator } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
 const locales = [
-    { prefix: "", lang: "ka-GE", title: "კამერების განლაგების პლანერი", add: "კამერის დამატება", area: "საკონტროლო არე", finish: "არის დასრულება", coverage: "არეის დაფარვა" },
-    { prefix: "/en", lang: "en-GE", title: "CCTV camera layout planner", add: "Add camera", area: "Inspection area", finish: "Finish area", coverage: "Area coverage" },
-    { prefix: "/ru", lang: "ru-GE", title: "Планировщик размещения камер", add: "Добавить камеру", area: "Зона контроля", finish: "Завершить зону", coverage: "Покрытие зоны" },
+    { prefix: "", lang: "ka-GE", title: "კამერების განლაგების პლანერი", add: "კამერის დამატება", area: "საკონტროლო არე", finish: "არეის დასრულება", coverage: "არეის დაფარვა", empty: "სამუშაო სივრცე მზადაა" },
+    { prefix: "/en", lang: "en-GE", title: "CCTV camera layout planner", add: "Add camera", area: "Inspection area", finish: "Finish area", coverage: "Area coverage", empty: "Your workspace is ready" },
+    { prefix: "/ru", lang: "ru-GE", title: "Планировщик размещения камер", add: "Добавить камеру", area: "Зона контроля", finish: "Завершить зону", coverage: "Покрытие зоны", empty: "Рабочая область готова" },
 ];
 
 async function place(canvas: Locator, x: number, y: number) {
@@ -32,8 +32,10 @@ for (const locale of locales) {
 
         const canvas = page.locator("canvas[role='img']");
         await expect(canvas).toBeVisible();
+        await expect(page.getByText(locale.empty, { exact: true })).toBeVisible();
         await page.getByRole("button", { name: locale.add }).click();
         await place(canvas, 0.3, 0.4);
+        await expect(page.getByText(locale.empty, { exact: true })).toHaveCount(0);
         await expect(page.getByText(locale.coverage, { exact: true })).toBeVisible();
 
         await page.getByRole("button", { name: locale.area }).click();

@@ -236,7 +236,7 @@ function calculatedComponentQuantity(
     values: CalculatorValues,
 ) {
     const source = Math.max(0, Number(values[component.quantityField]) || 0);
-    let quantity = component.defaultQuantity || 1;
+    let quantity = Math.max(0, component.defaultQuantity);
 
     if (component.quantityMode === "field") {
         quantity = source;
@@ -244,7 +244,19 @@ function calculatedComponentQuantity(
         quantity = Math.ceil(source / Math.max(1, component.unitsPerComponent));
     }
 
-    quantity = Math.max(component.minimumQuantity || 0, quantity);
+    return clampComponentQuantity(component, quantity);
+}
+
+export function clampComponentQuantity(
+    component: CalculatorComponent,
+    value: number,
+) {
+    const requiredMinimum = component.required ? 1 : 0;
+    let quantity = Math.max(
+        requiredMinimum,
+        component.minimumQuantity,
+        Number.isFinite(value) ? value : 0,
+    );
 
     if (component.maximumQuantity !== null) {
         quantity = Math.min(component.maximumQuantity, quantity);
@@ -299,8 +311,8 @@ export function calculateConfiguratorTotals(
         const selected = component.required
             ? true
             : override?.selected ?? component.recommended;
-        const quantity = Math.max(
-            0,
+        const quantity = clampComponentQuantity(
+            component,
             override?.quantity ?? recommendation.quantity,
         );
 

@@ -35,7 +35,7 @@ const copy = {
         subtitle: "ატვირთეთ ობიექტის გეგმა ან ფოტო, მონიშნეთ კედლები, კამერები და შესამოწმებელი არე. შეაფასეთ ხედვის ზონები და გამოგვიგზავნეთ პროექტი.",
         upload: "გეგმის / ფოტოს ატვირთვა", import: "JSON გეგმის გახსნა", wall: "კედლის დახაზვა",
         area: "საკონტროლო არე", camera: "კამერის დამატება", select: "გადატანა / არჩევა",
-        close: "არის დასრულება", undo: "უკან", clear: "თავიდან", save: "JSON ჩამოტვირთვა",
+        close: "არეის დასრულება", undo: "უკან", clear: "თავიდან", save: "JSON ჩამოტვირთვა",
         image: "სქემის SVG ჩამოტვირთვა", width: "გეგმის სრული სიგანე (მ)", preview: "კამერის პარამეტრები",
         delete: "კამერის წაშლა", count: "კამერები", walls: "კედლები", covered: "არეის დაფარვა",
         blind: "სავარაუდო ბრმა ზონები", noArea: "დაფარვის %-ისთვის დახაზეთ საკონტროლო არე",
@@ -59,6 +59,12 @@ const copy = {
         aiError: "AI-ს პასუხი ვერ დამუშავდა. ატვირთეთ უფრო მკაფიო გეგმა ან გააგრძელეთ ხელით.",
         aiOnly: "AI ქმნის მხოლოდ შესასწორებელ მონახაზს. ფოტო, ბნელი ადგილები, სიმაღლე და რეალური ხედვა ადგილზე გადაამოწმეთ.",
         photograph: "ფოტო ბრაუზერში ინახება ლოკალურად; AI-ში იგზავნება მხოლოდ მონიშვნისა და ღილაკზე დაჭერის შემდეგ.",
+        stepPlan: "ატვირთეთ გეგმა", stepLayout: "დაამატეთ კამერები", stepSend: "გააგზავნეთ შეფასებისთვის",
+        emptyTitle: "სამუშაო სივრცე მზადაა",
+        emptyText: "ატვირთეთ გეგმა/ფოტო ან პირდაპირ დაამატეთ კამერები თეთრ ბადეზე.",
+        activeTool: "აქტიური ხელსაწყო", fileError: "დაშვებულია PNG, JPEG ან WebP — მაქსიმუმ 5 MB.",
+        jsonError: "JSON გეგმა დაზიანებულია ან არასწორი ფორმატი აქვს.",
+        planLoaded: "გეგმა ატვირთულია — ახლა მონიშნეთ კედლები, არე და კამერები.",
     },
     en: {
         title: "CCTV camera layout planner",
@@ -87,6 +93,12 @@ const copy = {
         aiError: "AI draft could not be processed. Try a clearer plan or continue manually.",
         aiOnly: "AI produces an editable draft only. Verify visibility, lighting, heights and coverage on site.",
         photograph: "Photo stays local until you explicitly consent and request AI analysis or submit a quote.",
+        stepPlan: "Upload a plan", stepLayout: "Place cameras", stepSend: "Send for assessment",
+        emptyTitle: "Your workspace is ready",
+        emptyText: "Upload a plan/photo or start placing cameras directly on the blank grid.",
+        activeTool: "Active tool", fileError: "Use PNG, JPEG or WebP up to 5 MB.",
+        jsonError: "The JSON design is invalid or damaged.",
+        planLoaded: "Plan loaded — mark walls, the inspection area and cameras.",
     },
     ru: {
         title: "Планировщик размещения камер",
@@ -117,6 +129,12 @@ const copy = {
         aiError: "Не удалось обработать ответ AI. Загрузите более чёткий план или продолжите вручную.",
         aiOnly: "AI создаёт только редактируемый черновик. Проверяйте освещение, высоты и покрытие на объекте.",
         photograph: "Фото хранится локально, пока вы не дадите согласие на AI-анализ или отправку заявки.",
+        stepPlan: "Загрузите план", stepLayout: "Разместите камеры", stepSend: "Отправьте на оценку",
+        emptyTitle: "Рабочая область готова",
+        emptyText: "Загрузите план/фото или начните размещать камеры прямо на пустой сетке.",
+        activeTool: "Активный инструмент", fileError: "Допустимы PNG, JPEG или WebP до 5 МБ.",
+        jsonError: "JSON-проект повреждён или имеет неверный формат.",
+        planLoaded: "План загружен — отметьте стены, зону контроля и камеры.",
     },
 } as const;
 
@@ -236,6 +254,7 @@ export default function CameraPlanner() {
     const { locale } = useLocalization();
     const t = copy[locale as keyof typeof copy] || copy.ka;
     const canvas = useRef<HTMLCanvasElement>(null);
+    const cameraEditStarted = useRef(false);
     const [layout, setLayout] = useState<Layout>(initial);
     const [background, setBackground] = useState<string>("");
     const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
@@ -259,9 +278,17 @@ export default function CameraPlanner() {
     const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
     const analysis = useMemo(() => analyse(layout), [layout]);
     const active = layout.cameras.find((c) => c.id === selected) || null;
+    const isWorkspaceEmpty = !background && !layout.cameras.length
+        && !layout.walls.length && !layout.area.length && !areaDraft.length;
     const button = "rounded-xl border border-slate-600 px-4 py-3 text-sm font-semibold transition hover:border-amber-400";
     const field = "w-full rounded-xl border border-slate-600 bg-slate-900 p-3 text-slate-100 outline-none focus:border-amber-400";
     const pushHistory = useCallback(() => setHistory((previous) => [...previous.slice(-29), layout]), [layout]);
+    const beginCameraEdit = () => {
+        if (cameraEditStarted.current) return;
+        pushHistory();
+        cameraEditStarted.current = true;
+    };
+    const endCameraEdit = () => { cameraEditStarted.current = false; };
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -422,16 +449,15 @@ export default function CameraPlanner() {
     }
     function editCamera(key: keyof Camera, value: number | string) {
         if (!active) return;
-        pushHistory();
         setLayout((old) => ({ ...old, cameras: old.cameras.map((c) =>
             c.id === active.id ? { ...c, [key]: value } : c) }));
     }
     async function handlePhoto(file?: File) {
         if (!file) return;
         if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
-            setStatus("PNG / JPEG / WebP · max 5 MB"); return;
+            setStatus(t.fileError); return;
         }
-        try { setBackground(await readFile(file)); setAiDraft(null); setAiConsent(false); setStatus(""); }
+        try { setBackground(await readFile(file)); setAiDraft(null); setAiConsent(false); setStatus(t.planLoaded); }
         catch { setStatus(t.error); }
     }
     async function handleJSON(file?: File) {
@@ -442,7 +468,7 @@ export default function CameraPlanner() {
             setBackground(typeof parsed.background === "string" && parsed.background.startsWith("data:image/")
                 ? parsed.background : "");
             setWallStart(null); setAreaDraft([]); setSelected(null); setAiDraft(null); setStatus("");
-        } catch { setStatus("Invalid JSON design"); }
+        } catch { setStatus(t.jsonError); }
     }
     function exportJSON() {
         download("safetech-camera-plan.json", new Blob(
@@ -558,14 +584,29 @@ export default function CameraPlanner() {
                 <p className="mb-3 font-bold uppercase tracking-widest text-amber-400">SafeTech · CCTV Designer</p>
                 <h1 className="text-3xl font-bold sm:text-5xl">{t.title}</h1>
                 <p className="mt-4 max-w-3xl text-slate-300">{t.subtitle}</p>
+                <ol className="mt-8 grid gap-3 sm:grid-cols-3" aria-label={t.title}>
+                    {[t.stepPlan, t.stepLayout, t.stepSend].map((step, index) => (
+                        <li className="flex items-center gap-3 rounded-2xl border border-slate-600/70 bg-slate-950/35 px-4 py-3 text-sm font-semibold" key={step}>
+                            <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-400 font-bold text-slate-950">
+                                {index + 1}
+                            </span>
+                            {step}
+                        </li>
+                    ))}
+                </ol>
             </header>
             <div className="mt-7 grid gap-7 xl:grid-cols-[minmax(0,1fr)_330px]">
                 <section className="min-w-0 space-y-5 rounded-3xl border border-slate-700 bg-slate-900 p-4 sm:p-6">
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <label className={button + " cursor-pointer bg-amber-500 text-slate-950"}>
                             {t.upload}<input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp"
                                 onChange={(e) => { void handlePhoto(e.target.files?.[0]); e.target.value = ""; }} />
                         </label>
+                        {background ? (
+                            <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs font-semibold text-emerald-300">
+                                {t.planLoaded}
+                            </span>
+                        ) : null}
                         <label className={button + " cursor-pointer"}>
                             {t.import}<input className="sr-only" type="file" accept=".json,application/json"
                                 onChange={(e) => { void handleJSON(e.target.files?.[0]); e.target.value = ""; }} />
@@ -618,6 +659,10 @@ export default function CameraPlanner() {
                                 {t[item]}</button>
                         ))}
                     </div>
+                    <p className="rounded-xl border border-slate-700 bg-slate-950/40 px-4 py-3 text-sm text-slate-300">
+                        <span className="font-semibold text-amber-300">{t.activeTool}:</span>{" "}
+                        {t[mode]}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                         <button type="button" className={button} disabled={areaDraft.length < 3}
                             onClick={() => { if (areaDraft.length < 3) return; pushHistory();
@@ -633,12 +678,23 @@ export default function CameraPlanner() {
                         }}>{t.clear}</button>
                     </div>
                     <p className="text-sm leading-relaxed text-slate-300">{t.tip}</p>
-                    <canvas ref={canvas} width={W} height={H}
-                        aria-label={t.title} role="img"
-                        className="w-full touch-none rounded-xl border-2 border-amber-400/40 bg-slate-50"
-                        onPointerDown={pointerDown} onPointerMove={pointerMove}
-                        onPointerUp={() => setDragging(null)} onPointerCancel={() => setDragging(null)}
-                        style={{ aspectRatio: "3 / 2" }} />
+                    <div className="relative overflow-hidden rounded-2xl border-2 border-amber-400/40 bg-slate-50 shadow-inner">
+                        <canvas ref={canvas} width={W} height={H}
+                            aria-label={t.title} role="img"
+                            className="w-full touch-none bg-slate-50"
+                            onPointerDown={pointerDown} onPointerMove={pointerMove}
+                            onPointerUp={() => setDragging(null)} onPointerCancel={() => setDragging(null)}
+                            style={{ aspectRatio: "3 / 2" }} />
+                        {isWorkspaceEmpty ? (
+                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white/88 via-slate-50/78 to-amber-50/75 p-6 text-center">
+                                <div className="max-w-md rounded-3xl border border-slate-300/80 bg-white/90 px-6 py-7 text-slate-900 shadow-xl backdrop-blur-sm">
+                                    <span className="mx-auto inline-flex size-12 items-center justify-center rounded-2xl bg-amber-400 text-2xl font-black">+</span>
+                                    <h2 className="mt-4 text-xl font-bold">{t.emptyTitle}</h2>
+                                    <p className="mt-2 text-sm leading-6 text-slate-600">{t.emptyText}</p>
+                                </div>
+                            </div>
+                        ) : null}
+                    </div>
                     <p className="text-xs text-slate-400">{t.photograph}</p>
                     <label className="block space-y-2 text-sm font-semibold">
                         <span>{t.width}: {layout.widthMeters} m</span>
@@ -666,13 +722,15 @@ export default function CameraPlanner() {
                         <button type="button" className={button} onClick={exportSVG}>{t.image}</button>
                     </div>
                 </section>
-                <aside className="space-y-5">
+                <aside className="space-y-5 xl:sticky xl:top-28">
                     <section className="rounded-3xl border border-slate-700 bg-slate-900 p-6">
                         <h2 className="mb-4 text-xl font-bold">{t.preview}</h2>
                         {!active ? <p className="text-slate-400">{t.camera}</p> : (
                             <div className="space-y-4">
                                 <label className="block space-y-2 text-sm"><span>{t.cameraType}</span>
                                     <select className={field} value={active.kind}
+                                        onFocus={beginCameraEdit}
+                                        onBlur={endCameraEdit}
                                         onChange={(e) => editCamera("kind", e.target.value)}>
                                         {kinds.map((kind) => <option key={kind} value={kind}>{kind}</option>)}
                                     </select></label>
@@ -686,6 +744,14 @@ export default function CameraPlanner() {
                                         <span>{label}: {active[key]}</span>
                                         <input className="w-full accent-amber-400" type="range" min={min} max={max}
                                             step={step} value={Number(active[key])}
+                                            onBlur={endCameraEdit}
+                                            onPointerDown={beginCameraEdit} onPointerUp={endCameraEdit}
+                                            onKeyDown={(event) => {
+                                                if (event.key.startsWith("Arrow") || ["PageUp", "PageDown", "Home", "End"].includes(event.key)) {
+                                                    beginCameraEdit();
+                                                }
+                                            }}
+                                            onKeyUp={endCameraEdit}
                                             onChange={(e) => editCamera(key, Number(e.target.value))} /></label>
                                 ))}
                                 {([
@@ -694,12 +760,12 @@ export default function CameraPlanner() {
                                 ] as [keyof Camera, string, number, number][]).map(([key, label, min, max]) => (
                                     <label className="block space-y-2 text-sm" key={key}><span>{label}</span>
                                         <input className={field} type="number" min={min} max={max} step=".1"
+                                            onFocus={beginCameraEdit} onBlur={endCameraEdit}
                                             value={Number(active[key])} onChange={(e) => {
                                                 const n = clamp(Number(e.target.value), min, max);
                                                 const lens = key === "lens" ? n : active.lens;
                                                 const sensor = key === "sensor" ? n : active.sensor;
                                                 const fov = clamp(2 * Math.atan(sensor / (2 * lens)) * 180 / Math.PI, 15, 180);
-                                                pushHistory();
                                                 setLayout((v) => ({ ...v, cameras: v.cameras.map((c) =>
                                                     c.id === active.id ? { ...c, [key]: n, fov } : c) }));
                                             }} /></label>

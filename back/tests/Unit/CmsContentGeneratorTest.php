@@ -370,6 +370,74 @@ class CmsContentGeneratorTest extends TestCase
         }
     }
 
+    public function test_every_full_admin_form_targets_absent_multilingual_editorial_leaves(): void
+    {
+        $generator = app(CmsContentGenerator::class);
+        $method = new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths');
+        $cases = [
+            ['page', ['title' => 'გვერდი', 'content' => 'ტექსტი'], [
+                'translations.fields.title.ka',
+                'translations.fields.content.en',
+                'translations.fields.ogDescription.ru',
+                'translations.keywords.ru',
+            ]],
+            ['faq', ['question' => 'კითხვა', 'answer' => 'პასუხი'], [
+                'translations.fields.question.ka',
+                'translations.fields.answer.en',
+                'translations.fields.answer.ru',
+            ]],
+            ['local-seo', [
+                'location_name' => 'თბილისი',
+                'title' => 'მონტაჟი თბილისში',
+                'benefits' => [['title' => 'სარგებელი', 'description' => 'აღწერა']],
+                'faq' => [['question' => 'კითხვა', 'answer' => 'პასუხი']],
+            ], [
+                'translations.fields.locationName.en',
+                'translations.fields.ogTitle.ka',
+                'translations.fields.seoDescription.ru',
+                'translations.keywords.en',
+                'benefits.0.translations.ru.description',
+                'faq.0.translations.en.answer',
+            ]],
+            ['category', ['name' => 'კატეგორია', 'seo_title' => 'SEO'], [
+                'translations.fields.name.en',
+                'translations.fields.intro_text.ru',
+                'translations.fields.ogDescription.ka',
+                'translations.keywords.en',
+                'translations.faq.ru',
+            ]],
+            ['seo-page', ['title' => 'SEO', 'description' => 'აღწერა'], [
+                'translations.fields.title.ka',
+                'translations.fields.og_description.en',
+                'translations.keywords.ru',
+            ]],
+            ['team-member', ['first_name' => 'ნინო', 'position' => 'ინჟინერი'], [
+                'translations.fields.firstName.ka',
+                'translations.fields.position.en',
+                'translations.fields.bio.ru',
+            ]],
+            ['testimonial', ['quote' => 'შეფასება', 'author' => 'კლიენტი'], [
+                'translations.fields.quote.ka',
+                'translations.fields.author.en',
+                'translations.fields.company.ru',
+            ]],
+            ['about', ['about_page_translations' => [
+                'about_hero_title' => ['ka' => 'ჩვენ შესახებ'],
+            ]], [
+                'about_page_translations.about_hero_title.en',
+                'about_page_translations.about_hero_title.ru',
+            ]],
+        ];
+
+        foreach ($cases as [$profile, $state, $expectedPaths]) {
+            $targets = $method->invoke($generator, $profile, $state, false);
+
+            foreach ($expectedPaths as $path) {
+                $this->assertContains($path, $targets, "{$profile}: {$path}");
+            }
+        }
+    }
+
     public function test_project_featured_copy_is_generated_and_survives_sanitizing(): void
     {
         Http::fake(function (Request $request) {
@@ -570,16 +638,17 @@ class CmsContentGeneratorTest extends TestCase
     {
         Http::fake(function (Request $request) {
             $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
-            $this->assertContains('lead_form.extra_fields.0.en', $targets);
-            $this->assertNotContains('lead_form.extra_fields.0.type', $targets);
-            $this->assertNotContains('lead_form.extra_fields.0.default', $targets);
-            $this->assertNotContains('lead_form.extra_fields.0.options.0.value', $targets);
-            $this->assertNotContains('lead_form.extra_fields.0.options.0.one_time_price', $targets);
 
-            return Http::response($this->responseWithPatches([
-                ['path' => 'lead_form.extra_fields.0.en', 'value_json' => json_encode('English label')],
-                ['path' => 'lead_form.extra_fields.0.ru', 'value_json' => json_encode('Русская метка')],
-            ]));
+            return Http::response($this->responseWithPatches(
+                collect($targets)->map(fn (string $path): array => [
+                    'path' => $path,
+                    'value_json' => json_encode(match ($path) {
+                        'lead_form.extra_fields.0.en' => 'English label',
+                        'lead_form.extra_fields.0.ru' => 'Русская метка',
+                        default => "filled:{$path}",
+                    }, JSON_UNESCAPED_UNICODE),
+                ])->all(),
+            ));
         });
 
         $updates = app(CmsContentGenerator::class)->generate('service', 'რეალური ფაქტები', [
@@ -604,6 +673,15 @@ class CmsContentGeneratorTest extends TestCase
         $this->assertSame('Русская метка', data_get($updates, 'lead_form.extra_fields.0.ru'));
         $this->assertNull(data_get($updates, 'lead_form.extra_fields.0.type'));
         $this->assertNull(data_get($updates, 'lead_form.extra_fields.0.default'));
+        Http::assertSent(function (Request $request): bool {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+
+            return in_array('lead_form.extra_fields.0.en', $targets, true)
+                && ! in_array('lead_form.extra_fields.0.type', $targets, true)
+                && ! in_array('lead_form.extra_fields.0.default', $targets, true)
+                && ! in_array('lead_form.extra_fields.0.options.0.value', $targets, true)
+                && ! in_array('lead_form.extra_fields.0.options.0.one_time_price', $targets, true);
+        });
     }
 
     public function test_service_full_form_targets_every_existing_localized_editorial_group_but_not_operational_values(): void
@@ -640,6 +718,7 @@ class CmsContentGeneratorTest extends TestCase
                 'extra_fields' => [[
                     'key' => 'camera_count', 'type' => 'select', 'ka' => 'კამერები',
                     'en' => '', 'ru' => '', 'unit_price' => 75,
+                    'placeholder_ka' => 'რაოდენობა', 'help_ka' => 'მიუთითეთ კამერები', 'unit_ka' => 'ცალი',
                     'options' => [[
                         'value' => 'two', 'ka' => 'ორი', 'en' => '', 'ru' => '',
                         'one_time_price' => 0,
@@ -651,6 +730,13 @@ class CmsContentGeneratorTest extends TestCase
                     'description_ka' => 'საბაზისო',
                     'description_en' => '', 'description_ru' => '',
                     'one_time_price' => 1200, 'recommended' => false,
+                ]],
+                'components' => [[
+                    'key' => 'camera-4mp', 'title_ka' => '4MP კამერა',
+                    'title_en' => '', 'title_ru' => '',
+                    'description_ka' => 'IP კამერა',
+                    'description_en' => '', 'description_ru' => '',
+                    'unit_price' => 250, 'required' => true,
                 ]],
             ],
             'translations' => ['fields' => ['title' => ['ka' => 'მონტაჟი']]],
@@ -671,8 +757,14 @@ class CmsContentGeneratorTest extends TestCase
             'lead_form.project_size_options.0.en',
             'lead_form.property_type_options.0.ru',
             'lead_form.extra_fields.0.options.0.en',
+            'lead_form.extra_fields.0.en',
+            'lead_form.extra_fields.0.placeholder_ru',
+            'lead_form.extra_fields.0.help_en',
+            'lead_form.extra_fields.0.unit_ru',
             'lead_form.packages.0.title_en',
             'lead_form.packages.0.description_ru',
+            'lead_form.components.0.title_en',
+            'lead_form.components.0.description_ru',
             'overview',
         ] as $expected) {
             $this->assertContains($expected, $targets);
@@ -684,6 +776,8 @@ class CmsContentGeneratorTest extends TestCase
             'lead_form.packages.0.one_time_price',
             'lead_form.packages.0.key',
             'lead_form.extra_fields.0.options.0.value',
+            'lead_form.components.0.unit_price',
+            'lead_form.components.0.key',
             'translations.entries',
         ] as $forbidden) {
             $this->assertNotContains($forbidden, $targets);

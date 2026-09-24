@@ -6,6 +6,7 @@ use App\Filament\Resources\ServiceConfiguratorResource\Pages;
 use App\Filament\Support\NavigationGroup;
 use App\Models\Service;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -18,6 +19,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 
 class ServiceConfiguratorResource extends Resource
 {
@@ -79,6 +81,10 @@ class ServiceConfiguratorResource extends Resource
             ->columns(3)
             ->default([])
             ->collapsible()
+            ->collapsed()
+            ->itemLabel(
+                fn (array $state): ?string => $state['ka'] ?? $state['value'] ?? null,
+            )
             ->reorderable();
     }
 
@@ -103,8 +109,21 @@ class ServiceConfiguratorResource extends Resource
                 ->columns(3),
 
             Section::make('ფასები, მომსახურება და ფასდაკლება')
-                ->description('ყველა თანხა იცვლება ადმინ პანელიდან. მომხმარებელი ფასდაკლების პროცენტს თვითონ ვერ ცვლის.')
+                ->description('საბოლოო ფასი ითვლება ქვემოთ აღწერილი ყველა ფენის ჯამით. შეინახეთ ცვლილება და საჯარო კალკულატორი განახლდება ავტომატურად.')
                 ->schema([
+                    Placeholder::make('pricing_help')
+                        ->hiddenLabel()
+                        ->content(new HtmlString(
+                            '<div style="padding:1rem;border:1px solid rgba(59,130,246,.35);border-radius:.75rem;background:rgba(59,130,246,.08)">'.
+                            '<strong>სად იცვლება კალკულატორის ფასი?</strong>'.
+                            '<ol style="margin:.65rem 0 0 1.25rem;list-style:decimal;line-height:1.65">'.
+                            '<li>ამ ბლოკში — საბაზო, მინიმალური, სამუშაოს და ყოველთვიური ფასი;</li>'.
+                            '<li>„პროექტის ტიპები და მასშტაბები“ — თითოეული არჩევანის ფასის ცვლილება;</li>'.
+                            '<li>„მომსახურების პარამეტრები“ — რაოდენობრივი ველის ან არჩევანის ერთეულის ფასი;</li>'.
+                            '<li>„პაკეტები“ და „კომპონენტები“ — შესაბამისი ერთჯერადი/ყოველთვიური ფასი.</li>'.
+                            '</ol><p style="margin-top:.65rem">AI ტექსტურ ველებს თარგმნის, მაგრამ ფასებს, რაოდენობებსა და ტექნიკურ გასაღებებს უსაფრთხოების მიზნით არ ცვლის.</p></div>',
+                        ))
+                        ->columnSpanFull(),
                     Select::make('lead_form.pricing.currency')
                         ->label('ვალუტა')
                         ->options([
@@ -116,21 +135,25 @@ class ServiceConfiguratorResource extends Resource
                         ->required(),
                     TextInput::make('lead_form.pricing.base_price')
                         ->label('სერვისის საბაზო საფასური')
+                        ->helperText('საწყისი ერთჯერადი თანხა, რომელსაც ყველა სხვა არჩევანი ემატება.')
                         ->numeric()
                         ->minValue(0)
                         ->default(0),
                     TextInput::make('lead_form.pricing.monthly_base_price')
                         ->label('ყოველთვიური საბაზო საფასური')
+                        ->helperText('ფიქსირებული ყოველთვიური მომსახურების საწყისი თანხა.')
                         ->numeric()
                         ->minValue(0)
                         ->default(0),
                     TextInput::make('lead_form.pricing.minimum_price')
                         ->label('მინიმალური პროექტის ღირებულება')
+                        ->helperText('თუ სერვისის დათვლილი ნაწილი ამ თანხაზე ნაკლებია, კალკულატორი მინიმუმამდე შეავსებს.')
                         ->numeric()
                         ->minValue(0)
                         ->default(0),
                     TextInput::make('lead_form.pricing.labor_price')
                         ->label('ფიქსირებული სამუშაოს საფასური')
+                        ->helperText('კომპონენტებისა და სერვისის ფასს დამატებული ფიქსირებული სამუშაო.')
                         ->numeric()
                         ->minValue(0)
                         ->default(0),
@@ -158,7 +181,8 @@ class ServiceConfiguratorResource extends Resource
                         'ობიექტის ტიპები',
                     ),
                 ])
-                ->columns(3),
+                ->columns(3)
+                ->collapsible(),
 
             Section::make('მომსახურების პარამეტრები')
                 ->description('მაგალითად: კამერების რაოდენობა, ტექნოლოგია, გარჩევადობა, ობიექტივი, კაბელის მეტრაჟი.')
@@ -241,8 +265,14 @@ class ServiceConfiguratorResource extends Resource
                         ->columns(3)
                         ->default([])
                         ->collapsible()
+                        ->collapsed()
+                        ->itemLabel(
+                            fn (array $state): ?string => $state['ka'] ?? $state['key'] ?? null,
+                        )
                         ->reorderable(),
-                ]),
+                ])
+                ->collapsible()
+                ->collapsed(),
 
             Section::make('მომსახურების პაკეტები')
                 ->schema([
@@ -271,8 +301,14 @@ class ServiceConfiguratorResource extends Resource
                         ->columns(3)
                         ->default([])
                         ->collapsible()
+                        ->collapsed()
+                        ->itemLabel(
+                            fn (array $state): ?string => $state['title_ka'] ?? $state['key'] ?? null,
+                        )
                         ->reorderable(),
-                ]),
+                ])
+                ->collapsible()
+                ->collapsed(),
 
             Section::make('კომპონენტების კატალოგი და თავსებადობა')
                 ->description('აქ ემატება მოწყობილობები, მასალები და სამუშაოები. წესები განსაზღვრავს, როდის უნდა შესთავაზოს სისტემა კონკრეტული NVR, DVR, სვიჩი, დისკი ან სხვა კომპონენტი.')
@@ -404,11 +440,14 @@ class ServiceConfiguratorResource extends Resource
                         ->columns(4)
                         ->default([])
                         ->collapsible()
+                        ->collapsed()
                         ->reorderable()
                         ->itemLabel(
                             fn (array $state): ?string => $state['title_ka'] ?? $state['key'] ?? null,
                         ),
-                ]),
+                ])
+                ->collapsible()
+                ->collapsed(),
 
             Section::make('განმარტება')
                 ->schema([
@@ -422,7 +461,9 @@ class ServiceConfiguratorResource extends Resource
                         ->label('განმარტება (RU)')
                         ->rows(2),
                 ])
-                ->columns(3),
+                ->columns(3)
+                ->collapsible()
+                ->collapsed(),
         ]);
     }
 

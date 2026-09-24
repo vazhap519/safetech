@@ -12,6 +12,7 @@ import { trackEvent } from "@/lib/analytics";
 import {
     calculateConfiguratorTotals,
     calculateEstimateBreakdown,
+    clampComponentQuantity,
     getCompatibleComponents,
     initialCalculatorValues,
     type CalculatorEstimateBreakdown,
@@ -53,11 +54,13 @@ function SelectControl({
     label,
     onChange,
     options,
+    priceLabel,
     value,
 }: {
     label: string;
     onChange: (value: string) => void;
     options: CalculatorOption[];
+    priceLabel?: (option: CalculatorOption) => string;
     value: string;
 }) {
     if (!options.length) return null;
@@ -72,7 +75,7 @@ function SelectControl({
             >
                 {options.map((option) => (
                     <option key={option.value} value={option.value}>
-                        {option.label}
+                        {option.label}{priceLabel?.(option) ?? ""}
                     </option>
                 ))}
             </select>
@@ -426,6 +429,43 @@ export default function ServiceCalculator({
             en: "No compatible components are configured for this selection yet.",
             ru: "Для этого выбора пока не настроены совместимые компоненты.",
         }),
+        steps: [
+            t("calculator.steps.service", {
+                ka: "სერვისი",
+                en: "Service",
+                ru: "Услуга",
+            }),
+            t("calculator.steps.parameters", {
+                ka: "პარამეტრები",
+                en: "Parameters",
+                ru: "Параметры",
+            }),
+            t("calculator.steps.configuration", {
+                ka: "კონფიგურაცია და ფასი",
+                en: "Configuration and price",
+                ru: "Конфигурация и цена",
+            }),
+        ],
+        reset: t("calculator.actions.reset", {
+            ka: "არჩევანის გასუფთავება",
+            en: "Reset selection",
+            ru: "Сбросить выбор",
+        }),
+        pricingNote: t("calculator.price.note", {
+            ka: "თანხა ავტომატურად იცვლება არჩეული პარამეტრებისა და რაოდენობების მიხედვით.",
+            en: "The amount updates automatically with the selected parameters and quantities.",
+            ru: "Сумма автоматически меняется в зависимости от параметров и количества.",
+        }),
+        oneTime: t("calculator.price.oneTime", {
+            ka: "ერთჯერადი",
+            en: "one-time",
+            ru: "разово",
+        }),
+        perMonth: t("calculator.price.perMonth", {
+            ka: "თვეში",
+            en: "per month",
+            ru: "в месяц",
+        }),
     };
 
     if (!profile) return null;
@@ -450,7 +490,10 @@ export default function ServiceCalculator({
             selected: item.component.required
                 ? true
                 : override?.selected ?? item.component.recommended,
-            quantity: override?.quantity ?? item.quantity,
+            quantity: clampComponentQuantity(
+                item.component,
+                override?.quantity ?? item.quantity,
+            ),
         };
     };
 
@@ -473,8 +516,10 @@ export default function ServiceCalculator({
                     ...serviceSelections,
                     [item.component.key]: {
                         selected,
-                        quantity:
+                        quantity: clampComponentQuantity(
+                            item.component,
                             update.quantity ?? previous?.quantity ?? item.quantity,
+                        ),
                     },
                 },
             };
@@ -484,6 +529,45 @@ export default function ServiceCalculator({
     const selectedComponents = compatibleComponents.filter(
         (item) => selectionFor(item).selected,
     );
+    const resetCurrentService = () => {
+        setValuesByService((current) => ({
+            ...current,
+            [profile.slug]: initialCalculatorValues(profile),
+        }));
+        setProjectSizes((current) => ({
+            ...current,
+            [profile.slug]: profile.projectSize.options[0]?.value ?? "",
+        }));
+        setPropertyTypes((current) => ({
+            ...current,
+            [profile.slug]: profile.propertyType.options[0]?.value ?? "",
+        }));
+        setPackages((current) => ({
+            ...current,
+            [profile.slug]:
+                profile.packages.find((item) => item.recommended)?.key ??
+                profile.packages[0]?.key ??
+                "",
+        }));
+        setSelectionsByService((current) => ({
+            ...current,
+            [profile.slug]: {},
+        }));
+    };
+    const optionPriceLabel = (option: CalculatorOption) => {
+        const labels = [];
+
+        if (option.oneTimePrice > 0) {
+            labels.push(money(option.oneTimePrice, profile.currency, locale));
+        }
+        if (option.monthlyPrice > 0) {
+            labels.push(
+                `${money(option.monthlyPrice, profile.currency, locale)} / ${copy.perMonth}`,
+            );
+        }
+
+        return labels.length ? ` · +${labels.join(" + ")}` : "";
+    };
     const requestExactQuote = () => {
         const componentSummary = selectedComponents
             .map((item) => {
@@ -543,13 +627,27 @@ export default function ServiceCalculator({
                     <p className="mt-3 max-w-4xl text-sm leading-6 text-on-surface-variant sm:text-base">
                         {copy.description}
                     </p>
+                    <ol className="mt-6 grid gap-3 sm:grid-cols-3" aria-label={copy.title}>
+                        {copy.steps.map((step, index) => (
+                            <li
+                                className="flex items-center gap-3 rounded-xl border border-primary/15 bg-surface/70 px-4 py-3 text-sm font-medium text-on-surface"
+                                key={step}
+                            >
+                                <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-on-primary">
+                                    {index + 1}
+                                </span>
+                                {step}
+                            </li>
+                        ))}
+                    </ol>
                 </header>
 
                 <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-start">
                     <div className="space-y-8">
                         <section className="space-y-7 rounded-2xl border border-outline-variant/20 bg-surface p-5 sm:p-6">
-                            <label className="grid gap-2 text-sm text-on-surface-variant">
-                                <span>{copy.service}</span>
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                                <label className="grid flex-1 gap-2 text-sm text-on-surface-variant">
+                                    <span>{copy.service}</span>
                                 <select
                                     className="min-h-14 rounded-xl border border-outline-variant/30 bg-surface-container-low px-4 text-base font-semibold text-on-surface outline-none focus:border-primary"
                                     onChange={(event) => setServiceSlug(event.target.value)}
@@ -561,7 +659,16 @@ export default function ServiceCalculator({
                                         </option>
                                     ))}
                                 </select>
-                            </label>
+                                </label>
+                                <button
+                                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-outline-variant/30 px-4 text-sm font-semibold text-on-surface-variant transition hover:border-primary hover:text-primary"
+                                    onClick={resetCurrentService}
+                                    type="button"
+                                >
+                                    <Icon name="restart_alt" />
+                                    {copy.reset}
+                                </button>
+                            </div>
 
                             {profile.description ? (
                                 <p className="rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm leading-6 text-on-surface-variant">
@@ -579,6 +686,7 @@ export default function ServiceCalculator({
                                         }))
                                     }
                                     options={profile.projectSize.options}
+                                    priceLabel={optionPriceLabel}
                                     value={projectSize}
                                 />
                                 <SelectControl
@@ -590,6 +698,7 @@ export default function ServiceCalculator({
                                         }))
                                     }
                                     options={profile.propertyType.options}
+                                    priceLabel={optionPriceLabel}
                                     value={propertyType}
                                 />
                             </div>
@@ -650,6 +759,20 @@ export default function ServiceCalculator({
                                                     {item.description ? (
                                                         <span className="mt-1 block text-sm leading-5 text-on-surface-variant">
                                                             {item.description}
+                                                        </span>
+                                                    ) : null}
+                                                    {item.oneTimePrice > 0 || item.monthlyPrice > 0 ? (
+                                                        <span className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-primary">
+                                                            {item.oneTimePrice > 0 ? (
+                                                                <span className="rounded-full bg-primary/10 px-2.5 py-1">
+                                                                    +{money(item.oneTimePrice, profile.currency, locale)} · {copy.oneTime}
+                                                                </span>
+                                                            ) : null}
+                                                            {item.monthlyPrice > 0 ? (
+                                                                <span className="rounded-full bg-secondary/10 px-2.5 py-1 text-secondary">
+                                                                    +{money(item.monthlyPrice, profile.currency, locale)} · {copy.perMonth}
+                                                                </span>
+                                                            ) : null}
                                                         </span>
                                                     ) : null}
                                                 </span>
@@ -746,16 +869,25 @@ export default function ServiceCalculator({
                                                         <input
                                                             className="min-h-11 rounded-xl border border-outline-variant/30 bg-surface px-3 text-on-surface outline-none focus:border-primary disabled:opacity-50"
                                                             disabled={!selection.selected}
-                                                            min={0}
+                                                            min={Math.max(
+                                                                component.required ? 1 : 0,
+                                                                component.minimumQuantity,
+                                                            )}
+                                                            max={
+                                                                component.maximumQuantity ??
+                                                                undefined
+                                                            }
                                                             onChange={(event) =>
                                                                 updateSelection(item, {
-                                                                    quantity: Math.max(
-                                                                        0,
-                                                                        Number(
-                                                                            event.target
-                                                                                .value,
-                                                                        ) || 0,
-                                                                    ),
+                                                                    quantity:
+                                                                        clampComponentQuantity(
+                                                                            component,
+                                                                            Number(
+                                                                                event
+                                                                                    .target
+                                                                                    .value,
+                                                                            ) || 0,
+                                                                        ),
                                                                 })
                                                             }
                                                             step="1"
@@ -785,6 +917,9 @@ export default function ServiceCalculator({
                         </div>
                         <p className="mt-2 break-words text-4xl font-semibold text-on-surface">
                             {money(totals.total, profile.currency, locale)}
+                        </p>
+                        <p className="mt-2 text-xs leading-5 text-on-surface-variant">
+                            {copy.pricingNote}
                         </p>
 
                         <dl className="mt-6 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 border-t border-outline-variant/20 pt-5 text-sm">
