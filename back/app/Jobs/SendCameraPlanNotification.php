@@ -30,7 +30,7 @@ final class SendCameraPlanNotification implements ShouldQueue
     {
         $plan = CameraPlan::query()->find($this->cameraPlanId);
 
-        if (! $plan) {
+        if (!$plan) {
             return;
         }
 
@@ -45,7 +45,7 @@ final class SendCameraPlanNotification implements ShouldQueue
         $recipient = collect([$settingsRecipient, $configuredRecipient, $fallback])
             ->first(fn (string $address): bool => filter_var($address, FILTER_VALIDATE_EMAIL) !== false);
 
-        if (! $recipient) {
+        if (!$recipient) {
             Log::warning('Camera plan notification has no valid recipient.', ['plan_id' => $plan->getKey()]);
 
             return;
