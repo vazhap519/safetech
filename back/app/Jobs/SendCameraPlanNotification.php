@@ -22,9 +22,7 @@ final class SendCameraPlanNotification implements ShouldQueue
     /** @var array<int, int> */
     public array $backoff = [10, 60, 180];
 
-    public function __construct(public readonly int $cameraPlanId)
-    {
-    }
+    public function __construct(public readonly int $cameraPlanId) {}
 
     public function handle(): void
     {
