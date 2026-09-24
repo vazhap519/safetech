@@ -58,7 +58,7 @@ class ProjectCategory extends Model
         });
 
         static::creating(function ($category) {
-            if (!$category->slug) {
+            if (! $category->slug) {
                 $category->slug = StableSlug::fromTitle($category->name);
             }
         });
