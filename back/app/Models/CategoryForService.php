@@ -43,7 +43,7 @@ class CategoryForService extends Model
         });
 
         static::creating(function ($category) {
-            if (! $category->slug) {
+            if ($category->slug === null || $category->slug === '') {
                 $category->slug = StableSlug::fromTitle($category->name);
             }
         });
