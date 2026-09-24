@@ -80,7 +80,7 @@ export default function GallerySection({ project }: { project: ProjectDetail }) 
                 </span>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-5">
+            <div className={`grid gap-4 lg:gap-5 ${gallery.length > 1 ? "lg:grid-cols-[minmax(0,1fr)_260px]" : "mx-auto max-w-5xl"}`}>
                 <div className="group relative min-h-[300px] overflow-hidden rounded-[26px] border border-outline-variant/10 bg-surface-container-low shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:min-h-[460px] lg:min-h-[560px]">
                     {activeImage ? (
                         <button

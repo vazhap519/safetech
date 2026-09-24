@@ -317,7 +317,10 @@ class ProjectResource extends Resource
                     Repeater::make('results')
                         ->label('Results')
                         ->schema([
-                            TextInput::make('value')->label('Value (ქართული)')->required(),
+                            TextInput::make('value')
+                                ->label('Value (ქართული)')
+                                ->helperText('მოკლე მაჩვენებელი, მაგ. 13 ან 3. გრძელი ჩამონათვალი ჩაწერეთ Description-ში.')
+                                ->required(),
                             ...LocalizedContentFields::itemInputs('value', 'Value'),
                             TextInput::make('title')->label('Title (ქართული)')->required(),
                             ...LocalizedContentFields::itemInputs('title', 'Title'),

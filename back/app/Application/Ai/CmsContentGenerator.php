@@ -238,6 +238,9 @@ PROJECT profile:
 - challenges/solutions arrays use {"title":"...","description":"...","translations":{"en":{"title":"...","description":"..."},"ru":{"title":"...","description":"..."}}}.
 - process arrays use the same title/description translation shape.
 - results arrays use {"value":"...","title":"...","description":"...","translations":{"en":{"value":"...","title":"...","description":"..."},"ru":{"value":"...","title":"...","description":"..."}}}.
+- CRITICAL: each result.value is ONE short, factual KPI (for example "13", "3", "2"); never put a sentence, a list, semicolon-delimited facts, or a project summary in value. Put explanations in result.title and result.description. If no verifiable concise metric exists, omit results rather than invent a statistic.
+- For scope/specs each value must be a concise single fact (e.g. "13 კამერა"), not multiple facts or a paragraph; use separate rows and labels. Keep card title and description concise for a balanced responsive layout.
+- Never make one massive multi-fact result row when several short factual result rows can be created from EDITOR FACTS.
 - Related-project selections, media, publishing controls, canonical URLs, schema overrides, icons, accents and equipment facts are managed separately and must not be generated.
 - Prefer 3-5 useful items per generated section. Do not add equipment, models, quantities or specifications absent from EDITOR FACTS.
 RULES,
