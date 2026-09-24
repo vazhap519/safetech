@@ -16,12 +16,18 @@ final class LocalSeoAudit extends Command
     public function handle(): int
     {
         $published = Service::query()->publiclyVisible()->get();
+        // New GBP catalog entries are visible to visitors but intentionally noindexed
+        // until each page has substantive editorial copy. They should not fail
+        // local SEO coverage while their SEO opt-out remains active.
+        $indexableServices = $published->filter(
+            fn (Service $service): bool => ! (bool) data_get($service->seo, 'noindex', false),
+        );
         $indexable = LocalServiceLanding::query()->publiclyVisible()
             ->where('noindex', false)
             ->with('service')
             ->get();
         $coveredIds = $indexable->pluck('service_id')->unique()->all();
-        $missing = $published->whereNotIn('id', $coveredIds)->values();
+        $missing = $indexableServices->whereNotIn('id', $coveredIds)->values();
         $withoutProjects = LocalServiceLanding::query()->publiclyVisible()
             ->where('noindex', false)
             ->whereDoesntHave('publicProjects')
@@ -30,9 +36,9 @@ final class LocalSeoAudit extends Command
 
         $problems = [];
         $this->info(sprintf(
-            'Local SEO technical coverage: %d/%d published services, %d indexable Local pages, %d with no linked public project.',
-            $published->count() - $missing->count(),
-            $published->count(),
+            'Local SEO technical coverage: %d/%d indexable published services, %d indexable Local pages, %d with no linked public project.',
+            $indexableServices->count() - $missing->count(),
+            $indexableServices->count(),
             $indexable->count(),
             $withoutProjects->count(),
         ));
