@@ -14,7 +14,7 @@ export default async function SolutionsSection({
         "project.detail.solutions.title",
         locale,
         null,
-    );
+    ) || (locale === "en" ? "Implemented solution" : locale === "ru" ? "Реализованное решение" : "განხორციელებული გადაწყვეტილება");
     const cards = project.solutions.filter(
         (card) => card.title || card.description,
     );
