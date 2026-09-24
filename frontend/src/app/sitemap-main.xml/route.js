@@ -25,6 +25,7 @@ export async function GET() {
     { key: "services", path: "/services", changefreq: "weekly", priority: "0.9" },
     { key: "projects", path: "/projects", changefreq: "weekly", priority: "0.7" },
     { key: "camera-planner", path: "/camera-planner", changefreq: "monthly", priority: "0.6" },
+    { key: "guide-how-many-cameras-for-a-house", path: "/guides/how-many-cameras-for-a-house", changefreq: "monthly", priority: "0.6" },
     { key: "contact", path: "/contact", changefreq: "monthly", priority: "0.5" },
   ];
 
