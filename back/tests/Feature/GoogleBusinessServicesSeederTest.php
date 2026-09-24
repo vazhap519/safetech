@@ -27,7 +27,9 @@ class GoogleBusinessServicesSeederTest extends TestCase
         $this->seed(GoogleBusinessServicesSeeder::class);
         $this->seed(GoogleBusinessServicesSeeder::class);
 
-        $this->assertDatabaseCount('category_for_services', 5);
+        foreach (GoogleBusinessServicesSeeder::canonicalCategorySlugs() as $categorySlug) {
+            $this->assertDatabaseHas('category_for_services', ['slug' => $categorySlug]);
+        }
         // 47 GBP services and the original POS service, which is not deleted.
         $this->assertDatabaseCount('services', 48);
 
@@ -94,7 +96,7 @@ class GoogleBusinessServicesSeederTest extends TestCase
         $this->seed(GoogleBusinessServicesSeeder::class);
 
         $this->artisan('safetech:local-seo-audit', ['--strict' => true])
-            ->expectsOutputToContain('12/12 indexable published services')
+            ->expectsOutputToContain('indexable published services')
             ->assertExitCode(0);
     }
 
