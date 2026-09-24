@@ -23,7 +23,12 @@ final class CategoryFields
                     ->maxLength(255)
                     ->live(onBlur: true)
                     ->afterStateUpdated(self::syncGeorgianNameAndSlug()),
-                ...LocalizedContentFields::secondaryInputs('name', 'Category name', maxLength: 255),
+                ...LocalizedContentFields::secondaryInputs(
+                    'name',
+                    'Category name',
+                    maxLength: 255,
+                    required: fn (?Model $record): bool => $record === null,
+                ),
                 TextInput::make('slug')
                     ->label('URL slug')
                     ->required()
