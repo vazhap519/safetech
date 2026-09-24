@@ -69,7 +69,7 @@ export default async function ProjectOverviewSection({
         >
             <div className="mx-auto grid max-w-container-max gap-6 px-4 sm:px-6 lg:grid-cols-5 lg:gap-unit-xl lg:px-margin-desktop">
                 {scope.length ? (
-                    <div className="glass-card flex min-w-0 flex-col justify-center rounded-2xl p-5 sm:p-unit-md lg:col-span-2">
+                    <div className={`glass-card flex min-w-0 flex-col justify-center rounded-2xl p-5 sm:p-unit-md ${specs.length ? "lg:col-span-2" : "lg:col-span-5"}`}>
                         {scopeTitle ? (
                             <h2 className="mb-4 font-mono-sm text-mono-sm uppercase text-outline">
                                 {scopeTitle}
@@ -103,7 +103,7 @@ export default async function ProjectOverviewSection({
                                 {specsTitle}
                             </h2>
                         ) : null}
-                        <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 sm:gap-unit-md">
+                        <div className={`grid grid-cols-1 gap-4 sm:gap-unit-md ${specs.length === 1 ? "" : specs.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-3"}`}>
                             {specs.map((stat) => (
                                 <ProjectStat
                                     key={`${stat.label}-${stat.value}`}
