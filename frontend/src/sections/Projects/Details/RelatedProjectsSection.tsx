@@ -24,7 +24,7 @@ export default async function RelatedProjectsSection({
     return (
         <section
             aria-labelledby={title ? "related-projects-title" : undefined}
-            className="mx-auto max-w-container-max px-margin-desktop py-unit-xl"
+            className="mx-auto max-w-container-max px-4 py-10 sm:px-6 sm:py-14 lg:px-margin-desktop"
         >
             {title ? (
                 <h2
@@ -34,7 +34,7 @@ export default async function RelatedProjectsSection({
                     {title}
                 </h2>
             ) : null}
-            <div className="grid gap-gutter md:grid-cols-3">
+            <div className={`grid gap-5 sm:gap-gutter ${relatedProjects.length === 1 ? "max-w-lg" : relatedProjects.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3"}`}>
                 {relatedProjects.map((project) => (
                     <RelatedProjectCard key={project.slug} project={project} />
                 ))}
