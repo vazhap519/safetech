@@ -136,6 +136,60 @@ class CategoryLocalizationCrudTest extends TestCase
             ->assertJsonPath('data.0.seo_title', 'Офисная инфраструктура');
     }
 
+    public function test_project_category_open_graph_falls_back_to_the_requested_language_seo_copy(): void
+    {
+        $category = ProjectCategory::query()->create([
+            'name' => 'ქსელის სისტემები',
+            'slug' => 'network-systems',
+            'seo_title' => 'ქსელის სისტემები | SafeTech',
+            'seo_description' => 'ქსელის სისტემების განხორციელებული პროექტები.',
+            'translations' => [
+                'fields' => [
+                    'name' => [
+                        'en' => 'Network systems',
+                        'ru' => 'Сетевые системы',
+                    ],
+                    'seo_title' => [
+                        'en' => 'Network systems | SafeTech',
+                        'ru' => 'Сетевые системы | SafeTech',
+                    ],
+                    'seo_description' => [
+                        'en' => 'Completed network systems projects.',
+                        'ru' => 'Реализованные проекты сетевых систем.',
+                    ],
+                ],
+            ],
+        ]);
+
+        Project::query()->create([
+            'category_id' => $category->id,
+            'slug' => 'network-cabling',
+            'name' => 'ქსელის გაყვანილობა',
+            'title' => 'ქსელის გაყვანილობა',
+            'description' => 'ქსელის სისტემის პროექტი.',
+            'is_published' => true,
+        ]);
+
+        $this->getJson('/api/project-categories?locale=en')
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Network systems')
+            ->assertJsonPath('data.0.seo_title', 'Network systems | SafeTech')
+            ->assertJsonPath('data.0.og.title', 'Network systems | SafeTech')
+            ->assertJsonPath('data.0.og.description', 'Completed network systems projects.');
+
+        $this->getJson('/api/project-categories?locale=ru')
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Сетевые системы')
+            ->assertJsonPath('data.0.seo_title', 'Сетевые системы | SafeTech')
+            ->assertJsonPath('data.0.og.title', 'Сетевые системы | SafeTech')
+            ->assertJsonPath('data.0.og.description', 'Реализованные проекты сетевых систем.');
+
+        $this->getJson('/api/project-categories?locale=ka')
+            ->assertOk()
+            ->assertJsonPath('data.0.og.title', 'ქსელის სისტემები | SafeTech')
+            ->assertJsonPath('data.0.og.description', 'ქსელის სისტემების განხორციელებული პროექტები.');
+    }
+
     /** @return array<string, mixed> */
     private function categoryFormData(string $ka, string $en, string $ru, string $slug): array
     {
