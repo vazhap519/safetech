@@ -28,7 +28,7 @@ export default async function ProcessSection({
     return (
         <section
             aria-labelledby={title ? "implementation-title" : undefined}
-            className="overflow-hidden py-12 sm:py-unit-xl"
+            className="overflow-hidden py-10 sm:py-14"
         >
             <div className="mx-auto max-w-container-max px-4 sm:px-6 lg:px-margin-desktop">
                 {title ? (
@@ -39,13 +39,14 @@ export default async function ProcessSection({
                         {title}
                     </h2>
                 ) : null}
-                <ol className="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-5 sm:-mx-6 sm:gap-unit-md sm:px-6 lg:mx-0 lg:px-0">
+                <ol className={steps.length <= 3 ? `grid gap-4 sm:gap-unit-md ${steps.length === 1 ? "mx-auto max-w-4xl" : steps.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3"}` : "scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-5 sm:-mx-6 sm:gap-unit-md sm:px-6 lg:mx-0 lg:px-0"}>
                     {steps.map((step, index) => (
                         <ProcessStep
                             description={step.description}
                             index={index}
                             key={`${step.title}-${step.description}`}
                             last={index === steps.length - 1}
+                            fluid={steps.length <= 3}
                             stepLabel={stepLabel}
                             title={step.title}
                         />
