@@ -22,6 +22,7 @@ class GoogleBusinessServicesSeederTest extends TestCase
 
         $original = Service::query()->where('slug', 'security-camera-installation')->firstOrFail();
         $originalId = $original->id;
+        $existingServiceIds = Service::query()->pluck('id')->all();
         $originalSeoTitle = data_get($original->seo, 'title');
 
         $this->seed(GoogleBusinessServicesSeeder::class);
@@ -30,8 +31,10 @@ class GoogleBusinessServicesSeederTest extends TestCase
         foreach (GoogleBusinessServicesSeeder::canonicalCategorySlugs() as $categorySlug) {
             $this->assertDatabaseHas('category_for_services', ['slug' => $categorySlug]);
         }
-        // 47 GBP services and the original POS service, which is not deleted.
-        $this->assertDatabaseCount('services', 48);
+        // The Google catalog is additive and must retain every existing service row.
+        foreach ($existingServiceIds as $serviceId) {
+            $this->assertDatabaseHas('services', ['id' => $serviceId]);
+        }
 
         $this->assertSame(47, Service::query()
             ->whereIn('slug', GoogleBusinessServicesSeeder::canonicalServiceSlugs())->count());
