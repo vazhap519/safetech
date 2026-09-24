@@ -37,7 +37,7 @@ class ProjectCategoryResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return CategoryTable::configure($table, reorderable: true, showIcon: true);
+        return CategoryTable::configure($table, reorderable: true, showIcon: true, showTranslationNames: true);
     }
 
     public static function getRelations(): array

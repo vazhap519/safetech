@@ -15,13 +15,15 @@ final class CategorySeoPresenter
         $keywords = data_get($category->translations, "keywords.{$locale}");
         $faq = data_get($category->translations, "faq.{$locale}");
         $schema = data_get($category->translations, "schema.{$locale}");
+        $seoTitle = $this->translated($category, 'seo_title', $category->getAttribute('seo_title'), $locale);
+        $seoDescription = $this->translated($category, 'seo_description', $category->getAttribute('seo_description'), $locale);
 
         return [
             'id' => $category->getKey(),
             'name' => $this->translated($category, 'name', $category->getAttribute('name'), $locale),
             'slug' => $category->getAttribute('slug'),
-            'seo_title' => $this->translated($category, 'seo_title', $category->getAttribute('seo_title'), $locale),
-            'seo_description' => $this->translated($category, 'seo_description', $category->getAttribute('seo_description'), $locale),
+            'seo_title' => $seoTitle,
+            'seo_description' => $seoDescription,
             'seo_keywords' => $this->stringList(
                 is_array($keywords) ? $keywords : $category->getAttribute('seo_keywords'),
             ),
@@ -35,8 +37,8 @@ final class CategorySeoPresenter
             'image' => data_get($category->translations, 'seo.image'),
             'schema_type' => data_get($category->translations, 'seo.schema_type', 'CollectionPage'),
             'og' => [
-                'title' => $this->translated($category, 'ogTitle', $category->getAttribute('seo_title'), $locale),
-                'description' => $this->translated($category, 'ogDescription', $category->getAttribute('seo_description'), $locale),
+                'title' => $this->translated($category, 'ogTitle', $seoTitle, $locale),
+                'description' => $this->translated($category, 'ogDescription', $seoDescription, $locale),
             ],
             'updated_at' => $category->getAttribute('updated_at')?->toAtomString(),
         ];

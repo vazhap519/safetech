@@ -16,6 +16,7 @@ final class CategoryTable
         Table $table,
         bool $reorderable = false,
         bool $showIcon = false,
+        bool $showTranslationNames = false,
     ): Table {
         if ($reorderable) {
             $table
@@ -34,6 +35,16 @@ final class CategoryTable
                     )
                     ->searchable()
                     ->sortable(),
+                ...($showTranslationNames ? [
+                    TextColumn::make('translation_name_en')
+                        ->label('English')
+                        ->getStateUsing(fn ($record): ?string => data_get($record->translations, 'fields.name.en'))
+                        ->placeholder('EN თარგმანი აკლია'),
+                    TextColumn::make('translation_name_ru')
+                        ->label('Русский')
+                        ->getStateUsing(fn ($record): ?string => data_get($record->translations, 'fields.name.ru'))
+                        ->placeholder('RU თარგმანი აკლია'),
+                ] : []),
                 TextColumn::make('slug')
                     ->label('URL კოდი')
                     ->searchable()

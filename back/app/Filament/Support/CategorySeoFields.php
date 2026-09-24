@@ -65,17 +65,22 @@ final class CategorySeoFields
                 ])
                 ->columns(2),
             ...array_map(
-                fn (string $locale, string $label): Section => self::translationSection($locale, $label),
+                fn (string $locale, string $label): Section => self::translationSection(
+                    $locale,
+                    $label,
+                    expandTranslations: $kind === 'project',
+                ),
                 array_keys(self::locales()),
                 array_values(self::locales()),
             ),
         ];
     }
 
-    private static function translationSection(string $locale, string $label): Section
+    private static function translationSection(string $locale, string $label, bool $expandTranslations = false): Section
     {
         return Section::make("კონტენტი და SEO - {$label}")
-            ->collapsed($locale !== 'ka')
+            // Project categories should show EN/RU SEO editors without an extra click.
+            ->collapsed($locale !== 'ka' && ! $expandTranslations)
             ->schema([
                 TextInput::make("translations.fields.seo_title.{$locale}")
                     ->label('SEO სათაური')
