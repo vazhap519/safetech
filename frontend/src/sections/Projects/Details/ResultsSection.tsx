@@ -14,7 +14,7 @@ export default async function ResultsSection({
         "project.detail.results.title",
         locale,
         null,
-    );
+    ) || (locale === "en" ? "Project results" : locale === "ru" ? "Результаты проекта" : "პროექტის შედეგები");
     const results = project.results.filter(
         (result) => result.value || result.title || result.description,
     );
