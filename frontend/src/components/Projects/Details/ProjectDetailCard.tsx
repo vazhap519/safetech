@@ -4,11 +4,13 @@ import type { ProjectDetailCard as ProjectDetailCardType } from "@/lib/projectDe
 type ProjectDetailCardProps = {
     card: ProjectDetailCardType;
     tone?: "danger" | "solution";
+    allowFeaturedSpan?: boolean;
 };
 
 export default function ProjectDetailCard({
     card,
     tone = "solution",
+    allowFeaturedSpan = false,
 }: ProjectDetailCardProps) {
     const danger = tone === "danger";
 
@@ -16,7 +18,7 @@ export default function ProjectDetailCard({
 
     return (
         <article
-            className={`${card.featured ? "md:col-span-2 lg:row-span-2 lg:col-span-2" : ""} glass-card relative flex h-full min-h-52 flex-col justify-between overflow-hidden rounded-xl p-unit-lg ${danger ? "border-l-4 border-l-error/40" : "hover:border-primary-container"}`}
+            className={`${card.featured && allowFeaturedSpan ? "md:col-span-2 lg:row-span-2 lg:col-span-2" : ""} glass-card relative flex h-full min-h-44 min-w-0 flex-col justify-between overflow-hidden rounded-xl p-unit-lg ${danger ? "border-l-4 border-l-error/40" : "hover:border-primary-container"}`}
         >
             {card.featured ? (
                 <div
@@ -31,13 +33,13 @@ export default function ProjectDetailCard({
             <div className="relative mt-unit-lg">
                 {card.title ? (
                     <h3
-                        className={`${card.featured ? "text-headline-xl" : "text-headline-md"} mb-3 font-headline-md text-white`}
+                        className={`${card.featured ? "text-headline-xl" : "text-headline-md"} mb-3 break-words font-headline-md text-white`}
                     >
                         {card.title}
                     </h3>
                 ) : null}
                 {card.description ? (
-                    <p className="font-body-md text-body-md leading-relaxed text-on-surface-variant">
+                    <p className="break-words font-body-md text-body-md leading-relaxed text-on-surface-variant">
                         {card.description}
                     </p>
                 ) : null}
