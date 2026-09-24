@@ -14,7 +14,7 @@ export default async function ChallengesSection({
         "project.detail.challenges.title",
         locale,
         null,
-    );
+    ) || (locale === "en" ? "Project challenge" : locale === "ru" ? "Задача проекта" : "პროექტის ამოცანა");
     const cards = project.challenges.filter(
         (card) => card.title || card.description,
     );
