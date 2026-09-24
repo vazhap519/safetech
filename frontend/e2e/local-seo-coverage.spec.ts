@@ -28,7 +28,7 @@ test("every published canonical service has an indexable Local page in all 3 lan
     const serviceResponse = await request.get(apiBase + "/services?locale=ka");
     expect(serviceResponse.status()).toBe(200);
     const services = (await serviceResponse.json()).data as Array<{ slug: string }>;
-    expect(services).toHaveLength(12);
+    expect(services).toHaveLength(57);
 
     for (const { code } of locales) {
         const response = await request.get(apiBase + "/local-service-landings?locale=" + code);
