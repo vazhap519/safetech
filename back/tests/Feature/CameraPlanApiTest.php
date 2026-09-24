@@ -2,10 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SendCameraPlanNotification;
 use App\Models\CameraPlan;
+use App\Models\SiteSetting;
 use App\Models\User;
+use App\Notifications\NewCameraPlanNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -91,6 +97,66 @@ class CameraPlanApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('cameras.0.kind', 'bullet')
             ->assertHeader('Cache-Control', 'no-store, private');
+    }
+
+    public function test_accepted_camera_plan_queues_private_notification_to_business_inbox(): void
+    {
+        Queue::fake();
+        Notification::fake();
+        config()->set('leads.notification_email', 'fallback@safetech.test');
+
+        SiteSetting::query()->create([
+            'key' => 'contact',
+            'group' => 'general',
+            'is_public' => true,
+            'value' => ['lead_email' => 'business@safetech.test'],
+        ]);
+
+        $this->postJson('/api/camera-plans', $this->payload())
+            ->assertCreated();
+
+        $plan = CameraPlan::query()->sole();
+        Queue::assertPushed(SendCameraPlanNotification::class, 1);
+        Queue::assertPushed(
+            SendCameraPlanNotification::class,
+            fn (SendCameraPlanNotification $job): bool => $job->cameraPlanId === $plan->id,
+        );
+
+        (new SendCameraPlanNotification($plan->id))->handle();
+
+        Notification::assertSentOnDemand(
+            NewCameraPlanNotification::class,
+            static function (
+                NewCameraPlanNotification $notification,
+                array $channels,
+                AnonymousNotifiable $notifiable,
+            ) use ($plan): bool {
+                $mail = $notification->toMail($notifiable);
+                $body = implode("\n", array_map('strval', $mail->introLines));
+
+                return $channels === ['mail']
+                    && $notifiable->routeNotificationFor('mail') === 'business@safetech.test'
+                    && str_contains((string) $mail->subject, (string) $plan->id)
+                    && str_contains($body, 'კოტეჯი')
+                    && str_contains($body, '+995555123456')
+                    && str_contains($body, 'კამერების რაოდენობა (წინასწარი გეგმა): 1')
+                    && ! str_contains($body, 'cam-1')
+                    && ! str_contains($body, 'background_path')
+                    && $mail->actionUrl === route('admin.camera-plans.layout', $plan);
+            },
+        );
+    }
+
+    public function test_invalid_camera_plan_never_queues_notification(): void
+    {
+        Queue::fake();
+
+        $this->postJson('/api/camera-plans', array_replace($this->payload(), [
+            'privacy' => '0',
+        ]))->assertUnprocessable();
+
+        $this->assertDatabaseCount('camera_plans', 0);
+        Queue::assertNotPushed(SendCameraPlanNotification::class);
     }
 
     public function test_photo_is_private_and_deleted_with_plan(): void
