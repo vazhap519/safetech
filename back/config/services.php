@@ -46,6 +46,8 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
         'model' => $openAiModel,
         'max_output_tokens' => env('OPENAI_MAX_OUTPUT_TOKENS', 12000),
+        'planner_enabled' => env('AI_CAMERA_PLANNER_ENABLED', false),
+        'planner_model' => env('OPENAI_PLANNER_MODEL', 'gpt-4.1-mini'),
     ],
 
 ];

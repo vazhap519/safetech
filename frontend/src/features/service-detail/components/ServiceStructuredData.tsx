@@ -74,7 +74,7 @@ export default async function ServiceStructuredData({
 
     const graph: Array<Record<string, unknown>> = [
         {
-            "@type": "Service",
+            "@type": service.seo?.schemaType || "Service",
             "@id": `${url}#service`,
             name: service.title || service.name,
             description,

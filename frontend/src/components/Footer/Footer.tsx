@@ -8,7 +8,7 @@ export default async function Footer({
 }: {
     marketingEnabled?: boolean;
 }) {
-    const [{ branding, contact, socialLinks }, services] = await Promise.all([
+    const [{ branding, contact, integrations, socialLinks }, services] = await Promise.all([
         getSiteSettings(),
         getBackendFooterServices(),
     ]);
@@ -21,7 +21,10 @@ export default async function Footer({
                 services={services}
                 socialLinks={socialLinks}
             />
-            <FooterBottom marketingEnabled={marketingEnabled} />
+            <FooterBottom
+                footerCounterCode={integrations.footerCounterCode}
+                marketingEnabled={marketingEnabled}
+            />
         </footer>
     );
 }

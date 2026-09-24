@@ -125,6 +125,9 @@ export async function generateMetadata({
         siteName,
         type: "article",
         noindex: Boolean(project.seo?.noindex),
+        canonical: project.seo?.canonical,
+        ogTitle: project.seo?.og?.title,
+        ogDescription: project.seo?.og?.description,
     });
 }
 

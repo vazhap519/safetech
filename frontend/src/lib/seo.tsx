@@ -113,7 +113,11 @@ export function createMetadata({
     robotsIndex,
     robotsFollow,
 }: SeoProps): Metadata {
-    const url = canonical ? absoluteSiteUrl(canonical) : absoluteLocalizedUrl(path, locale);
+    // A single CMS canonical override represents the default (KA) URL. Localized
+    // pages must remain self-canonical so EN/RU are not incorrectly folded into KA.
+    const url = canonical && locale === DEFAULT_LOCALE
+        ? absoluteSiteUrl(canonical)
+        : absoluteLocalizedUrl(path, locale);
     const resolvedSiteName = cleanText(siteName) || SITE_NAME;
     const resolvedTitle = cleanText(title) || resolvedSiteName;
     const suppliedDescription = cleanText(description);

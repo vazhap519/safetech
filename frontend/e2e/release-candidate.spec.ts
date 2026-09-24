@@ -177,6 +177,7 @@ test.describe("release candidate public matrix", () => {
                 { waitUntil: "domcontentloaded" },
             );
             expect(projectCategoryResponse?.status()).toBe(200);
+            await expect(page.locator("h1")).toHaveCount(1);
 
             const cmsPageResponse = await page.goto(localizedPath(prefix, "/pages/qa-dynamic-page"), {
                 waitUntil: "domcontentloaded",

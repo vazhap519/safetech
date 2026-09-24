@@ -144,6 +144,15 @@ class LocalServiceLandingResource extends Resource
                     ...LocalizedContentFields::secondaryInputs('seoTitle', 'SEO title', maxLength: 255),
                     Textarea::make('seo_description')->label('SEO description (ქართული)')->rows(3)->maxLength(320),
                     ...LocalizedContentFields::secondaryInputs('seoDescription', 'SEO description', textarea: true, maxLength: 320),
+                    ...LocalizedContentFields::inputs('ogTitle', 'Open Graph title', maxLength: 255),
+                    ...LocalizedContentFields::inputs('ogDescription', 'Open Graph description', textarea: true, maxLength: 320),
+                    TextInput::make('translations.seo.canonical')->label('Canonical URL override')->url(),
+                    TextInput::make('translations.seo.image')->label('Open Graph image URL')->url(),
+                    Select::make('translations.seo.schema_type')->label('Schema.org type')->options([
+                        'Service' => 'Service',
+                        'WebPage' => 'WebPage',
+                        'LocalBusiness' => 'LocalBusiness',
+                    ])->default('Service'),
                     StructuredDataJsonField::makeAt(
                         'schema',
                         'ცარიელი დატოვეთ ავტომატური Local Service schema-სთვის. Custom JSON გამოიყენეთ მხოლოდ მაშინ, როცა generated schema უნდა ჩაანაცვლოთ ან გააფართოოთ.',

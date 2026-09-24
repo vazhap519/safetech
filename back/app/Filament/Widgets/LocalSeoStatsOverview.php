@@ -53,7 +53,7 @@ class LocalSeoStatsOverview extends StatsOverviewWidget
                 ->description('სერვისები ინდექსირებადი Local გვერდის გარეშე')
                 ->color($opportunities > 0 ? 'warning' : 'success'),
             Stat::make('რეალური პროექტის გარეშე', $withoutProjectProof)
-                ->description('ინდექსირებადი Local გვერდები proof-ის გარეშე')
+                ->description('დაკავშირებული რეალური საჯარო პროექტის გარეშე; ხელით გადასამოწმებელია')
                 ->color($withoutProjectProof > 0 ? 'warning' : 'success'),
             Stat::make('Live, მაგრამ noindex', $liveNoindexPages)
                 ->description('კონტენტის დასრულების შემდეგ გადაამოწმეთ')

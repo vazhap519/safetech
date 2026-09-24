@@ -24,18 +24,20 @@ export default function FooterContact({
             ? {
                   key: "phone",
                   content: (
-                      <div className="flex flex-col items-start gap-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           {phoneNumbers.map((phone, index) => (
-                              <span className="contents" key={phone}>
+                              <span className="inline-flex items-center gap-2" key={phone}>
+                                  {index > 0 ? (
+                                      <span aria-hidden="true" className="text-outline">
+                                          /
+                                      </span>
+                                  ) : null}
                                   <a
                                       className="inline-flex min-h-9 items-center transition-colors hover:text-secondary"
                                       href={toPhoneHref(phone)}
                                   >
                                       {phone}
                                   </a>
-                                  {index < phoneNumbers.length - 1 ? (
-                                      <span className="sr-only"> / </span>
-                                  ) : null}
                               </span>
                           ))}
                       </div>

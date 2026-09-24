@@ -40,6 +40,7 @@ class SeoPageForm
                             'projects' => 'პროექტები',
                             'contact' => 'კონტაქტი',
                             'privacy' => 'კონფიდენციალურობა',
+                            'terms' => 'წესები და პირობები',
                         ])
                         ->required()
                         ->unique(ignoreRecord: true)

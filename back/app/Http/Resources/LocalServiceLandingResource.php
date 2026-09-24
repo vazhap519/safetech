@@ -24,6 +24,8 @@ class LocalServiceLandingResource extends JsonResource
             $this->seo_description ?: ($excerpt ?: $content),
             $locale,
         );
+        $ogTitle = $this->translated('ogTitle', $seoTitle ?: $title, $locale);
+        $ogDescription = $this->translated('ogDescription', $seoDescription ?: ($excerpt ?: $content), $locale);
         $localizedKeywords = data_get($this->translations, "keywords.{$locale}");
         $keywords = is_array($localizedKeywords)
             ? array_values(array_filter($localizedKeywords, 'is_string'))
@@ -86,8 +88,11 @@ class LocalServiceLandingResource extends JsonResource
                 'title' => $seoTitle ?: $title,
                 'description' => $seoDescription,
                 'keywords' => $keywords,
-                'image' => $service->social_image_url ?: $service->image,
+                'image' => data_get($this->translations, 'seo.image', $service->social_image_url ?: $service->image),
                 'noindex' => $this->noindex,
+                'canonical' => data_get($this->translations, 'seo.canonical'),
+                'schemaType' => data_get($this->translations, 'seo.schema_type', 'Service'),
+                'og' => ['title' => $ogTitle, 'description' => $ogDescription],
                 'schema' => $this->schema,
             ],
             'updated_at' => $this->updated_at?->toAtomString(),

@@ -18,11 +18,13 @@ type ServicesPageContentProps = {
         | Promise<{ category?: string; service?: string }>
         | { category?: string; service?: string };
     showPageSchema?: boolean;
+    showHero?: boolean;
 };
 
 export default async function ServicesPageContent({
     searchParams,
     showPageSchema = true,
+    showHero = true,
 }: ServicesPageContentProps) {
     const resolvedSearchParams = await searchParams;
     const category = firstSearchParam(resolvedSearchParams?.category);
@@ -42,13 +44,13 @@ export default async function ServicesPageContent({
             {showPageSchema ? (
                 <CmsPageSchema pageKey="services" fallback={<ServicesSchema />} />
             ) : null}
-            <HeroSection />
+            {showHero ? <HeroSection /> : null}
             <PartnerSection />
             <ServiceSection
                 category={category || undefined}
                 initialService={selectedService || undefined}
             />
-            <FeaturedSection />
+            <FeaturedSection selectedService={selectedService || undefined} />
             <WhySection />
             <WorkSection />
             <FaqSeqAction />

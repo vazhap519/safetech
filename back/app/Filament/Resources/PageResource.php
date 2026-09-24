@@ -14,6 +14,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
@@ -60,12 +61,25 @@ class PageResource extends Resource
                     ...LocalizedContentFields::inputs('content', 'Content', textarea: true, rows: 10),
                     ...LocalizedContentFields::inputs('seoTitle', 'SEO title'),
                     ...LocalizedContentFields::inputs('seoDescription', 'SEO description', textarea: true),
+                    ...LocalizedContentFields::inputs('ogTitle', 'Open Graph title'),
+                    ...LocalizedContentFields::inputs('ogDescription', 'Open Graph description', textarea: true),
+                    TagsInput::make('translations.keywords.ka')->label('Keywords (KA)'),
+                    TagsInput::make('translations.keywords.en')->label('Keywords (EN)'),
+                    TagsInput::make('translations.keywords.ru')->label('Keywords (RU)'),
                 ])->columns(3),
             Section::make('Search and publishing')
                 ->schema([
                     TextInput::make('seo_title')->label('SEO title')->maxLength(255),
                     Textarea::make('seo_description')->label('SEO description')->rows(3)->maxLength(320),
                     TagsInput::make('keywords')->label('Keywords'),
+                    TextInput::make('translations.seo.canonical')->label('Canonical URL override')->url(),
+                    TextInput::make('translations.seo.image')->label('Open Graph image URL')->url(),
+                    Select::make('translations.seo.schema_type')->label('Schema.org type')->options([
+                        'WebPage' => 'WebPage',
+                        'Article' => 'Article',
+                        'AboutPage' => 'AboutPage',
+                        'ContactPage' => 'ContactPage',
+                    ])->default('WebPage'),
                     StructuredDataJsonField::makeAt(
                         'schema',
                         'ცარიელი დატოვეთ ავტომატური WebPage schema-სთვის. Custom override შეავსეთ მხოლოდ მაშინ, როცა generated JSON-LD უნდა შეიცვალოს.',

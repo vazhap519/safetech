@@ -113,7 +113,7 @@ final class CmsContentGenerator
     ): array {
         $targetJson = json_encode($targets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
         $stateJson = json_encode(
-            $this->safeContext($state),
+            $this->safeContext($profile, $state),
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT,
         );
         $attemptNote = $retry
@@ -233,19 +233,26 @@ final class CmsContentGenerator
             'project' => <<<'RULES'
 PROJECT profile:
 - Build a professional case study from the supplied facts.
+- Fill the complete KA/EN/RU editorial surface, including card copy and featured title/category/image-alt text.
 - meta/scope/specs arrays use {"value":"...","label":"...","translations":{"en":{"value":"...","label":"..."},"ru":{"value":"...","label":"..."}}}.
 - challenges/solutions arrays use {"title":"...","description":"...","translations":{"en":{"title":"...","description":"..."},"ru":{"title":"...","description":"..."}}}.
 - process arrays use the same title/description translation shape.
 - results arrays use {"value":"...","title":"...","description":"...","translations":{"en":{"value":"...","title":"...","description":"..."},"ru":{"value":"...","title":"...","description":"..."}}}.
+- Related-project selections, media, publishing controls, canonical URLs, schema overrides, icons, accents and equipment facts are managed separately and must not be generated.
 - Prefer 3-5 useful items per generated section. Do not add equipment, models, quantities or specifications absent from EDITOR FACTS.
 RULES,
             'service' => <<<'RULES'
 SERVICE profile:
 - Produce conversion-focused, technically credible service copy in KA/EN/RU.
-- benefits/solutions arrays use {"title":"...","description":"..."}; process uses {"title":"...","description":"..."}.
+- benefits/solutions/process arrays use {"title":"...","description":"...","translations":{"en":{"title":"...","description":"..."},"ru":{"title":"...","description":"..."}}}.
 - translations.entries is the legacy locale map for service repeaters. Each item must be {"key":"benefit.0.title","ka":"...","en":"...","ru":"..."}; cover every generated repeater title/description using its zero-based index.
 - Tags/keywords/highlights/industries are JSON arrays of plain strings.
-- If overview is targeted, its value must be a JSON-encoded string containing valid structured JSON suitable for the existing Overview JSON field.
+- In lead_form, fill human-facing labels, placeholders, help/unit text, existing project-size/property-type option labels, existing extra-field option labels, existing package titles/descriptions, and disclaimer texts in KA/EN/RU. Never change option values, IDs, types, prices, quantities, rules, categories or compatibility logic. No new calculator choices or packages may be invented.
+- For existing benefits/solutions/process repeater rows, fill or improve KA/EN/RU title and description without changing the icon or featured flags. New repeater lists use complete nested EN/RU translation objects.
+- For service translation fields, fill KA/EN/RU name, eyebrow, headline, description, SEO title/description, Open Graph title/description and card title/description. Keep localized keywords/highlights/industries consistent with the corresponding visible copy.
+- SEO and Open Graph descriptions should be readable editorial summaries no longer than 320 characters. Avoid keyword stuffing.
+- If overview is targeted, value_json MUST contain a JSON string holding an object with nonempty "title", nonempty "paragraphs" list of strings and optional "stats" array. Do not invent numeric claims.
+- Warranty and SLA are factual terms: when the editor has provided no verified terms, use neutral consultation wording without promising durations or response deadlines.
 - Never invent prices, discounts, warranty periods, response times, package prices, brands, technical limits or availability.
 RULES,
             'page' => <<<'RULES'
@@ -353,7 +360,265 @@ PROMPT;
             $this->collectTargetPaths($profile, $state[$root], $root, $overwrite, $targets);
         }
 
+        if ($profile === 'service') {
+            $targets = array_merge($targets, $this->serviceMissingEditorialPaths($state, $overwrite));
+        }
+
+        if ($profile === 'project') {
+            $targets = array_merge($targets, $this->projectMissingEditorialPaths($state, $overwrite));
+        }
+
         return array_values(array_unique($targets));
+    }
+
+    /**
+     * Filament does not always hydrate absent locale leaves for an existing
+     * repeater row. The general walker only sees keys that already exist, so
+     * explicitly cover the entire safe editable service form without adding
+     * invented calculator options, media, SKUs, prices or legacy routing keys.
+     *
+     * @param  array<string, mixed>  $state
+     * @return array<int, string>
+     */
+    private function serviceMissingEditorialPaths(array $state, bool $overwrite): array
+    {
+        $paths = [];
+        $fullServiceForm = array_key_exists('name', $state)
+            || array_key_exists('title', $state)
+            || array_key_exists('description', $state);
+
+        $offer = function (string $path) use ($state, $overwrite, &$paths): void {
+            if ($this->pathIsBlocked('service', $path)) {
+                return;
+            }
+
+            $value = data_get($state, $path);
+            if ($overwrite || ! is_string($value) || trim($value) === '') {
+                if ($value === null || is_string($value)) {
+                    $paths[] = $path;
+                }
+            }
+        };
+
+        foreach ([
+            'name', 'eyebrow', 'title', 'description',
+            'seoTitle', 'seoDescription', 'ogTitle', 'ogDescription',
+            'card.title', 'card.description',
+        ] as $field) {
+            // Do not introduce unrelated fields into targeted partial forms.
+            $source = match ($field) {
+                'seoTitle', 'seoDescription', 'ogTitle', 'ogDescription' => 'title',
+                'card.title' => 'name',
+                'card.description' => 'description',
+                default => $field,
+            };
+            if (! array_key_exists($source, $state)
+                && data_get($state, "translations.fields.{$field}") === null) {
+                continue;
+            }
+
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $offer("translations.fields.{$field}.{$locale}");
+            }
+        }
+
+        foreach (['keywords', 'highlights', 'industries'] as $field) {
+            if (! $fullServiceForm && ! array_key_exists($field, $state)
+                && data_get($state, "translations.{$field}") === null) {
+                continue;
+            }
+
+            foreach (['en', 'ru'] as $locale) {
+                $path = "translations.{$field}.{$locale}";
+                $value = data_get($state, $path);
+                if ($overwrite || ! is_array($value) || $value === []) {
+                    $paths[] = $path;
+                }
+            }
+        }
+
+        foreach (['benefits', 'solutions', 'process'] as $field) {
+            $items = data_get($state, $field);
+            if ($items === null || $items === []) {
+                if ($fullServiceForm) {
+                    $paths[] = $field;
+                }
+
+                continue;
+            }
+
+            if (! is_array($items)) {
+                continue;
+            }
+
+            foreach ($items as $index => $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                foreach (['title', 'description'] as $leaf) {
+                    foreach (['en', 'ru'] as $locale) {
+                        $offer("{$field}.{$index}.translations.{$locale}.{$leaf}");
+                    }
+                }
+            }
+        }
+
+        // A service may have existing calculator choices but lack EN/RU or
+        // even Georgian display labels. Never invent option IDs/price values.
+        foreach (['project_size_options', 'property_type_options'] as $field) {
+            foreach (data_get($state, "lead_form.{$field}", []) ?: [] as $index => $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offer("lead_form.{$field}.{$index}.{$locale}");
+                }
+            }
+        }
+        foreach (data_get($state, 'lead_form.extra_fields', []) ?: [] as $index => $field) {
+            if (! is_array($field)) {
+                continue;
+            }
+            foreach (data_get($field, 'options', []) ?: [] as $optionIndex => $option) {
+                if (! is_array($option)) {
+                    continue;
+                }
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offer("lead_form.extra_fields.{$index}.options.{$optionIndex}.{$locale}");
+                }
+            }
+        }
+        foreach (data_get($state, 'lead_form.packages', []) ?: [] as $index => $package) {
+            if (! is_array($package)) {
+                continue;
+            }
+            foreach (['title', 'description'] as $field) {
+                foreach (['ka', 'en', 'ru'] as $locale) {
+                    $offer("lead_form.packages.{$index}.{$field}_{$locale}");
+                }
+            }
+        }
+        foreach (data_get($state, 'translations.entries', []) ?: [] as $index => $entry) {
+            if (! is_array($entry) || blank($entry['key'] ?? null)) {
+                continue;
+            }
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $offer("translations.entries.{$index}.{$locale}");
+            }
+        }
+
+        return $paths;
+    }
+
+    /**
+     * Filament may omit empty nested locale leaves from the hydrated project
+     * state. Explicitly describe the complete editorial surface so the AI
+     * action cannot report success while card/featured copy or repeater
+     * translations are still empty.
+     *
+     * Factual relationships, equipment, media and publishing controls remain
+     * deliberately outside the generator.
+     *
+     * @param  array<string, mixed>  $state
+     * @return array<int, string>
+     */
+    private function projectMissingEditorialPaths(array $state, bool $overwrite): array
+    {
+        $fullProjectForm = array_key_exists('name', $state)
+            || array_key_exists('title', $state)
+            || array_key_exists('description', $state);
+
+        if (! $fullProjectForm) {
+            return [];
+        }
+
+        $paths = [];
+        $offer = function (string $path) use ($state, $overwrite, &$paths): void {
+            if ($this->pathIsBlocked('project', $path)) {
+                return;
+            }
+
+            $value = data_get($state, $path);
+            if (($overwrite || ! is_string($value) || trim($value) === '')
+                && ($value === null || is_string($value))) {
+                $paths[] = $path;
+            }
+        };
+
+        foreach ([
+            'name' => 'name',
+            'title' => 'title',
+            'description' => 'description',
+            'seoDescription' => 'seo_description',
+            'imageAlt' => 'image_alt',
+            'technology' => 'technology',
+            'city' => 'city',
+            'objectType' => 'object_type',
+        ] as $translationField => $sourceField) {
+            if (! array_key_exists($sourceField, $state)
+                && data_get($state, "translations.fields.{$translationField}") === null) {
+                continue;
+            }
+
+            foreach (['en', 'ru'] as $locale) {
+                $offer("translations.fields.{$translationField}.{$locale}");
+            }
+        }
+
+        foreach ([
+            'seoTitle', 'ogTitle', 'ogDescription',
+            'card.title', 'card.description',
+            'featured.title', 'featured.category', 'featured.imageAlt',
+        ] as $translationField) {
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $offer("translations.fields.{$translationField}.{$locale}");
+            }
+        }
+
+        $keywords = data_get($state, 'seo.keywords');
+        if ($overwrite || ! is_array($keywords) || $keywords === []) {
+            $paths[] = 'seo.keywords';
+        }
+
+        $repeaters = [
+            'meta' => ['value', 'label'],
+            'scope' => ['value', 'label'],
+            'specs' => ['value', 'label'],
+            'challenges' => ['title', 'description'],
+            'solutions' => ['title', 'description'],
+            'process' => ['title', 'description'],
+            'results' => ['value', 'title', 'description'],
+        ];
+
+        foreach ($repeaters as $field => $leaves) {
+            $items = data_get($state, $field);
+
+            if ($items === null || $items === []) {
+                $paths[] = $field;
+
+                continue;
+            }
+
+            if (! is_array($items)) {
+                continue;
+            }
+
+            foreach ($items as $index => $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+
+                foreach ($leaves as $leaf) {
+                    $offer("{$field}.{$index}.{$leaf}");
+
+                    foreach (['en', 'ru'] as $locale) {
+                        $offer("{$field}.{$index}.translations.{$locale}.{$leaf}");
+                    }
+                }
+            }
+        }
+
+        return $paths;
     }
 
     /** @param array<string, mixed> $state
@@ -365,10 +630,28 @@ PROMPT;
 
         $paths = [...$paths, ...match ((string) ($state['key'] ?? '')) {
             'translations' => ['value.entries'],
-            'branding' => ['value.site_name', 'value.tagline'],
-            'seo' => ['value.site_name', 'value.site_description', 'value.default_keywords'],
+            'branding' => ['value.site_name', 'value.tagline', 'value.tagline_en', 'value.tagline_ru'],
+            'seo' => [
+                'value.site_name',
+                'value.site_description',
+                'value.site_description_en',
+                'value.site_description_ru',
+                'value.default_keywords',
+                'value.default_keywords_en',
+                'value.default_keywords_ru',
+            ],
             'socials' => ['value.share_title_ka', 'value.share_title_en', 'value.share_title_ru'],
-            'contact' => ['value.whatsapp_message'],
+            'contact' => [
+                'value.whatsapp_message',
+                'value.whatsapp_message_en',
+                'value.whatsapp_message_ru',
+                'value.hours',
+                'value.hours_en',
+                'value.hours_ru',
+                'value.address',
+                'value.address_en',
+                'value.address_ru',
+            ],
             default => [],
         }];
 
@@ -378,7 +661,11 @@ PROMPT;
         foreach ($paths as $path) {
             $value = data_get($state, $path, $missing);
             if ($value === $missing) {
-                continue;
+                if ($path === 'managed_page_translations' || str_ends_with($path, '.entries')) {
+                    continue;
+                }
+
+                $value = str_contains($path, 'keywords') ? [] : null;
             }
 
             $this->collectTargetPaths('settings', $value, $path, $overwrite, $targets);
@@ -449,12 +736,12 @@ PROMPT;
     {
         $allowed = match ($profile) {
             'project' => ['meta', 'scope', 'specs', 'challenges', 'solutions', 'process', 'results', 'seo.keywords'],
-            'service' => ['keywords', 'highlights', 'industries', 'benefits', 'solutions', 'process', 'translations.entries'],
-            'page' => ['keywords'],
+            'service' => ['keywords', 'highlights', 'industries', 'benefits', 'solutions', 'process', 'translations.keywords.en', 'translations.keywords.ru', 'translations.highlights.en', 'translations.highlights.ru', 'translations.industries.en', 'translations.industries.ru'],
+            'page' => ['keywords', 'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru'],
             'local-seo' => ['benefits', 'faq', 'keywords', 'translations.keywords.en', 'translations.keywords.ru'],
             'category' => ['seo_keywords', 'faq', 'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru', 'translations.faq.ka', 'translations.faq.en', 'translations.faq.ru'],
             'seo-page' => ['keywords', 'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru'],
-            'settings' => ['value.default_keywords'],
+            'settings' => ['value.default_keywords', 'value.default_keywords_en', 'value.default_keywords_ru'],
             default => [],
         };
 
@@ -463,6 +750,29 @@ PROMPT;
 
     private function isGeneratedValueComplete(string $profile, string $path, mixed $value): bool
     {
+        if ($profile === 'service' && $path === 'overview') {
+            $overview = is_string($value) ? json_decode($value, true) : $value;
+
+            if (! is_array($overview) || ! is_string($overview['title'] ?? null)
+                || trim($overview['title']) === ''
+                || ! is_array($overview['paragraphs'] ?? null)
+                || ($overview['paragraphs'] ?? []) === []
+                || ! collect($overview['paragraphs'])->every(
+                    fn (mixed $paragraph): bool => is_string($paragraph) && trim($paragraph) !== '',
+                )) {
+                return false;
+            }
+
+            return ! isset($overview['stats']) || is_array($overview['stats']);
+        }
+
+        if ($profile === 'service' && (
+            $path === 'seo_description'
+            || preg_match('/^translations\\.fields\\.(?:seoDescription|ogDescription)\\.(?:ka|en|ru)$/', $path) === 1
+        ) && is_string($value)) {
+            return trim($value) !== '' && mb_strlen($value) <= 320;
+        }
+
         if (is_string($value)) {
             return trim($value) !== '';
         }
@@ -477,8 +787,7 @@ PROMPT;
             $profile === 'project' && in_array($path, ['meta', 'scope', 'specs'], true) => ['value', 'label', 'translations.en.value', 'translations.en.label', 'translations.ru.value', 'translations.ru.label'],
             $profile === 'project' && in_array($path, ['challenges', 'solutions', 'process'], true) => ['title', 'description', 'translations.en.title', 'translations.en.description', 'translations.ru.title', 'translations.ru.description'],
             $profile === 'project' && $path === 'results' => ['value', 'title', 'description', 'translations.en.value', 'translations.en.title', 'translations.en.description', 'translations.ru.value', 'translations.ru.title', 'translations.ru.description'],
-            $profile === 'service' && in_array($path, ['benefits', 'solutions', 'process'], true) => ['title', 'description'],
-            $profile === 'service' && $path === 'translations.entries' => ['key', 'ka', 'en', 'ru'],
+            $profile === 'service' && in_array($path, ['benefits', 'solutions', 'process'], true) => ['title', 'description', 'translations.en.title', 'translations.en.description', 'translations.ru.title', 'translations.ru.description'],
             $profile === 'category' && ($path === 'faq' || str_starts_with($path, 'translations.faq.')) => ['question', 'answer'],
             default => [],
         };
@@ -546,17 +855,21 @@ PROMPT;
     /** @param array<string, mixed> $state
      * @return array<string, mixed>
      */
-    private function safeContext(array $state): array
+    private function safeContext(string $profile, array $state): array
     {
         $blocked = ['password', 'token', 'secret', 'api_key', 'apiKey', 'schema', 'media', 'cover', 'services', 'gallery', 'published_at', 'created_at', 'updated_at'];
 
-        $walk = function (mixed $value, string $path = '') use (&$walk, $blocked): mixed {
+        $walk = function (mixed $value, string $path = '') use (&$walk, $blocked, $profile): mixed {
             if (is_array($value)) {
                 $out = [];
                 foreach ($value as $key => $item) {
                     $keyString = (string) $key;
                     $next = $path === '' ? $keyString : "{$path}.{$keyString}";
-                    if ($this->pathContainsAny($next, $blocked)) {
+                    $isProjectFeaturedCopy = $profile === 'project'
+                        && ($next === 'translations.fields.featured'
+                            || str_starts_with($next, 'translations.fields.featured.'));
+
+                    if ($this->pathContainsAny($next, $blocked) && ! $isProjectFeaturedCopy) {
                         continue;
                     }
                     $out[$key] = $walk($item, $next);
@@ -634,7 +947,17 @@ PROMPT;
             return false;
         }
 
-        if ($profile === 'settings' && $path === 'value.whatsapp_message') {
+        if ($profile === 'settings' && in_array($path, [
+            'value.whatsapp_message',
+            'value.whatsapp_message_en',
+            'value.whatsapp_message_ru',
+            'value.hours',
+            'value.hours_en',
+            'value.hours_ru',
+            'value.address',
+            'value.address_en',
+            'value.address_ru',
+        ], true)) {
             return false;
         }
 
@@ -642,33 +965,66 @@ PROMPT;
             return false;
         }
 
+        if ($profile === 'project' && (
+            $path === 'translations.fields.featured'
+            || str_starts_with($path, 'translations.fields.featured.')
+        )) {
+            return false;
+        }
+
         if (Str::before($path, '.') === 'image_alt' || str_contains(Str::lower($path), 'imagealt') || str_contains(Str::lower($path), 'image_alt')) {
             return false;
         }
 
-        if ($profile === 'service' && str_contains($path, 'lead_form')) {
+        if ($profile === 'service' && (
+            $path === 'lead_form'
+            || preg_match('/^lead_form\.(?:extra_fields|components|project_size_options|property_type_options|packages)(?:\.\d+)?(?:\.options(?:\.\d+)?)?$/', $path) === 1
+        )) {
+            // A nested container is traversable; only its locale-specific
+            // editorial leaves may become AI targets (never prices or keys).
+            return false;
+        }
+
+        if ($profile === 'service' && str_starts_with($path, 'lead_form.')) {
             $leaf = Str::afterLast($path, '.');
-            if (in_array($leaf, ['key', 'type', 'required', 'min', 'max', 'step', 'default', 'value'], true)) {
-                return true;
-            }
+
+            return preg_match('/(?:^|_)(ka|en|ru)$/', $leaf) !== 1;
         }
 
         return $this->pathContainsAny($path, [
             'slug', 'url', 'email', 'phone', 'whatsapp', 'telegram', 'facebook', 'instagram', 'linkedin', 'youtube',
             'password', 'token', 'secret', 'api', 'key', 'id', 'icon', 'accent', 'media', 'cover', 'image', 'file',
             'published', 'noindex', 'sort', 'order', 'date', 'time', 'currency', 'price', 'cost', 'amount', 'lat', 'lng',
-            'latitude', 'longitude', 'schema', 'featured', 'recommended', 'enabled', 'quantity', 'model', 'href',
+            'latitude', 'longitude', 'schema', 'canonical', 'featured', 'recommended', 'enabled', 'quantity', 'model', 'href',
         ]);
     }
 
     /** @param array<string, mixed> $updates */
     public function mergeIntoState(array $currentState, array $updates): array
     {
-        foreach ($this->flatten($updates) as $path => $value) {
-            data_set($currentState, $path, $value);
+        // Do not replace an existing Repeater list with sparse generated rows:
+        // that used to erase icons, featured flags and calculator option IDs.
+        // Entire plain-string lists (keywords etc.) are deliberately replaced.
+        return $this->mergeEditorialValues($currentState, $updates);
+    }
+
+    private function mergeEditorialValues(mixed $original, mixed $patch): mixed
+    {
+        if (! is_array($original) || ! is_array($patch)) {
+            return $patch;
         }
 
-        return $currentState;
+        if (array_is_list($patch) && ($patch === [] || ! is_array($patch[0]))) {
+            return $patch;
+        }
+
+        foreach ($patch as $key => $value) {
+            $original[$key] = array_key_exists($key, $original)
+                ? $this->mergeEditorialValues($original[$key], $value)
+                : $value;
+        }
+
+        return $original;
     }
 
     /** @return array<string, mixed> */

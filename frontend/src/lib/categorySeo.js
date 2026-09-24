@@ -86,6 +86,10 @@ export function categoryMetadata({ category, path, locale, kind }) {
     path,
     locale,
     noindex: Boolean(category?.noindex),
+    canonical: category?.canonical,
+    image: category?.image,
+    ogTitle: category?.og?.title,
+    ogDescription: category?.og?.description,
   });
 }
 
@@ -100,7 +104,7 @@ export function categorySchemas({ category, path, locale }) {
 
     schemas.push({
       "@context": "https://schema.org",
-      "@type": "CollectionPage",
+      "@type": category.schema_type || "CollectionPage",
       name: category.name,
       ...(description ? { description } : {}),
       url,

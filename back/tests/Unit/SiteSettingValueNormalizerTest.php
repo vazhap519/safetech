@@ -15,11 +15,23 @@ class SiteSettingValueNormalizerTest extends TestCase
             'whatsapp' => ' +995 599 12 34 56 ',
             'whatsapp_enabled' => 'false',
             'whatsapp_message' => 'Hello from SafeTech',
+            'whatsapp_message_en' => 'Contact SafeTech',
+            'whatsapp_message_ru' => 'Связаться с SafeTech',
+            'address_en' => 'Tbilisi',
+            'address_ru' => 'Тбилиси',
+            'hours_en' => 'Mon–Sat, 09:00–18:00',
+            'hours_ru' => 'Пн–Сб, 09:00–18:00',
         ]);
 
         $this->assertSame('+995 599 12 34 56', $normalized['whatsapp']);
         $this->assertFalse($normalized['whatsapp_enabled']);
         $this->assertSame('Hello from SafeTech', $normalized['whatsapp_message']);
+        $this->assertSame('Contact SafeTech', $normalized['whatsapp_message_en']);
+        $this->assertSame('Связаться с SafeTech', $normalized['whatsapp_message_ru']);
+        $this->assertSame('Tbilisi', $normalized['address_en']);
+        $this->assertSame('Тбилиси', $normalized['address_ru']);
+        $this->assertSame('Mon–Sat, 09:00–18:00', $normalized['hours_en']);
+        $this->assertSame('Пн–Сб, 09:00–18:00', $normalized['hours_ru']);
         $this->assertSame('info@safetech.ge', $normalized['lead_email']);
     }
 

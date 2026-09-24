@@ -128,6 +128,81 @@ class CmsContentGeneratorTest extends TestCase
         ]);
     }
 
+    public function test_service_repeaters_require_complete_english_and_russian_content(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+            $this->assertContains('benefits', $targets);
+
+            return Http::response($this->responseWithPatches([[
+                'path' => 'benefits',
+                'value_json' => json_encode([[
+                    'title' => 'სწორი დაგეგმვა',
+                    'description' => 'ქართული აღწერა',
+                    'translations' => [
+                        'en' => ['title' => 'Correct planning', 'description' => 'English description'],
+                        'ru' => ['title' => 'Правильное планирование', 'description' => 'Русское описание'],
+                    ],
+                ]], JSON_UNESCAPED_UNICODE),
+            ]]));
+        });
+
+        $updates = app(CmsContentGenerator::class)->generate('service', 'რეალური ფაქტები', [
+            'benefits' => [],
+        ]);
+
+        $this->assertSame('Correct planning', data_get($updates, 'benefits.0.translations.en.title'));
+        $this->assertSame('Русское описание', data_get($updates, 'benefits.0.translations.ru.description'));
+    }
+
+    public function test_service_configurator_ai_only_targets_localized_editorial_fields(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+
+            $this->assertContains('lead_form.extra_fields.0.ka', $targets);
+            $this->assertContains('lead_form.extra_fields.0.en', $targets);
+            $this->assertContains('lead_form.extra_fields.0.ru', $targets);
+            $this->assertContains('lead_form.extra_fields.0.placeholder_en', $targets);
+            $this->assertNotContains('lead_form.extra_fields.0.key', $targets);
+            $this->assertNotContains('lead_form.extra_fields.0.type', $targets);
+            $this->assertNotContains('lead_form.extra_fields.0.unit_price', $targets);
+            $this->assertNotContains('lead_form.components.0.category', $targets);
+
+            $patches = collect($targets)->map(fn (string $path): array => [
+                'path' => $path,
+                'value_json' => json_encode("filled:{$path}", JSON_UNESCAPED_UNICODE),
+            ])->all();
+
+            return Http::response($this->responseWithPatches($patches));
+        });
+
+        $updates = app(CmsContentGenerator::class)->generate('service', 'რეალური ფაქტები', [
+            'lead_form' => [
+                'extra_fields' => [[
+                    'key' => 'camera_count',
+                    'type' => 'number',
+                    'ka' => '',
+                    'en' => '',
+                    'ru' => '',
+                    'placeholder_en' => '',
+                    'unit_price' => '50',
+                ]],
+                'components' => [[
+                    'category' => 'camera',
+                    'title_ka' => '',
+                    'title_en' => '',
+                    'title_ru' => '',
+                ]],
+            ],
+        ]);
+
+        $this->assertSame('filled:lead_form.extra_fields.0.en', data_get($updates, 'lead_form.extra_fields.0.en'));
+        $this->assertSame('filled:lead_form.components.0.title_ru', data_get($updates, 'lead_form.components.0.title_ru'));
+        $this->assertNull(data_get($updates, 'lead_form.extra_fields.0.key'));
+        $this->assertNull(data_get($updates, 'lead_form.extra_fields.0.unit_price'));
+    }
+
     public function test_empty_local_seo_repeaters_require_all_three_languages(): void
     {
         Http::fakeSequence()
@@ -208,6 +283,162 @@ class CmsContentGeneratorTest extends TestCase
         }
     }
 
+    public function test_project_full_form_targets_every_featured_locale_and_missing_repeater_translation(): void
+    {
+        $state = [
+            'name' => 'Offside Game Center',
+            'title' => 'ვიდეომეთვალყურეობის გაფართოება',
+            'description' => 'პროექტის რეალური აღწერა',
+            'seo_description' => '',
+            'image_alt' => '',
+            'technology' => '',
+            'city' => 'რუსთავი',
+            'object_type' => 'გასართობი ცენტრი',
+            'meta' => [[
+                'value' => '10 კამერა',
+                'label' => 'მასშტაბი',
+            ]],
+            'scope' => [],
+            'specs' => [],
+            'challenges' => [],
+            'solutions' => [[
+                'title' => 'ეტაპობრივი მონტაჟი',
+                'description' => 'სისტემის გაფართოება',
+                'icon' => 'security',
+                'featured' => true,
+            ]],
+            'process' => [],
+            'results' => [],
+            'related' => [[
+                'slug' => 'existing-project',
+                'title' => '',
+            ]],
+            'seo' => [
+                'keywords' => [],
+                'canonical' => '',
+                'schema' => [],
+                'image' => '',
+                'noindex' => false,
+            ],
+            'translations' => [
+                'fields' => [
+                    'name' => ['en' => '', 'ru' => ''],
+                    'title' => ['en' => '', 'ru' => ''],
+                ],
+            ],
+        ];
+
+        $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
+            ->invoke(app(CmsContentGenerator::class), 'project', $state, false);
+
+        foreach (['ka', 'en', 'ru'] as $locale) {
+            foreach (['title', 'category', 'imageAlt'] as $field) {
+                $this->assertContains("translations.fields.featured.{$field}.{$locale}", $targets);
+            }
+        }
+
+        foreach ([
+            'translations.fields.name.en',
+            'translations.fields.title.ru',
+            'translations.fields.ogTitle.ka',
+            'translations.fields.card.description.en',
+            'meta.0.translations.en.value',
+            'meta.0.translations.ru.label',
+            'solutions.0.translations.en.title',
+            'solutions.0.translations.ru.description',
+            'scope',
+            'specs',
+            'challenges',
+            'process',
+            'results',
+            'seo.keywords',
+        ] as $expected) {
+            $this->assertContains($expected, $targets);
+        }
+
+        foreach ([
+            'seo.canonical',
+            'seo.schema',
+            'seo.image',
+            'seo.noindex',
+            'solutions.0.icon',
+            'solutions.0.featured',
+            'related.0.slug',
+            'related.0.title',
+        ] as $forbidden) {
+            $this->assertNotContains($forbidden, $targets);
+        }
+    }
+
+    public function test_project_featured_copy_is_generated_and_survives_sanitizing(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+
+            $this->assertCount(9, $targets);
+
+            return Http::response($this->responseWithPatches(
+                collect($targets)->map(fn (string $path): array => [
+                    'path' => $path,
+                    'value_json' => json_encode("filled:{$path}", JSON_UNESCAPED_UNICODE),
+                ])->all(),
+            ));
+        });
+
+        $updates = app(CmsContentGenerator::class)->generate('project', 'რეალური პროექტის ფაქტები', [
+            'translations' => ['fields' => ['featured' => [
+                'title' => ['ka' => '', 'en' => '', 'ru' => ''],
+                'category' => ['ka' => '', 'en' => '', 'ru' => ''],
+                'imageAlt' => ['ka' => '', 'en' => '', 'ru' => ''],
+            ]]],
+        ]);
+
+        $this->assertSame(
+            'filled:translations.fields.featured.title.ka',
+            data_get($updates, 'translations.fields.featured.title.ka'),
+        );
+        $this->assertSame(
+            'filled:translations.fields.featured.category.en',
+            data_get($updates, 'translations.fields.featured.category.en'),
+        );
+        $this->assertSame(
+            'filled:translations.fields.featured.imageAlt.ru',
+            data_get($updates, 'translations.fields.featured.imageAlt.ru'),
+        );
+    }
+
+    public function test_ai_targets_all_three_open_graph_locales_for_content_pages(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                $this->assertContains("translations.fields.ogTitle.{$locale}", $targets);
+                $this->assertContains("translations.fields.ogDescription.{$locale}", $targets);
+            }
+
+            $patches = collect($targets)->map(fn (string $path): array => [
+                'path' => $path,
+                'value_json' => json_encode("filled:{$path}", JSON_UNESCAPED_UNICODE),
+            ])->all();
+
+            return Http::response($this->responseWithPatches($patches));
+        });
+
+        $emptyLocales = ['ka' => '', 'en' => '', 'ru' => ''];
+        $updates = app(CmsContentGenerator::class)->generate('page', 'რეალური ფაქტები', [
+            'translations' => ['fields' => [
+                'ogTitle' => $emptyLocales,
+                'ogDescription' => $emptyLocales,
+            ]],
+        ]);
+
+        $this->assertSame(
+            'filled:translations.fields.ogDescription.ru',
+            data_get($updates, 'translations.fields.ogDescription.ru'),
+        );
+    }
+
     public function test_service_translation_routing_keys_are_never_rewritten(): void
     {
         Http::fake(function (Request $request) {
@@ -259,9 +490,15 @@ class CmsContentGeneratorTest extends TestCase
         Http::fake(function (Request $request) {
             $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
             $this->assertContains('managed_page_translations.contact_info_phone.en', $targets);
+            $this->assertContains('value.whatsapp_message_en', $targets);
+            $this->assertContains('value.whatsapp_message_ru', $targets);
+            $this->assertContains('value.address', $targets);
+            $this->assertContains('value.address_en', $targets);
+            $this->assertContains('value.address_ru', $targets);
+            $this->assertContains('value.hours_en', $targets);
+            $this->assertContains('value.hours_ru', $targets);
             $this->assertNotContains('value.phone', $targets);
             $this->assertNotContains('value.email', $targets);
-            $this->assertNotContains('value.address', $targets);
 
             $patches = collect($targets)->map(fn (string $path): array => [
                 'path' => $path,
@@ -277,7 +514,14 @@ class CmsContentGeneratorTest extends TestCase
                 'phone' => '',
                 'email' => '',
                 'address' => '',
+                'address_en' => '',
+                'address_ru' => '',
                 'whatsapp_message' => '',
+                'whatsapp_message_en' => '',
+                'whatsapp_message_ru' => '',
+                'hours' => '',
+                'hours_en' => '',
+                'hours_ru' => '',
             ],
             'managed_page_translations' => [
                 'contact_info_phone' => ['ka' => 'ტელეფონი', 'en' => '', 'ru' => 'Телефон'],
@@ -286,9 +530,40 @@ class CmsContentGeneratorTest extends TestCase
 
         $this->assertSame('filled:managed_page_translations.contact_info_phone.en', data_get($updates, 'managed_page_translations.contact_info_phone.en'));
         $this->assertSame('filled:value.whatsapp_message', data_get($updates, 'value.whatsapp_message'));
+        $this->assertSame('filled:value.whatsapp_message_en', data_get($updates, 'value.whatsapp_message_en'));
+        $this->assertSame('filled:value.whatsapp_message_ru', data_get($updates, 'value.whatsapp_message_ru'));
+        $this->assertSame('filled:value.address_en', data_get($updates, 'value.address_en'));
+        $this->assertSame('filled:value.address_ru', data_get($updates, 'value.address_ru'));
+        $this->assertSame('filled:value.hours_en', data_get($updates, 'value.hours_en'));
+        $this->assertSame('filled:value.hours_ru', data_get($updates, 'value.hours_ru'));
         $this->assertNull(data_get($updates, 'value.phone'));
         $this->assertNull(data_get($updates, 'value.email'));
-        $this->assertNull(data_get($updates, 'value.address'));
+    }
+
+    public function test_site_settings_target_new_localized_contact_fields_even_before_they_exist_in_json(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+            $this->assertContains('value.whatsapp_message_en', $targets);
+            $this->assertContains('value.whatsapp_message_ru', $targets);
+            $this->assertContains('value.address_en', $targets);
+            $this->assertContains('value.address_ru', $targets);
+
+            return Http::response($this->responseWithPatches(
+                collect($targets)->map(fn (string $path): array => [
+                    'path' => $path,
+                    'value_json' => json_encode("filled:{$path}", JSON_UNESCAPED_UNICODE),
+                ])->all(),
+            ));
+        });
+
+        $updates = app(CmsContentGenerator::class)->generate('settings', 'SafeTech-ის ფაქტები', [
+            'key' => 'contact',
+            'value' => ['whatsapp_message' => 'ქართული ტექსტი', 'address' => 'თბილისი'],
+        ]);
+
+        $this->assertSame('filled:value.whatsapp_message_en', data_get($updates, 'value.whatsapp_message_en'));
+        $this->assertSame('filled:value.address_ru', data_get($updates, 'value.address_ru'));
     }
 
     public function test_service_generator_excludes_calculator_control_values_but_fills_labels(): void
@@ -329,6 +604,200 @@ class CmsContentGeneratorTest extends TestCase
         $this->assertSame('Русская метка', data_get($updates, 'lead_form.extra_fields.0.ru'));
         $this->assertNull(data_get($updates, 'lead_form.extra_fields.0.type'));
         $this->assertNull(data_get($updates, 'lead_form.extra_fields.0.default'));
+    }
+
+    public function test_service_full_form_targets_every_existing_localized_editorial_group_but_not_operational_values(): void
+    {
+        $state = [
+            'name' => 'კამერების მონტაჟი',
+            'title' => 'კამერების მონტაჟი',
+            'description' => 'სერვისი',
+            'seo_description' => '',
+            'slug' => 'security-camera-installation',
+            'icon' => 'video-camera',
+            'brands' => ['TVT'],
+            'benefits' => [[
+                'title' => 'დაფარვა',
+                'description' => 'ძირითადი ზონები',
+                'icon' => 'shield',
+            ]],
+            'solutions' => [[
+                'title' => 'სისტემა',
+                'description' => 'პროფესიონალური პროექტი',
+                'featured' => true,
+            ]],
+            'process' => [['title' => 'მონტაჟი', 'description' => 'კამერის დაყენება']],
+            'overview' => '',
+            'lead_form' => [
+                'pricing' => ['base_price' => 300],
+                'project_size_options' => [[
+                    'value' => 'small', 'ka' => 'პატარა', 'en' => '', 'ru' => '',
+                    'one_time_price' => 30,
+                ]],
+                'property_type_options' => [[
+                    'value' => 'home', 'ka' => 'სახლი', 'en' => '', 'ru' => '',
+                ]],
+                'extra_fields' => [[
+                    'key' => 'camera_count', 'type' => 'select', 'ka' => 'კამერები',
+                    'en' => '', 'ru' => '', 'unit_price' => 75,
+                    'options' => [[
+                        'value' => 'two', 'ka' => 'ორი', 'en' => '', 'ru' => '',
+                        'one_time_price' => 0,
+                    ]],
+                ]],
+                'packages' => [[
+                    'key' => 'standard', 'title_ka' => 'სტანდარტული',
+                    'title_en' => '', 'title_ru' => '',
+                    'description_ka' => 'საბაზისო',
+                    'description_en' => '', 'description_ru' => '',
+                    'one_time_price' => 1200, 'recommended' => false,
+                ]],
+            ],
+            'translations' => ['fields' => ['title' => ['ka' => 'მონტაჟი']]],
+            'seo' => ['noindex' => false, 'canonical' => 'https://safetech.ge/services/security-camera-installation'],
+        ];
+
+        $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
+            ->invoke(app(CmsContentGenerator::class), 'service', $state, false);
+
+        foreach ([
+            'translations.fields.title.en',
+            'translations.fields.seoTitle.ru',
+            'translations.fields.ogDescription.en',
+            'translations.fields.card.title.ru',
+            'benefits.0.translations.en.title',
+            'solutions.0.translations.ru.description',
+            'process.0.translations.en.description',
+            'lead_form.project_size_options.0.en',
+            'lead_form.property_type_options.0.ru',
+            'lead_form.extra_fields.0.options.0.en',
+            'lead_form.packages.0.title_en',
+            'lead_form.packages.0.description_ru',
+            'overview',
+        ] as $expected) {
+            $this->assertContains($expected, $targets);
+        }
+
+        foreach ([
+            'slug', 'icon', 'brands', 'seo.noindex', 'seo.canonical',
+            'lead_form.pricing.base_price',
+            'lead_form.packages.0.one_time_price',
+            'lead_form.packages.0.key',
+            'lead_form.extra_fields.0.options.0.value',
+            'translations.entries',
+        ] as $forbidden) {
+            $this->assertNotContains($forbidden, $targets);
+        }
+    }
+
+    public function test_service_generated_missing_translations_merge_without_erasing_existing_repeater_configuration(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+
+            $patches = collect($targets)->map(function (string $path): array {
+                $value = 'generated:'.$path;
+                if (preg_match('/^(?:keywords|highlights|industries|translations\\.(?:keywords|highlights|industries)\\.(?:en|ru))$/', $path) === 1) {
+                    $value = ['sample'];
+                }
+                if ($path === 'overview') {
+                    $value = json_encode([
+                        'title' => 'კამერების მონტაჟი',
+                        'paragraphs' => ['სერვისის აღწერა'],
+                        'stats' => [],
+                    ], JSON_UNESCAPED_UNICODE);
+                }
+
+                return ['path' => $path, 'value_json' => json_encode($value, JSON_UNESCAPED_UNICODE)];
+            })->all();
+
+            return Http::response($this->responseWithPatches($patches));
+        });
+
+        $original = [
+            'name' => 'კამერების მონტაჟი',
+            'title' => 'მონტაჟი',
+            'description' => 'აღწერა',
+            'seo_description' => 'სერვისის აღწერა',
+            'benefits' => [[
+                'title' => 'უსაფრთხოება',
+                'description' => 'მონტაჟი',
+                'icon' => 'shield-check',
+                'translations' => ['en' => ['title' => 'Safety']],
+            ]],
+            'solutions' => [[
+                'title' => 'სისტემა',
+                'description' => 'კამერები',
+                'featured' => true,
+            ]],
+            'process' => [[
+                'title' => 'დაგეგმვა',
+                'description' => 'გეგმა',
+            ]],
+            'lead_form' => [
+                'project_size_options' => [[
+                    'value' => 'small', 'ka' => 'მცირე', 'en' => '',
+                    'ru' => '', 'one_time_price' => 30,
+                ]],
+                'extra_fields' => [[
+                    'key' => 'rooms', 'type' => 'select', 'ka' => 'ოთახი',
+                    'unit_price' => 50, 'options' => [[
+                        'value' => 'one', 'ka' => 'ერთი', 'en' => '',
+                        'ru' => '', 'one_time_price' => 100,
+                    ]],
+                ]],
+                'packages' => [[
+                    'key' => 'starter',
+                    'title_ka' => 'საწყისი',
+                    'title_en' => '',
+                    'title_ru' => '',
+                    'one_time_price' => 800,
+                    'recommended' => true,
+                ]],
+            ],
+            'translations' => ['fields' => ['title' => ['ka' => 'მონტაჟი']]],
+        ];
+
+        $generator = app(CmsContentGenerator::class);
+        $updates = $generator->generate('service', 'უსაფრთხოების კამერების მონტაჟის რეალური მომსახურება', $original);
+        $merged = $generator->mergeIntoState($original, $updates);
+
+        $this->assertSame('shield-check', data_get($merged, 'benefits.0.icon'));
+        $this->assertSame('Safety', data_get($merged, 'benefits.0.translations.en.title'));
+        $this->assertSame('generated:benefits.0.translations.en.description',
+            data_get($merged, 'benefits.0.translations.en.description'));
+        $this->assertSame('generated:benefits.0.translations.ru.title',
+            data_get($merged, 'benefits.0.translations.ru.title'));
+        $this->assertTrue(data_get($merged, 'solutions.0.featured'));
+        $this->assertSame('small', data_get($merged, 'lead_form.project_size_options.0.value'));
+        $this->assertSame(30, data_get($merged, 'lead_form.project_size_options.0.one_time_price'));
+        $this->assertSame('one', data_get($merged, 'lead_form.extra_fields.0.options.0.value'));
+        $this->assertSame(100, data_get($merged, 'lead_form.extra_fields.0.options.0.one_time_price'));
+        $this->assertSame('starter', data_get($merged, 'lead_form.packages.0.key'));
+        $this->assertSame(800, data_get($merged, 'lead_form.packages.0.one_time_price'));
+        $this->assertTrue(data_get($merged, 'lead_form.packages.0.recommended'));
+        $this->assertSame('generated:lead_form.packages.0.title_en',
+            data_get($merged, 'lead_form.packages.0.title_en'));
+        $this->assertSame('generated:translations.fields.ogTitle.ru',
+            data_get($merged, 'translations.fields.ogTitle.ru'));
+    }
+
+    public function test_service_overview_rejects_invalid_json_even_if_non_empty(): void
+    {
+        Http::fakeSequence()
+            ->push($this->responseWithPatches([[
+                'path' => 'overview', 'value_json' => json_encode('not a JSON overview'),
+            ]]))
+            ->push($this->responseWithPatches([[
+                'path' => 'overview', 'value_json' => json_encode('still not JSON'),
+            ]]));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('AI-მ ყველა მოთხოვნილი ველი სრულად ვერ შეავსო');
+
+        app(CmsContentGenerator::class)->generate('service', 'დადასტურებული სერვისი', [
+            'overview' => '',
+        ]);
     }
 
     /** @param array<int, array{path: string, value_json: string}> $patches

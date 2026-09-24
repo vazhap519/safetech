@@ -31,6 +31,13 @@ final class CategorySeoPresenter
             'faq' => is_array($faq) ? $faq : ($category->getAttribute('faq') ?? []),
             'schema' => is_array($schema) ? $schema : $category->getAttribute('schema'),
             'noindex' => (bool) $category->getAttribute('noindex'),
+            'canonical' => data_get($category->translations, 'seo.canonical'),
+            'image' => data_get($category->translations, 'seo.image'),
+            'schema_type' => data_get($category->translations, 'seo.schema_type', 'CollectionPage'),
+            'og' => [
+                'title' => $this->translated($category, 'ogTitle', $category->getAttribute('seo_title'), $locale),
+                'description' => $this->translated($category, 'ogDescription', $category->getAttribute('seo_description'), $locale),
+            ],
             'updated_at' => $category->getAttribute('updated_at')?->toAtomString(),
         ];
     }

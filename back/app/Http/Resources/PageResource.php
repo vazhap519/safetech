@@ -18,6 +18,12 @@ class PageResource extends JsonResource
         $content = $this->translated('content', $this->content, $locale);
         $seoTitle = $this->translated('seoTitle', $this->seo_title ?: $title, $locale);
         $seoDescription = $this->translated('seoDescription', $this->seo_description ?: ($excerpt ?: $content), $locale);
+        $ogTitle = $this->translated('ogTitle', $seoTitle ?: $title, $locale);
+        $ogDescription = $this->translated('ogDescription', $seoDescription ?: ($excerpt ?: $content), $locale);
+        $localizedKeywords = data_get($this->translations, "keywords.{$locale}");
+        $keywords = is_array($localizedKeywords) && $localizedKeywords !== []
+            ? array_values(array_filter($localizedKeywords, fn (mixed $keyword): bool => is_string($keyword) && trim($keyword) !== ''))
+            : ($this->keywords ?? []);
 
         return [
             'id' => $this->id,
@@ -29,9 +35,12 @@ class PageResource extends JsonResource
             'seo' => [
                 'title' => $seoTitle ?: $title,
                 'description' => $seoDescription,
-                'keywords' => $this->keywords ?? [],
-                'image' => $this->cover_image,
+                'keywords' => $keywords,
+                'image' => data_get($this->translations, 'seo.image', $this->cover_image),
                 'noindex' => $this->noindex,
+                'canonical' => data_get($this->translations, 'seo.canonical'),
+                'schemaType' => data_get($this->translations, 'seo.schema_type', 'WebPage'),
+                'og' => ['title' => $ogTitle, 'description' => $ogDescription],
                 'schema' => $this->schema,
             ],
             'updated_at' => $this->updated_at?->toAtomString(),

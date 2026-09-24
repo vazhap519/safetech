@@ -17,8 +17,12 @@ export default async function ProjectCategoryPage({ params }) {
 
   return (
     <>
-      <ProjectsPageContent searchParams={{ category: slug }} showPageSchema={false} />
       <CategorySeoContent category={category} locale={locale} path={path} />
+      <ProjectsPageContent
+        searchParams={{ category: slug }}
+        showHero={false}
+        showPageSchema={false}
+      />
     </>
   );
 }

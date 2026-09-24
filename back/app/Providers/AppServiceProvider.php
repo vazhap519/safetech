@@ -98,6 +98,16 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('ai-camera-plans', function (Request $request): array {
+            $ip = $request->ip() ?: 'unknown';
+
+            return [
+                Limit::perMinute(1)->by("ai-camera-minute|{$ip}"),
+                Limit::perHour(3)->by("ai-camera-hour|{$ip}"),
+                Limit::perDay(10)->by('ai-camera-global'),
+            ];
+        });
+
         RateLimiter::for('ai-feedback', function (Request $request): Limit {
             return Limit::perMinute(30)->by($request->ip());
         });

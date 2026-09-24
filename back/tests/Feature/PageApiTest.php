@@ -21,12 +21,22 @@ class PageApiTest extends TestCase
             'seo_description' => 'კორპორაციული უსაფრთხოების სრულყოფილი გადაწყვეტები.',
             'keywords' => ['უსაფრთხოება'],
             'translations' => [
+                'keywords' => [
+                    'en' => ['security', 'infrastructure'],
+                    'ru' => ['безопасность', 'инфраструктура'],
+                ],
                 'fields' => [
                     'title' => ['en' => 'Corporate security'],
                     'excerpt' => ['en' => 'English summary'],
                     'content' => ['en' => 'English page content'],
                     'seoTitle' => ['en' => 'Corporate security | SafeTech'],
                     'seoDescription' => ['en' => 'Complete corporate security solutions.'],
+                    'ogTitle' => ['en' => 'Corporate security preview'],
+                    'ogDescription' => ['en' => 'English social preview description.'],
+                ],
+                'seo' => [
+                    'canonical' => 'https://safetech.ge/pages/corporate-security',
+                    'schema_type' => 'Article',
                 ],
             ],
             'is_published' => true,
@@ -51,7 +61,12 @@ class PageApiTest extends TestCase
         $this->getJson('/api/pages/corporate-security?locale=en')
             ->assertOk()
             ->assertJsonPath('data.content', 'English page content')
-            ->assertJsonPath('data.seo.title', 'Corporate security | SafeTech');
+            ->assertJsonPath('data.seo.title', 'Corporate security | SafeTech')
+            ->assertJsonPath('data.seo.og.title', 'Corporate security preview')
+            ->assertJsonPath('data.seo.og.description', 'English social preview description.')
+            ->assertJsonPath('data.seo.canonical', 'https://safetech.ge/pages/corporate-security')
+            ->assertJsonPath('data.seo.schemaType', 'Article')
+            ->assertJsonPath('data.seo.keywords.0', 'security');
 
         $this->getJson('/api/pages/draft-page')->assertNotFound();
     }

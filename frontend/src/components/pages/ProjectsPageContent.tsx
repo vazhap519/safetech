@@ -14,11 +14,13 @@ import StandardsSection from "@/sections/Projects/Standards/StandardsSection";
 type ProjectsPageContentProps = {
     searchParams?: Promise<{ category?: string }> | { category?: string };
     showPageSchema?: boolean;
+    showHero?: boolean;
 };
 
 export default async function ProjectsPageContent({
     searchParams,
     showPageSchema = true,
+    showHero = true,
 }: ProjectsPageContentProps) {
     const category = firstSearchParam((await searchParams)?.category);
 
@@ -36,7 +38,7 @@ export default async function ProjectsPageContent({
             {showPageSchema ? (
                 <CmsPageSchema pageKey="projects" fallback={<ProjectsSchema />} />
             ) : null}
-            <ProjectsHeroSection />
+            {showHero ? <ProjectsHeroSection /> : null}
             <MetricsSection />
             <FeaturedProjectsSection />
             <ProjectsGallerySection category={category || undefined} />

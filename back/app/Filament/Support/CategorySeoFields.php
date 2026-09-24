@@ -4,6 +4,7 @@ namespace App\Filament\Support;
 
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -34,6 +35,19 @@ final class CategorySeoFields
                         ->separator(',')
                         ->helperText('Google meta keywords-ს ranking-ისთვის არ იყენებს; ეს ველი შიდა კონტენტისა და სხვა არხებისთვისაა.')
                         ->columnSpanFull(),
+                    TextInput::make('translations.seo.canonical')
+                        ->label('Canonical URL override')
+                        ->url(),
+                    TextInput::make('translations.seo.image')
+                        ->label('Open Graph image URL')
+                        ->url(),
+                    Select::make('translations.seo.schema_type')
+                        ->label('Schema.org ტიპი')
+                        ->options([
+                            'CollectionPage' => 'CollectionPage',
+                            'WebPage' => 'WebPage',
+                        ])
+                        ->default('CollectionPage'),
                     RichEditor::make('intro_text')
                         ->label('კატეგორიის შესავალი ტექსტი')
                         ->columnSpanFull(),
@@ -68,6 +82,14 @@ final class CategorySeoFields
                     ->maxLength(255),
                 Textarea::make("translations.fields.seo_description.{$locale}")
                     ->label('Meta აღწერა')
+                    ->rows(3)
+                    ->maxLength(320)
+                    ->columnSpanFull(),
+                TextInput::make("translations.fields.ogTitle.{$locale}")
+                    ->label('Open Graph სათაური')
+                    ->maxLength(255),
+                Textarea::make("translations.fields.ogDescription.{$locale}")
+                    ->label('Open Graph აღწერა')
                     ->rows(3)
                     ->maxLength(320)
                     ->columnSpanFull(),
