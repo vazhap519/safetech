@@ -14,7 +14,7 @@ export default async function RelatedProjectsSection({
         "project.detail.related.title",
         locale,
         null,
-    );
+    ) || (locale === "en" ? "Related projects" : locale === "ru" ? "Похожие проекты" : "მსგავსი პროექტები");
     const relatedProjects = projects.filter(
         (project) => project.title || project.category,
     );
