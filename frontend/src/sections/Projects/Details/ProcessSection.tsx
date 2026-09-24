@@ -14,7 +14,7 @@ export default async function ProcessSection({
         "project.detail.process.title",
         locale,
         null,
-    );
+    ) || (locale === "en" ? "Implementation process" : locale === "ru" ? "Этапы реализации" : "შესრულების პროცესი");
     const stepLabel = translateText(
         translations,
         "project.detail.process.stepLabel",
