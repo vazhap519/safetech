@@ -98,13 +98,14 @@ class ServiceResource extends Resource
                         ->label('Name')
                         ->required()
                         ->maxLength(255)
-                        ->live(onBlur: true)
+                        ->live()
                         ->afterStateUpdated(StableSlug::syncOnCreate()),
                     TextInput::make('slug')
                         ->label('Slug')
                         ->required()
                         ->unique(ignoreRecord: true)
-                        ->helperText('Generated automatically from the name, but still editable.'),
+                        ->readOnly()
+                        ->helperText('Generated automatically from the Georgian name. Edit the name to update it.'),
                     Select::make('category_for_service_id')
                         ->label('Category')
                         ->relationship('category', 'name')

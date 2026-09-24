@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use App\Filament\Support\StableSlug;
 
 class CategoryForService extends Model
 {
@@ -44,7 +44,7 @@ class CategoryForService extends Model
 
         static::creating(function ($category) {
             if (! $category->slug) {
-                $category->slug = Str::slug($category->name);
+                $category->slug = StableSlug::fromTitle($category->name);
             }
         });
 

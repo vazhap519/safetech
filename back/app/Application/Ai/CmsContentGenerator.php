@@ -283,7 +283,8 @@ LOCAL SEO profile:
 RULES,
             'category' => <<<'RULES'
 CATEGORY profile:
-- Generate category name, useful intro, SEO copy, keywords and FAQ in KA/EN/RU.
+- Generate category name (name plus translations.fields.name.en/ru), useful intro, SEO copy, keywords and FAQ in KA/EN/RU.
+- Keep the Georgian category name in the existing name field. Fill both English and Russian category-name translations.
 - faq and translations.faq.{locale} are arrays of {"question":"...","answer":"..."}.
 - Keyword targets are JSON arrays of plain strings in the relevant language.
 RULES,
@@ -354,6 +355,16 @@ PROMPT;
         }
 
         $targets = [];
+
+        if ($profile === 'category') {
+            // Empty localized name keys are not always present in older forms.
+            foreach (['en', 'ru'] as $locale) {
+                $path = "translations.fields.name.{$locale}";
+                if ($overwrite || trim((string) data_get($state, $path, '')) === '') {
+                    $targets[] = $path;
+                }
+            }
+        }
 
         foreach ($this->allowedRoots($profile) as $root) {
             if (! array_key_exists($root, $state)) {

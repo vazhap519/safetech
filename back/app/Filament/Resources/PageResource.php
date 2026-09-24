@@ -16,6 +16,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -44,7 +45,7 @@ class PageResource extends Resource
         return $schema->components([
             Section::make('Page')
                 ->schema([
-                    TextInput::make('title')->required()->maxLength(255)->live(onBlur: true)->afterStateUpdated(StableSlug::syncOnCreate()),
+                    TextInput::make('title')->required()->maxLength(255)->live()->afterStateUpdated(StableSlug::syncOnCreate()),
                     TextInput::make('slug')
                         ->required()
                         ->unique(ignoreRecord: true)

@@ -77,7 +77,7 @@ class ProjectResource extends Resource
                         ->label('Project name (ქართული)')
                         ->required()
                         ->maxLength(255)
-                        ->live(onBlur: true)
+                        ->live()
                         ->afterStateUpdated(StableSlug::syncOnCreate()),
                     ...LocalizedContentFields::secondaryInputs('name', 'Project name', maxLength: 255),
 

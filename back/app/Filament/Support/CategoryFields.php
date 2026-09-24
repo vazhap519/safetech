@@ -23,17 +23,13 @@ final class CategoryFields
                     ->maxLength(255)
                     ->live(onBlur: true)
                     ->afterStateUpdated(self::syncGeorgianNameAndSlug()),
-                ...LocalizedContentFields::secondaryInputs(
-                    'name',
-                    'Category name',
-                    maxLength: 255,
-                    required: static fn (?Model $record): bool => $record === null,
-                ),
+                ...LocalizedContentFields::secondaryInputs('name', 'Category name', maxLength: 255),
                 TextInput::make('slug')
                     ->label('URL slug')
                     ->required()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true)
+                    ->live()
                     ->readOnly()
                     ->helperText('ავტომატურად გენერირდება ქართული კატეგორიის სახელიდან.'),
                 ...($withAppearance ? [
