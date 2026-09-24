@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Filament\Support\StableSlug;
 use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Model;
-use App\Filament\Support\StableSlug;
 
 class ProjectCategory extends Model
 {
