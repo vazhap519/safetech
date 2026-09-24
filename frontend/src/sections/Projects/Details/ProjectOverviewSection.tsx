@@ -20,13 +20,13 @@ export default async function ProjectOverviewSection({
         "project.detail.overview.scopeTitle",
         locale,
         null,
-    );
+    ) || localizedLabel(locale, "სამუშაოს მოცულობა", "Project scope", "Объём работ");
     const specsTitle = translateText(
         translations,
         "project.detail.overview.specsTitle",
         locale,
         null,
-    );
+    ) || localizedLabel(locale, "ტექნიკური მახასიათებლები", "Technical specifications", "Технические характеристики");
     const structuredFacts = [
         project.city
             ? {
