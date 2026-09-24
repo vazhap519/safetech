@@ -10,7 +10,7 @@
         .cctv-button{border:1px solid #f59e0b;border-radius:.6rem;padding:.6rem 1rem;color:#f59e0b}
         .cctv-note{font-size:.85rem;line-height:1.6;color:#94a3b8}
     </style>
-    <p class="cctv-note">დაამატეთ კამერების ჯგუფები განსხვავებული ბიტრეიტით, კოდეკით ან სიმძლავრით. ყველა გამოთვლა სრულდება სერვერზე. MP/FPS-ით გამოთვლილი ბიტრეიტი მხოლოდ მიახლოებითია — ზუსტი შედეგისთვის მიუთითეთ რეალურად დაყენებული Mbps.</p>
+    <p class="cctv-note">დაამატეთ კამერების ჯგუფები განსხვავებული მეგაპიქსელით, ბიტრეიტით, კოდეკით ან სიმძლავრით. კამერის გარჩევადობა აირჩიეთ 2 MP-იანი ნაბიჯით: 2, 4, 6, 8 და ასე შემდეგ. ყველა გამოთვლა სრულდება სერვერზე. MP/FPS-ით გამოთვლილი ბიტრეიტი მხოლოდ მიახლოებითია — ზუსტი შედეგისთვის მიუთითეთ რეალურად დაყენებული Mbps.</p>
     <section class="cctv-card">
         <h2 class="text-lg font-bold mb-4">ჩაწერა და დისკის პირობები</h2>
         <div class="cctv-grid">
@@ -30,10 +30,16 @@
                 <button type="button" class="cctv-button" wire:click="removeGroup({{ $i }})" @disabled(count($groups) === 1)>წაშლა</button>
             </div>
             <div class="cctv-grid">
+                <label class="cctv-field">
+                    <span>კამერის გარჩევადობა (MP)</span>
+                    <select wire:model.live="groups.{{ $i }}.megapixels">
+                        @foreach (range(2, 64, 2) as $megapixels)
+                            <option value="{{ $megapixels }}">{{ $megapixels }} MP</option>
+                        @endforeach
+                    </select>
+                </label>
                 @foreach ([
                     'count' => ['კამერების რაოდენობა', 0, 256, 1],
-                    'width' => ['ჰორიზონტალური პიქსელები (px)', 320, 16384, 1],
-                    'height' => ['ვერტიკალური პიქსელები (px)', 240, 8640, 1],
                     'fps' => ['კადრი წამში (FPS)', 1, 60, 1],
                     'bitrate_mbps' => ['ვიდეო ბიტრეიტი / კამერა (Mbps; 0 = მიახლოებითი)', 0, 128, 0.1],
                     'audio_mbps' => ['აუდიო / კამერა (Mbps)', 0, 1, 0.01],

@@ -32,9 +32,7 @@ final class CctvEngineeringCalculator
                 continue;
             }
 
-            $width = $this->bounded($group['width'] ?? 2560, 320, 16384);
-            $height = $this->bounded($group['height'] ?? 1440, 240, 8640);
-            $megapixels = $width * $height / 1000000;
+            $megapixels = $this->megapixels($group);
             $fps = $this->bounded($group['fps'] ?? 15, 1, 60);
             $codec = in_array($group['codec'] ?? '', ['h264', 'h265', 'h265plus'], true)
                 ? $group['codec'] : 'h265';
@@ -118,5 +116,23 @@ final class CctvEngineeringCalculator
     private function bounded(mixed $value, float $min, float $max): float
     {
         return min($max, max($min, is_numeric($value) ? (float) $value : $min));
+    }
+
+    /**
+     * Prefer the current MP input while retaining compatibility with payloads
+     * created before the engineering calculator moved away from width × height.
+     */
+    private function megapixels(array $group): float
+    {
+        if (array_key_exists('megapixels', $group) && is_numeric($group['megapixels'])) {
+            $megapixels = $this->bounded($group['megapixels'], 2, 64);
+
+            return round($megapixels / 2) * 2;
+        }
+
+        $width = $this->bounded($group['width'] ?? 2560, 320, 16384);
+        $height = $this->bounded($group['height'] ?? 1440, 240, 8640);
+
+        return $width * $height / 1000000;
     }
 }

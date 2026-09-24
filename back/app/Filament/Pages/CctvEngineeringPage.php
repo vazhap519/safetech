@@ -37,7 +37,7 @@ class CctvEngineeringPage extends Page
     ];
 
     public array $groups = [[
-        'count' => 4, 'width' => 2560, 'height' => 1440, 'fps' => 15,
+        'count' => 4, 'megapixels' => 4, 'fps' => 15,
         'codec' => 'h265', 'bitrate_mbps' => 4, 'audio_mbps' => 0,
         'mode' => 'continuous', 'hours_per_day' => 24, 'motion_percent' => 35,
         'camera_watts' => 8, 'power_type' => 'poe', 'voltage' => 48,
@@ -47,7 +47,7 @@ class CctvEngineeringPage extends Page
     {
         if (count($this->groups) < 32) {
             $this->groups[] = [
-                'count' => 1, 'width' => 1920, 'height' => 1080, 'fps' => 15,
+                'count' => 1, 'megapixels' => 2, 'fps' => 15,
                 'codec' => 'h265', 'bitrate_mbps' => 2.5, 'audio_mbps' => 0,
                 'mode' => 'continuous', 'hours_per_day' => 24, 'motion_percent' => 35,
                 'camera_watts' => 8, 'power_type' => 'poe', 'voltage' => 48,

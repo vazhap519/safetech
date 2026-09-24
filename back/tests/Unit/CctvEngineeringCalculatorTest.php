@@ -13,7 +13,7 @@ class CctvEngineeringCalculatorTest extends TestCase
             'days' => 14,
             'reserve_percent' => 20,
             'groups' => [[
-                'count' => 6, 'width' => 1920, 'height' => 1080,
+                'count' => 6, 'megapixels' => 2,
                 'fps' => 15, 'bitrate_mbps' => 2.5, 'audio_mbps' => 0,
                 'mode' => 'continuous', 'camera_watts' => 8, 'power_type' => 'poe',
             ]],
@@ -45,5 +45,52 @@ class CctvEngineeringCalculatorTest extends TestCase
         $this->assertSame(0, $result['camera_count']);
         $this->assertSame(0.0, $result['storage_required_tb']);
         $this->assertSame(0.0, $result['poe_load_watts']);
+    }
+
+    public function test_megapixel_input_drives_the_automatic_bitrate_estimate(): void
+    {
+        $result = (new CctvEngineeringCalculator)->calculate([
+            'groups' => [[
+                'count' => 1,
+                'megapixels' => 8,
+                'fps' => 15,
+                'codec' => 'h265',
+                'bitrate_mbps' => 0,
+            ]],
+        ]);
+
+        $this->assertSame(8.0, $result['groups'][0]['megapixels']);
+        $this->assertSame(7.2, $result['groups'][0]['video_mbps_each']);
+        $this->assertSame('estimated', $result['groups'][0]['bitrate_source']);
+    }
+
+    public function test_legacy_width_and_height_payloads_remain_compatible(): void
+    {
+        $result = (new CctvEngineeringCalculator)->calculate([
+            'groups' => [[
+                'count' => 1,
+                'width' => 2560,
+                'height' => 1440,
+                'fps' => 15,
+                'codec' => 'h265',
+                'bitrate_mbps' => 0,
+            ]],
+        ]);
+
+        $this->assertSame(3.69, $result['groups'][0]['megapixels']);
+        $this->assertSame(3.32, $result['groups'][0]['video_mbps_each']);
+    }
+
+    public function test_megapixel_input_is_normalized_to_an_even_option(): void
+    {
+        $result = (new CctvEngineeringCalculator)->calculate([
+            'groups' => [[
+                'count' => 1,
+                'megapixels' => 3,
+                'bitrate_mbps' => 1,
+            ]],
+        ]);
+
+        $this->assertSame(4.0, $result['groups'][0]['megapixels']);
     }
 }
