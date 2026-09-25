@@ -16,14 +16,14 @@ export const PAGE_SEO_PRESETS = {
         key: "home",
         path: "/",
         title: {
-            ka: "კამერების მონტაჟი, ქსელები და IT მომსახურება საქართველოში | SafeTech",
-            en: "CCTV Installation, Networking and IT Services in Georgia | SafeTech",
-            ru: "Монтаж камер, сети и IT-услуги в Грузии | SafeTech",
+            ka: "უსაფრთხოების სისტემები და IT მომსახურება | SafeTech",
+            en: "Security Systems & IT Services in Georgia | SafeTech",
+            ru: "Системы безопасности и IT-услуги в Грузии | SafeTech",
         },
         description: {
-            ka: "SafeTech — უსაფრთხოების კამერების მონტაჟი, ქსელის გაყვანა, Wi‑Fi, დაშვების კონტროლი, შლაგბაუმები, POS და IT მომსახურება თბილისში, ხაშურში და საქართველოს რეგიონებში.",
-            en: "SafeTech provides CCTV installation, network cabling, Wi‑Fi, access control, barrier gates, POS and IT services in Tbilisi and across Georgia.",
-            ru: "SafeTech выполняет монтаж видеонаблюдения, сетей, Wi‑Fi, контроля доступа, шлагбаумов, POS и IT-обслуживание в Тбилиси и по Грузии.",
+            ka: "უსაფრთხოების კამერები, ქსელები, Wi‑Fi და IT მომსახურება თბილისში და რეგიონებში. SafeTech გეგმავს და ამონტაჟებს სისტემებს. მოითხოვეთ კონსულტაცია.",
+            en: "CCTV, networking, Wi-Fi and IT support in Tbilisi and across Georgia. SafeTech plans and installs systems for homes and businesses. Contact us.",
+            ru: "Видеонаблюдение, сети, Wi-Fi и IT-поддержка в Тбилиси и по всей Грузии. SafeTech проектирует и устанавливает решения для дома и бизнеса. Свяжитесь с нами.",
         },
         keywords: [
             "კამერების მონტაჟი",

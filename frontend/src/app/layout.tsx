@@ -24,6 +24,7 @@ import {
     DEFAULT_SOCIAL_IMAGE,
     SITE_NAME,
     SITE_URL,
+    withSiteTitle,
 } from "@/lib/seo";
 import { buildOrganizationEntity } from "@/lib/organization-schema";
 import {
@@ -57,18 +58,6 @@ const GOOGLE_TAG_MANAGER_ID_PATTERN = /^GTM-[A-Z0-9]+$/i;
 const GOOGLE_ANALYTICS_ID_PATTERN = /^G-[A-Z0-9]+$/i;
 const FACEBOOK_APP_ID = "2104123086847903";
 
-function withDynamicSiteTitle(title: string, siteName: string) {
-    const cleanTitle = title.trim();
-    const cleanSiteName = siteName.trim();
-
-    if (!cleanTitle) return cleanSiteName;
-    if (!cleanSiteName) return cleanTitle;
-
-    return cleanTitle.includes(cleanSiteName)
-        ? cleanTitle
-        : `${cleanTitle} | ${cleanSiteName}`;
-}
-
 function validIntegrationId(value: string | undefined, pattern: RegExp) {
     const normalized = value?.trim() ?? "";
     return pattern.test(normalized) ? normalized : "";
@@ -86,7 +75,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const siteName = branding.siteName || SITE_NAME;
     const t = createTranslator(translations, locale);
     const canonical = absoluteLocalizedUrl("/", locale);
-    const title = withDynamicSiteTitle(
+    const title = withSiteTitle(
         t("meta.default.title", {
             ka: "IT ინფრასტრუქტურა და უსაფრთხოების სისტემები",
             en: "IT Infrastructure and Security Systems",

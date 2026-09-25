@@ -141,14 +141,14 @@ class SeoPageSeeder extends Seeder
                 'home',
                 '/',
                 self::localized(
-                    'IT სერვისები და უსაფრთხოების სისტემები საქართველოში | SafeTech',
-                    'IT Services and Security Systems in Georgia | SafeTech',
-                    'IT-услуги и системы безопасности в Грузии | SafeTech',
+                    'უსაფრთხოების სისტემები და IT მომსახურება | SafeTech',
+                    'Security Systems & IT Services in Georgia | SafeTech',
+                    'Системы безопасности и IT-услуги в Грузии | SafeTech',
                 ),
                 self::localized(
-                    'SafeTech გეგმავს და ამონტაჟებს კამერებს, დაშვების სისტემებს, ქსელებს, POS სისტემებსა და კომპიუტერულ ინფრასტრუქტურას თბილისში და საქართველოს მასშტაბით.',
-                    'SafeTech designs and installs CCTV, access control, networks, POS systems, and computer infrastructure in Tbilisi and across Georgia.',
-                    'SafeTech проектирует и устанавливает видеонаблюдение, контроль доступа, сети, POS и компьютерную инфраструктуру в Тбилиси и по Грузии.',
+                    'უსაფრთხოების კამერები, ქსელები, Wi‑Fi და IT მომსახურება თბილისში და რეგიონებში. SafeTech გეგმავს და ამონტაჟებს სისტემებს. მოითხოვეთ კონსულტაცია.',
+                    'CCTV, networking, Wi-Fi and IT support in Tbilisi and across Georgia. SafeTech plans and installs systems for homes and businesses. Contact us.',
+                    'Видеонаблюдение, сети, Wi-Fi и IT-поддержка в Тбилиси и по всей Грузии. SafeTech проектирует и устанавливает решения для дома и бизнеса. Свяжитесь с нами.',
                 ),
                 [
                     'ka' => ['IT სერვისები', 'კამერების მონტაჟი', 'ქსელის მონტაჟი', 'დაშვების სისტემები', 'SafeTech Georgia'],

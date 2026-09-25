@@ -93,9 +93,14 @@ export function withSiteTitle(title: string, siteName = SITE_NAME): string {
 
     if (!cleanTitle) return cleanSiteName;
 
-    return cleanTitle.includes(cleanSiteName)
+    const normalizedTitle = cleanTitle.toLocaleLowerCase();
+    const brandNames = [cleanSiteName, SITE_NAME]
+        .map((name) => cleanText(name).toLocaleLowerCase())
+        .filter(Boolean);
+
+    return brandNames.some((brandName) => normalizedTitle.includes(brandName))
         ? cleanTitle
-        : `${cleanTitle} | ${cleanSiteName}`;
+        : cleanTitle + " | " + cleanSiteName;
 }
 
 export function createMetadata({
