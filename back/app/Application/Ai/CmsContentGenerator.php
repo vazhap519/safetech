@@ -46,7 +46,7 @@ final class CmsContentGenerator
         $updates = [];
         $workingState = $currentState;
 
-        foreach (array_chunk($targets, self::TARGETS_PER_REQUEST) as $targetBatch) {
+        foreach (array_chunk($targets, $profile === 'local-seo' ? 12 : self::TARGETS_PER_REQUEST) as $targetBatch) {
             $patches = $this->requestPatches(
                 $apiKey,
                 $model,
@@ -280,6 +280,9 @@ LOCAL SEO profile:
 - faq items use {"question":"...","answer":"...","translations":{"en":{"question":"...","answer":"..."},"ru":{"question":"...","answer":"..."}}}.
 - Keyword targets are JSON arrays of natural search phrases in the target language.
 - Location and service facts must match EDITOR FACTS/current state exactly.
+- Keep the current Local SEO city/service unchanged. Never invent additional service areas, installed projects, an office address, opening hours or availability; Batumi must not be substituted for an existing target city.
+- For each local landing, create a clear H1, useful service- and location-specific body, concise CTA, factual benefits and practical FAQs in KA/EN/RU. All SEO and Open Graph descriptions must be no longer than 320 characters.
+- Existing project relationships, canonical override, Open Graph image URL, custom schema, published status and noindex are editor-managed, not generation targets.
 RULES,
             'category' => <<<'RULES'
 CATEGORY profile:
@@ -439,6 +442,22 @@ PROMPT;
         }
 
         if ($profile === 'local-seo' && array_key_exists('location_name', $state)) {
+            // Cover missing root fields and absent repeater containers even
+            // when Filament has not hydrated them for legacy records.
+            foreach ([
+                'eyebrow', 'title', 'excerpt', 'content', 'cta_title',
+                'cta_text', 'primary_keyword', 'seo_title', 'seo_description',
+            ] as $field) {
+                $offerText($field);
+            }
+            foreach (['keywords', 'benefits', 'faq'] as $field) {
+                // For populated repeater lists rewrite individual editorial
+                // leaves instead of generating an overlapping whole-list patch.
+                $items = data_get($state, $field);
+                if (! is_array($items) || $items === []) {
+                    $offerCollection($field);
+                }
+            }
             foreach ([
                 'locationName', 'eyebrow', 'title', 'excerpt', 'content',
                 'ctaTitle', 'ctaText', 'primaryKeyword', 'seoTitle', 'seoDescription',
@@ -939,7 +958,7 @@ PROMPT;
             return ! isset($overview['stats']) || is_array($overview['stats']);
         }
 
-        if ($profile === 'service' && (
+        if (in_array($profile, ['service', 'local-seo'], true) && (
             $path === 'seo_description'
             || preg_match('/^translations\\.fields\\.(?:seoDescription|ogDescription)\\.(?:ka|en|ru)$/', $path) === 1
         ) && is_string($value)) {
@@ -1116,6 +1135,11 @@ PROMPT;
 
     private function pathIsBlocked(string $profile, string $path): bool
     {
+        if ($profile === 'local-seo' && $path === 'location_name') {
+            // The city is an editor-controlled fact, not generated copy.
+            return true;
+        }
+
         if ($profile === 'settings' && Str::before($path, '.') === 'managed_page_translations') {
             return false;
         }

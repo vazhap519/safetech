@@ -894,6 +894,65 @@ class CmsContentGeneratorTest extends TestCase
         ]);
     }
 
+    public function test_local_seo_ai_targets_missing_form_fields_without_changing_city_or_indexing(): void
+    {
+        $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
+            ->invoke(app(CmsContentGenerator::class), 'local-seo', [
+                'service_id' => 1,
+                'location_name' => 'სურამი',
+                'location_slug' => 'surami',
+                'title' => 'შლაგბაუმები სურამში',
+                'content' => 'Verified local content.',
+                'seo_title' => '',
+                'translations' => [],
+                'noindex' => true,
+                'is_published' => false,
+                'projects' => [12],
+            ], false);
+
+        foreach ([
+            'eyebrow', 'excerpt', 'cta_title', 'cta_text', 'primary_keyword',
+            'seo_title', 'seo_description', 'keywords', 'benefits', 'faq',
+            'translations.fields.title.en', 'translations.fields.title.ru',
+            'translations.fields.ogTitle.ka', 'translations.fields.ogTitle.en',
+            'translations.fields.ogDescription.ru',
+            'translations.keywords.en', 'translations.keywords.ru',
+        ] as $expected) {
+            $this->assertContains($expected, $targets, $expected);
+        }
+        foreach ([
+            'location_name', 'location_slug', 'service_id', 'noindex',
+            'is_published', 'projects', 'translations.seo.canonical',
+            'translations.seo.image', 'schema',
+        ] as $blocked) {
+            $this->assertNotContains($blocked, $targets, $blocked);
+        }
+        $this->assertNotContains('title', $targets);
+        $this->assertNotContains('content', $targets);
+    }
+
+    public function test_local_seo_ai_rejects_overlong_meta_description_before_reporting_success(): void
+    {
+        Http::fakeSequence()
+            ->push($this->responseWithPatches([[
+                'path' => 'seo_description',
+                'value_json' => json_encode(str_repeat('Description ', 35)),
+            ]]))
+            ->push($this->responseWithPatches([[
+                'path' => 'seo_description',
+                'value_json' => json_encode('Validated local description.'),
+            ]]));
+
+        $updates = app(CmsContentGenerator::class)->generate(
+            'local-seo',
+            'სერვისის რეალური აღწერა',
+            ['seo_description' => '']
+        );
+
+        $this->assertSame('Validated local description.', $updates['seo_description']);
+        Http::assertSentCount(2);
+    }
+
     /** @param array<int, array{path: string, value_json: string}> $patches
      * @return array<string, mixed>
      */
