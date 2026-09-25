@@ -451,7 +451,12 @@ PROMPT;
                 $offerText($field);
             }
             foreach (['keywords', 'benefits', 'faq'] as $field) {
-                $offerCollection($field);
+                // For populated repeater lists rewrite individual editorial
+                // leaves instead of generating an overlapping whole-list patch.
+                $items = data_get($state, $field);
+                if (! is_array($items) || $items === []) {
+                    $offerCollection($field);
+                }
             }
             foreach ([
                 'locationName', 'eyebrow', 'title', 'excerpt', 'content',
