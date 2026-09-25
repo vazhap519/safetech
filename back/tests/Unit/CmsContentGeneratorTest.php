@@ -894,7 +894,6 @@ class CmsContentGeneratorTest extends TestCase
         ]);
     }
 
-
     public function test_local_seo_ai_targets_missing_form_fields_without_changing_city_or_indexing(): void
     {
         $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
