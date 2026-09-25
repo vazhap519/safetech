@@ -30,3 +30,14 @@ Verify new service Tbilisi routes and old five-city pages in KA/EN/RU, one H1, c
 ## Proof editorial workflow
 
 Use Local SEO pages > Real Projects to attach a published, actually delivered, service-relevant and city-relevant project only after verifying the job and permission to show it. A published project merely mentioning a city is not sufficient proof. Gather authentic images (with permission), city, scope, equipment and completion details first. Never fabricate a finished project to clear a dashboard warning.
+
+
+## All-service expansion across six priority regions (September 2026)
+
+PriorityLocalSeoSeeder runs AFTER GoogleBusinessServicesSeeder in production and fresh database seeding. It prepares each current catalogue service for Tbilisi, Bakuriani, Surami, Borjomi, Khashuri and Abastumani. It does not target Batumi.
+
+Each new page includes KA/EN/RU copy and metadata, its actual service description, service-category technical checks, distinct city/property considerations, CTAs, benefits and FAQ. They are planning information, not assertions of completed installations. Existing CMS records are not overwritten or automatically republished, and project associations are never invented.
+
+Already indexable core services receive published local pages. Short noindexed Google Business services receive Local SEO drafts with noindex=true; review the service's actual availability, specific copy, original local value and underlying service SEO setting before publishing them manually. The existing LocalSeoFieldCompletionSeeder can fill missing fields on older records without reversing their editorial indexing decisions.
+
+To verify on the server after normal deploy: cd /var/www/safetech/back && php artisan safetech:local-seo-audit --strict. Check Tbilisi, Bakuriani, Surami and additional region pages in KA/EN/RU. Technical indexability is not Google Search Console indexing.

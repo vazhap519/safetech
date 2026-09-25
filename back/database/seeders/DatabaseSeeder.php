@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(SystemContentSeeder::class);
         $this->call(GoogleBusinessServicesSeeder::class);
+        $this->call(PriorityLocalSeoSeeder::class);
+        $this->call(LocalSeoFieldCompletionSeeder::class);
         $this->call(SeoPageSeeder::class);
         $this->call(AdminUserSeeder::class);
     }
