@@ -47,6 +47,9 @@ final class PriorityLocalSeoSeeder extends Seeder
                 }
 
                 $category = (string) ($service->category?->slug ?? '');
+                if ($category === 'telecommunications-infrastructure') {
+                    $category = 'telecommunications-contractor';
+                }
                 if (! isset($technical[$category])) {
                     return;
                 }
