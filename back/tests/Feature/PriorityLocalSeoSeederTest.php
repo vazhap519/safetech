@@ -37,21 +37,21 @@ class PriorityLocalSeoSeederTest extends TestCase
         $this->assertDatabaseMissing('local_service_landings', ['location_slug' => 'batumi']);
 
         $barrier = Service::query()->where('slug', 'barrier-gate-installation')->sole();
-        $bakuriani = LocalServiceLanding::query()
+        $abastumani = LocalServiceLanding::query()
             ->where('service_id', $barrier->getKey())
-            ->where('location_slug', 'bakuriani')
+            ->where('location_slug', 'abastumani')
             ->sole();
 
-        $this->assertTrue($bakuriani->is_published);
-        $this->assertFalse($bakuriani->noindex);
-        $this->assertCount(0, $bakuriani->projects);
-        $this->assertGreaterThan(400, mb_strlen($bakuriani->content));
-        $this->assertCount(3, $bakuriani->benefits);
-        $this->assertGreaterThanOrEqual(2, count($bakuriani->faq));
-        $this->assertStringContainsString('კოტეჯ', $bakuriani->content);
+        $this->assertTrue($abastumani->is_published);
+        $this->assertFalse($abastumani->noindex);
+        $this->assertCount(0, $abastumani->projects);
+        $this->assertGreaterThan(400, mb_strlen($abastumani->content));
+        $this->assertCount(3, $abastumani->benefits);
+        $this->assertGreaterThanOrEqual(2, count($abastumani->faq));
+        $this->assertStringContainsString('დასასვენებელი', $abastumani->content);
         $this->assertStringContainsString(
-            'hotel',
-            mb_strtolower(data_get($bakuriani->translations, 'fields.content.en')),
+            'holiday',
+            mb_strtolower(data_get($abastumani->translations, 'fields.content.en')),
         );
 
         foreach (['ka', 'en', 'ru'] as $locale) {
@@ -60,13 +60,13 @@ class PriorityLocalSeoSeederTest extends TestCase
                 'ctaTitle', 'ctaText', 'primaryKeyword',
                 'seoTitle', 'seoDescription', 'ogTitle', 'ogDescription',
             ] as $field) {
-                $this->assertNotEmpty(data_get($bakuriani->translations, "fields.{$field}.{$locale}"));
+                $this->assertNotEmpty(data_get($abastumani->translations, "fields.{$field}.{$locale}"));
             }
             $this->assertLessThanOrEqual(
                 320,
-                mb_strlen(data_get($bakuriani->translations, "fields.seoDescription.{$locale}")),
+                mb_strlen(data_get($abastumani->translations, "fields.seoDescription.{$locale}")),
             );
-            $this->assertNotEmpty(data_get($bakuriani->translations, "keywords.{$locale}"));
+            $this->assertNotEmpty(data_get($abastumani->translations, "keywords.{$locale}"));
         }
     }
 
