@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\LocalServiceLanding;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Arr;
 
 /**
  * Complete missing editable fields on EXISTING, verified Local SEO landings.
