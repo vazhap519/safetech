@@ -23,7 +23,7 @@ class PriorityLocalSeoSeederTest extends TestCase
         $this->seed(PriorityLocalSeoSeeder::class);
 
         $serviceIds = Service::query()->publiclyVisible()->pluck('id')->all();
-        $this->assertCount(57, $serviceIds);
+        $this->assertCount(79, $serviceIds);
 
         foreach (PriorityLocalSeoCopy::CITY_ORDER as $city) {
             $this->assertSame(
