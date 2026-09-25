@@ -27,6 +27,18 @@ class SeoPageForm
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
+            Section::make('SEO ტექსტები 3 ენაზე')
+                ->description('KA, EN და RU სათაური, Meta აღწერა, Open Graph ტექსტები და საკვანძო თემები აქ ცალკე ველებად ჩანს. თუ ინგლისური ან რუსული ველი ცარიელია, საიტი ქართულ სათადარიგო მნიშვნელობას გამოიყენებს.')
+                ->schema([
+                    ...LocalizedContentFields::inputs('title', 'SEO სათაური', maxLength: 180, live: true),
+                    ...LocalizedContentFields::inputs('description', 'Meta აღწერა', textarea: true, maxLength: 500, live: true),
+                    ...LocalizedContentFields::inputs('og_title', 'Open Graph სათაური', maxLength: 180, live: true),
+                    ...LocalizedContentFields::inputs('og_description', 'Open Graph აღწერა', textarea: true, maxLength: 500, live: true),
+                    TagsInput::make('translations.keywords.ka')->label('კონტენტის თემები (ქართული)'),
+                    TagsInput::make('translations.keywords.en')->label('კონტენტის თემები (ინგლისური)'),
+                    TagsInput::make('translations.keywords.ru')->label('Темы контента (Русский)'),
+                ])
+                ->columns(3),
             Section::make('ტექნიკური SEO')
                 ->description('კანონიკური მისამართი, ინდექსაციის წესები, სოციალური preview და სტრუქტურირებული მონაცემები იმართება ერთი ადგილიდან.')
                 ->schema([
@@ -165,18 +177,6 @@ class SeoPageForm
                         ->columnSpanFull(),
                 ])
                 ->columns(2),
-            Section::make('SEO ტექსტები 3 ენაზე')
-                ->description('თითოეულ ენას აქვს დამოუკიდებელი სათაური, აღწერა და Open Graph preview. ქართული ცარიელი ველი სათადარიგო ტექსტს გამოიყენებს.')
-                ->schema([
-                    ...LocalizedContentFields::inputs('title', 'SEO სათაური', maxLength: 180, live: true),
-                    ...LocalizedContentFields::inputs('description', 'Meta აღწერა', textarea: true, maxLength: 500, live: true),
-                    ...LocalizedContentFields::inputs('og_title', 'Open Graph სათაური', maxLength: 180, live: true),
-                    ...LocalizedContentFields::inputs('og_description', 'Open Graph აღწერა', textarea: true, maxLength: 500, live: true),
-                    TagsInput::make('translations.keywords.ka')->label('კონტენტის თემები (ქართული)'),
-                    TagsInput::make('translations.keywords.en')->label('კონტენტის თემები (ინგლისური)'),
-                    TagsInput::make('translations.keywords.ru')->label('Темы контента (Русский)'),
-                ])
-                ->columns(3),
         ]);
     }
 
