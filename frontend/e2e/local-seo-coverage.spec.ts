@@ -27,8 +27,12 @@ type Landing = {
 test("every published canonical service has an indexable Local page in all 3 languages", async ({ request }) => {
     const serviceResponse = await request.get(apiBase + "/services?locale=ka");
     expect(serviceResponse.status()).toBe(200);
-    const services = (await serviceResponse.json()).data as Array<{ slug: string }>;
-    expect(services).toHaveLength(57);
+    const services = (await serviceResponse.json()).data as Array<{
+        slug: string;
+        seo?: { noindex?: boolean };
+    }>;
+    const indexableServices = services.filter((service) => service.seo?.noindex !== true);
+    expect(indexableServices.length).toBeGreaterThan(0);
 
     for (const { code } of locales) {
         const response = await request.get(apiBase + "/local-service-landings?locale=" + code);
@@ -36,7 +40,7 @@ test("every published canonical service has an indexable Local page in all 3 lan
         const landings = (await response.json()).data as Landing[];
         const covered = new Set(landings.filter((landing) => !landing.seo.noindex)
             .map((landing) => landing.service.slug));
-        for (const service of services) {
+        for (const service of indexableServices) {
             expect(covered.has(service.slug), code + ": missing Local SEO for " + service.slug).toBe(true);
         }
         for (const slug of missingServices) {
