@@ -614,7 +614,7 @@ export default function ServiceCalculator({
     };
 
     return (
-        <section className="scroll-mt-28 pt-unit-2xl" id="service-calculator">
+        <section className="pt-unit-2xl">
             <div className="overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container/70 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
                 <header className="border-b border-outline-variant/20 bg-primary/5 px-5 py-7 sm:px-8 sm:py-9">
                     <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">

@@ -2,20 +2,39 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\LocalizesResourceContent;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
+use Illuminate\Http\Resources\Json\JsonResource;
 
-class ServiceCardResource extends ServiceResource
+class ServiceCardResource extends JsonResource
 {
+    use LocalizesResourceContent;
+
     public function toArray(Request $request): array
     {
-        return Arr::only(parent::toArray($request), [
-            'slug',
-            'name',
-            'title',
+        $locale = $this->locale($request);
+        $category = $this->resource->relationLoaded('category')
+            ? $this->resource->getRelation('category')
+            : null;
+        $fallbackName = $this->name ?: $this->title;
+        $name = $this->translated('name', $fallbackName, $locale);
+        $title = $this->translated('title', $this->title ?: $fallbackName, $locale);
+        $description = $this->translated(
             'description',
-            'icon',
-            'category',
-        ]);
+            $this->description ?: ($this->short_description ?: $this->long_description),
+            $locale,
+        );
+
+        return [
+            'slug' => $this->slug,
+            'name' => $name,
+            'title' => $title ?: $name,
+            'description' => $description,
+            'icon' => $this->icon,
+            'category' => $category ? [
+                'name' => $this->translatedModel($category, 'name', $category->name, $locale),
+                'slug' => $category->slug,
+            ] : null,
+        ];
     }
 }

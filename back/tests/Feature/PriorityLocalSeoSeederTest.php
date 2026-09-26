@@ -54,6 +54,14 @@ class PriorityLocalSeoSeederTest extends TestCase
             mb_strtolower(data_get($abastumani->translations, 'fields.content.en')),
         );
 
+        $camera = Service::query()->where('slug', 'security-camera-installation')->sole();
+        $cameraAbastumani = LocalServiceLanding::query()
+            ->where('service_id', $camera->getKey())
+            ->where('location_slug', 'abastumani')
+            ->sole();
+        $this->assertSame('კამერების დაყენება აბასთუმანში', $cameraAbastumani->primary_keyword);
+        $this->assertStringContainsString('დაყენება და მონტაჟი', $cameraAbastumani->title);
+
         foreach (['ka', 'en', 'ru'] as $locale) {
             foreach ([
                 'locationName', 'eyebrow', 'title', 'excerpt', 'content',

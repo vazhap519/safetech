@@ -123,6 +123,11 @@ class PublicContentEligibilityTest extends TestCase
         $serviceCard = $this->getJson('/api/services?view=card&locale=en')
             ->assertOk()
             ->assertJsonPath('data.0.slug', 'camera-installation');
+        $serviceSitemap = $this->getJson('/api/services?view=sitemap')
+            ->assertOk()
+            ->assertJsonPath('data.0.slug', 'camera-installation')
+            ->assertJsonPath('data.0.indexable', true)
+            ->assertJsonPath('data.0.seo.noindex', false);
         $projectSummary = $this->getJson('/api/projects?view=summary&locale=en')
             ->assertOk()
             ->assertJsonPath('data.0.slug', 'office-network')
@@ -130,6 +135,8 @@ class PublicContentEligibilityTest extends TestCase
 
         $this->assertArrayNotHasKey('benefits', $serviceCard->json('data.0'));
         $this->assertArrayNotHasKey('overview', $serviceCard->json('data.0'));
+        $this->assertArrayNotHasKey('description', $serviceSitemap->json('data.0'));
+        $this->assertArrayNotHasKey('benefits', $serviceSitemap->json('data.0'));
         $this->assertArrayNotHasKey('challenges', $projectSummary->json('data.0'));
         $this->assertArrayNotHasKey('gallery', $projectSummary->json('data.0'));
 

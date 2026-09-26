@@ -11,12 +11,33 @@ export type LocalServiceLandingProject = {
     image?: string | null;
 };
 
-export type LocalServiceLanding = {
+export type LocalServiceLandingProjectReference = {
+    slug: string;
+};
+
+export type LocalServiceLandingSummary = {
     id: number;
     locationSlug: string;
     locationName: string;
-    eyebrow?: string | null;
     title: string;
+    service: {
+        slug: string;
+        name: string;
+        title: string;
+    };
+    projects: LocalServiceLandingProjectReference[];
+    seo?: {
+        title?: string;
+        noindex?: boolean;
+    };
+    updated_at?: string;
+};
+
+export type LocalServiceLanding = Omit<
+    LocalServiceLandingSummary,
+    "projects" | "seo" | "service"
+> & {
+    eyebrow?: string | null;
     excerpt?: string | null;
     content: string;
     benefits: Array<{
@@ -31,25 +52,19 @@ export type LocalServiceLanding = {
     ctaText?: string | null;
     primaryKeyword?: string | null;
     keywords: string[];
-    service: {
-        slug: string;
-        name: string;
-        title: string;
+    service: LocalServiceLandingSummary["service"] & {
         heroImage?: string | null;
     };
     projects: LocalServiceLandingProject[];
-    seo?: {
-        title?: string;
+    seo?: LocalServiceLandingSummary["seo"] & {
         description?: string;
         keywords?: string[];
         image?: string | null;
-        noindex?: boolean;
         canonical?: string;
         schemaType?: string;
         og?: { title?: string; description?: string };
         schema?: Record<string, unknown> | Array<Record<string, unknown>>;
     };
-    updated_at?: string;
 };
 
 const serverApiBase = getServerApiBase();
@@ -119,14 +134,18 @@ export async function getLocalServiceLanding(
 
 export async function getLocalServiceLandings(
     serviceSlug?: string,
-): Promise<LocalServiceLanding[]> {
+): Promise<LocalServiceLandingSummary[]> {
     const locale = await getCurrentLocale();
-    const landings = await fetchData<LocalServiceLanding[]>(
+    const landings = await fetchData<LocalServiceLandingSummary[]>(
         apiPath("/local-service-landings", {
             locale,
             service: serviceSlug,
+            view: "summary",
         }),
     );
 
-    return (landings ?? []).map(normalizeLanding);
+    return (landings ?? []).map((landing) => ({
+        ...landing,
+        projects: landing.projects ?? [],
+    }));
 }

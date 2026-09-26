@@ -1,7 +1,6 @@
 import {
   buildSitemapApiUrl,
-  hasMeaningfulContent,
-  hasValidSitemapSlug,
+  isIndexableLocalServiceLanding,
   localizedUrlEntries,
   safeFetchJson,
   urlset,
@@ -12,16 +11,13 @@ import { addSitemapStylesheet } from "@/lib/sitemap-style";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const response = await safeFetchJson(buildSitemapApiUrl("/local-service-landings"));
+  const response = await safeFetchJson(buildSitemapApiUrl(
+    "/local-service-landings",
+    { view: "sitemap" },
+  ));
   const landings = Array.isArray(response?.data) ? response.data : [];
   const urls = landings
-    .filter((landing) => (
-      hasValidSitemapSlug(landing?.service?.slug)
-      && hasValidSitemapSlug(landing?.locationSlug)
-      && !landing?.seo?.noindex
-      && hasMeaningfulContent(landing?.title)
-      && hasMeaningfulContent(landing?.content)
-    ))
+    .filter(isIndexableLocalServiceLanding)
     .flatMap((landing) => localizedUrlEntries(
       `/services/${encodeURIComponent(landing.service.slug)}/${encodeURIComponent(landing.locationSlug)}`,
       {

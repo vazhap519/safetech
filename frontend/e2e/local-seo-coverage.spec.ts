@@ -25,7 +25,7 @@ type Landing = {
 };
 
 test("every published canonical service has an indexable Local page in all 3 languages", async ({ request }) => {
-    const serviceResponse = await request.get(apiBase + "/services?locale=ka");
+    const serviceResponse = await request.get(apiBase + "/services?locale=ka&view=sitemap");
     expect(serviceResponse.status()).toBe(200);
     const services = (await serviceResponse.json()).data as Array<{
         slug: string;
@@ -35,7 +35,9 @@ test("every published canonical service has an indexable Local page in all 3 lan
     expect(indexableServices.length).toBeGreaterThan(0);
 
     for (const { code } of locales) {
-        const response = await request.get(apiBase + "/local-service-landings?locale=" + code);
+        const response = await request.get(
+            apiBase + "/local-service-landings?locale=" + code + "&view=summary",
+        );
         expect(response.status()).toBe(200);
         const landings = (await response.json()).data as Landing[];
         const covered = new Set(landings.filter((landing) => !landing.seo.noindex)
@@ -44,15 +46,17 @@ test("every published canonical service has an indexable Local page in all 3 lan
             expect(covered.has(service.slug), code + ": missing Local SEO for " + service.slug).toBe(true);
         }
         for (const slug of missingServices) {
-            const landing = landings.find((item) => item.service.slug === slug
-                && item.locationSlug === "tbilisi");
-            expect(landing, code + ": " + slug + "/tbilisi").toBeDefined();
-            expect(landing?.title).toBeTruthy();
-            expect(landing?.content.length).toBeGreaterThan(250);
-            expect(landing?.seo.description).toBeTruthy();
-            expect(landing?.seo.noindex).toBe(false);
+            const detailResponse = await request.get(
+                apiBase + "/local-service-landings/" + slug + "/tbilisi?locale=" + code,
+            );
+            expect(detailResponse.status(), code + ": " + slug + "/tbilisi").toBe(200);
+            const landing = (await detailResponse.json()).data as Landing;
+            expect(landing.title).toBeTruthy();
+            expect(landing.content.length).toBeGreaterThan(250);
+            expect(landing.seo.description).toBeTruthy();
+            expect(landing.seo.noindex).toBe(false);
             if (code !== "ka") {
-                expect(landing?.content, code + ": Georgian fallback in " + slug).not.toMatch(/[\u10A0-\u10FF]/);
+                expect(landing.content, code + ": Georgian fallback in " + slug).not.toMatch(/[\u10A0-\u10FF]/);
             }
         }
     }

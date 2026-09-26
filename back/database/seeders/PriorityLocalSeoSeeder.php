@@ -122,7 +122,14 @@ final class PriorityLocalSeoSeeder extends Seeder
         foreach (self::LOCALES as $locale) {
             $location = $city['in'][$locale];
             $name = $names[$locale];
-            $title = $this->limit("{$name} {$location}", 245);
+            $isCameraService = $service->slug === 'security-camera-installation';
+            $title = $isCameraService
+                ? match ($locale) {
+                    'ka' => "უსაფრთხოების კამერების დაყენება და მონტაჟი {$location}",
+                    'en' => "Security Camera Installation and Setup {$location}",
+                    default => "Установка и монтаж камер видеонаблюдения {$location}",
+                }
+                : $this->limit("{$name} {$location}", 245);
             $scenario = $city['use'][$category][$locale];
             $siteContext = $city['context'][$locale];
             $checklist = $technical[$locale];
@@ -158,6 +165,17 @@ final class PriorityLocalSeoSeeder extends Seeder
 
             $seo = $this->limit("{$title}. {$scenario} SafeTech.", 310);
             $seoTitle = $this->limit("{$title} | SafeTech", 255);
+            $keywords = $isCameraService
+                ? match ($locale) {
+                    'ka' => ["კამერების დაყენება {$location}", "კამერების მონტაჟი {$location}", $title],
+                    'en' => ["security camera installation {$city['name'][$locale]}", "CCTV installation {$city['name'][$locale]}", $title],
+                    default => ["установка камер {$city['name'][$locale]}", "монтаж камер {$city['name'][$locale]}", $title],
+                }
+                : [
+                    $title,
+                    $this->limit("{$name} {$city['name'][$locale]}", 245),
+                ];
+
             $copy[$locale] = [
                 'locationName' => $city['name'][$locale],
                 'eyebrow' => $this->limit("{$name} · {$city['name'][$locale]}", 255),
@@ -170,11 +188,8 @@ final class PriorityLocalSeoSeeder extends Seeder
                     default => "Запросить предложение в {$city['name'][$locale]}",
                 },
                 'ctaText' => $section[3],
-                'primaryKeyword' => $title,
-                'keywords' => [
-                    $title,
-                    $this->limit("{$name} {$city['name'][$locale]}", 245),
-                ],
+                'primaryKeyword' => $keywords[0],
+                'keywords' => $keywords,
                 'seoTitle' => $seoTitle,
                 'seoDescription' => $seo,
                 'ogTitle' => $seoTitle,

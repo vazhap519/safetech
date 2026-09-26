@@ -111,7 +111,9 @@ test.describe("release candidate public matrix", () => {
         }
 
         test(`${locale} service local landing project category CMS page and review routes render`, async ({ page, request }) => {
-            const servicesResponse = await request.get(`${apiBase}/services?locale=${locale}`);
+            const servicesResponse = await request.get(
+                `${apiBase}/services?locale=${locale}&view=card`,
+            );
             expect(servicesResponse.ok()).toBeTruthy();
             const services = (await servicesResponse.json()) as { data?: Array<{ slug?: string }> };
             const serviceSlug = services.data?.find((item) => item.slug)?.slug;
@@ -124,7 +126,7 @@ test.describe("release candidate public matrix", () => {
             await expect(page.locator("h1").first()).toBeVisible();
 
             const localLandingsResponse = await request.get(
-                `${apiBase}/local-service-landings?locale=${locale}`,
+                `${apiBase}/local-service-landings?locale=${locale}&view=summary`,
             );
             expect(localLandingsResponse.ok()).toBeTruthy();
             const localLandings = (await localLandingsResponse.json()) as {

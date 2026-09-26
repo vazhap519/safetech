@@ -1,5 +1,5 @@
 import JsonLd from "@/components/seo/JsonLd";
-import type { LocalServiceLanding } from "@/lib/local-service-landings";
+import type { LocalServiceLandingSummary } from "@/lib/local-service-landings";
 import { getLanguageTag } from "@/lib/locales";
 import type { ProjectDetail } from "@/lib/projectDetails";
 import {
@@ -50,7 +50,7 @@ export default async function ProjectDetailSchema({
     localLandings = [],
 }: {
     project: ProjectDetail;
-    localLandings?: LocalServiceLanding[];
+    localLandings?: LocalServiceLandingSummary[];
 }) {
     const { branding, locale, translations } = await getSiteSettings();
     const t = createTranslator(translations, locale);

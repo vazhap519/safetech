@@ -5,7 +5,6 @@ import {
     getBackendFilterCategories,
     getBackendServices,
 } from "@/lib/backend";
-import { getServiceCalculatorProfiles } from "@/lib/service-calculator-api";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -16,15 +15,14 @@ export default async function ServiceSection({
     category?: string;
     initialService?: string;
 }) {
-    const [services, categories, profiles, { locale, translations }] =
+    const [services, categories, { locale, translations }] =
         await Promise.all([
             getBackendServices(category),
             getBackendFilterCategories("services"),
-            getServiceCalculatorProfiles(),
             getSiteSettings(),
         ]);
 
-    if (!services.length && !profiles.length) return null;
+    if (!services.length) return null;
 
     const countLabel = translateText(
         translations,
@@ -63,12 +61,9 @@ export default async function ServiceSection({
                 />
             ) : null}
 
-            {profiles.length ? (
-                <ServiceCalculatorSlot
-                    initialService={initialService || services[0]?.slug}
-                    profiles={profiles}
-                />
-            ) : null}
+            <ServiceCalculatorSlot
+                initialService={initialService || services[0]?.slug}
+            />
         </section>
     );
 }

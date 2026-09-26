@@ -1,5 +1,5 @@
 import LocalizedLink from "@/components/ui/LocalizedLink";
-import type { LocalServiceLanding } from "@/lib/local-service-landings";
+import type { LocalServiceLandingSummary } from "@/lib/local-service-landings";
 import type { Locale } from "@/lib/locales";
 
 const labels: Record<Locale, { title: string; text: string }> = {
@@ -21,7 +21,7 @@ export default function ProjectLocalSeoLinks({
     landings,
     locale,
 }: {
-    landings: LocalServiceLanding[];
+    landings: LocalServiceLandingSummary[];
     locale: Locale;
 }) {
     if (!landings.length) return null;

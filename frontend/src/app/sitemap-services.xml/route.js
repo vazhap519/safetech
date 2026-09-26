@@ -10,7 +10,7 @@ import { addSitemapStylesheet } from "@/lib/sitemap-style";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const services = await fetchAllPaginated("/services");
+  const services = await fetchAllPaginated("/services", { view: "sitemap" });
   const urls = services
     .filter(isIndexableService)
     .flatMap((service) => localizedUrlEntries(`/services/${encodeURIComponent(service.slug)}`, {

@@ -1,5 +1,5 @@
 import LocalizedLink from "@/components/ui/LocalizedLink";
-import type { LocalServiceLanding } from "@/lib/local-service-landings";
+import type { LocalServiceLandingSummary } from "@/lib/local-service-landings";
 import type { Locale } from "@/lib/locales";
 
 const labels: Record<Locale, { title: string; text: string }> = {
@@ -25,7 +25,7 @@ export default function LocalServiceSiblingLinks({
 }: {
     currentLocation: string;
     serviceSlug: string;
-    siblings: LocalServiceLanding[];
+    siblings: LocalServiceLandingSummary[];
     locale: Locale;
 }) {
     const links = siblings.filter(

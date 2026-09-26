@@ -165,18 +165,38 @@ export function isIndexableService(service) {
   return Boolean(
     hasValidSitemapSlug(service?.slug)
     && !service?.seo?.noindex
-    && hasMeaningfulContent(service?.title, service?.name)
-    && hasMeaningfulContent(
-      service?.description,
-      service?.shortDescription,
-      service?.longDescription,
-      service?.overview,
-      service?.benefits,
-      service?.solutions,
-      service?.features,
-      service?.process,
-      service?.warranty,
-      service?.sla,
+    && (
+      service?.indexable === true
+      || (
+        hasMeaningfulContent(service?.title, service?.name)
+        && hasMeaningfulContent(
+          service?.description,
+          service?.shortDescription,
+          service?.longDescription,
+          service?.overview,
+          service?.benefits,
+          service?.solutions,
+          service?.features,
+          service?.process,
+          service?.warranty,
+          service?.sla,
+        )
+      )
+    )
+  );
+}
+
+export function isIndexableLocalServiceLanding(landing) {
+  return Boolean(
+    hasValidSitemapSlug(landing?.service?.slug)
+    && hasValidSitemapSlug(landing?.locationSlug)
+    && !landing?.seo?.noindex
+    && (
+      landing?.indexable === true
+      || (
+        hasMeaningfulContent(landing?.title)
+        && hasMeaningfulContent(landing?.content)
+      )
     )
   );
 }
@@ -252,12 +272,13 @@ export async function categorySitemapResponse({
   pathPrefix,
   priority,
   contentEndpoint,
+  contentParams,
   contentFilter,
   categorySlug,
 }) {
   const [response, content] = await Promise.all([
     safeFetchJson(buildSitemapApiUrl(endpoint)),
-    contentEndpoint ? fetchAllPaginated(contentEndpoint) : Promise.resolve([]),
+    contentEndpoint ? fetchAllPaginated(contentEndpoint, contentParams) : Promise.resolve([]),
   ]);
 
   if (!response) {
@@ -305,7 +326,7 @@ function buildImageSitemapItems(services, projects) {
 
 export async function fetchImageSitemapItems() {
   const [services, projects] = await Promise.all([
-    fetchAllPaginated("/services"),
+    fetchAllPaginated("/services", { view: "sitemap" }),
     fetchAllPaginated("/projects"),
   ]);
 
@@ -332,7 +353,7 @@ export async function getSitemapIndexPaths() {
     serviceCategoriesResponse,
     projectCategoriesResponse,
   ] = await Promise.all([
-    fetchAllPaginated("/services"),
+    fetchAllPaginated("/services", { view: "sitemap" }),
     fetchAllPaginated("/projects"),
     fetchAllPaginated("/pages"),
     safeFetchJson(buildSitemapApiUrl("/service-categories")),

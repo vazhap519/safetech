@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\LocalServiceLandingResource;
+use App\Http\Resources\LocalServiceLandingSitemapResource;
+use App\Http\Resources\LocalServiceLandingSummaryResource;
 use App\Models\LocalServiceLanding;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -16,10 +18,10 @@ final class LocalServiceLandingController extends Controller
     {
         $serviceSlug = trim($request->string('service')->toString());
         $locationSlug = trim($request->string('location')->toString());
+        $view = $request->string('view')->toString();
 
         $query = LocalServiceLanding::query()
-            ->publiclyVisible()
-            ->with(['service', 'publicProjects']);
+            ->publiclyVisible();
 
         if ($serviceSlug !== '') {
             $query->whereHas(
@@ -32,7 +34,47 @@ final class LocalServiceLandingController extends Controller
             $query->where('location_slug', $locationSlug);
         }
 
-        return LocalServiceLandingResource::collection($query->get());
+        if ($view === 'sitemap') {
+            $landings = $query
+                ->with(['service:id,slug'])
+                ->get([
+                    'id',
+                    'service_id',
+                    'location_slug',
+                    'noindex',
+                    'updated_at',
+                    'sort_order',
+                ]);
+
+            return LocalServiceLandingSitemapResource::collection($landings);
+        }
+
+        if ($view === 'summary') {
+            $landings = $query
+                ->with([
+                    'service:id,slug,name,title,translations',
+                    'publicProjects' => fn (Builder $projects): Builder => $projects
+                        ->select(['projects.id', 'projects.slug']),
+                ])
+                ->get([
+                    'id',
+                    'service_id',
+                    'location_slug',
+                    'location_name',
+                    'title',
+                    'seo_title',
+                    'translations',
+                    'noindex',
+                    'updated_at',
+                    'sort_order',
+                ]);
+
+            return LocalServiceLandingSummaryResource::collection($landings);
+        }
+
+        return LocalServiceLandingResource::collection(
+            $query->with(['service', 'publicProjects'])->get(),
+        );
     }
 
     public function show(

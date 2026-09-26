@@ -86,6 +86,28 @@ class LocalServiceLandingApiTest extends TestCase
             ->assertJsonPath('data.projects.0.slug', 'tbilisi-cctv-project')
             ->assertJsonPath('data.service.slug', 'security-camera-installation')
             ->assertJsonPath('data.seo.noindex', false);
+
+        $summary = $this->getJson('/api/local-service-landings?view=summary&locale=en')
+            ->assertOk()
+            ->assertJsonPath('data.0.locationName', 'Tbilisi')
+            ->assertJsonPath('data.0.title', 'Security camera installation in Tbilisi')
+            ->assertJsonPath('data.0.projects.0.slug', 'tbilisi-cctv-project')
+            ->assertJsonPath('data.0.service.slug', 'security-camera-installation')
+            ->assertJsonPath('data.0.seo.noindex', false);
+
+        $this->assertArrayNotHasKey('content', $summary->json('data.0'));
+        $this->assertArrayNotHasKey('benefits', $summary->json('data.0'));
+        $this->assertArrayNotHasKey('description', $summary->json('data.0.projects.0'));
+
+        $sitemap = $this->getJson('/api/local-service-landings?view=sitemap')
+            ->assertOk()
+            ->assertJsonPath('data.0.locationSlug', 'tbilisi')
+            ->assertJsonPath('data.0.service.slug', 'security-camera-installation')
+            ->assertJsonPath('data.0.indexable', true)
+            ->assertJsonPath('data.0.seo.noindex', false);
+
+        $this->assertArrayNotHasKey('title', $sitemap->json('data.0'));
+        $this->assertArrayNotHasKey('projects', $sitemap->json('data.0'));
     }
 
     public function test_unpublished_local_landings_are_not_public(): void
