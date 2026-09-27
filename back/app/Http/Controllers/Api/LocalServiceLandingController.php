@@ -8,6 +8,7 @@ use App\Http\Resources\LocalServiceLandingSitemapResource;
 use App\Http\Resources\LocalServiceLandingSummaryResource;
 use App\Models\LocalServiceLanding;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -53,7 +54,7 @@ final class LocalServiceLandingController extends Controller
             $landings = $query
                 ->with([
                     'service:id,slug,name,title,translations',
-                    'publicProjects' => fn (Builder $projects): Builder => $projects
+                    'publicProjects' => fn (BelongsToMany $projects): BelongsToMany => $projects
                         ->select(['projects.id', 'projects.slug']),
                 ])
                 ->get([

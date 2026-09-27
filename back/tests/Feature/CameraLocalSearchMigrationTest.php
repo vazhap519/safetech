@@ -86,9 +86,10 @@ class CameraLocalSearchMigrationTest extends TestCase
 
     private function landing(Service $service, string $slug, string $name): LocalServiceLanding
     {
-        return LocalServiceLanding::query()->create([
+        return LocalServiceLanding::query()->updateOrCreate([
             'service_id' => $service->getKey(),
             'location_slug' => $slug,
+        ], [
             'location_name' => $name,
             'title' => "უსაფრთხოების კამერების მონტაჟი {$name}",
             'content' => 'ობიექტის შეფასება, კაბელირება, მონტაჟი და გამართვა.',
