@@ -36,6 +36,12 @@ export default function ServiceCalculatorSlot({
         const target = containerRef.current;
         if (!target) return;
 
+        if (window.location.hash === "#service-calculator") {
+            const directLoad = window.setTimeout(() => setShouldLoad(true), 0);
+
+            return () => window.clearTimeout(directLoad);
+        }
+
         const Observer = window.IntersectionObserver;
 
         if (typeof Observer !== "function") {

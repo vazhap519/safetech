@@ -269,6 +269,7 @@ test.describe("release candidate public matrix", () => {
             await expect(calculator).toBeVisible();
 
             const serviceSelect = calculator.locator("select").first();
+            await expect(serviceSelect).toBeVisible();
             const options = await serviceSelect.locator("option").count();
             expect(options).toBeGreaterThan(0);
 
