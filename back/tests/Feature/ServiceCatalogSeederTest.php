@@ -44,7 +44,7 @@ class ServiceCatalogSeederTest extends TestCase
         $translationMap = MultilingualContent::mapFrom($translations->value);
 
         $this->assertSame(
-            'CCTV Camera Installation in Georgia | SafeTech',
+            'Security Camera Installation and Setup | SafeTech',
             $translationMap['service.security-camera-installation.seoTitle']['en'] ?? null,
         );
         $this->assertSame(
