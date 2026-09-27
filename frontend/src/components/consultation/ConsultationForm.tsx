@@ -161,7 +161,7 @@ export default function ConsultationForm({
                         maxLength={24}
                         minLength={7}
                         name="phone"
-                        pattern="[+()0-9\s-]{7,24}"
+                        pattern="[+\(\)0-9\s\-]{7,24}"
                         required
                         type="tel"
                     />
