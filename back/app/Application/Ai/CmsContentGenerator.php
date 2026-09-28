@@ -2,6 +2,7 @@
 
 namespace App\Application\Ai;
 
+use App\Filament\Support\ManagedPageTranslationFields;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -902,6 +903,28 @@ PROMPT;
         $missing = new \stdClass;
 
         foreach ($paths as $path) {
+            if ($path === 'value.entries') {
+                $managedKeys = array_fill_keys(ManagedPageTranslationFields::managedKeys(), true);
+
+                foreach (data_get($state, 'value.entries', []) ?: [] as $index => $entry) {
+                    if (! is_array($entry) || blank($entry['key'] ?? null)
+                        || isset($managedKeys[(string) $entry['key']])) {
+                        continue;
+                    }
+
+                    foreach (['ka', 'en', 'ru'] as $locale) {
+                        $valuePath = "value.entries.{$index}.{$locale}";
+                        $value = data_get($state, $valuePath);
+
+                        if ($overwrite || ! is_string($value) || trim($value) === '') {
+                            $this->collectTargetPaths('settings', $value, $valuePath, $overwrite, $targets);
+                        }
+                    }
+                }
+
+                continue;
+            }
+
             $value = data_get($state, $path, $missing);
             if ($value === $missing) {
                 if ($path === 'managed_page_translations' || str_ends_with($path, '.entries')) {
