@@ -72,7 +72,7 @@ final class CategoryFields
             Get $get,
             Set $set,
             ?Model $record,
-        ): void {
+        ) use ($kind): void {
             $set('translations.fields.name.ka', $state);
 
             $currentSlug = trim((string) $get('slug'));
