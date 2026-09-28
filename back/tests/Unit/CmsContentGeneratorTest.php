@@ -676,11 +676,12 @@ class CmsContentGeneratorTest extends TestCase
             $this->assertContains('managed_page_translations.contact_info_phone.en', $targets);
             $this->assertContains('value.whatsapp_message_en', $targets);
             $this->assertContains('value.whatsapp_message_ru', $targets);
-            $this->assertContains('value.address', $targets);
-            $this->assertContains('value.address_en', $targets);
-            $this->assertContains('value.address_ru', $targets);
-            $this->assertContains('value.hours_en', $targets);
-            $this->assertContains('value.hours_ru', $targets);
+            $this->assertNotContains('value.address', $targets);
+            $this->assertNotContains('value.address_en', $targets);
+            $this->assertNotContains('value.address_ru', $targets);
+            $this->assertNotContains('value.hours', $targets);
+            $this->assertNotContains('value.hours_en', $targets);
+            $this->assertNotContains('value.hours_ru', $targets);
             $this->assertNotContains('value.phone', $targets);
             $this->assertNotContains('value.email', $targets);
 
@@ -716,10 +717,10 @@ class CmsContentGeneratorTest extends TestCase
         $this->assertSame('filled:value.whatsapp_message', data_get($updates, 'value.whatsapp_message'));
         $this->assertSame('filled:value.whatsapp_message_en', data_get($updates, 'value.whatsapp_message_en'));
         $this->assertSame('filled:value.whatsapp_message_ru', data_get($updates, 'value.whatsapp_message_ru'));
-        $this->assertSame('filled:value.address_en', data_get($updates, 'value.address_en'));
-        $this->assertSame('filled:value.address_ru', data_get($updates, 'value.address_ru'));
-        $this->assertSame('filled:value.hours_en', data_get($updates, 'value.hours_en'));
-        $this->assertSame('filled:value.hours_ru', data_get($updates, 'value.hours_ru'));
+        $this->assertNull(data_get($updates, 'value.address_en'));
+        $this->assertNull(data_get($updates, 'value.address_ru'));
+        $this->assertNull(data_get($updates, 'value.hours_en'));
+        $this->assertNull(data_get($updates, 'value.hours_ru'));
         $this->assertNull(data_get($updates, 'value.phone'));
         $this->assertNull(data_get($updates, 'value.email'));
     }
@@ -743,11 +744,18 @@ class CmsContentGeneratorTest extends TestCase
 
         $updates = app(CmsContentGenerator::class)->generate('settings', 'SafeTech-ის ფაქტები', [
             'key' => 'contact',
-            'value' => ['whatsapp_message' => 'ქართული ტექსტი', 'address' => 'თბილისი'],
+            'value' => [
+                'whatsapp_message' => 'ქართული ტექსტი',
+                'address' => 'თბილისი',
+                'hours' => 'ორშაბათი-პარასკევი 10:00-18:00',
+            ],
         ]);
 
         $this->assertSame('filled:value.whatsapp_message_en', data_get($updates, 'value.whatsapp_message_en'));
         $this->assertSame('filled:value.address_ru', data_get($updates, 'value.address_ru'));
+        $this->assertSame('filled:value.hours_en', data_get($updates, 'value.hours_en'));
+        $this->assertNull(data_get($updates, 'value.address'));
+        $this->assertNull(data_get($updates, 'value.hours'));
     }
 
     public function test_service_generator_excludes_calculator_control_values_but_fills_labels(): void
@@ -1320,6 +1328,45 @@ class CmsContentGeneratorTest extends TestCase
             foreach ($blocked as $path) {
                 $this->assertNotContains($path, $targets, "{$profile}: {$path}");
             }
+        }
+    }
+
+
+    public function test_settings_ai_covers_managed_home_services_about_and_contact_copy_without_business_statistics(): void
+    {
+        $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
+            ->invoke(app(CmsContentGenerator::class), 'settings', [
+                'key' => 'translations',
+                'managed_page_translations' => [
+                    'home_hero_title_prefix' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'home_services_description' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'services_hero_description' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'services_work_step_0_description' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'about_numbers_item_0_value' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'about_numbers_item_0_label' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'about_team_description' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'contact_hero_description' => ['ka' => '', 'en' => '', 'ru' => ''],
+                ],
+            ], false);
+
+        foreach ([
+            'managed_page_translations.home_hero_title_prefix.ka',
+            'managed_page_translations.home_hero_title_prefix.en',
+            'managed_page_translations.home_services_description.ru',
+            'managed_page_translations.services_hero_description.en',
+            'managed_page_translations.services_work_step_0_description.ru',
+            'managed_page_translations.about_numbers_item_0_label.en',
+            'managed_page_translations.about_team_description.ru',
+            'managed_page_translations.contact_hero_description.en',
+        ] as $expected) {
+            $this->assertContains($expected, $targets, $expected);
+        }
+
+        foreach (['ka', 'en', 'ru'] as $locale) {
+            $this->assertNotContains(
+                "managed_page_translations.about_numbers_item_0_value.{$locale}",
+                $targets,
+            );
         }
     }
 
