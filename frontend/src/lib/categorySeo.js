@@ -1,4 +1,5 @@
-import { absoluteLocalizedUrl, createMetadata } from "@/lib/seo";
+import { DEFAULT_LOCALE } from "@/lib/locales";
+import { absoluteLocalizedUrl, absoluteSiteUrl, createMetadata } from "@/lib/seo";
 
 const descriptionFallbacks = {
   services: {
@@ -73,6 +74,12 @@ function categoryTitle(kind, category, locale) {
   return name ? formatter(name) : seoTitle;
 }
 
+function categoryCanonicalUrl(category, path, locale) {
+  return category?.canonical && locale === DEFAULT_LOCALE
+    ? absoluteSiteUrl(category.canonical)
+    : absoluteLocalizedUrl(path, locale);
+}
+
 export function categoryMetadata({ category, path, locale, kind }) {
   const description = plainText(
     category?.seo_description || category?.intro_text,
@@ -100,7 +107,7 @@ export function categorySchemas({ category, path, locale }) {
     const description = plainText(
       category.seo_description || category.intro_text,
     );
-    const url = absoluteLocalizedUrl(path, locale);
+    const url = categoryCanonicalUrl(category, path, locale);
 
     schemas.push({
       "@context": "https://schema.org",
