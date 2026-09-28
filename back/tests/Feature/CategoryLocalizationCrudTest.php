@@ -194,7 +194,6 @@ class CategoryLocalizationCrudTest extends TestCase
             ->assertJsonPath('data.0.og.description', 'ქსელის სისტემების განხორციელებული პროექტები.');
     }
 
-
     public function test_category_canonical_is_created_from_its_stable_slug(): void
     {
         $serviceCategory = CategoryForService::query()->create([
