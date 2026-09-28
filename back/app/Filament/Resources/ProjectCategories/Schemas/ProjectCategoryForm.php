@@ -12,7 +12,7 @@ class ProjectCategoryForm
     {
         return $schema
             ->components([
-                CategoryFields::core(withAppearance: true),
+                CategoryFields::core(withAppearance: true, kind: 'project'),
 
                 ...CategorySeoFields::sections('project'),
             ]);
