@@ -825,6 +825,19 @@ PROMPT;
         foreach ($repeaters as $field => $leaves) {
             $items = data_get($state, $field);
 
+            // Filament repeater rows may be keyed by UUIDs. Results are also
+            // semantically optional because a project may have no verified KPI.
+            // Generate the whole results collection atomically so AI can return
+            // either a complete translated KPI list or [] without being forced
+            // to fill UUID-scoped value/title/description leaves.
+            if ($field === 'results') {
+                if ($overwrite || ! is_array($items) || $items === [] || $this->projectResultsNeedGeneration($items)) {
+                    $paths[] = 'results';
+                }
+
+                continue;
+            }
+
             if ($items === null || $items === []) {
                 $paths[] = $field;
 
@@ -851,6 +864,36 @@ PROMPT;
         }
 
         return $paths;
+    }
+
+    /** @param array<mixed> $items */
+    private function projectResultsNeedGeneration(array $items): bool
+    {
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                return true;
+            }
+
+            foreach ([
+                'value',
+                'title',
+                'description',
+                'translations.en.value',
+                'translations.en.title',
+                'translations.en.description',
+                'translations.ru.value',
+                'translations.ru.title',
+                'translations.ru.description',
+            ] as $path) {
+                $value = data_get($item, $path);
+
+                if (! is_string($value) || trim($value) === '') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /** @param array<string, mixed> $state
