@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\CategoryForServices\Pages\CreateCategoryForService;
+use App\Filament\Resources\CategoryForServices\Pages\EditCategoryForService;
 use App\Filament\Resources\ProjectCategories\Pages\CreateProjectCategory;
+use App\Filament\Resources\ProjectCategories\Pages\EditProjectCategory;
 use App\Models\CategoryForService;
 use App\Models\Project;
 use App\Models\ProjectCategory;
@@ -11,6 +13,8 @@ use App\Models\Service;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -188,6 +192,103 @@ class CategoryLocalizationCrudTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.og.title', 'ქსელის სისტემები | SafeTech')
             ->assertJsonPath('data.0.og.description', 'ქსელის სისტემების განხორციელებული პროექტები.');
+    }
+
+
+    public function test_category_canonical_is_created_from_its_stable_slug(): void
+    {
+        $serviceCategory = CategoryForService::query()->create([
+            'name' => 'ქსელები',
+            'slug' => 'networks',
+        ]);
+        $projectCategory = ProjectCategory::query()->create([
+            'name' => 'ვიდეომეთვალყურეობა',
+            'slug' => 'video-surveillance',
+        ]);
+
+        $this->assertSame(
+            'https://safetech.ge/services/category/networks',
+            data_get($serviceCategory->fresh()->translations, 'seo.canonical'),
+        );
+        $this->assertSame(
+            'https://safetech.ge/projects/category/video-surveillance',
+            data_get($projectCategory->fresh()->translations, 'seo.canonical'),
+        );
+    }
+
+    public function test_editing_category_name_does_not_change_existing_public_slug(): void
+    {
+        $this->authenticateAdministrator();
+
+        $serviceCategory = CategoryForService::query()->create([
+            'name' => 'ძველი კატეგორია',
+            'slug' => 'stable-service-category',
+            'translations' => [
+                'fields' => [
+                    'name' => ['en' => 'Old category', 'ru' => 'Старая категория'],
+                ],
+            ],
+        ]);
+        $projectCategory = ProjectCategory::query()->create([
+            'name' => 'ძველი პროექტები',
+            'slug' => 'stable-project-category',
+            'translations' => [
+                'fields' => [
+                    'name' => ['en' => 'Old projects', 'ru' => 'Старые проекты'],
+                ],
+            ],
+        ]);
+
+        Livewire::test(EditCategoryForService::class, ['record' => $serviceCategory->getRouteKey()])
+            ->fillForm(['name' => 'ახალი კატეგორია'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        Livewire::test(EditProjectCategory::class, ['record' => $projectCategory->getRouteKey()])
+            ->fillForm(['name' => 'ახალი პროექტები'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('stable-service-category', $serviceCategory->fresh()->slug);
+        $this->assertSame('stable-project-category', $projectCategory->fresh()->slug);
+        $this->assertSame(
+            'https://safetech.ge/services/category/stable-service-category',
+            data_get($serviceCategory->fresh()->translations, 'seo.canonical'),
+        );
+        $this->assertSame(
+            'https://safetech.ge/projects/category/stable-project-category',
+            data_get($projectCategory->fresh()->translations, 'seo.canonical'),
+        );
+    }
+
+    public function test_category_api_exposes_uploaded_webp_open_graph_image(): void
+    {
+        Storage::fake('public');
+
+        $category = ProjectCategory::query()->create([
+            'name' => 'კამერების პროექტები',
+            'slug' => 'camera-projects',
+        ]);
+        Project::query()->create([
+            'category_id' => $category->id,
+            'slug' => 'camera-project',
+            'name' => 'კამერების პროექტი',
+            'title' => 'კამერების პროექტი',
+            'description' => 'რეალური პროექტი.',
+            'is_published' => true,
+        ]);
+
+        $category
+            ->addMedia(UploadedFile::fake()->image('open-graph.jpg', 1200, 630))
+            ->toMediaCollection('og_image', 'public');
+
+        $response = $this->getJson('/api/project-categories?locale=ka')
+            ->assertOk();
+
+        $image = (string) $response->json('data.0.image');
+
+        $this->assertNotSame('', $image);
+        $this->assertStringContainsString('.webp', $image);
     }
 
     /** @return array<string, mixed> */
