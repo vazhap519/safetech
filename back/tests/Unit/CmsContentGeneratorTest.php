@@ -283,6 +283,121 @@ class CmsContentGeneratorTest extends TestCase
         }
     }
 
+
+    public function test_category_full_form_targets_every_visible_editorial_field_but_not_routing_or_media(): void
+    {
+        $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
+            ->invoke(app(CmsContentGenerator::class), 'category', [
+                'name' => 'ვიდეომეთვალყურეობა',
+                'slug' => '',
+                'seo_title' => '',
+                'seo_description' => '',
+                'seo_keywords' => [],
+                'intro_text' => '',
+                'faq' => [],
+                'translations' => [
+                    'fields' => [
+                        'name' => ['en' => '', 'ru' => ''],
+                    ],
+                    'seo' => [
+                        'canonical' => '',
+                    ],
+                ],
+            ], false);
+
+        foreach ([
+            'seo_title',
+            'seo_description',
+            'seo_keywords',
+            'intro_text',
+            'faq',
+            'translations.fields.name.en',
+            'translations.fields.name.ru',
+            'translations.fields.seo_title.ka',
+            'translations.fields.seo_title.en',
+            'translations.fields.seo_title.ru',
+            'translations.fields.seo_description.ka',
+            'translations.fields.seo_description.en',
+            'translations.fields.seo_description.ru',
+            'translations.fields.ogTitle.ka',
+            'translations.fields.ogTitle.en',
+            'translations.fields.ogTitle.ru',
+            'translations.fields.ogDescription.ka',
+            'translations.fields.ogDescription.en',
+            'translations.fields.ogDescription.ru',
+            'translations.fields.intro_text.ka',
+            'translations.fields.intro_text.en',
+            'translations.fields.intro_text.ru',
+            'translations.keywords.ka',
+            'translations.keywords.en',
+            'translations.keywords.ru',
+            'translations.faq.ka',
+            'translations.faq.en',
+            'translations.faq.ru',
+        ] as $expected) {
+            $this->assertContains($expected, $targets, $expected);
+        }
+
+        foreach ([
+            'slug',
+            'translations.seo.canonical',
+            'translations.seo.image',
+            'og_image',
+            'schema',
+            'noindex',
+        ] as $forbidden) {
+            $this->assertNotContains($forbidden, $targets, $forbidden);
+        }
+    }
+
+    public function test_ai_routing_normalization_creates_slug_and_correct_category_canonical(): void
+    {
+        $resolver = new AiProfileResolverStub;
+
+        $serviceState = $resolver->normalize(
+            'App\\Filament\\Resources\\CategoryForServices\\CategoryForServiceResource',
+            ['name' => 'ქსელის მონტაჟი', 'slug' => '', 'translations' => []],
+        );
+        $projectState = $resolver->normalize(
+            'App\\Filament\\Resources\\ProjectCategories\\ProjectCategoryResource',
+            ['name' => 'ვიდეომეთვალყურეობა', 'slug' => '', 'translations' => []],
+        );
+
+        $this->assertSame('kselis-montazhi', data_get($serviceState, 'slug'));
+        $this->assertSame(
+            'https://safetech.ge/services/category/kselis-montazhi',
+            data_get($serviceState, 'translations.seo.canonical'),
+        );
+        $this->assertSame('ვიდეომეთვალყურეობა', data_get($projectState, 'translations.fields.name.ka'));
+        $this->assertSame('videometvalqureoba', data_get($projectState, 'slug'));
+        $this->assertSame(
+            'https://safetech.ge/projects/category/videometvalqureoba',
+            data_get($projectState, 'translations.seo.canonical'),
+        );
+    }
+
+    public function test_ai_routing_normalization_never_replaces_existing_slug_or_custom_canonical(): void
+    {
+        $resolver = new AiProfileResolverStub;
+
+        $state = $resolver->normalize(
+            'App\\Filament\\Resources\\ProjectCategories\\ProjectCategoryResource',
+            [
+                'name' => 'ახალი სათაური',
+                'slug' => 'existing-public-url',
+                'translations' => [
+                    'seo' => ['canonical' => 'https://safetech.ge/custom-category-url'],
+                ],
+            ],
+        );
+
+        $this->assertSame('existing-public-url', data_get($state, 'slug'));
+        $this->assertSame(
+            'https://safetech.ge/custom-category-url',
+            data_get($state, 'translations.seo.canonical'),
+        );
+    }
+
     public function test_project_full_form_targets_every_featured_locale_and_missing_repeater_translation(): void
     {
         $state = [
@@ -982,5 +1097,15 @@ final class AiProfileResolverStub
         self::$resource = $resource;
 
         return $this->aiContentProfile();
+    }
+
+    /** @param array<string, mixed> $state
+     * @return array<string, mixed>
+     */
+    public function normalize(string $resource, array $state): array
+    {
+        self::$resource = $resource;
+
+        return $this->normalizeAiGeneratedRouting($state);
     }
 }
