@@ -34,7 +34,7 @@ final class CategorySeoPresenter
             'schema' => is_array($schema) ? $schema : $category->getAttribute('schema'),
             'noindex' => (bool) $category->getAttribute('noindex'),
             'canonical' => data_get($category->translations, 'seo.canonical'),
-            'image' => data_get($category->translations, 'seo.image'),
+            'image' => $category->getAttribute('og_image_url') ?: data_get($category->translations, 'seo.image'),
             'schema_type' => data_get($category->translations, 'seo.schema_type', 'CollectionPage'),
             'og' => [
                 'title' => $this->translated($category, 'ogTitle', $seoTitle, $locale),
