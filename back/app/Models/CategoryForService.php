@@ -6,10 +6,14 @@ use App\Filament\Support\StableSlug;
 use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class CategoryForService extends Model
+class CategoryForService extends Model implements HasMedia
 {
-    use FlushesPublicContentCache, HasFactory;
+    use FlushesPublicContentCache, HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'name',
@@ -31,6 +35,31 @@ class CategoryForService extends Model
         'translations' => 'array',
         'noindex' => 'boolean',
     ];
+
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('og_image')
+            ->useDisk('public')
+            ->singleFile();
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('og')
+            ->fit(Fit::Crop, 1200, 630)
+            ->format('webp')
+            ->quality(82)
+            ->performOnCollections('og_image')
+            ->nonQueued();
+    }
+
+    public function getOgImageUrlAttribute(): ?string
+    {
+        $url = $this->getFirstMediaUrl('og_image', 'og');
+
+        return $url !== '' ? $url : null;
+    }
 
     protected static function booted()
     {
