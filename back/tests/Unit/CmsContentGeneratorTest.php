@@ -17,6 +17,7 @@ class CmsContentGeneratorTest extends TestCase
 
         config()->set('services.openai.api_key', 'test-key');
         config()->set('services.openai.model', 'gpt-test');
+        config()->set('app.frontend_url', 'https://safetech.ge');
     }
 
     public function test_local_seo_fills_every_empty_nested_translation_and_uses_structured_outputs(): void
@@ -159,16 +160,6 @@ class CmsContentGeneratorTest extends TestCase
     {
         Http::fake(function (Request $request) {
             $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
-
-            $this->assertContains('lead_form.extra_fields.0.ka', $targets);
-            $this->assertContains('lead_form.extra_fields.0.en', $targets);
-            $this->assertContains('lead_form.extra_fields.0.ru', $targets);
-            $this->assertContains('lead_form.extra_fields.0.placeholder_en', $targets);
-            $this->assertNotContains('lead_form.extra_fields.0.key', $targets);
-            $this->assertNotContains('lead_form.extra_fields.0.type', $targets);
-            $this->assertNotContains('lead_form.extra_fields.0.unit_price', $targets);
-            $this->assertNotContains('lead_form.components.0.category', $targets);
-
             $patches = collect($targets)->map(fn (string $path): array => [
                 'path' => $path,
                 'value_json' => json_encode("filled:{$path}", JSON_UNESCAPED_UNICODE),
@@ -196,6 +187,24 @@ class CmsContentGeneratorTest extends TestCase
                 ]],
             ],
         ]);
+
+        $allTargets = collect(Http::recorded())
+            ->flatMap(fn (array $record): array => data_get(
+                $record[0]->data(),
+                'text.format.schema.properties.patches.items.properties.path.enum',
+                [],
+            ))
+            ->values()
+            ->all();
+
+        $this->assertContains('lead_form.extra_fields.0.ka', $allTargets);
+        $this->assertContains('lead_form.extra_fields.0.en', $allTargets);
+        $this->assertContains('lead_form.extra_fields.0.ru', $allTargets);
+        $this->assertContains('lead_form.extra_fields.0.placeholder_en', $allTargets);
+        $this->assertNotContains('lead_form.extra_fields.0.key', $allTargets);
+        $this->assertNotContains('lead_form.extra_fields.0.type', $allTargets);
+        $this->assertNotContains('lead_form.extra_fields.0.unit_price', $allTargets);
+        $this->assertNotContains('lead_form.components.0.category', $allTargets);
 
         $this->assertSame('filled:lead_form.extra_fields.0.en', data_get($updates, 'lead_form.extra_fields.0.en'));
         $this->assertSame('filled:lead_form.components.0.title_ru', data_get($updates, 'lead_form.components.0.title_ru'));
@@ -1113,7 +1122,6 @@ class CmsContentGeneratorTest extends TestCase
             ]]));
 
         $updates = app(CmsContentGenerator::class)->generate('category', 'რეალური ფაქტები', [
-            'name' => 'კატეგორია',
             'seo_description' => '',
         ]);
 
