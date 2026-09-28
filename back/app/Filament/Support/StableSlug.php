@@ -20,10 +20,16 @@ final class StableSlug
             ?Model $record,
         ): void {
             $currentSlug = trim((string) $get('slug'));
-            $previousGeneratedSlug = self::fromTitle((string) $old);
-            $recordSlug = trim((string) $record?->slug);
 
-            if ($currentSlug === '' || $currentSlug === $previousGeneratedSlug || ($record !== null && $currentSlug === $recordSlug)) {
+            // Existing public URLs are stable. Renaming an already-saved
+            // record must never silently change its slug and create a 404.
+            if ($record !== null && $currentSlug !== '') {
+                return;
+            }
+
+            $previousGeneratedSlug = self::fromTitle((string) $old);
+
+            if ($currentSlug === '' || $currentSlug === $previousGeneratedSlug) {
                 $set('slug', self::fromTitle((string) $state));
             }
         };
