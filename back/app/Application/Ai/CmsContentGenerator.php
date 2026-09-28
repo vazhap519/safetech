@@ -611,6 +611,30 @@ PROMPT;
             }
         }
 
+        // Warranty and SLA use Georgian root fields plus EN/RU JSON
+        // leaves. Older service rows may not hydrate those locale leaves.
+        foreach (['warranty', 'sla'] as $field) {
+            if ($fullServiceForm || array_key_exists($field, $state)
+                || data_get($state, "translations.fields.{$field}") !== null) {
+                foreach (['en', 'ru'] as $locale) {
+                    $offer("translations.fields.{$field}.{$locale}");
+                }
+            }
+        }
+
+        // The configurator has several localized scalar labels that may be
+        // absent from legacy lead_form JSON entirely. They are editorial copy,
+        // not prices or technical control values.
+        if ($fullServiceForm || is_array(data_get($state, 'lead_form'))) {
+            foreach ([
+                'project_size_label_ka', 'project_size_label_en', 'project_size_label_ru',
+                'property_type_label_ka', 'property_type_label_en', 'property_type_label_ru',
+                'calculator_disclaimer_ka', 'calculator_disclaimer_en', 'calculator_disclaimer_ru',
+            ] as $field) {
+                $offer("lead_form.{$field}");
+            }
+        }
+
         foreach (['keywords', 'highlights', 'industries'] as $field) {
             if (! $fullServiceForm && ! array_key_exists($field, $state)
                 && data_get($state, "translations.{$field}") === null) {
