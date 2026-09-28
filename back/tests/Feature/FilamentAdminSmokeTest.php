@@ -28,6 +28,17 @@ class FilamentAdminSmokeTest extends TestCase
             ->assertSee('ქეშის გაწმენდა');
     }
 
+    public function test_access_intercom_configurator_is_admin_only_and_renders(): void
+    {
+        $this->get('/admin/access-intercom-configurator')
+            ->assertRedirect('/admin/login');
+
+        $this->actingAs($this->administrator())
+            ->get('/admin/access-intercom-configurator')
+            ->assertOk()
+            ->assertSee('RFID / დაშვების და დომოფონის კონფიგურატორი');
+    }
+
     public function test_project_edit_page_exposes_direct_related_projects_manager(): void
     {
         $admin = $this->administrator();
