@@ -22,6 +22,13 @@ class CategoryLocalizationCrudTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('app.frontend_url', 'https://safetech.ge');
+    }
+
     public function test_administrator_must_provide_english_and_russian_names_when_creating_categories(): void
     {
         $this->authenticateAdministrator();
