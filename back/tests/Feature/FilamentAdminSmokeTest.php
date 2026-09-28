@@ -28,6 +28,17 @@ class FilamentAdminSmokeTest extends TestCase
             ->assertSee('ქეშის გაწმენდა');
     }
 
+    public function test_barrier_configurator_is_admin_only_and_renders(): void
+    {
+        $this->get('/admin/barrier-configurator')
+            ->assertRedirect('/admin/login');
+
+        $this->actingAs($this->administrator())
+            ->get('/admin/barrier-configurator')
+            ->assertOk()
+            ->assertSee('შლაგბაუმი / LPR / UHF კონფიგურატორი');
+    }
+
     public function test_access_intercom_configurator_is_admin_only_and_renders(): void
     {
         $this->get('/admin/access-intercom-configurator')
