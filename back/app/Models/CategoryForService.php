@@ -37,7 +37,6 @@ class CategoryForService extends Model implements HasMedia
         'noindex' => 'boolean',
     ];
 
-
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('og_image')
@@ -85,7 +84,6 @@ class CategoryForService extends Model implements HasMedia
                 $category->slug = StableSlug::fromTitle($category->name);
             }
         });
-
     }
 
     /*
