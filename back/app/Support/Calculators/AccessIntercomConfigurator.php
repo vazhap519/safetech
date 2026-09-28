@@ -4,170 +4,297 @@ namespace App\Support\Calculators;
 
 final class AccessIntercomConfigurator
 {
+    /** @param array<string, mixed> $config
+     * @return array<string, mixed>
+     */
+    public function normalize(array $config, ?string $changedKey = null): array
+    {
+        if (($config['system'] ?? 'access') === 'access') {
+            return $this->normalizeAccess($config, $changedKey);
+        }
+
+        return $this->normalizeIntercom($config, $changedKey);
+    }
+
     /** @param array<string, mixed> $input
      * @return array<string, mixed>
      */
     public function configure(array $input): array
     {
+        $input = $this->normalize($input);
         $system = (string) ($input['system'] ?? 'access');
-        $doors = max(1, min(16, (int) ($input['doors'] ?? 1)));
-        $readerSides = ($input['reader_sides'] ?? 'entry') === 'entry_exit' ? 2 : 1;
-        $readerInterface = (string) ($input['reader_interface'] ?? 'wiegand');
-        $credential = (string) ($input['credential'] ?? 'mifare');
-        $lockType = (string) ($input['lock_type'] ?? 'maglock');
-        $lockCurrent = max(0.1, (float) ($input['lock_current_a'] ?? 0.5));
-        $controllerCurrent = max(0.1, (float) ($input['controller_current_a'] ?? 0.3));
-        $readerCurrent = max(0.05, (float) ($input['reader_current_a'] ?? 0.12));
-        $reserve = max(0, min(100, (float) ($input['reserve_percent'] ?? 30)));
 
-        $readers = $doors * $readerSides;
-        $controllerDoors = $this->controllerDoorCapacity($doors);
-        $controllerCount = (int) ceil($doors / $controllerDoors);
-        $loadA = ($doors * $lockCurrent) + ($readers * $readerCurrent) + ($controllerCount * $controllerCurrent);
-        $recommendedA = ceil(($loadA * (1 + ($reserve / 100))) * 10) / 10;
+        return $system === 'access'
+            ? $this->accessResult($input)
+            : $this->intercomResult($input);
+    }
 
-        $items = [];
-        $warnings = [];
-        $checks = [];
+    /** @param array<string, mixed> $config
+     * @return array<string, mixed>
+     */
+    private function normalizeAccess(array $config, ?string $changedKey): array
+    {
+        $controllers = AccessIntercomDeviceCatalog::controllers();
+        $readers = AccessIntercomDeviceCatalog::readers();
 
-        if ($system === 'access') {
-            $items[] = [
-                'group' => 'კონტროლერი',
-                'qty' => $controllerCount,
-                'item' => $this->controllerLabel($controllerDoors, $readerInterface),
-                'why' => "{$doors} კარისთვის საჭიროა მინიმუმ {$doors} მართვადი რელე/კარის არხი.",
-            ];
-            $items[] = [
-                'group' => 'RFID Reader',
-                'qty' => $readers,
-                'item' => $this->readerLabel($credential, $readerInterface),
-                'why' => $readerSides === 2 ? 'Reader საჭიროა შესასვლელზეც და გამოსასვლელზეც.' : 'Reader საჭიროა შესასვლელ მხარეს.',
-            ];
-            $items[] = [
-                'group' => 'საკეტი',
-                'qty' => $doors,
-                'item' => $this->lockLabel($lockType),
-                'why' => 'თითო კარს სჭირდება დამოუკიდებელი საკეტი და შესაბამისი კვება.',
-            ];
-            $items[] = [
-                'group' => 'Exit ღილაკი',
-                'qty' => $readerSides === 1 ? $doors : 0,
-                'item' => $readerSides === 1 ? 'NO/NC exit button' : 'არ არის აუცილებელი, თუ გამოსასვლელზეც reader გამოიყენება',
-                'why' => 'გამოსვლის ლოგიკა უნდა დაემთხვეს reader/ღილაკის სქემას.',
-            ];
-            $items[] = [
-                'group' => 'Door contact',
-                'qty' => $doors,
-                'item' => 'მაგნიტური კარის სენსორი',
-                'why' => 'კარის სტატუსი, forced-open და held-open მონიტორინგისთვის.',
-            ];
-            $items[] = [
-                'group' => 'კვება',
-                'qty' => 1,
-                'item' => "12V DC PSU მინ. {$recommendedA}A + ბატარეის მხარდაჭერა",
-                'why' => "დათვლილი დატვირთვა ≈ ".number_format($loadA, 1)."A; დამატებულია {$reserve}% რეზერვი.",
-            ];
+        $doors = max(1, min(16, (int) ($config['doors'] ?? 1)));
+        $sides = ($config['reader_sides'] ?? 'entry') === 'entry_exit' ? 2 : 1;
+        $credential = (string) ($config['credential'] ?? 'mifare');
+        $interface = (string) ($config['reader_interface'] ?? 'wiegand');
 
-            $checks[] = $readerInterface === 'osdp'
-                ? 'კონტროლერს და reader-ს ორივეს უნდა ჰქონდეს OSDP/RS-485 მხარდაჭერა და თავსებადი secure channel პარამეტრები.'
-                : 'კონტროლერის reader input და reader output ორივე უნდა იყოს Wiegand (მაგ. W26/W34 მხარდაჭერა გადაამოწმეთ).';
-            $checks[] = $credential === 'mifare'
-                ? 'ბარათი/ბრელოკი და reader უნდა იყოს 13.56 MHz MIFARE-compatible.'
-                : 'ბარათი/ბრელოკი და reader უნდა იყოს 125 kHz EM-compatible.';
-            $checks[] = 'საკეტის NO/NC ლოგიკა უნდა დაემთხვეს კონტროლერის relay output-ს და fire/emergency მოთხოვნებს.';
+        $readerId = (string) ($config['reader_id'] ?? '');
+        $reader = $readers[$readerId] ?? null;
 
-            if ($lockType === 'maglock') {
-                $warnings[] = 'Maglock ჩვეულებრივ fail-safe ტიპია: კვების დაკარგვისას იღება. ავარიული გახსნა და სახანძრო ინტეგრაცია ცალკე გადაამოწმეთ.';
-            }
-            if ($readerInterface === 'wiegand') {
-                $warnings[] = 'Wiegand მარტივია, მაგრამ OSDP-სთან შედარებით ნაკლებად დაცულია. ახალ ობიექტზე OSDP სასურველია, თუ ორივე მხარე უჭერს მხარს.';
-            }
-        } else {
-            $intercomType = (string) ($input['intercom_type'] ?? 'ip');
-            $apartments = max(1, min(200, (int) ($input['apartments'] ?? 1)));
-            $monitorsPerApartment = max(1, min(4, (int) ($input['monitors_per_apartment'] ?? 1)));
-            $monitors = $apartments * $monitorsPerApartment;
+        if ($changedKey === 'reader_id' && $reader) {
+            $credential = (string) $reader['credential'];
+            $common = array_values(array_intersect((array) $reader['interfaces'], ['osdp', 'wiegand', 'rs485']));
+            $interface = in_array($interface, $common, true) ? $interface : ($common[0] ?? 'wiegand');
+            $config['credential'] = $credential;
+            $config['reader_interface'] = $interface;
+        }
 
-            $items[] = [
-                'group' => 'გარე პანელი',
-                'qty' => 1,
-                'item' => $intercomType === 'ip' ? 'IP ვიდეოდომოფონის გარე პანელი, relay output-ით' : '2-wire ვიდეოდომოფონის გარე პანელი',
-                'why' => 'გარე პანელი და შიდა მონიტორები უნდა იყოს ერთი თავსებადი პლატფორმის/ოჯახის.',
-            ];
-            $items[] = [
-                'group' => 'შიდა მონიტორი',
-                'qty' => $monitors,
-                'item' => $intercomType === 'ip' ? 'IP indoor monitor' : '2-wire indoor monitor',
-                'why' => "{$apartments} ბინა × {$monitorsPerApartment} მონიტორი.",
-            ];
-            $items[] = [
-                'group' => $intercomType === 'ip' ? 'ქსელი / PoE' : '2-wire distributor',
-                'qty' => $intercomType === 'ip' ? (int) ceil(($monitors + 1) / 8) : (int) ceil($apartments / 4),
-                'item' => $intercomType === 'ip' ? 'PoE switch შესაბამისი PoE budget-ით' : 'მწარმოებლის თავსებადი 2-wire distributor / power module',
-                'why' => $intercomType === 'ip' ? 'ყველა IP მოწყობილობის პორტები და PoE budget წინასწარ დაითვალეთ.' : '2-wire სისტემაში distributor/power module უნდა ეკუთვნოდეს იმავე ეკოსისტემას.',
-            ];
-            $items[] = [
-                'group' => 'ელ. საკეტი',
-                'qty' => 1,
-                'item' => $this->lockLabel($lockType),
-                'why' => 'გარე პანელის relay ან ცალკე access controller მართავს საკეტს.',
-            ];
+        if (! $reader
+            || ($reader['credential'] ?? null) !== $credential
+            || ! in_array($interface, (array) ($reader['interfaces'] ?? []), true)) {
+            $readerId = $this->bestReader($credential, $interface) ?? $this->bestReader($credential, null) ?? array_key_first($readers);
+            $reader = $readers[$readerId];
+            $config['reader_id'] = $readerId;
 
-            $checks[] = $intercomType === 'ip'
-                ? 'Outdoor station, indoor monitor და management software უნდა იყოს ერთი თავსებადი IP intercom ecosystem-ის.'
-                : '2-wire outdoor station, monitors, distributor და power module არ აურიოთ სხვა 2-wire სტანდარტთან მხოლოდ კონექტორის მსგავსების გამო.';
-            $checks[] = 'გარე პანელის relay contact rating და lock PSU ცალ-ცალკე გადაამოწმეთ; საკეტის დენი პირდაპირ პანელიდან არ გაატაროთ, თუ datasheet ამას არ ითვალისწინებს.';
-            $checks[] = 'თუ RFID reader გარე პანელშია ჩაშენებული, credential technology (MIFARE/EM) უნდა დაემთხვეს გამოყენებულ ბარათებს.';
-
-            if ($intercomType === 'ip') {
-                $warnings[] = 'PoE სტანდარტი (802.3af/at ან passive) ზუსტად უნდა ემთხვეოდეს მოწყობილობას; passive PoE ავტომატურად თავსებადი არ არის.';
+            if (! in_array($interface, (array) $reader['interfaces'], true)) {
+                $interface = (string) ($reader['interfaces'][0] ?? 'wiegand');
+                $config['reader_interface'] = $interface;
             }
         }
 
+        $controllerId = (string) ($config['controller_id'] ?? '');
+        $controller = $controllers[$controllerId] ?? null;
+
+        if (! $this->controllerWorks($controller, $doors, $sides, $interface)) {
+            $controllerId = $this->bestController($doors, $sides, $interface)
+                ?? $this->bestController($doors, $sides, 'wiegand')
+                ?? array_key_first($controllers);
+            $config['controller_id'] = $controllerId;
+            $controller = $controllers[$controllerId];
+
+            if (! in_array($interface, (array) $controller['interfaces'], true)) {
+                $interface = (string) ($controller['interfaces'][0] ?? 'wiegand');
+                $config['reader_interface'] = $interface;
+                $readerId = $this->bestReader($credential, $interface) ?? $readerId;
+                $config['reader_id'] = $readerId;
+            }
+        }
+
+        return $config;
+    }
+
+    /** @param array<string, mixed> $config
+     * @return array<string, mixed>
+     */
+    private function normalizeIntercom(array $config, ?string $changedKey): array
+    {
+        $doors = AccessIntercomDeviceCatalog::doorStations();
+        $indoors = AccessIntercomDeviceCatalog::indoorStations();
+        $switches = AccessIntercomDeviceCatalog::switches();
+
+        $doorId = (string) ($config['door_station_id'] ?? array_key_first($doors));
+        $door = $doors[$doorId] ?? reset($doors);
+        $config['door_station_id'] = array_key_exists($doorId, $doors) ? $doorId : array_key_first($doors);
+        $config['intercom_type'] = (string) ($door['system'] ?? 'ip');
+
+        $indoorId = (string) ($config['indoor_station_id'] ?? '');
+        $indoor = $indoors[$indoorId] ?? null;
+        if (! $indoor || ($indoor['ecosystem'] ?? null) !== ($door['ecosystem'] ?? null)) {
+            foreach ($indoors as $id => $candidate) {
+                if (($candidate['ecosystem'] ?? null) === ($door['ecosystem'] ?? null)) {
+                    $config['indoor_station_id'] = $id;
+                    $indoor = $candidate;
+                    break;
+                }
+            }
+        }
+
+        $requiredPorts = max(2, (int) ($config['apartments'] ?? 1) * max(1, (int) ($config['monitors_per_apartment'] ?? 1)) + 1);
+        $switchId = (string) ($config['switch_id'] ?? '');
+        $switch = $switches[$switchId] ?? null;
+        if (! $switch || ($switch['poe'] ?? null) !== ($door['poe'] ?? null)) {
+            $config['switch_id'] = $this->bestSwitch($requiredPorts, (string) ($door['poe'] ?? 'standard'));
+        }
+
+        return $config;
+    }
+
+    /** @param array<string, mixed> $c */
+    private function accessResult(array $c): array
+    {
+        $controllers = AccessIntercomDeviceCatalog::controllers();
+        $readers = AccessIntercomDeviceCatalog::readers();
+        $controller = $controllers[$c['controller_id']];
+        $reader = $readers[$c['reader_id']];
+
+        $doors = max(1, (int) $c['doors']);
+        $sides = ($c['reader_sides'] ?? 'entry') === 'entry_exit' ? 2 : 1;
+        $readersCount = $doors * $sides;
+        $interface = (string) $c['reader_interface'];
+
+        $controllerCount = max(
+            (int) ceil($doors / max(1, (int) $controller['doors'])),
+            (int) ceil($readersCount / max(1, (int) ($controller['reader_ports'][$interface] ?? 0))),
+        );
+
+        $lockCurrent = max(0.1, (float) ($c['lock_current_a'] ?? 0.5));
+        $controllerCurrent = max(0.1, (float) ($c['controller_current_a'] ?? 0.3));
+        $readerCurrent = max(0.05, (float) ($c['reader_current_a'] ?? 0.12));
+        $reserve = max(0, min(100, (float) ($c['reserve_percent'] ?? 30)));
+        $loadA = ($doors * $lockCurrent) + ($readersCount * $readerCurrent) + ($controllerCount * $controllerCurrent);
+        $recommendedA = ceil(($loadA * (1 + $reserve / 100)) * 10) / 10;
+
         return [
-            'system' => $system,
-            'summary' => $system === 'access'
-                ? "{$doors} კარის RFID/დაშვების სისტემის წინასწარი კომპლექტაცია"
-                : 'ვიდეოდომოფონის სისტემის წინასწარი კომპლექტაცია',
-            'items' => array_values(array_filter($items, fn (array $item): bool => ($item['qty'] ?? 0) !== 0)),
-            'checks' => $checks,
-            'warnings' => $warnings,
-            'electrical' => $system === 'access' ? [
-                'doors' => $doors,
-                'readers' => $readers,
-                'estimated_load_a' => round($loadA, 1),
-                'recommended_psu_a' => $recommendedA,
-            ] : null,
+            'system' => 'access',
+            'summary' => "{$doors} კარის RFID / დაშვების სისტემის თავსებადი კომპლექტაცია",
+            'compatible' => true,
+            'selection' => [
+                'controller' => AccessIntercomDeviceCatalog::label($controller),
+                'reader' => AccessIntercomDeviceCatalog::label($reader),
+                'interface' => strtoupper($interface),
+                'credential' => ($c['credential'] ?? 'mifare') === 'em' ? 'EM 125 kHz' : 'MIFARE 13.56 MHz',
+            ],
+            'items' => [
+                ['group' => 'კონტროლერი', 'qty' => $controllerCount, 'item' => AccessIntercomDeviceCatalog::label($controller), 'why' => 'კარის არხები და reader port-ები საკმარისია არჩეული ტოპოლოგიისთვის.'],
+                ['group' => 'RFID Reader', 'qty' => $readersCount, 'item' => AccessIntercomDeviceCatalog::label($reader), 'why' => strtoupper($interface).' + '.(($c['credential'] ?? 'mifare') === 'em' ? 'EM 125 kHz' : 'MIFARE 13.56 MHz').' თავსებადია.'],
+                ['group' => 'საკეტი', 'qty' => $doors, 'item' => $this->lockLabel((string) ($c['lock_type'] ?? 'maglock')), 'why' => 'თითო კარზე დამოუკიდებელი lock relay / კვება.'],
+                ['group' => 'Exit ღილაკი', 'qty' => $sides === 1 ? $doors : 0, 'item' => 'NO/NC exit button', 'why' => 'საჭიროა, როცა გამოსვლა reader-ით არ იმართება.'],
+                ['group' => 'Door contact', 'qty' => $doors, 'item' => 'მაგნიტური კარის სენსორი', 'why' => 'კარის სტატუსისა და forced/held-open კონტროლისთვის.'],
+                ['group' => 'კვება', 'qty' => 1, 'item' => "12V DC PSU მინ. {$recommendedA}A + battery backup", 'why' => 'დათვლილი დატვირთვა ≈ '.number_format($loadA, 1)."A + {$reserve}% რეზერვი."],
+            ],
+            'checks' => [
+                'Controller ↔ Reader: '.strtoupper($interface).' მხარდაჭერა ორივე მხარეს დადასტურებულია კატალოგის მონაცემებით.',
+                'Card ↔ Reader: არჩეული RFID ტექნოლოგია reader-ის ტექნოლოგიას ემთხვევა.',
+                'Controller ↔ Lock: გადაამოწმეთ NO/NC relay logic, contact rating და fire/emergency release მოთხოვნა.',
+            ],
+            'warnings' => ($c['lock_type'] ?? 'maglock') === 'maglock'
+                ? ['Maglock ჩვეულებრივ fail-safe სისტემაა; ავარიული გახსნა და სახანძრო ინტეგრაცია ცალკე გადაამოწმეთ.']
+                : [],
+            'electrical' => [
+                'doors' => $doors, 'readers' => $readersCount,
+                'estimated_load_a' => round($loadA, 1), 'recommended_psu_a' => $recommendedA,
+            ],
         ];
     }
 
-    private function controllerDoorCapacity(int $doors): int
+    /** @param array<string, mixed> $c */
+    private function intercomResult(array $c): array
     {
-        return $doors <= 1 ? 1 : ($doors <= 2 ? 2 : 4);
+        $doors = AccessIntercomDeviceCatalog::doorStations();
+        $indoors = AccessIntercomDeviceCatalog::indoorStations();
+        $switches = AccessIntercomDeviceCatalog::switches();
+        $door = $doors[$c['door_station_id']];
+        $indoor = $indoors[$c['indoor_station_id']];
+        $switch = $switches[$c['switch_id']];
+
+        $apartments = max(1, (int) ($c['apartments'] ?? 1));
+        $monitorsPerApartment = max(1, (int) ($c['monitors_per_apartment'] ?? 1));
+        $monitors = $apartments * $monitorsPerApartment;
+        $requiredEndpoints = $monitors + 1;
+        $switchCount = (int) ceil($requiredEndpoints / max(1, (int) $switch['poe_ports']));
+
+        return [
+            'system' => 'intercom',
+            'summary' => 'IP ვიდეოდომოფონის თავსებადი კომპლექტაცია',
+            'compatible' => ($door['ecosystem'] ?? null) === ($indoor['ecosystem'] ?? null)
+                && ($door['poe'] ?? null) === ($switch['poe'] ?? null),
+            'selection' => [
+                'door_station' => AccessIntercomDeviceCatalog::label($door),
+                'indoor_station' => AccessIntercomDeviceCatalog::label($indoor),
+                'switch' => AccessIntercomDeviceCatalog::label($switch),
+            ],
+            'items' => [
+                ['group' => 'გარე პანელი', 'qty' => 1, 'item' => AccessIntercomDeviceCatalog::label($door), 'why' => 'არჩეულ indoor station-თან ერთი Hikvision IP intercom ecosystem.'],
+                ['group' => 'შიდა მონიტორი', 'qty' => $monitors, 'item' => AccessIntercomDeviceCatalog::label($indoor), 'why' => "{$apartments} ბინა × {$monitorsPerApartment} მონიტორი."],
+                ['group' => 'PoE switch', 'qty' => $switchCount, 'item' => AccessIntercomDeviceCatalog::label($switch), 'why' => "{$requiredEndpoints} IP endpoint-ისთვის საკმარისი პორტების რაოდენობა."],
+                ['group' => 'ელ. საკეტი', 'qty' => 1, 'item' => $this->lockLabel((string) ($c['lock_type'] ?? 'strike')), 'why' => 'Door station relay ან ცალკე access controller მართავს საკეტს.'],
+            ],
+            'checks' => [
+                'Outdoor station ↔ Indoor station: ecosystem ემთხვევა.',
+                'PoE: არჩეული მოწყობილობები და switch იყენებს Standard PoE კლასს.',
+                'საკეტის კვება/relay contact rating გადაამოწმეთ კონკრეტული lock datasheet-ით.',
+            ],
+            'warnings' => ['მრავალბინიან პროექტზე გადაამოწმეთ firmware family, მაქსიმალური apartment/room capacity, PoE budget და network topology.'],
+            'electrical' => null,
+        ];
     }
 
-    private function controllerLabel(int $doors, string $interface): string
+    /** @param array<string, mixed>|null $controller */
+    private function controllerWorks(?array $controller, int $doors, int $sides, string $interface): bool
     {
-        $example = match ($doors) {
-            1 => '1-door network controller (მაგ. ZKTeco C3-100 class)',
-            2 => '2-door network controller (მაგ. ZKTeco C3-200 class)',
-            default => '4-door network controller (მაგ. ZKTeco C3-400 class)',
-        };
+        if (! $controller || ! in_array($interface, (array) ($controller['interfaces'] ?? []), true)) {
+            return false;
+        }
 
-        return $example.' / reader interface: '.strtoupper($interface);
+        $controllerDoors = max(1, (int) ($controller['doors'] ?? 1));
+        $ports = (int) ($controller['reader_ports'][$interface] ?? 0);
+
+        return $ports >= ($controllerDoors * $sides);
     }
 
-    private function readerLabel(string $credential, string $interface): string
+    private function bestController(int $doors, int $sides, string $interface): ?string
     {
-        $card = $credential === 'em' ? '125 kHz EM' : '13.56 MHz MIFARE';
+        $candidates = [];
+        foreach (AccessIntercomDeviceCatalog::controllers() as $id => $controller) {
+            if (! $this->controllerWorks($controller, $doors, $sides, $interface)) {
+                continue;
+            }
 
-        return "{$card} reader / ".strtoupper($interface);
+            $count = (int) ceil($doors / max(1, (int) $controller['doors']));
+            $candidates[$id] = [$count, -(int) $controller['doors']];
+        }
+
+        uasort($candidates, fn (array $a, array $b): int => $a <=> $b);
+
+        return array_key_first($candidates);
+    }
+
+    private function bestReader(string $credential, ?string $interface): ?string
+    {
+        foreach (AccessIntercomDeviceCatalog::readers() as $id => $reader) {
+            if (($reader['credential'] ?? null) !== $credential) {
+                continue;
+            }
+            if ($interface !== null && ! in_array($interface, (array) $reader['interfaces'], true)) {
+                continue;
+            }
+
+            return $id;
+        }
+
+        return null;
+    }
+
+    private function bestSwitch(int $requiredPorts, string $poe): string
+    {
+        $bestId = '';
+        $bestPorts = PHP_INT_MAX;
+        foreach (AccessIntercomDeviceCatalog::switches() as $id => $switch) {
+            if (($switch['poe'] ?? null) !== $poe) {
+                continue;
+            }
+            $ports = (int) ($switch['poe_ports'] ?? 0);
+            if ($ports >= $requiredPorts && $ports < $bestPorts) {
+                $bestId = $id;
+                $bestPorts = $ports;
+            }
+        }
+
+        if ($bestId !== '') {
+            return $bestId;
+        }
+
+        return array_key_last(AccessIntercomDeviceCatalog::switches());
     }
 
     private function lockLabel(string $lockType): string
     {
         return match ($lockType) {
-            'strike' => 'Electric strike (fail-secure/fail-safe ვარიანტი პროექტის მიხედვით)',
+            'strike' => 'Electric strike (fail-secure/fail-safe პროექტის მიხედვით)',
             'bolt' => 'Electric bolt lock',
             default => 'Electromagnetic lock (maglock, fail-safe)',
         };
