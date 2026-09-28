@@ -1370,6 +1370,45 @@ class CmsContentGeneratorTest extends TestCase
         }
     }
 
+
+    public function test_managed_page_entries_are_not_targeted_twice_and_home_local_seo_is_covered(): void
+    {
+        $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
+            ->invoke(app(CmsContentGenerator::class), 'settings', [
+                'key' => 'translations',
+                'managed_page_translations' => [
+                    'home_local_seo_eyebrow' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'home_local_seo_title' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'home_local_seo_description' => ['ka' => '', 'en' => '', 'ru' => ''],
+                ],
+                'value' => [
+                    'entries' => [
+                        [
+                            'key' => 'home.localSeo.title',
+                            'ka' => '',
+                            'en' => '',
+                            'ru' => '',
+                        ],
+                        [
+                            'key' => 'nav.home',
+                            'ka' => 'მთავარი',
+                            'en' => '',
+                            'ru' => '',
+                        ],
+                    ],
+                ],
+            ], false);
+
+        foreach (['ka', 'en', 'ru'] as $locale) {
+            $this->assertContains("managed_page_translations.home_local_seo_title.{$locale}", $targets);
+            $this->assertNotContains("value.entries.0.{$locale}", $targets);
+        }
+
+        $this->assertContains('value.entries.1.en', $targets);
+        $this->assertContains('value.entries.1.ru', $targets);
+        $this->assertNotContains('value.entries.1.ka', $targets);
+    }
+
     /** @param array<int, array{path: string, value_json: string}> $patches
      * @return array<string, mixed>
      */
