@@ -5,10 +5,14 @@ namespace App\Models;
 use App\Filament\Support\StableSlug;
 use App\Models\Concerns\FlushesPublicContentCache;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class ProjectCategory extends Model
+class ProjectCategory extends Model implements HasMedia
 {
-    use FlushesPublicContentCache;
+    use FlushesPublicContentCache, InteractsWithMedia;
 
     protected $fillable = [
         'name',
@@ -47,6 +51,31 @@ class ProjectCategory extends Model
     /* =========================
        🔥 AUTO SLUG
     ========================= */
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('og_image')
+            ->useDisk('public')
+            ->singleFile();
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('og')
+            ->fit(Fit::Crop, 1200, 630)
+            ->format('webp')
+            ->quality(82)
+            ->performOnCollections('og_image')
+            ->nonQueued();
+    }
+
+    public function getOgImageUrlAttribute(): ?string
+    {
+        $url = $this->getFirstMediaUrl('og_image', 'og');
+
+        return $url !== '' ? $url : null;
+    }
+
     protected static function booted()
     {
         static::saving(function (self $category): void {
