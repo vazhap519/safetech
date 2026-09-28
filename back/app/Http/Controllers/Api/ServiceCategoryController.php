@@ -14,6 +14,7 @@ final class ServiceCategoryController extends Controller
     {
         $locale = $request->string('locale')->toString();
         $categories = CategoryForService::query()
+            ->with('media')
             ->whereHas('services', fn ($query) => $query->publiclyVisible())
             ->orderBy('name')
             ->get()
