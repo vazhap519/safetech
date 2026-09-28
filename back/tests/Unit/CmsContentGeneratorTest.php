@@ -1186,6 +1186,83 @@ class CmsContentGeneratorTest extends TestCase
         $this->assertSame('6', data_get($updates, 'results.0.translations.ru.value'));
     }
 
+    public function test_project_results_failure_never_aborts_other_project_fields(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+
+            $patches = collect($targets)
+                ->reject(fn (string $path): bool => $path === 'results')
+                ->map(fn (string $path): array => [
+                    'path' => $path,
+                    'value_json' => json_encode("filled:{$path}", JSON_UNESCAPED_UNICODE),
+                ])
+                ->values()
+                ->all();
+
+            return Http::response($this->responseWithPatches($patches));
+        });
+
+        $updates = app(CmsContentGenerator::class)->generate(
+            'project',
+            'დამონტაჟდა 6 კამერა.',
+            [
+                'title' => '',
+                'results' => [[
+                    'value' => 'ძველი',
+                    'title' => '',
+                    'description' => '',
+                    'translations' => [
+                        'en' => ['value' => '', 'title' => '', 'description' => ''],
+                        'ru' => ['value' => '', 'title' => '', 'description' => ''],
+                    ],
+                ]],
+            ],
+        );
+
+        $this->assertSame('filled:title', $updates['title']);
+        $this->assertArrayNotHasKey('results', $updates);
+    }
+
+    public function test_project_results_failure_is_cleared_in_rewrite_mode_without_aborting_copy(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+
+            $patches = collect($targets)
+                ->reject(fn (string $path): bool => $path === 'results')
+                ->map(fn (string $path): array => [
+                    'path' => $path,
+                    'value_json' => json_encode("rewritten:{$path}", JSON_UNESCAPED_UNICODE),
+                ])
+                ->values()
+                ->all();
+
+            return Http::response($this->responseWithPatches($patches));
+        });
+
+        $updates = app(CmsContentGenerator::class)->generate(
+            'project',
+            'დამონტაჟდა 6 კამერა.',
+            [
+                'title' => 'ძველი სათაური',
+                'results' => [[
+                    'value' => 'არასწორი',
+                    'title' => 'არასწორი შედეგი',
+                    'description' => 'არასწორი აღწერა',
+                    'translations' => [
+                        'en' => ['value' => '', 'title' => '', 'description' => ''],
+                        'ru' => ['value' => '', 'title' => '', 'description' => ''],
+                    ],
+                ]],
+            ],
+            overwrite: true,
+        );
+
+        $this->assertSame('rewritten:title', $updates['title']);
+        $this->assertSame([], $updates['results']);
+    }
+
     public function test_project_results_failure_does_not_abort_generation_for_empty_placeholder_rows(): void
     {
         Http::fakeSequence()
