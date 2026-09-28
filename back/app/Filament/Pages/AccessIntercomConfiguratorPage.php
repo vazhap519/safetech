@@ -10,10 +10,15 @@ use Filament\Pages\Page;
 class AccessIntercomConfiguratorPage extends Page
 {
     protected static ?string $navigationLabel = 'RFID / დომოფონის კონფიგურატორი';
+
     protected static ?string $title = 'RFID / დაშვების და დომოფონის კონფიგურატორი';
+
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-identification';
+
     protected static ?int $navigationSort = 13;
+
     protected string $view = 'filament.pages.access-intercom-configurator';
 
     public ?string $lastCorrection = null;
