@@ -3,6 +3,8 @@
 namespace App\Filament\Concerns;
 
 use App\Application\Ai\CmsContentGenerator;
+use App\Filament\Support\StableSlug;
+use App\Support\SocialLinks;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -57,7 +59,9 @@ trait HasAiContentGenerator
                         return;
                     }
 
-                    $this->data = $generator->mergeIntoState($current, $updates);
+                    $this->data = $this->normalizeAiGeneratedRouting(
+                        $generator->mergeIntoState($current, $updates),
+                    );
 
                     Notification::make()
                         ->title('AI კონტენტი მომზადდა')
@@ -74,6 +78,50 @@ trait HasAiContentGenerator
                         ->send();
                 }
             });
+    }
+
+    /** @param array<string, mixed> $state
+     * @return array<string, mixed>
+     */
+    private function normalizeAiGeneratedRouting(array $state): array
+    {
+        $profile = $this->aiContentProfile();
+        $slug = trim((string) ($state['slug'] ?? ''));
+
+        if ($slug === '') {
+            $source = match ($profile) {
+                'category', 'service', 'project' => (string) ($state['name'] ?? ''),
+                'page', 'seo-page' => (string) ($state['title'] ?? ''),
+                default => '',
+            };
+
+            if (trim($source) !== '') {
+                $slug = StableSlug::fromTitle($source);
+                $state['slug'] = $slug;
+            }
+        }
+
+        if ($profile === 'category') {
+            $name = trim((string) ($state['name'] ?? ''));
+            if ($name !== '') {
+                data_set($state, 'translations.fields.name.ka', $name);
+            }
+
+            if ($slug !== '' && trim((string) data_get($state, 'translations.seo.canonical', '')) === '') {
+                $resource = strtolower((string) static::$resource);
+                $prefix = str_contains($resource, 'projectcategoryresource')
+                    ? '/projects/category/'
+                    : '/services/category/';
+
+                data_set(
+                    $state,
+                    'translations.seo.canonical',
+                    SocialLinks::frontendUrl($prefix.ltrim($slug, '/')),
+                );
+            }
+        }
+
+        return $state;
     }
 
     protected function aiContentProfile(): string
