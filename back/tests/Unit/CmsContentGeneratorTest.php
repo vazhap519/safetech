@@ -1177,6 +1177,152 @@ class CmsContentGeneratorTest extends TestCase
         }
     }
 
+
+    public function test_page_faq_team_testimonial_partner_and_seo_page_profiles_cover_safe_editorial_fields(): void
+    {
+        $generator = app(CmsContentGenerator::class);
+        $method = new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths');
+
+        $cases = [
+            'page' => [[
+                'title' => '',
+                'excerpt' => '',
+                'content' => '',
+                'seo_title' => '',
+                'seo_description' => '',
+                'keywords' => [],
+                'slug' => 'editor-controlled',
+                'translations' => [
+                    'fields' => [
+                        'title' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'excerpt' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'content' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'seoTitle' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'seoDescription' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'ogTitle' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'ogDescription' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    ],
+                    'keywords' => ['ka' => [], 'en' => [], 'ru' => []],
+                    'seo' => ['canonical' => '', 'image' => '', 'schema_type' => 'WebPage'],
+                ],
+                'noindex' => false,
+                'is_published' => false,
+            ], [
+                'title', 'excerpt', 'content', 'seo_title', 'seo_description', 'keywords',
+                'translations.fields.title.en', 'translations.fields.content.ru',
+                'translations.fields.seoTitle.ka', 'translations.fields.ogDescription.ru',
+                'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru',
+            ], [
+                'slug', 'translations.seo.canonical', 'translations.seo.image',
+                'translations.seo.schema_type', 'noindex', 'is_published',
+            ]],
+
+            'seo-page' => [[
+                'key' => 'about',
+                'slug' => '/about',
+                'title' => '',
+                'description' => '',
+                'keywords' => [],
+                'schema_type' => 'AboutPage',
+                'schema' => [],
+                'noindex' => false,
+                'translations' => [
+                    'fields' => [
+                        'title' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'description' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'og_title' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'og_description' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    ],
+                    'keywords' => ['ka' => [], 'en' => [], 'ru' => []],
+                ],
+            ], [
+                'title', 'description', 'keywords',
+                'translations.fields.title.ka', 'translations.fields.description.en',
+                'translations.fields.og_title.ru', 'translations.fields.og_description.ka',
+                'translations.keywords.ka', 'translations.keywords.en', 'translations.keywords.ru',
+            ], [
+                'key', 'slug', 'schema_type', 'schema', 'noindex',
+            ]],
+
+            'faq' => [[
+                'service_id' => 1,
+                'context' => 'general',
+                'question' => '',
+                'answer' => '',
+                'is_active' => true,
+                'translations' => [
+                    'fields' => [
+                        'question' => ['ka' => '', 'en' => '', 'ru' => ''],
+                        'answer' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    ],
+                ],
+            ], [
+                'question', 'answer',
+                'translations.fields.question.ka', 'translations.fields.question.en',
+                'translations.fields.answer.ru',
+            ], [
+                'service_id', 'context', 'is_active',
+            ]],
+
+            'team-member' => [[
+                'first_name' => '',
+                'last_name' => '',
+                'position' => '',
+                'bio' => '',
+                'image' => null,
+                'socials' => [],
+                'certificates' => [],
+                'translations' => ['fields' => []],
+            ], [
+                'first_name', 'last_name', 'position', 'bio',
+                'translations.fields.firstName.ka', 'translations.fields.lastName.en',
+                'translations.fields.position.ru', 'translations.fields.bio.en',
+            ], [
+                'image', 'socials', 'certificates',
+            ]],
+
+            'testimonial' => [[
+                'quote' => '',
+                'author' => '',
+                'role' => '',
+                'company' => '',
+                'image' => null,
+                'is_active' => true,
+                'translations' => ['fields' => []],
+            ], [
+                'quote', 'author', 'role', 'company',
+                'translations.fields.quote.ka', 'translations.fields.author.en',
+                'translations.fields.role.ru', 'translations.fields.company.en',
+            ], [
+                'image', 'is_active',
+            ]],
+
+            'partner' => [[
+                'name' => '',
+                'category' => '',
+                'url' => '',
+                'logo' => null,
+                'is_active' => true,
+            ], [
+                'name', 'category',
+            ], [
+                'url', 'logo', 'is_active',
+            ]],
+        ];
+
+        foreach ($cases as $profile => [$state, $expected, $blocked]) {
+            $targets = $method->invoke($generator, $profile, $state, false);
+
+            foreach ($expected as $path) {
+                $this->assertContains($path, $targets, "{$profile}: {$path}");
+            }
+
+            foreach ($blocked as $path) {
+                $this->assertNotContains($path, $targets, "{$profile}: {$path}");
+            }
+        }
+    }
+
     /** @param array<int, array{path: string, value_json: string}> $patches
      * @return array<string, mixed>
      */
