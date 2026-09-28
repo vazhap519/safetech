@@ -76,21 +76,34 @@ final class CategoryFields
             $set('translations.fields.name.ka', $state);
 
             $currentSlug = trim((string) $get('slug'));
-            $previousGeneratedSlug = StableSlug::fromTitle((string) $old);
-            $recordSlug = trim((string) $record?->slug);
             $nextSlug = $currentSlug;
 
-            if ($currentSlug === '' || $currentSlug === $previousGeneratedSlug || ($record !== null && $currentSlug === $recordSlug)) {
+            if ($record === null) {
+                $previousGeneratedSlug = StableSlug::fromTitle((string) $old);
+
+                if ($currentSlug === '' || $currentSlug === $previousGeneratedSlug) {
+                    $nextSlug = StableSlug::fromTitle((string) $state);
+                    $set('slug', $nextSlug);
+                }
+
+                $currentCanonical = trim((string) $get('translations.seo.canonical'));
+                $previousCanonical = self::canonicalFor($kind, $previousGeneratedSlug);
+
+                if ($currentCanonical === '' || $currentCanonical === $previousCanonical) {
+                    $set('translations.seo.canonical', self::canonicalFor($kind, $nextSlug));
+                }
+
+                return;
+            }
+
+            // Existing category URLs are immutable during ordinary title edits.
+            // Only repair an actually missing slug/canonical.
+            if ($currentSlug === '') {
                 $nextSlug = StableSlug::fromTitle((string) $state);
                 $set('slug', $nextSlug);
             }
 
-            $currentCanonical = trim((string) $get('translations.seo.canonical'));
-            $previousCanonical = $previousGeneratedSlug !== ''
-                ? self::canonicalFor($kind, $previousGeneratedSlug)
-                : '';
-
-            if ($currentCanonical === '' || $currentCanonical === $previousCanonical) {
+            if (trim((string) $get('translations.seo.canonical')) === '') {
                 $set('translations.seo.canonical', self::canonicalFor($kind, $nextSlug));
             }
         };
