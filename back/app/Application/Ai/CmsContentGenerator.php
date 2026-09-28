@@ -75,6 +75,19 @@ final class CmsContentGenerator
                 $missing = array_values(array_diff($targetBatch, array_keys($patches)));
             }
 
+            // Project results are optional factual KPIs. A model must never be
+            // allowed to fail the entire project generation just because it
+            // declines to create or cannot fully structure an optional result.
+            // If the current repeater contains only an empty placeholder row,
+            // clear it so Filament's required fields do not block Save.
+            if ($profile === 'project' && in_array('results', $missing, true)) {
+                if ($this->projectResultsAreEmptyPlaceholders(data_get($workingState, 'results'))) {
+                    $patches['results'] = [];
+                }
+
+                $missing = array_values(array_diff($missing, ['results']));
+            }
+
             if ($missing !== []) {
                 throw new RuntimeException($this->missingFieldsMessage($missing));
             }
@@ -216,6 +229,10 @@ final class CmsContentGenerator
                 $value = json_decode($valueJson, true, 512, JSON_THROW_ON_ERROR);
             } catch (JsonException) {
                 continue;
+            }
+
+            if ($profile === 'project' && $path === 'results') {
+                $value = $this->normalizeProjectResults($value);
             }
 
             if (! $this->isGeneratedValueComplete($profile, $path, $value)) {
@@ -1139,6 +1156,80 @@ PROMPT;
             foreach ($requiredFields as $requiredField) {
                 $requiredValue = data_get($item, $requiredField);
                 if (! is_string($requiredValue) || trim($requiredValue) === '') {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function normalizeProjectResults(mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        foreach ($value as $index => $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $rootValue = $item['value'] ?? null;
+            if (is_int($rootValue) || is_float($rootValue)) {
+                $rootValue = (string) $rootValue;
+                $item['value'] = $rootValue;
+            }
+
+            if (is_string($rootValue) && trim($rootValue) !== '') {
+                foreach (['en', 'ru'] as $locale) {
+                    $translatedValue = data_get($item, "translations.{$locale}.value");
+
+                    if ($translatedValue === null || $translatedValue === '') {
+                        data_set($item, "translations.{$locale}.value", $rootValue);
+                    } elseif (is_int($translatedValue) || is_float($translatedValue)) {
+                        data_set($item, "translations.{$locale}.value", (string) $translatedValue);
+                    }
+                }
+            }
+
+            $value[$index] = $item;
+        }
+
+        return $value;
+    }
+
+    private function projectResultsAreEmptyPlaceholders(mixed $value): bool
+    {
+        if ($value === null || $value === []) {
+            return true;
+        }
+
+        if (! is_array($value)) {
+            return false;
+        }
+
+        foreach ($value as $item) {
+            if (! is_array($item)) {
+                return false;
+            }
+
+            foreach ([
+                'value',
+                'title',
+                'description',
+                'translations.en.value',
+                'translations.en.title',
+                'translations.en.description',
+                'translations.ru.value',
+                'translations.ru.title',
+                'translations.ru.description',
+            ] as $path) {
+                $field = data_get($item, $path);
+
+                if ((is_string($field) && trim($field) !== '')
+                    || is_int($field)
+                    || is_float($field)) {
                     return false;
                 }
             }
