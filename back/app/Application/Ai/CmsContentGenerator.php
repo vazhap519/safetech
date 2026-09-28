@@ -286,10 +286,12 @@ LOCAL SEO profile:
 RULES,
             'category' => <<<'RULES'
 CATEGORY profile:
-- Generate category name (name plus translations.fields.name.en/ru), useful intro, SEO copy, keywords and FAQ in KA/EN/RU.
+- Generate category name (name plus translations.fields.name.en/ru), useful intro, SEO copy, Open Graph copy, keywords and FAQ in KA/EN/RU.
 - Keep the Georgian category name in the existing name field. Fill both English and Russian category-name translations.
+- Fill every targeted root SEO field and every targeted localized SEO/intro field; never leave a requested category editorial field blank.
 - faq and translations.faq.{locale} are arrays of {"question":"...","answer":"..."}.
 - Keyword targets are JSON arrays of plain strings in the relevant language.
+- Canonical URL, slug and Open Graph media are deterministic/editor-managed and are never AI writing targets.
 RULES,
             'seo-page' => <<<'RULES'
 SEO PAGE profile:
@@ -493,6 +495,16 @@ PROMPT;
         }
 
         if ($profile === 'category' && (array_key_exists('name', $state) || array_key_exists('seo_title', $state))) {
+            // Legacy category rows may not hydrate empty top-level SEO leaves at
+            // all, so explicitly describe the complete visible editorial
+            // surface instead of relying only on the recursive state walker.
+            foreach (['seo_title', 'seo_description', 'intro_text'] as $field) {
+                $offerText($field);
+            }
+            foreach (['seo_keywords', 'faq'] as $field) {
+                $offerCollection($field);
+            }
+
             foreach (['en', 'ru'] as $locale) {
                 $offerText("translations.fields.name.{$locale}");
             }
