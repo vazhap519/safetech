@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\ProjectCategory;
 use Illuminate\Database\Eloquent\Model;
 
 final class CategorySeoPresenter
@@ -33,7 +34,7 @@ final class CategorySeoPresenter
             'faq' => is_array($faq) ? $faq : ($category->getAttribute('faq') ?? []),
             'schema' => is_array($schema) ? $schema : $category->getAttribute('schema'),
             'noindex' => (bool) $category->getAttribute('noindex'),
-            'canonical' => data_get($category->translations, 'seo.canonical'),
+            'canonical' => data_get($category->translations, 'seo.canonical') ?: $this->canonical($category),
             'image' => $category->getAttribute('og_image_url') ?: data_get($category->translations, 'seo.image'),
             'schema_type' => data_get($category->translations, 'seo.schema_type', 'CollectionPage'),
             'og' => [
@@ -42,6 +43,15 @@ final class CategorySeoPresenter
             ],
             'updated_at' => $category->getAttribute('updated_at')?->toAtomString(),
         ];
+    }
+
+    private function canonical(Model $category): string
+    {
+        $prefix = $category instanceof ProjectCategory
+            ? '/projects/category/'
+            : '/services/category/';
+
+        return SocialLinks::frontendUrl($prefix.ltrim((string) $category->getAttribute('slug'), '/'));
     }
 
     private function translated(Model $model, string $field, mixed $fallback, string $locale): string
