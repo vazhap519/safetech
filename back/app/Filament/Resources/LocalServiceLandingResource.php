@@ -21,11 +21,14 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class LocalServiceLandingResource extends Resource
 {
@@ -56,7 +59,7 @@ class LocalServiceLandingResource extends Resource
                         ->required()
                         ->maxLength(255)
                         ->live(onBlur: true)
-                        ->afterStateUpdated(function (?string $state, ?string $old, \Filament\Schemas\Components\Utilities\Get $get, \Filament\Schemas\Components\Utilities\Set $set, ?\Illuminate\Database\Eloquent\Model $record): void {
+                        ->afterStateUpdated(function (?string $state, ?string $old, Get $get, Set $set, ?Model $record): void {
                             $currentSlug = trim((string) $get('location_slug'));
 
                             if ($record !== null && $currentSlug !== '') {
