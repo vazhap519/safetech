@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Filament\Support\StableSlug;
 use App\Models\Concerns\FlushesPublicContentCache;
+use App\Support\SocialLinks;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -82,6 +83,14 @@ class ProjectCategory extends Model implements HasMedia
             $translations = is_array($category->translations) ? $category->translations : [];
 
             data_set($translations, 'fields.name.ka', trim((string) $category->name));
+
+            if (blank(data_get($translations, 'seo.canonical')) && filled($category->slug)) {
+                data_set(
+                    $translations,
+                    'seo.canonical',
+                    SocialLinks::frontendUrl('/projects/category/'.ltrim((string) $category->slug, '/')),
+                );
+            }
 
             $category->translations = $translations;
         });
