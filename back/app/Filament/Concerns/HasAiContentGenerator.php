@@ -91,7 +91,7 @@ trait HasAiContentGenerator
         if ($slug === '') {
             $source = match ($profile) {
                 'category', 'service', 'project' => (string) ($state['name'] ?? ''),
-                'page', 'seo-page' => (string) ($state['title'] ?? ''),
+                'page' => (string) ($state['title'] ?? ''),
                 default => '',
             };
 
