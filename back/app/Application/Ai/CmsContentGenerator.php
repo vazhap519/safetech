@@ -238,7 +238,7 @@ PROJECT profile:
 - challenges/solutions arrays use {"title":"...","description":"...","translations":{"en":{"title":"...","description":"..."},"ru":{"title":"...","description":"..."}}}.
 - process arrays use the same title/description translation shape.
 - results arrays use {"value":"...","title":"...","description":"...","translations":{"en":{"value":"...","title":"...","description":"..."},"ru":{"value":"...","title":"...","description":"..."}}}.
-- CRITICAL: each result.value is ONE short, factual KPI (for example "13", "3", "2"); never put a sentence, a list, semicolon-delimited facts, or a project summary in value. Put explanations in result.title and result.description. If no verifiable concise metric exists, omit results rather than invent a statistic.
+- CRITICAL: each result.value is ONE short, factual KPI (for example "13", "3", "2"); never put a sentence, a list, semicolon-delimited facts, or a project summary in value. Put explanations in result.title and result.description. If the "results" path itself is targeted but EDITOR FACTS contain no verifiable concise KPI, return [] for that path rather than inventing a statistic.
 - For scope/specs each value must be a concise single fact (e.g. "13 კამერა"), not multiple facts or a paragraph; use separate rows and labels. Keep card title and description concise for a balanced responsive layout.
 - Never make one massive multi-fact result row when several short factual result rows can be created from EDITOR FACTS.
 - Related-project selections, media, publishing controls, canonical URLs, schema overrides, icons, accents and equipment facts are managed separately and must not be generated.
@@ -266,6 +266,7 @@ RULES,
             'about' => <<<'RULES'
 ABOUT profile:
 - Fill every targeted about_page_translations path in KA/EN/RU with consistent company positioning, story, capabilities, process and CTA copy.
+- Numeric/statistical "about_numbers_item_*_value" fields are editor-controlled and are never generation targets. Generate their labels only.
 - Do not invent years in business, team size, certifications, partner status, client counts or guarantees.
 RULES,
             'faq' => <<<'RULES'
@@ -986,6 +987,13 @@ PROMPT;
             }
         }
 
+        // Project results are optional factual KPIs. When the editor did not
+        // provide a verifiable metric, [] is the correct safe result and must
+        // not force the model to invent a number just to satisfy completeness.
+        if ($profile === 'project' && $path === 'results' && is_array($value) && $value === []) {
+            return true;
+        }
+
         if ($profile === 'service' && $path === 'overview') {
             $overview = is_string($value) ? json_decode($value, true) : $value;
 
@@ -1227,6 +1235,13 @@ PROMPT;
 
     private function pathIsBlocked(string $profile, string $path): bool
     {
+        if ($profile === 'about'
+            && preg_match('/^about_page_translations\\.about_numbers_item_\\d+_value\\.(?:ka|en|ru)$/', $path) === 1) {
+            // These are business facts/statistics. Keep them editor-controlled;
+            // AI may generate their labels but must never invent the values.
+            return true;
+        }
+
         if ($profile === 'local-seo' && $path === 'location_name') {
             // The city is an editor-controlled fact, not generated copy.
             return true;
