@@ -365,8 +365,10 @@ PROMPT;
 
         $targets = [];
 
-        if ($profile === 'category') {
-            // Empty localized name keys are not always present in older forms.
+        if ($profile === 'category'
+            && (array_key_exists('name', $state) || data_get($state, 'translations.fields.name') !== null)) {
+            // Empty localized name keys are not always present in older category forms.
+            // Do not introduce unrelated category-name targets into focused/partial states.
             foreach (['en', 'ru'] as $locale) {
                 $path = "translations.fields.name.{$locale}";
                 if ($overwrite || trim((string) data_get($state, $path, '')) === '') {
@@ -377,6 +379,15 @@ PROMPT;
 
         foreach ($this->allowedRoots($profile) as $root) {
             if (! array_key_exists($root, $state)) {
+                continue;
+            }
+
+            // Project results are optional factual KPIs and must be generated
+            // atomically. Traversing an existing Filament repeater row here
+            // exposes UUID-scoped leaves (results.<uuid>.value, etc.) and
+            // incorrectly forces the model to invent/fill a KPI. The project
+            // form-specific pass below handles the whole results array.
+            if ($profile === 'project' && $root === 'results') {
                 continue;
             }
 
