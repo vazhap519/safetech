@@ -130,6 +130,7 @@ trait HasAiContentGenerator
 
         return match (true) {
             str_contains($resource, 'localservicelandingresource') => 'local-seo',
+            str_contains($resource, 'serviceconfiguratorresource') => 'service',
             str_contains($resource, 'categoryforserviceresource'), str_contains($resource, 'projectcategoryresource') => 'category',
             str_contains($resource, 'projectresource') => 'project',
             str_contains($resource, 'serviceresource') => 'service',
