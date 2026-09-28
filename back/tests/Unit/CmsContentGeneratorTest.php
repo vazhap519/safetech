@@ -1149,6 +1149,71 @@ class CmsContentGeneratorTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_project_results_copy_numeric_kpi_value_into_missing_locale_values(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+            $this->assertSame(['results'], $targets);
+
+            return Http::response($this->responseWithPatches([[
+                'path' => 'results',
+                'value_json' => json_encode([[
+                    'value' => 6,
+                    'title' => 'დამონტაჟებული კამერები',
+                    'description' => 'ობიექტზე დამონტაჟდა 6 სათვალთვალო კამერა.',
+                    'translations' => [
+                        'en' => [
+                            'title' => 'Installed cameras',
+                            'description' => 'Six surveillance cameras were installed at the property.',
+                        ],
+                        'ru' => [
+                            'title' => 'Установленные камеры',
+                            'description' => 'На объекте установлено 6 камер видеонаблюдения.',
+                        ],
+                    ],
+                ]], JSON_UNESCAPED_UNICODE),
+            ]]));
+        });
+
+        $updates = app(CmsContentGenerator::class)->generate(
+            'project',
+            'დამონტაჟდა 6 სათვალთვალო კამერა.',
+            ['results' => []],
+        );
+
+        $this->assertSame('6', data_get($updates, 'results.0.value'));
+        $this->assertSame('6', data_get($updates, 'results.0.translations.en.value'));
+        $this->assertSame('6', data_get($updates, 'results.0.translations.ru.value'));
+    }
+
+    public function test_project_results_failure_does_not_abort_generation_for_empty_placeholder_rows(): void
+    {
+        Http::fakeSequence()
+            ->push($this->responseWithPatches([]))
+            ->push($this->responseWithPatches([]));
+
+        $updates = app(CmsContentGenerator::class)->generate(
+            'project',
+            'რეალური პროექტის ფაქტები',
+            [
+                'results' => [
+                    'row-uuid' => [
+                        'value' => '',
+                        'title' => '',
+                        'description' => '',
+                        'translations' => [
+                            'en' => ['value' => '', 'title' => '', 'description' => ''],
+                            'ru' => ['value' => '', 'title' => '', 'description' => ''],
+                        ],
+                    ],
+                ],
+            ],
+        );
+
+        $this->assertSame([], $updates['results']);
+        Http::assertSentCount(2);
+    }
+
     public function test_project_results_may_remain_empty_when_no_verified_kpi_exists(): void
     {
         Http::fake(function (Request $request) {
