@@ -81,11 +81,17 @@ final class CmsContentGenerator
             // If the current repeater contains only an empty placeholder row,
             // clear it so Filament's required fields do not block Save.
             if ($profile === 'project' && in_array('results', $missing, true)) {
-                if ($this->projectResultsAreEmptyPlaceholders(data_get($workingState, 'results'))) {
+                if ($overwrite || $this->projectResultsAreEmptyPlaceholders(data_get($workingState, 'results'))) {
                     $patches['results'] = [];
                 }
 
-                $missing = array_values(array_diff($missing, ['results']));
+                // Results are an optional factual KPI block. A malformed or
+                // omitted results response must never discard the other valid
+                // project copy generated in the same action.
+                $missing = array_values(array_filter(
+                    $missing,
+                    fn (string $path): bool => ! $this->isOptionalGeneratedTarget($profile, $path),
+                ));
             }
 
             if ($missing !== []) {
@@ -100,7 +106,8 @@ final class CmsContentGenerator
         $merged = $this->mergeIntoState($currentState, $sanitized);
         $missingAfterSanitizing = array_values(array_filter(
             $targets,
-            fn (string $path): bool => ! $this->isGeneratedValueComplete($profile, $path, data_get($merged, $path)),
+            fn (string $path): bool => ! $this->isOptionalGeneratedTarget($profile, $path)
+                && ! $this->isGeneratedValueComplete($profile, $path, data_get($merged, $path)),
         ));
 
         if ($missingAfterSanitizing !== []) {
@@ -256,7 +263,7 @@ PROJECT profile:
 - challenges/solutions arrays use {"title":"...","description":"...","translations":{"en":{"title":"...","description":"..."},"ru":{"title":"...","description":"..."}}}.
 - process arrays use the same title/description translation shape.
 - results arrays use {"value":"...","title":"...","description":"...","translations":{"en":{"value":"...","title":"...","description":"..."},"ru":{"value":"...","title":"...","description":"..."}}}.
-- CRITICAL: each result.value is ONE short, factual KPI (for example "13", "3", "2"); never put a sentence, a list, semicolon-delimited facts, or a project summary in value. Put explanations in result.title and result.description. If the "results" path itself is targeted but EDITOR FACTS contain no verifiable concise KPI, return [] for that path rather than inventing a statistic.
+- CRITICAL: each result.value is ONE short, factual KPI (for example "13", "3", "2"); never put a sentence, a list, semicolon-delimited facts, or a project summary in value. Put explanations in result.title and result.description. If the "results" path itself is targeted but EDITOR FACTS contain no verifiable concise KPI, return [] for that path rather than inventing a statistic. Results are optional and must never be used to block generation of the other project fields.
 - For scope/specs each value must be a concise single fact (e.g. "13 კამერა"), not multiple facts or a paragraph; use separate rows and labels. Keep card title and description concise for a balanced responsive layout.
 - Never make one massive multi-fact result row when several short factual result rows can be created from EDITOR FACTS.
 - Related-project selections, media, publishing controls, canonical URLs, schema overrides, icons, accents and equipment facts are managed separately and must not be generated.
@@ -1083,6 +1090,11 @@ PROMPT;
         };
 
         return in_array($path, $allowed, true);
+    }
+
+    private function isOptionalGeneratedTarget(string $profile, string $path): bool
+    {
+        return $profile === 'project' && $path === 'results';
     }
 
     private function isGeneratedValueComplete(string $profile, string $path, mixed $value): bool
