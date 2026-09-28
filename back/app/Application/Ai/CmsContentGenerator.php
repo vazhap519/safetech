@@ -302,7 +302,9 @@ RULES,
             'settings' => <<<'RULES'
 SETTINGS profile:
 - Fill only targeted editorial copy and translation values already present in the current form.
-- Never change phone numbers, email addresses, URLs, social links, addresses, coordinates, analytics values, IDs, booleans or operational settings.
+- Home, Services, About and Contact managed page copy may be generated in KA/EN/RU when targeted.
+- Existing address and working-hours facts may only be translated into EN/RU; never invent or rewrite the Georgian source fact.
+- Business statistic values, site/brand identity, phone numbers, email addresses, URLs, social links, coordinates, analytics values, IDs, booleans and operational settings are editor-controlled and must never be invented or changed.
 RULES,
             'team-member' => <<<'RULES'
 TEAM MEMBER profile:
@@ -859,9 +861,8 @@ PROMPT;
 
         $paths = [...$paths, ...match ((string) ($state['key'] ?? '')) {
             'translations' => ['value.entries'],
-            'branding' => ['value.site_name', 'value.tagline', 'value.tagline_en', 'value.tagline_ru'],
+            'branding' => ['value.tagline', 'value.tagline_en', 'value.tagline_ru'],
             'seo' => [
-                'value.site_name',
                 'value.site_description',
                 'value.site_description_en',
                 'value.site_description_ru',
@@ -874,15 +875,28 @@ PROMPT;
                 'value.whatsapp_message',
                 'value.whatsapp_message_en',
                 'value.whatsapp_message_ru',
-                'value.hours',
-                'value.hours_en',
-                'value.hours_ru',
-                'value.address',
-                'value.address_en',
-                'value.address_ru',
             ],
             default => [],
         }];
+
+        if ((string) ($state['key'] ?? '') === 'contact') {
+            foreach (['address', 'hours'] as $field) {
+                $source = trim((string) data_get($state, "value.{$field}", ''));
+
+                if ($source === '') {
+                    continue;
+                }
+
+                foreach (['en', 'ru'] as $locale) {
+                    $path = "value.{$field}_{$locale}";
+                    $value = data_get($state, $path);
+
+                    if ($overwrite || ! is_string($value) || trim($value) === '') {
+                        $paths[] = $path;
+                    }
+                }
+            }
+        }
 
         $targets = [];
         $missing = new \stdClass;
@@ -1244,6 +1258,11 @@ PROMPT;
 
         if ($profile === 'local-seo' && $path === 'location_name') {
             // The city is an editor-controlled fact, not generated copy.
+            return true;
+        }
+
+        if ($profile === 'settings'
+            && preg_match('/^managed_page_translations\\.about_numbers_item_\\d+_value\\.(?:ka|en|ru)$/', $path) === 1) {
             return true;
         }
 
