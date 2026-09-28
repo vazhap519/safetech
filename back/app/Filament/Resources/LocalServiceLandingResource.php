@@ -6,6 +6,7 @@ use App\Filament\Resources\LocalServiceLandingResource\Pages;
 use App\Filament\Support\GeneratedSchemaPreview;
 use App\Filament\Support\LocalizedContentFields;
 use App\Filament\Support\NavigationGroup;
+use App\Filament\Support\StableSlug;
 use App\Filament\Support\StructuredDataJsonField;
 use App\Models\LocalServiceLanding;
 use Filament\Actions\BulkActionGroup;
@@ -53,7 +54,21 @@ class LocalServiceLandingResource extends Resource
                     TextInput::make('location_name')
                         ->label('ქალაქი / მომსახურების ზონა (ქართული)')
                         ->required()
-                        ->maxLength(255),
+                        ->maxLength(255)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(function (?string $state, ?string $old, \Filament\Schemas\Components\Utilities\Get $get, \Filament\Schemas\Components\Utilities\Set $set, ?\Illuminate\Database\Eloquent\Model $record): void {
+                            $currentSlug = trim((string) $get('location_slug'));
+
+                            if ($record !== null && $currentSlug !== '') {
+                                return;
+                            }
+
+                            $previousGeneratedSlug = StableSlug::fromTitle((string) $old);
+
+                            if ($currentSlug === '' || $currentSlug === $previousGeneratedSlug) {
+                                $set('location_slug', StableSlug::fromTitle((string) $state));
+                            }
+                        }),
                     ...LocalizedContentFields::secondaryInputs('locationName', 'ქალაქი / მომსახურების ზონა'),
                     TextInput::make('location_slug')
                         ->label('URL slug')
