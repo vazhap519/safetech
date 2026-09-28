@@ -12,7 +12,7 @@ class CategoryForServiceForm
     {
         return $schema
             ->components([
-                CategoryFields::core(),
+                CategoryFields::core(kind: 'service'),
 
                 ...CategorySeoFields::sections(),
             ]);
