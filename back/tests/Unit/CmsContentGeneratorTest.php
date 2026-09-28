@@ -1409,6 +1409,40 @@ class CmsContentGeneratorTest extends TestCase
         $this->assertNotContains('value.entries.1.ka', $targets);
     }
 
+
+    public function test_project_results_with_uuid_repeater_keys_are_generated_atomically(): void
+    {
+        $uuid = '19444055-97cc-4813-bfe4-200a9ae7120a';
+
+        $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
+            ->invoke(app(CmsContentGenerator::class), 'project', [
+                'name' => 'POS პროექტი',
+                'title' => 'POS პროექტი',
+                'description' => 'აღწერა',
+                'results' => [
+                    $uuid => [
+                        'value' => '',
+                        'title' => '',
+                        'description' => '',
+                        'translations' => [
+                            'en' => ['value' => '', 'title' => '', 'description' => ''],
+                            'ru' => ['value' => '', 'title' => '', 'description' => ''],
+                        ],
+                    ],
+                ],
+            ], false);
+
+        $this->assertContains('results', $targets);
+
+        foreach ([
+            "results.{$uuid}.value",
+            "results.{$uuid}.translations.en.value",
+            "results.{$uuid}.translations.ru.value",
+        ] as $forbidden) {
+            $this->assertNotContains($forbidden, $targets);
+        }
+    }
+
     /** @param array<int, array{path: string, value_json: string}> $patches
      * @return array<string, mixed>
      */
