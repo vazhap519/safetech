@@ -5,6 +5,7 @@ namespace App\Filament\Support;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -38,9 +39,15 @@ final class CategorySeoFields
                     TextInput::make('translations.seo.canonical')
                         ->label('Canonical URL override')
                         ->url(),
-                    TextInput::make('translations.seo.image')
-                        ->label('Open Graph image URL')
-                        ->url(),
+                    SpatieMediaLibraryFileUpload::make('og_image')
+                        ->label('Open Graph image')
+                        ->helperText('რეკომენდებული ზომაა 1200×630. ატვირთვისას ავტომატურად იქმნება WebP ვერსია.')
+                        ->collection('og_image')
+                        ->conversion('og')
+                        ->image()
+                        ->imageEditor()
+                        ->maxSize(10240)
+                        ->imagePreviewHeight('150'),
                     Select::make('translations.seo.schema_type')
                         ->label('Schema.org ტიპი')
                         ->options([
