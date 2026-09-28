@@ -1135,6 +1135,48 @@ class CmsContentGeneratorTest extends TestCase
         Http::assertSentCount(2);
     }
 
+
+    public function test_project_results_may_remain_empty_when_no_verified_kpi_exists(): void
+    {
+        Http::fake(function (Request $request) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
+
+            $this->assertSame(['results'], $targets);
+
+            return Http::response($this->responseWithPatches([[
+                'path' => 'results',
+                'value_json' => json_encode([]),
+            ]]));
+        });
+
+        $updates = app(CmsContentGenerator::class)->generate(
+            'project',
+            'პროექტის აღწერა მოცემულია, მაგრამ რაოდენობრივი შედეგი არ არის დადასტურებული.',
+            ['results' => []],
+        );
+
+        $this->assertSame([], $updates['results']);
+        Http::assertSentCount(1);
+    }
+
+    public function test_about_generator_never_targets_business_statistic_values(): void
+    {
+        $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
+            ->invoke(app(CmsContentGenerator::class), 'about', [
+                'about_page_translations' => [
+                    'about_numbers_item_0_value' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'about_numbers_item_0_label' => ['ka' => '', 'en' => '', 'ru' => ''],
+                    'about_team_title' => ['ka' => '', 'en' => '', 'ru' => ''],
+                ],
+            ], false);
+
+        foreach (['ka', 'en', 'ru'] as $locale) {
+            $this->assertNotContains("about_page_translations.about_numbers_item_0_value.{$locale}", $targets);
+            $this->assertContains("about_page_translations.about_numbers_item_0_label.{$locale}", $targets);
+            $this->assertContains("about_page_translations.about_team_title.{$locale}", $targets);
+        }
+    }
+
     /** @param array<int, array{path: string, value_json: string}> $patches
      * @return array<string, mixed>
      */
