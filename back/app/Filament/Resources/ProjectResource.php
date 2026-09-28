@@ -353,7 +353,6 @@ class ProjectResource extends Resource
                                 })
                                 ->searchable()
                                 ->preload()
-                                ->required()
                                 ->live()
                                 ->afterStateUpdated(function (?string $state, Set $set): void {
                                     $defaults = RelatedProjectDefaults::forSlug($state);
