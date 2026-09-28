@@ -10,10 +10,15 @@ use Filament\Pages\Page;
 class BarrierConfiguratorPage extends Page
 {
     protected static ?string $navigationLabel = 'შლაგბაუმის კონფიგურატორი';
+
     protected static ?string $title = 'შლაგბაუმი / LPR / UHF კონფიგურატორი';
+
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
+
     protected static ?int $navigationSort = 14;
+
     protected string $view = 'filament.pages.barrier-configurator';
 
     public ?string $lastCorrection = null;
