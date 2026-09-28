@@ -978,6 +978,14 @@ PROMPT;
 
     private function isGeneratedValueComplete(string $profile, string $path, mixed $value): bool
     {
+        if (is_string($value)) {
+            $maxLength = $this->generatedTextMaxLength($profile, $path);
+
+            if ($maxLength !== null && mb_strlen(trim($value)) > $maxLength) {
+                return false;
+            }
+        }
+
         if ($profile === 'service' && $path === 'overview') {
             $overview = is_string($value) ? json_decode($value, true) : $value;
 
@@ -1038,6 +1046,54 @@ PROMPT;
         }
 
         return true;
+    }
+
+    private function generatedTextMaxLength(string $profile, string $path): ?int
+    {
+        return match (true) {
+            $profile === 'project' && (
+                $path === 'seo_description'
+                || preg_match('/^translations\\.fields\\.(?:seoDescription|ogDescription)\\.(?:ka|en|ru)$/', $path) === 1
+            ) => 320,
+
+            $profile === 'service' && (
+                $path === 'seo_description'
+                || preg_match('/^translations\\.fields\\.(?:seoDescription|ogDescription)\\.(?:ka|en|ru)$/', $path) === 1
+            ) => 320,
+
+            $profile === 'local-seo' && (
+                $path === 'seo_description'
+                || preg_match('/^translations\\.fields\\.(?:seoDescription|ogDescription)\\.(?:ka|en|ru)$/', $path) === 1
+            ) => 320,
+
+            $profile === 'category' && (
+                $path === 'seo_description'
+                || preg_match('/^translations\\.fields\\.(?:seo_description|ogDescription)\\.(?:ka|en|ru)$/', $path) === 1
+            ) => 320,
+
+            $profile === 'category' && (
+                $path === 'seo_title'
+                || preg_match('/^translations\\.fields\\.(?:seo_title|ogTitle)\\.(?:ka|en|ru)$/', $path) === 1
+            ) => 255,
+
+            $profile === 'page' && $path === 'title' => 255,
+            $profile === 'page' && $path === 'seo_title' => 255,
+            $profile === 'page' && $path === 'seo_description' => 320,
+            $profile === 'page' && preg_match('/^translations\\.fields\\.(?:seoTitle|ogTitle)\\.(?:ka|en|ru)$/', $path) === 1 => 255,
+            $profile === 'page' && preg_match('/^translations\\.fields\\.(?:seoDescription|ogDescription)\\.(?:ka|en|ru)$/', $path) === 1 => 320,
+
+            $profile === 'seo-page' && (
+                $path === 'title'
+                || preg_match('/^translations\\.fields\\.(?:title|og_title)\\.(?:ka|en|ru)$/', $path) === 1
+            ) => 180,
+
+            $profile === 'seo-page' && (
+                $path === 'description'
+                || preg_match('/^translations\\.fields\\.(?:description|og_description)\\.(?:ka|en|ru)$/', $path) === 1
+            ) => 500,
+
+            default => null,
+        };
     }
 
     private function containsNonEmptyValue(mixed $value): bool
