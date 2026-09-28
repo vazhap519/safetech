@@ -234,6 +234,9 @@ final class ManagedPageTranslationFields
                     self::field('home_cta_email_placeholder', 'home.cta.emailPlaceholder', 'CTA email placeholder'),
                     self::field('home_cta_submit', 'home.cta.submit', 'CTA submit button'),
                     self::field('home_cta_note', 'home.cta.note', 'CTA note', 'textarea'),
+                    self::field('home_local_seo_eyebrow', 'home.localSeo.eyebrow', 'Local SEO eyebrow'),
+                    self::field('home_local_seo_title', 'home.localSeo.title', 'Local SEO title'),
+                    self::field('home_local_seo_description', 'home.localSeo.description', 'Local SEO description', 'textarea'),
                 ],
             ],
             [
