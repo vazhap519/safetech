@@ -243,6 +243,7 @@ class CmsContentGeneratorTest extends TestCase
         $resolver = new AiProfileResolverStub;
 
         $this->assertSame('local-seo', $resolver->resolve('App\\Filament\\Resources\\LocalServiceLandingResource'));
+        $this->assertSame('service', $resolver->resolve('App\\Filament\\Resources\\ServiceConfiguratorResource'));
         $this->assertSame('category', $resolver->resolve('App\\Filament\\Resources\\CategoryForServices\\CategoryForServiceResource'));
         $this->assertSame('category', $resolver->resolve('App\\Filament\\Resources\\ProjectCategories\\ProjectCategoryResource'));
         $this->assertSame('seo-page', $resolver->resolve('App\\Filament\\Resources\\SeoPages\\SeoPageResource'));
@@ -821,8 +822,19 @@ class CmsContentGeneratorTest extends TestCase
             ]],
             'process' => [['title' => 'მონტაჟი', 'description' => 'კამერის დაყენება']],
             'overview' => '',
+            'warranty' => '',
+            'sla' => '',
             'lead_form' => [
                 'pricing' => ['base_price' => 300],
+                'project_size_label_ka' => '',
+                'project_size_label_en' => '',
+                'project_size_label_ru' => '',
+                'property_type_label_ka' => '',
+                'property_type_label_en' => '',
+                'property_type_label_ru' => '',
+                'calculator_disclaimer_ka' => '',
+                'calculator_disclaimer_en' => '',
+                'calculator_disclaimer_ru' => '',
                 'project_size_options' => [[
                     'value' => 'small', 'ka' => 'პატარა', 'en' => '', 'ru' => '',
                     'one_time_price' => 30,
@@ -880,6 +892,19 @@ class CmsContentGeneratorTest extends TestCase
             'lead_form.packages.0.description_ru',
             'lead_form.components.0.title_en',
             'lead_form.components.0.description_ru',
+            'lead_form.project_size_label_ka',
+            'lead_form.project_size_label_en',
+            'lead_form.project_size_label_ru',
+            'lead_form.property_type_label_ka',
+            'lead_form.property_type_label_en',
+            'lead_form.property_type_label_ru',
+            'lead_form.calculator_disclaimer_ka',
+            'lead_form.calculator_disclaimer_en',
+            'lead_form.calculator_disclaimer_ru',
+            'translations.fields.warranty.en',
+            'translations.fields.warranty.ru',
+            'translations.fields.sla.en',
+            'translations.fields.sla.ru',
             'overview',
         ] as $expected) {
             $this->assertContains($expected, $targets);
@@ -1065,6 +1090,48 @@ class CmsContentGeneratorTest extends TestCase
         );
 
         $this->assertSame('Validated local description.', $updates['seo_description']);
+        Http::assertSentCount(2);
+    }
+
+
+    public function test_ai_retries_copy_that_exceeds_filament_field_limits(): void
+    {
+        Http::fakeSequence()
+            ->push($this->responseWithPatches([[
+                'path' => 'seo_description',
+                'value_json' => json_encode(str_repeat('a', 321)),
+            ]]))
+            ->push($this->responseWithPatches([[
+                'path' => 'seo_description',
+                'value_json' => json_encode('Valid category meta description.'),
+            ]]));
+
+        $updates = app(CmsContentGenerator::class)->generate('category', 'რეალური ფაქტები', [
+            'name' => 'კატეგორია',
+            'seo_description' => '',
+        ]);
+
+        $this->assertSame('Valid category meta description.', $updates['seo_description']);
+        Http::assertSentCount(2);
+    }
+
+    public function test_seo_page_title_over_180_characters_is_retried(): void
+    {
+        Http::fakeSequence()
+            ->push($this->responseWithPatches([[
+                'path' => 'translations.fields.title.en',
+                'value_json' => json_encode(str_repeat('x', 181)),
+            ]]))
+            ->push($this->responseWithPatches([[
+                'path' => 'translations.fields.title.en',
+                'value_json' => json_encode('Safe SEO title'),
+            ]]));
+
+        $updates = app(CmsContentGenerator::class)->generate('seo-page', 'რეალური ფაქტები', [
+            'translations' => ['fields' => ['title' => ['en' => '']]],
+        ]);
+
+        $this->assertSame('Safe SEO title', data_get($updates, 'translations.fields.title.en'));
         Http::assertSentCount(2);
     }
 
