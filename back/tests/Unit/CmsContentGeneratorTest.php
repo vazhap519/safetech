@@ -284,7 +284,6 @@ class CmsContentGeneratorTest extends TestCase
         }
     }
 
-
     public function test_category_full_form_targets_every_visible_editorial_field_but_not_routing_or_media(): void
     {
         $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
@@ -1101,7 +1100,6 @@ class CmsContentGeneratorTest extends TestCase
         Http::assertSentCount(2);
     }
 
-
     public function test_ai_retries_copy_that_exceeds_filament_field_limits(): void
     {
         Http::fakeSequence()
@@ -1143,7 +1141,6 @@ class CmsContentGeneratorTest extends TestCase
         Http::assertSentCount(2);
     }
 
-
     public function test_project_results_may_remain_empty_when_no_verified_kpi_exists(): void
     {
         Http::fake(function (Request $request) {
@@ -1184,7 +1181,6 @@ class CmsContentGeneratorTest extends TestCase
             $this->assertContains("about_page_translations.about_team_title.{$locale}", $targets);
         }
     }
-
 
     public function test_page_faq_team_testimonial_partner_and_seo_page_profiles_cover_safe_editorial_fields(): void
     {
@@ -1331,7 +1327,6 @@ class CmsContentGeneratorTest extends TestCase
         }
     }
 
-
     public function test_settings_ai_covers_managed_home_services_about_and_contact_copy_without_business_statistics(): void
     {
         $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
@@ -1370,7 +1365,6 @@ class CmsContentGeneratorTest extends TestCase
         }
     }
 
-
     public function test_managed_page_entries_are_not_targeted_twice_and_home_local_seo_is_covered(): void
     {
         $targets = (new \ReflectionMethod(CmsContentGenerator::class, 'targetPaths'))
@@ -1408,7 +1402,6 @@ class CmsContentGeneratorTest extends TestCase
         $this->assertContains('value.entries.1.ru', $targets);
         $this->assertNotContains('value.entries.1.ka', $targets);
     }
-
 
     public function test_project_results_with_uuid_repeater_keys_are_generated_atomically(): void
     {
