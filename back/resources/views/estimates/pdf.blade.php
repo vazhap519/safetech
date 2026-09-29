@@ -107,11 +107,15 @@
     $siteName = $branding['site_name'] ?? config('app.name', 'SafeTech');
     $lineItems = $calculation['line_items'] ?? [];
     $requirements = $calculation['requirements'] ?? [];
-    $projectTypeLabel = [
+    $summary = $calculation['summary'] ?? [];
+    $isQuoteEngine = (bool) ($calculation['quote_engine'] ?? false);
+    $clientNote = trim((string) ($calculation['client_note'] ?? ''));
+    $projectTypeLabel = $calculation['service_name'] ?? ([
         'cctv' => 'CCTV',
         'network' => 'ქსელი',
         'it' => 'IT',
-    ][$estimate->project_type] ?? strtoupper($estimate->project_type);
+        'service' => 'სერვისი',
+    ][$estimate->project_type] ?? strtoupper($estimate->project_type));
     $money = fn ($value) => '₾' . number_format((float) $value, 2, '.', ',');
     $quantity = fn ($value) => fmod((float) $value, 1.0) === 0.0
         ? number_format((float) $value, 0, '.', ',')
@@ -146,6 +150,18 @@
             <td class="label">პროექტის ტიპი</td>
             <td>{{ $projectTypeLabel }}</td>
         </tr>
+        @if($estimate->project_title)
+            <tr>
+                <td class="label">პროექტი</td>
+                <td>{{ $estimate->project_title }}</td>
+            </tr>
+        @endif
+        @if($estimate->location)
+            <tr>
+                <td class="label">ობიექტი / მისამართი</td>
+                <td>{{ $estimate->location }}</td>
+            </tr>
+        @endif
         @if($estimate->client_name)
             <tr>
                 <td class="label">კლიენტი</td>
@@ -172,24 +188,35 @@
         @endif
     </table>
 
-    <h2>საჭირო აღჭურვილობა</h2>
+    <h2>{{ $isQuoteEngine ? 'პროექტის შეჯამება' : 'საჭირო აღჭურვილობა' }}</h2>
     <table class="summary">
-        <tr>
-            <td class="label">რეკორდერი</td>
-            <td>{{ $requirements['recorder'] ?? 'არ არის საჭირო' }}</td>
-        </tr>
-        <tr>
-            <td class="label">შენახვა</td>
-            <td>{{ $requirements['storage'] ?? 'არ არის საჭირო' }}</td>
-        </tr>
-        <tr>
-            <td class="label">PoE სვიჩი</td>
-            <td>{{ $requirements['poe_switch'] ?? 'არ არის საჭირო' }}</td>
-        </tr>
-        <tr>
-            <td class="label">RJ45 / BNC</td>
-            <td>{{ $requirements['connectors'] ?? 'არ არის საჭირო' }}</td>
-        </tr>
+        @if($isQuoteEngine && ! empty($summary))
+            @foreach($summary as $label => $value)
+                @if(filled($value))
+                    <tr>
+                        <td class="label">{{ $label }}</td>
+                        <td>{{ $value }}</td>
+                    </tr>
+                @endif
+            @endforeach
+        @else
+            <tr>
+                <td class="label">რეკორდერი</td>
+                <td>{{ $requirements['recorder'] ?? 'არ არის საჭირო' }}</td>
+            </tr>
+            <tr>
+                <td class="label">შენახვა</td>
+                <td>{{ $requirements['storage'] ?? 'არ არის საჭირო' }}</td>
+            </tr>
+            <tr>
+                <td class="label">PoE სვიჩი</td>
+                <td>{{ $requirements['poe_switch'] ?? 'არ არის საჭირო' }}</td>
+            </tr>
+            <tr>
+                <td class="label">RJ45 / BNC</td>
+                <td>{{ $requirements['connectors'] ?? 'არ არის საჭირო' }}</td>
+            </tr>
+        @endif
     </table>
 
     <h2>შეთავაზების დეტალები</h2>
@@ -229,9 +256,9 @@
         </tr>
     </table>
 
-    @if($estimate->notes)
+    @if($isQuoteEngine ? $clientNote !== '' : filled($estimate->notes))
         <h2>შენიშვნები</h2>
-        <div>{{ $estimate->notes }}</div>
+        <div>{{ $isQuoteEngine ? $clientNote : $estimate->notes }}</div>
     @endif
 </div>
 </body>
