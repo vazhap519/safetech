@@ -80,9 +80,24 @@ class EstimateResource extends Resource
                 ])
                 ->columns(2),
 
+            Section::make('Quote Engine — შენახული შეთავაზება')
+                ->visible(fn (?Estimate $record): bool => self::isQuoteEngine($record))
+                ->schema([
+                    Placeholder::make('quote_financial_summary')
+                        ->label('ფინანსური შეჯამება')
+                        ->content(fn (?Estimate $record): array => self::quoteSummary($record))
+                        ->listWithLineBreaks(),
+                    Placeholder::make('quote_lines')
+                        ->label('შეთავაზების ხაზები')
+                        ->content(fn (?Estimate $record): array => self::savedQuoteLines($record))
+                        ->listWithLineBreaks()
+                        ->columnSpanFull(),
+                ])
+                ->columns(2),
+
             Section::make('CCTV პარამეტრები')
                 ->description('საცავის კალკულატორი ავტომატურად ითვლის HDD/NVR/PoE საჭიროებებს.')
-                ->visible(fn (Get $get): bool => self::isCctv($get))
+                ->visible(fn (Get $get, ?Estimate $record): bool => ! self::isQuoteEngine($record) && self::isCctv($get))
                 ->schema([
                     Select::make('camera_type')
                         ->label('კამერის ტიპი')
@@ -146,6 +161,7 @@ class EstimateResource extends Resource
                 ->columns(3),
 
             Section::make('ღირებულებები')
+                ->visible(fn (?Estimate $record): bool => ! self::isQuoteEngine($record))
                 ->schema([
                     TextInput::make('camera_unit_cost')
                         ->label('კამერის ფასი')
@@ -223,6 +239,7 @@ class EstimateResource extends Resource
                 ->columns(3),
 
             Section::make('დამატებითი კომპონენტები')
+                ->visible(fn (?Estimate $record): bool => ! self::isQuoteEngine($record))
                 ->description('ქსელისა და IT პროექტებისთვის აქ შეგიძლიათ ხელით დაამატოთ როუტერები, სვიჩები, კარადები, UPS და სხვა ხაზები.')
                 ->schema([
                     Repeater::make('manual_items')
@@ -262,6 +279,7 @@ class EstimateResource extends Resource
                 ]),
 
             Section::make('ცოცხალი შეჯამება')
+                ->visible(fn (?Estimate $record): bool => ! self::isQuoteEngine($record))
                 ->schema([
                     Placeholder::make('requirements_preview')
                         ->label('საჭირო აღჭურვილობა')
@@ -380,6 +398,56 @@ class EstimateResource extends Resource
     public static function hydrateCalculatedFields(array $data): array
     {
         return array_merge($data, app(EstimateCalculator::class)->calculate($data));
+    }
+
+    private static function isQuoteEngine(?Estimate $record): bool
+    {
+        return (bool) data_get($record?->calculation, 'quote_engine', false);
+    }
+
+    /** @return array<int, string> */
+    private static function quoteSummary(?Estimate $record): array
+    {
+        if (! $record) {
+            return [];
+        }
+
+        $financial = data_get($record->calculation, 'financial', []);
+
+        return [
+            'სერვისი: '.(data_get($record->calculation, 'service_name') ?: ($record->service?->name ?? '—')),
+            'საბოლოო ფასი: '.self::formatMoney((float) $record->final_total),
+            'ცნობილი თვითღირებულება: '.self::formatMoney((float) $record->cost_total),
+            'მოგება: '.($record->pricing_complete ? self::formatMoney((float) $record->profit_total) : 'დასაზუსტებელია'),
+            'მარჟა: '.($record->pricing_complete && is_numeric($financial['gross_margin_percentage'] ?? null)
+                ? number_format((float) $financial['gross_margin_percentage'], 1).'%'
+                : '—'),
+            'ფასები: '.($record->pricing_complete ? 'სრულია' : 'საჭიროებს შევსებას Quote Catalog-ში'),
+        ];
+    }
+
+    /** @return array<int, string> */
+    private static function savedQuoteLines(?Estimate $record): array
+    {
+        $items = is_array(data_get($record?->calculation, 'line_items'))
+            ? data_get($record?->calculation, 'line_items')
+            : [];
+
+        if ($items === []) {
+            return ['ხაზები არ არის.'];
+        }
+
+        return array_map(
+            fn (array $item): string => sprintf(
+                '%s: %s %s × %s = %s',
+                (string) ($item['label'] ?? '—'),
+                self::formatQuantity((float) ($item['quantity'] ?? 0)),
+                (string) ($item['unit'] ?? 'pcs'),
+                self::formatMoney((float) ($item['sell_unit'] ?? 0)),
+                self::formatMoney((float) ($item['sell_total'] ?? 0)),
+            ),
+            $items,
+        );
     }
 
     private static function isCctv(Get $get): bool
