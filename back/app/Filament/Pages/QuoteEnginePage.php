@@ -6,6 +6,8 @@ use App\Filament\Resources\EstimateResource;
 use App\Filament\Support\NavigationGroup;
 use App\Models\Estimate;
 use App\Models\Service;
+use App\Support\Calculators\BarrierConfigurator;
+use App\Support\Calculators\BarrierQuoteProfile;
 use App\Support\Calculators\CalculatorProfileBuilder;
 use App\Support\Estimators\ServiceQuoteCalculator;
 use Filament\Notifications\Notification;
@@ -98,9 +100,30 @@ class QuoteEnginePage extends Page
     {
         $service = $this->service();
 
-        return $service
-            ? app(CalculatorProfileBuilder::class)->build($service, 'ka')
-            : [];
+        if (! $service) {
+            return [];
+        }
+
+        if (BarrierQuoteProfile::matches((string) $service->slug, (string) $service->name)) {
+            $service = clone $service;
+            $service->setAttribute(
+                'lead_form',
+                app(ServiceQuoteCalculator::class)->config($service),
+            );
+        }
+
+        return app(CalculatorProfileBuilder::class)->build($service, 'ka');
+    }
+
+    public function updatedValues(mixed $value, string $key): void
+    {
+        $service = $this->service();
+
+        if (! $service || ! BarrierQuoteProfile::matches((string) $service->slug, (string) $service->name)) {
+            return;
+        }
+
+        $this->values = (new BarrierConfigurator)->normalize($this->values, $key);
     }
 
     /** @return array<string, mixed> */
@@ -283,9 +306,8 @@ class QuoteEnginePage extends Page
             return;
         }
 
-        $builder = app(CalculatorProfileBuilder::class);
-        $profile = $builder->build($service, 'ka');
-        $config = $builder->config($service);
+        $profile = $this->profile();
+        $config = app(ServiceQuoteCalculator::class)->config($service);
         $pricing = is_array($config['pricing'] ?? null) ? $config['pricing'] : [];
 
         $this->values = app(ServiceQuoteCalculator::class)->initialValues($service);
