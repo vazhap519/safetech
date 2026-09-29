@@ -227,8 +227,8 @@ final class ServiceQuoteCalculator
                     : $catalogItem?->purchase_price,
             );
             $markupPercentage = array_key_exists('markup_percentage', $override)
-                ? $this->percentage($override['markup_percentage'])
-                : $this->percentage($catalogItem?->markup_percentage ?? 60);
+                ? $this->markupPercentage($override['markup_percentage'])
+                : $this->markupPercentage($catalogItem?->markup_percentage ?? 60);
 
             if (array_key_exists('sale_price', $override)) {
                 $salePrice = $this->money($override['sale_price']);
@@ -723,6 +723,11 @@ final class ServiceQuoteCalculator
     }
 
     private function percentage(mixed $value): float
+    {
+        return round(min(100, max(0, is_numeric($value) ? (float) $value : 0)), 2);
+    }
+
+    private function markupPercentage(mixed $value): float
     {
         return round(min(1000, max(0, is_numeric($value) ? (float) $value : 0)), 2);
     }
