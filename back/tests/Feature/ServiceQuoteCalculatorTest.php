@@ -128,7 +128,6 @@ class ServiceQuoteCalculatorTest extends TestCase
         $this->assertNull($quote['gross_margin_percentage']);
     }
 
-
     public function test_barrier_quote_uses_specialized_lpr_profile_and_normalizes_incompatible_model(): void
     {
         $service = Service::query()->create([
