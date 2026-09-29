@@ -5,6 +5,8 @@ namespace App\Filament\Pages;
 use App\Filament\Support\NavigationGroup;
 use App\Support\Calculators\AccessIntercomConfigurator;
 use App\Support\Calculators\AccessIntercomDeviceCatalog;
+use App\Support\Calculators\IntercomPlanner;
+use App\Support\Calculators\IntercomProfile;
 use Filament\Pages\Page;
 
 class AccessIntercomConfiguratorPage extends Page
@@ -23,8 +25,10 @@ class AccessIntercomConfiguratorPage extends Page
 
     public ?string $lastCorrection = null;
 
+    public bool $scopeConfirmed = false;
+
     public array $config = [
-        'system' => 'access',
+        'system' => 'intercom',
         'doors' => 1,
         'reader_sides' => 'entry',
         'reader_interface' => 'wiegand',
@@ -39,9 +43,9 @@ class AccessIntercomConfiguratorPage extends Page
         'intercom_type' => 'ip',
         'apartments' => 1,
         'monitors_per_apartment' => 1,
-        'door_station_id' => 'hikvision-kv8113-wme1c',
-        'indoor_station_id' => 'hikvision-kh6320-wte1',
-        'switch_id' => 'hikvision-3e0105p-em-b',
+        'door_station_id' => 'tvt-td-e2223',
+        'indoor_station_id' => 'tvt-td-e2137',
+        'switch_id' => 'auto',
     ];
 
     public function mount(): void
@@ -51,6 +55,9 @@ class AccessIntercomConfiguratorPage extends Page
 
     public function updatedConfig(mixed $value, ?string $key = null): void
     {
+        if (in_array($key, ['apartments', 'doors', 'system'], true)) {
+            $this->scopeConfirmed = false;
+        }
         $before = $this->config;
         $this->config = app(AccessIntercomConfigurator::class)->normalize($this->config, $key);
 
@@ -63,7 +70,7 @@ class AccessIntercomConfiguratorPage extends Page
 
         $this->lastCorrection = $changed === []
             ? null
-            : 'შეუსაბამო კომბინაცია ავტომატურად გასწორდა: '.implode(', ', $changed);
+            : 'მოწყობილობები არჩეული მასშტაბისა და სერიის მიხედვით განახლდა.';
     }
 
     public function controllerOptions(): array
@@ -74,6 +81,33 @@ class AccessIntercomConfiguratorPage extends Page
     public function readerOptions(): array
     {
         return AccessIntercomDeviceCatalog::options(AccessIntercomDeviceCatalog::readers());
+    }
+
+    public function showDevices(): void
+    {
+        $this->config = app(AccessIntercomConfigurator::class)->normalize($this->config);
+        $this->scopeConfirmed = true;
+    }
+
+    public function intercomFields(): array
+    {
+        return IntercomProfile::fields();
+    }
+
+    public function intercomFieldOptions(array $field): array
+    {
+        $planner = new IntercomPlanner;
+        $devices = match ($field['key']) {
+            'door_station_id' => $planner->doorOptions($this->config),
+            'indoor_station_id' => $planner->indoorOptions($this->config),
+            'switch_id' => $planner->switchOptions($this->config),
+            default => null,
+        };
+        if ($devices === null) {
+            return $field['options'] ?? [];
+        }
+
+        return array_values(array_filter($field['options'], fn (array $option): bool => $option['value'] === 'auto' || isset($devices[$option['value']])));
     }
 
     public function doorStationOptions(): array

@@ -26,6 +26,7 @@ final class CalculatorProfileBuilder
         $pricing = is_array($config['pricing'] ?? null) ? $config['pricing'] : [];
 
         return [
+            'intercomCatalog' => isset($config['intercom_version']) ? IntercomProfile::catalog() : null,
             'serviceId' => (int) ($service->getKey() ?? 0),
             'slug' => $service->slug,
             'name' => $this->serviceValue($service, 'name', $locale, $service->name ?: $service->title),
@@ -222,6 +223,8 @@ final class CalculatorProfileBuilder
                     'description' => $this->localizedLabel($component, 'description', $locale),
                     'unitPrice' => $this->money($component['unit_price'] ?? 0),
                     'monthlyPrice' => $this->money($component['monthly_price'] ?? 0),
+                    'quantityLocked' => (bool) ($component['quantity_locked'] ?? false),
+                    'priceOnRequest' => (bool) ($component['quote_required'] ?? false) && $this->money($component['unit_price'] ?? 0) <= 0,
                     'quantityMode' => in_array($mode, $quantityModes, true) ? $mode : 'fixed',
                     'quantityField' => $this->string($component['quantity_field'] ?? ''),
                     'defaultQuantity' => max(0, $this->number($component['default_quantity'] ?? 1)),

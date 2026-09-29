@@ -356,6 +356,8 @@ class ServiceConfiguratorResource extends Resource
                                 ->numeric()
                                 ->minValue(0)
                                 ->default(0),
+                            Toggle::make('quote_required')->label('დაუფასებელი კომპონენტი: ფასი დასაზუსტებელია')->helperText('თუ ერთეულის ფასი 0-ია, საჯარო გვერდზე უფასოდ არ გამოჩნდება.'),
+                            Toggle::make('quantity_locked')->label('რაოდენობა ავტომატურად დაითვალოს'),
                             TextInput::make('monthly_price')
                                 ->label('ყოველთვიური ერთეულის ფასი')
                                 ->numeric()

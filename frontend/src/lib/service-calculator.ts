@@ -1,3 +1,5 @@
+import { intercomValues, type IntercomCatalog } from "./intercom-calculator";
+
 export type CalculatorOption = {
     value: string;
     label: string;
@@ -59,6 +61,8 @@ export type CalculatorComponent = {
     description: string;
     unitPrice: number;
     monthlyPrice: number;
+    quantityLocked?: boolean;
+    priceOnRequest?: boolean;
     quantityMode: "fixed" | "field" | "ceil";
     quantityField: string;
     defaultQuantity: number;
@@ -73,6 +77,7 @@ export type CalculatorComponent = {
 };
 
 export type CalculatorProfile = {
+    intercomCatalog?: IntercomCatalog | null;
     serviceId: number;
     slug: string;
     name: string;
@@ -244,7 +249,7 @@ function calculatedComponentQuantity(
         quantity = Math.ceil(source / Math.max(1, component.unitsPerComponent));
     }
 
-    return clampComponentQuantity(component, quantity);
+    return component.quantityLocked ? quantity : clampComponentQuantity(component, quantity);
 }
 
 export function clampComponentQuantity(
@@ -272,6 +277,7 @@ export function getCompatibleComponents(
     propertyType: string,
     packageKey: string,
 ): CompatibleCalculatorComponent[] {
+    if (profile.intercomCatalog) values = intercomValues(profile.intercomCatalog, values);
     const compatible = profile.components
         .filter((component) =>
             component.rules.every((rule) =>
@@ -313,7 +319,7 @@ export function calculateConfiguratorTotals(
             : override?.selected ?? component.recommended;
         const quantity = clampComponentQuantity(
             component,
-            override?.quantity ?? recommendation.quantity,
+            component.quantityLocked ? recommendation.quantity : override?.quantity ?? recommendation.quantity,
         );
 
         if (!selected || quantity <= 0) continue;

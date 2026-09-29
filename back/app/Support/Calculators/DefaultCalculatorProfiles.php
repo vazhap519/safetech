@@ -19,6 +19,10 @@ final class DefaultCalculatorProfiles
     /** @return array<string, mixed> */
     public static function for(string $slug, string $name = ''): array
     {
+        if (IntercomProfile::matches($slug, $name)) {
+            return IntercomProfile::profile();
+        }
+
         $profiles = self::all();
         $value = mb_strtolower(trim("{$slug} {$name}"));
         $matches = [

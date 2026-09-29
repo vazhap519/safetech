@@ -64,16 +64,37 @@ final class AccessIntercomDeviceCatalog
     /** @return array<string, array<string, mixed>> */
     public static function doorStations(): array
     {
+        // Capacity comes from TVT's apartment/villa topology, not RFID card storage.
+        // https://www.tvt.net.cn/keyTechnologies/index1280.html
         return [
+            'tvt-td-e2223' => [
+                'brand' => 'TVT', 'model' => 'TD-E2223-EM/IC/PE/WF',
+                'ecosystem' => 'tvt-td', 'max_apartments' => 500, 'max_doors' => 10,
+                'watts' => 12, 'poe' => 'standard', 'rfid' => true,
+                'source' => 'https://www.tvt.net.cn/products/1386.html',
+            ],
+            'tvt-td-e3110' => [
+                'brand' => 'TVT', 'model' => 'TD-E3110-IC/PE/WF',
+                'ecosystem' => 'tvt-td', 'max_apartments' => 1, 'max_doors' => 10,
+                'watts' => 6, 'poe' => 'standard', 'rfid' => true,
+                'source' => 'https://www.tvt.net.cn/keyTechnologies/index1280.html',
+            ],
+            'tvt-te-vd1108' => [
+                'brand' => 'TVT', 'model' => 'TE-VD1108S1-CEPW (1/2/4/8 buttons)',
+                'ecosystem' => 'tvt-te', 'max_apartments' => 8,
+                // Limit recommendations to one entrance until multi-entrance firmware is verified.
+                'max_doors' => 1, 'watts' => 10, 'poe' => 'standard', 'rfid' => true,
+                'source' => 'https://www.tvt.net.cn/products/1845.html',
+            ],
             'hikvision-kv8113-wme1c' => [
                 'brand' => 'Hikvision', 'model' => 'DS-KV8113-WME1(C)',
-                'system' => 'ip', 'ecosystem' => 'hikvision-ip-intercom', 'poe' => 'standard',
-                'rfid' => true,
+                'ecosystem' => 'hikvision-ip-intercom', 'max_apartments' => 1, 'max_doors' => 1,
+                'watts' => 10, 'poe' => 'standard', 'rfid' => true,
             ],
             'hikvision-kv6113-wpe1c' => [
                 'brand' => 'Hikvision', 'model' => 'DS-KV6113-WPE1(C)',
-                'system' => 'ip', 'ecosystem' => 'hikvision-ip-intercom', 'poe' => 'standard',
-                'rfid' => true,
+                'ecosystem' => 'hikvision-ip-intercom', 'max_apartments' => 1, 'max_doors' => 1,
+                'watts' => 10, 'poe' => 'standard', 'rfid' => true,
             ],
         ];
     }
@@ -82,34 +103,44 @@ final class AccessIntercomDeviceCatalog
     public static function indoorStations(): array
     {
         return [
+            'tvt-td-e2137' => [
+                'brand' => 'TVT', 'model' => 'TD-E2137-PE/TP/WF — 7"',
+                'ecosystem' => 'tvt-td', 'max_per_apartment' => 6,
+                'watts' => 6, 'poe' => 'standard',
+                'source' => 'https://www.tvt.net.cn/products/1388.html',
+            ],
+            'tvt-te-vh1104' => [
+                'brand' => 'TVT', 'model' => 'TE-VH1104S1-PTW — 4.3"',
+                'ecosystem' => 'tvt-te', 'max_per_apartment' => 6,
+                'watts' => 6, 'poe' => 'standard',
+                'source' => 'https://www.tvt.net.cn/products/1900.html',
+            ],
             'hikvision-kh6320-wte1' => [
                 'brand' => 'Hikvision', 'model' => 'DS-KH6320-WTE1',
-                'system' => 'ip', 'ecosystem' => 'hikvision-ip-intercom', 'poe' => 'standard',
+                'ecosystem' => 'hikvision-ip-intercom', 'max_per_apartment' => 6,
+                'watts' => 6, 'poe' => 'standard',
             ],
             'hikvision-kh6320-le1b' => [
                 'brand' => 'Hikvision', 'model' => 'DS-KH6320-LE1(B)',
-                'system' => 'ip', 'ecosystem' => 'hikvision-ip-intercom', 'poe' => 'standard',
+                'ecosystem' => 'hikvision-ip-intercom', 'max_per_apartment' => 6,
+                'watts' => 6, 'poe' => 'standard',
             ],
         ];
     }
 
-    /** @return array<string, array<string, mixed>> */
+    /** Generic switches are procurement requirements, not invented manufacturer models. */
     public static function switches(): array
     {
-        return [
-            'hikvision-3e0105p-em-b' => [
-                'brand' => 'Hikvision', 'model' => 'DS-3E0105P-E/M(B)',
-                'system' => 'ip', 'poe' => 'standard', 'poe_ports' => 4,
-            ],
-            'generic-standard-poe-8' => [
-                'brand' => 'Generic', 'model' => '8-port IEEE 802.3af/at PoE switch',
-                'system' => 'ip', 'poe' => 'standard', 'poe_ports' => 8,
-            ],
-            'generic-standard-poe-16' => [
-                'brand' => 'Generic', 'model' => '16-port IEEE 802.3af/at PoE switch',
-                'system' => 'ip', 'poe' => 'standard', 'poe_ports' => 16,
-            ],
-        ];
+        $switches = [];
+        foreach ([4 => 65, 8 => 120, 16 => 250, 24 => 370] as $ports => $budget) {
+            $switches["generic-standard-poe-{$ports}"] = [
+                'brand' => '', 'model' => "PoE+ {$ports} ports / ≥{$budget}W / 2 Gigabit uplinks",
+                'poe' => 'standard', 'poe_ports' => $ports, 'poe_budget_w' => $budget,
+                'per_port_w' => 30, 'dedicated_uplinks' => 2,
+            ];
+        }
+
+        return $switches;
     }
 
     public static function label(array $device): string

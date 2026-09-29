@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     <style>
-        .ac-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.ac-card{border:1px solid #94a3b844;padding:1.25rem;border-radius:1rem;margin-bottom:1rem}.ac-field{display:grid;gap:.35rem;font-size:.85rem}.ac-field input,.ac-field select{width:100%;padding:.62rem .7rem;border:1px solid #94a3b866;border-radius:.55rem;background:transparent;color:inherit}.ac-field select option{color:#111827}.ac-note{font-size:.84rem;line-height:1.6;color:#94a3b8}.ac-table{width:100%;border-collapse:collapse}.ac-table th,.ac-table td{padding:.7rem;border-bottom:1px solid #94a3b833;text-align:left;vertical-align:top}.ac-ok{border:1px solid #22c55e66;background:#22c55e12;padding:.8rem 1rem;border-radius:.7rem}.ac-fix{border:1px solid #f59e0b66;background:#f59e0b12;padding:.8rem 1rem;border-radius:.7rem}
+        .ac-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1rem}.ac-card{border:1px solid #94a3b844;padding:1.25rem;border-radius:1rem;margin-bottom:1rem}.ac-field{display:grid;gap:.35rem;font-size:.85rem}.ac-field input,.ac-field select{width:100%;padding:.62rem .7rem;border:1px solid #94a3b866;border-radius:.55rem;background:transparent;color:inherit}.ac-field select option{color:#111827}.ac-note{font-size:.84rem;line-height:1.6;color:#64748b}.dark .ac-note{color:#94a3b8}.ac-action{margin-top:1rem}.ac-table{width:100%;border-collapse:collapse}.ac-table th,.ac-table td{padding:.7rem;border-bottom:1px solid #94a3b833;text-align:left;vertical-align:top}.ac-ok{border:1px solid #22c55e66;background:#22c55e12;padding:.8rem 1rem;border-radius:.7rem}.ac-fix{border:1px solid #f59e0b66;background:#f59e0b12;padding:.8rem 1rem;border-radius:.7rem}
     </style>
 
     <p class="ac-note mb-4">აირჩიეთ კომპონენტი. თუ არჩეული მოდელი სხვა კომპონენტთან ან ტოპოლოგიასთან შეუთავსებელია, სისტემა ავტომატურად ჩაანაცვლებს თავსებადი მოდელით და ქვემოთ გაჩვენებთ საბოლოო კომპლექტაციას.</p>
@@ -34,20 +34,33 @@
         </section>
     @else
         <section class="ac-card">
-            <h2 class="text-lg font-bold mb-4">IP ვიდეოდომოფონი — თავსებადი მოწყობილობების შერჩევა</h2>
+            <h2 class="text-lg font-bold mb-4">1. პროექტის მასშტაბი</h2>
+            <p class="ac-note mb-4">ერთი აბონენტი ნიშნავს ერთ ბინას / გამოძახების მისამართს. კარები საერთო IP ქსელშია.</p>
             <div class="ac-grid">
-                <label class="ac-field"><span>ბინების / აბონენტების რაოდენობა</span><input type="number" min="1" max="200" wire:model.live.debounce.300ms="config.apartments"></label>
-                <label class="ac-field"><span>მონიტორი ერთ ბინაზე</span><input type="number" min="1" max="4" wire:model.live.debounce.300ms="config.monitors_per_apartment"></label>
-                <label class="ac-field"><span>გარე პანელი</span><select wire:model.live="config.door_station_id">@foreach($this->doorStationOptions() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach</select></label>
-                <label class="ac-field"><span>შიდა მონიტორი</span><select wire:model.live="config.indoor_station_id">@foreach($this->indoorStationOptions() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach</select></label>
-                <label class="ac-field"><span>PoE switch</span><select wire:model.live="config.switch_id">@foreach($this->switchOptions() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach</select></label>
-                <label class="ac-field"><span>საკეტი</span><select wire:model.live="config.lock_type"><option value="maglock">Maglock</option><option value="strike">Electric strike</option><option value="bolt">Electric bolt</option></select></label>
+                @foreach(array_slice($this->intercomFields(), 0, 2) as $field)
+                    @include('filament.pages.partials.intercom-field', ['field' => $field])
+                @endforeach
             </div>
+            <x-filament::button class="ac-action" wire:click="showDevices" wire:loading.attr="disabled">შესაბამისი მოწყობილობების შერჩევა</x-filament::button>
         </section>
+        @if($scopeConfirmed)
+            <section class="ac-card" x-show="$wire.scopeConfirmed">
+                <h2 class="text-lg font-bold mb-4">2. მოწყობილობები და აქსესუარები</h2>
+                <p class="ac-note mb-4">მოდელები იფილტრება ბინების, კარებისა და სერიის მიხედვით. PoE სვიჩების რაოდენობა ითვალისწინებს პორტებსაც და კვების ბიუჯეტსაც.</p>
+                <div class="ac-grid">
+                    @foreach(array_slice($this->intercomFields(), 2) as $field)
+                        @include('filament.pages.partials.intercom-field', ['field' => $field])
+                    @endforeach
+                </div>
+            </section>
+        @endif
     @endif
 
+    @if(($config['system'] ?? 'access') === 'access' || $scopeConfirmed)
+
     @php($r = $this->result())
-    <div class="ac-ok mb-4"><strong>✓ თავსებადი კომპლექტაცია</strong> — {{ $r['summary'] }}</div>
+    <div x-show="$wire.config.system === 'access' || $wire.scopeConfirmed">
+    <div class="{{ $r['compatible'] ? 'ac-ok' : 'ac-fix' }} mb-4"><strong>კომპლექტაციის პროექტი</strong> — {{ $r['summary'] }}</div>
 
     <section class="ac-card">
         <h2 class="text-xl font-bold mb-4">არჩეული თავსებადი მოწყობილობები</h2>
@@ -71,4 +84,6 @@
 
     <section class="ac-card"><h3 class="text-lg font-bold mb-3">თავსებადობის შემოწმება</h3><ul class="list-disc ms-5 ac-note">@foreach($r['checks'] as $check)<li>{{ $check }}</li>@endforeach</ul></section>
     @if($r['warnings'])<section class="ac-card"><h3 class="text-lg font-bold mb-3">გაფრთხილებები</h3><ul class="list-disc ms-5 ac-note">@foreach($r['warnings'] as $warning)<li>{{ $warning }}</li>@endforeach</ul></section>@endif
+    </div>
+    @endif
 </x-filament-panels::page>

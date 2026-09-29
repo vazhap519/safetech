@@ -52,6 +52,7 @@ final class SystemContentSeeder extends ContentSeeder
         $this->call(ConsultationCopySeeder::class);
         $this->call(PrivacyPageSeeder::class);
         $this->call(ServiceCatalogSeeder::class);
+        $this->call(IntercomConfiguratorSeeder::class);
         $this->call(LegacyLocalLandingBaselineSeeder::class);
         $this->call(LocalServiceCoverageSeeder::class);
         $this->call(ExistingLocalLandingTranslationsSeeder::class);

@@ -7,6 +7,10 @@ final class DefaultConfiguratorComponents
     /** @return array<int, array<string, mixed>> */
     public static function for(string $slug, string $name = ''): array
     {
+        if (IntercomProfile::matches($slug, $name)) {
+            return IntercomProfile::components();
+        }
+
         $value = mb_strtolower(trim("{$slug} {$name}"));
 
         if (self::containsAny($value, ['cctv', 'camera', 'surveillance', 'video', 'კამერ', 'ვიდეო'])) {

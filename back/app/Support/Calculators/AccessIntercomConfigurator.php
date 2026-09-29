@@ -92,35 +92,7 @@ final class AccessIntercomConfigurator
      */
     private function normalizeIntercom(array $config, ?string $changedKey): array
     {
-        $doors = AccessIntercomDeviceCatalog::doorStations();
-        $indoors = AccessIntercomDeviceCatalog::indoorStations();
-        $switches = AccessIntercomDeviceCatalog::switches();
-
-        $doorId = (string) ($config['door_station_id'] ?? array_key_first($doors));
-        $door = $doors[$doorId] ?? reset($doors);
-        $config['door_station_id'] = array_key_exists($doorId, $doors) ? $doorId : array_key_first($doors);
-        $config['intercom_type'] = (string) ($door['system'] ?? 'ip');
-
-        $indoorId = (string) ($config['indoor_station_id'] ?? '');
-        $indoor = $indoors[$indoorId] ?? null;
-        if (! $indoor || ($indoor['ecosystem'] ?? null) !== ($door['ecosystem'] ?? null)) {
-            foreach ($indoors as $id => $candidate) {
-                if (($candidate['ecosystem'] ?? null) === ($door['ecosystem'] ?? null)) {
-                    $config['indoor_station_id'] = $id;
-                    $indoor = $candidate;
-                    break;
-                }
-            }
-        }
-
-        $requiredPorts = max(2, (int) ($config['apartments'] ?? 1) * max(1, (int) ($config['monitors_per_apartment'] ?? 1)) + 1);
-        $switchId = (string) ($config['switch_id'] ?? '');
-        $switch = $switches[$switchId] ?? null;
-        if (! $switch || ($switch['poe'] ?? null) !== ($door['poe'] ?? null)) {
-            $config['switch_id'] = $this->bestSwitch($requiredPorts, (string) ($door['poe'] ?? 'standard'));
-        }
-
-        return $config;
+        return (new IntercomPlanner)->normalize($config);
     }
 
     /** @param array<string, mixed> $c */
@@ -184,43 +156,7 @@ final class AccessIntercomConfigurator
     /** @param array<string, mixed> $c */
     private function intercomResult(array $c): array
     {
-        $doors = AccessIntercomDeviceCatalog::doorStations();
-        $indoors = AccessIntercomDeviceCatalog::indoorStations();
-        $switches = AccessIntercomDeviceCatalog::switches();
-        $door = $doors[$c['door_station_id']];
-        $indoor = $indoors[$c['indoor_station_id']];
-        $switch = $switches[$c['switch_id']];
-
-        $apartments = max(1, (int) ($c['apartments'] ?? 1));
-        $monitorsPerApartment = max(1, (int) ($c['monitors_per_apartment'] ?? 1));
-        $monitors = $apartments * $monitorsPerApartment;
-        $requiredEndpoints = $monitors + 1;
-        $switchCount = (int) ceil($requiredEndpoints / max(1, (int) $switch['poe_ports']));
-
-        return [
-            'system' => 'intercom',
-            'summary' => 'IP ვიდეოდომოფონის თავსებადი კომპლექტაცია',
-            'compatible' => ($door['ecosystem'] ?? null) === ($indoor['ecosystem'] ?? null)
-                && ($door['poe'] ?? null) === ($switch['poe'] ?? null),
-            'selection' => [
-                'door_station' => AccessIntercomDeviceCatalog::label($door),
-                'indoor_station' => AccessIntercomDeviceCatalog::label($indoor),
-                'switch' => AccessIntercomDeviceCatalog::label($switch),
-            ],
-            'items' => [
-                ['group' => 'გარე პანელი', 'qty' => 1, 'item' => AccessIntercomDeviceCatalog::label($door), 'why' => 'არჩეულ indoor station-თან ერთი Hikvision IP intercom ecosystem.'],
-                ['group' => 'შიდა მონიტორი', 'qty' => $monitors, 'item' => AccessIntercomDeviceCatalog::label($indoor), 'why' => "{$apartments} ბინა × {$monitorsPerApartment} მონიტორი."],
-                ['group' => 'PoE switch', 'qty' => $switchCount, 'item' => AccessIntercomDeviceCatalog::label($switch), 'why' => "{$requiredEndpoints} IP endpoint-ისთვის საკმარისი პორტების რაოდენობა."],
-                ['group' => 'ელ. საკეტი', 'qty' => 1, 'item' => $this->lockLabel((string) ($c['lock_type'] ?? 'strike')), 'why' => 'Door station relay ან ცალკე access controller მართავს საკეტს.'],
-            ],
-            'checks' => [
-                'Outdoor station ↔ Indoor station: ecosystem ემთხვევა.',
-                'PoE: არჩეული მოწყობილობები და switch იყენებს Standard PoE კლასს.',
-                'საკეტის კვება/relay contact rating გადაამოწმეთ კონკრეტული lock datasheet-ით.',
-            ],
-            'warnings' => ['მრავალბინიან პროექტზე გადაამოწმეთ firmware family, მაქსიმალური apartment/room capacity, PoE budget და network topology.'],
-            'electrical' => null,
-        ];
+        return (new IntercomPlanner)->result($c);
     }
 
     /** @param array<string, mixed>|null $controller */
@@ -267,28 +203,6 @@ final class AccessIntercomConfigurator
         }
 
         return null;
-    }
-
-    private function bestSwitch(int $requiredPorts, string $poe): string
-    {
-        $bestId = '';
-        $bestPorts = PHP_INT_MAX;
-        foreach (AccessIntercomDeviceCatalog::switches() as $id => $switch) {
-            if (($switch['poe'] ?? null) !== $poe) {
-                continue;
-            }
-            $ports = (int) ($switch['poe_ports'] ?? 0);
-            if ($ports >= $requiredPorts && $ports < $bestPorts) {
-                $bestId = $id;
-                $bestPorts = $ports;
-            }
-        }
-
-        if ($bestId !== '') {
-            return $bestId;
-        }
-
-        return array_key_last(AccessIntercomDeviceCatalog::switches());
     }
 
     private function lockLabel(string $lockType): string

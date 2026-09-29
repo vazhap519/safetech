@@ -9,6 +9,7 @@ import {
 } from "@/components/consultation/constants";
 import Icon from "@/components/ui/Icon";
 import { trackEvent } from "@/lib/analytics";
+import { intercomValues, intercomField } from "@/lib/intercom-calculator";
 import {
     calculateConfiguratorTotals,
     calculateEstimateBreakdown,
@@ -269,8 +270,13 @@ export default function ServiceCalculator({
         Record<string, Record<string, CalculatorSelection>>
     >({});
 
+    const [confirmedScopes, setConfirmedScopes] = useState<Record<string, boolean>>({});
+    const configurationReady = !profile?.intercomCatalog || Boolean(confirmedScopes[profile.slug]);
     const values = useMemo(
-        () => (profile ? valuesByService[profile.slug] ?? EMPTY_VALUES : EMPTY_VALUES),
+        () => {
+            const raw = profile ? valuesByService[profile.slug] ?? EMPTY_VALUES : EMPTY_VALUES;
+            return profile?.intercomCatalog ? intercomValues(profile.intercomCatalog, raw) : raw;
+        },
         [profile, valuesByService],
     );
     const projectSize = profile ? projectSizes[profile.slug] ?? "" : "";
@@ -292,7 +298,7 @@ export default function ServiceCalculator({
     const compatibleComponents = useMemo(
         () =>
             profile
-                ? getCompatibleComponents(
+                && configurationReady ? getCompatibleComponents(
                       profile,
                       values,
                       projectSize,
@@ -300,7 +306,7 @@ export default function ServiceCalculator({
                       packageKey,
                   )
                 : [],
-        [profile, values, projectSize, propertyType, packageKey],
+        [profile, values, projectSize, propertyType, packageKey, configurationReady],
     );
     const selections = useMemo(
         () => (profile ? selectionsByService[profile.slug] ?? {} : {}),
@@ -470,17 +476,19 @@ export default function ServiceCalculator({
 
     if (!profile) return null;
 
+    const priceOnRequest = t("calculator.price.onRequest", { ka: "ფასი დასაზუსტებელია", en: "Price on request", ru: "Цена по запросу" });
+    const chooseDevices = t("calculator.intercom.choose", { ka: "შესაბამისი მოწყობილობების შერჩევა", en: "Choose matching devices", ru: "Подобрать устройства" });
     const updateField = (
         key: string,
         nextValue: string | number | boolean,
     ) => {
-        setValuesByService((current) => ({
-            ...current,
-            [profile.slug]: {
-                ...(current[profile.slug] ?? {}),
-                [key]: nextValue,
-            },
-        }));
+        setValuesByService((current) => {
+            const next = { ...values, ...current[profile.slug], [key]: nextValue };
+            return { ...current, [profile.slug]: profile.intercomCatalog ? intercomValues(profile.intercomCatalog, next) : next };
+        });
+        if (profile.intercomCatalog && ["apartments", "doors"].includes(key)) {
+            setConfirmedScopes((current) => ({ ...current, [profile.slug]: false }));
+        }
     };
 
     const selectionFor = (item: CompatibleCalculatorComponent) => {
@@ -492,7 +500,7 @@ export default function ServiceCalculator({
                 : override?.selected ?? item.component.recommended,
             quantity: clampComponentQuantity(
                 item.component,
-                override?.quantity ?? item.quantity,
+                item.component.quantityLocked ? item.quantity : override?.quantity ?? item.quantity,
             ),
         };
     };
@@ -529,7 +537,10 @@ export default function ServiceCalculator({
     const selectedComponents = compatibleComponents.filter(
         (item) => selectionFor(item).selected,
     );
+    const hasUnpriced = selectedComponents.some((item) => item.component.priceOnRequest);
+    const totalLabel = hasUnpriced ? t("calculator.price.knownSubtotal", { ka: "დაფასებული ნაწილის ჯამი", en: "Priced items subtotal", ru: "Сумма позиций с ценой" }) : copy.total;
     const resetCurrentService = () => {
+        setConfirmedScopes((current) => ({ ...current, [profile.slug]: false }));
         setValuesByService((current) => ({
             ...current,
             [profile.slug]: initialCalculatorValues(profile),
@@ -578,7 +589,7 @@ export default function ServiceCalculator({
         const estimateSummary = estimate.lines
             .map((line) => `${line.label}: ${line.detail || money(line.oneTime, profile.currency, locale)}`)
             .join("; ");
-        const total = money(totals.total, profile.currency, locale);
+        const total = hasUnpriced ? `${priceOnRequest} (${totalLabel}: ${money(totals.total, profile.currency, locale)})` : money(totals.total, profile.currency, locale);
         const message = t("calculator.quote.prefill", {
             ka: `მსურს ზუსტი შეთავაზება არჩეულ კონფიგურაციაზე. საორიენტაციო ჯამი: ${total}.`,
             en: `I would like an exact quote for this configuration. Indicative total: ${total}.`,
@@ -704,7 +715,7 @@ export default function ServiceCalculator({
                             </div>
 
                             <div className="grid gap-5 sm:grid-cols-2">
-                                {profile.fields.map((field) => (
+                                {profile.fields.filter((field) => configurationReady || ["apartments", "doors"].includes(field.key)).map((field) => (
                                     <div
                                         className={
                                             field.type === "textarea"
@@ -714,7 +725,7 @@ export default function ServiceCalculator({
                                         key={field.key}
                                     >
                                         <DynamicField
-                                            field={field}
+                                            field={profile.intercomCatalog ? intercomField(profile.intercomCatalog, field, values) : field}
                                             onChange={(value) =>
                                                 updateField(field.key, value)
                                             }
@@ -724,6 +735,18 @@ export default function ServiceCalculator({
                                 ))}
                             </div>
 
+                            {profile.intercomCatalog && !configurationReady ? (
+                                <button className="min-h-12 rounded-xl bg-primary px-5 font-semibold text-on-primary" type="button" onClick={() => setConfirmedScopes((current) => ({ ...current, [profile.slug]: true }))}>{chooseDevices}</button>
+                            ) : null}
+                            {profile.intercomCatalog && configurationReady ? (
+                                <p className="rounded-xl bg-primary/5 p-4 text-sm" data-testid="intercom-capacity">
+                                    {t("calculator.intercom.capacity", {
+                                        ka: `${values.monitor_count} მონიტორი · ${values.doors} პანელი · ${values.switch_count} PoE სვიჩი. PoE ბიუჯეტი: ${values.poe_required_w}W / ${values.poe_available_w}W. აგრეგაცია: ${values.core_ports} პორტი. თითო საკეტის PSU ≥${values.lock_psu_a}A @12V.`,
+                                        en: `${values.monitor_count} monitors · ${values.doors} panels · ${values.switch_count} PoE switches. PoE budget: ${values.poe_required_w}W / ${values.poe_available_w}W. Core: ${values.core_ports} ports. Lock PSU ≥${values.lock_psu_a}A @12V each.`,
+                                        ru: `${values.monitor_count} мониторов · ${values.doors} панелей · ${values.switch_count} PoE-коммутаторов. Бюджет PoE: ${values.poe_required_w}Вт / ${values.poe_available_w}Вт. Агрегация: ${values.core_ports} портов. БП замка ≥${values.lock_psu_a}А @12В каждый.`,
+                                    })}
+                                </p>
+                            ) : null}
                             {profile.packages.length ? (
                                 <fieldset>
                                     <legend className="mb-3 text-lg font-semibold text-on-surface">
@@ -783,7 +806,7 @@ export default function ServiceCalculator({
                             ) : null}
                         </section>
 
-                        <section className="rounded-2xl border border-outline-variant/20 bg-surface p-5 sm:p-6">
+                        {configurationReady ? <section className="rounded-2xl border border-outline-variant/20 bg-surface p-5 sm:p-6">
                             <div className="flex items-start gap-3">
                                 <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
                                     <Icon name="inventory_2" />
@@ -812,6 +835,7 @@ export default function ServiceCalculator({
                                                         : "border-outline-variant/20 bg-surface-container-low/50"
                                                 }`}
                                                 key={component.key}
+                                                data-component-key={component.key}
                                             >
                                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                                     <label className="flex min-w-0 cursor-pointer items-start gap-3">
@@ -855,7 +879,7 @@ export default function ServiceCalculator({
                                                                 </span>
                                                             ) : null}
                                                             <span className="mt-2 block text-sm font-medium text-primary">
-                                                                {money(
+                                                                {component.priceOnRequest ? priceOnRequest : money(
                                                                     component.unitPrice,
                                                                     profile.currency,
                                                                     locale,
@@ -868,7 +892,7 @@ export default function ServiceCalculator({
                                                         <span>{copy.quantity}</span>
                                                         <input
                                                             className="min-h-11 rounded-xl border border-outline-variant/30 bg-surface px-3 text-on-surface outline-none focus:border-primary disabled:opacity-50"
-                                                            disabled={!selection.selected}
+                                                            disabled={!selection.selected || component.quantityLocked}
                                                             min={Math.max(
                                                                 component.required ? 1 : 0,
                                                                 component.minimumQuantity,
@@ -905,19 +929,20 @@ export default function ServiceCalculator({
                                     {copy.noComponents}
                                 </p>
                             )}
-                        </section>
+                        </section> : null}
                     </div>
 
-                    <aside className="rounded-2xl border border-outline-variant/20 bg-surface p-5 lg:sticky lg:top-28">
+                    {configurationReady ? <aside className="rounded-2xl border border-outline-variant/20 bg-surface p-5 lg:sticky lg:top-28">
                         <div className="flex items-center justify-between gap-4">
                             <span className="text-sm text-on-surface-variant">
-                                {copy.total}
+                                {totalLabel}
                             </span>
                             <Icon className="text-secondary" name="query_stats" />
                         </div>
                         <p className="mt-2 break-words text-4xl font-semibold text-on-surface">
-                            {money(totals.total, profile.currency, locale)}
+                            {hasUnpriced && totals.total === 0 ? priceOnRequest : money(totals.total, profile.currency, locale)}
                         </p>
+                        {hasUnpriced ? <p className="mt-2 text-sm text-on-surface-variant">{priceOnRequest}</p> : null}
                         <p className="mt-2 text-xs leading-5 text-on-surface-variant">
                             {copy.pricingNote}
                         </p>
@@ -933,7 +958,7 @@ export default function ServiceCalculator({
                             />
                             <SummaryRow
                                 label={copy.componentPrice}
-                                value={money(
+                                value={hasUnpriced ? priceOnRequest : money(
                                     totals.componentSubtotal,
                                     profile.currency,
                                     locale,
@@ -951,7 +976,7 @@ export default function ServiceCalculator({
                             ) : null}
                             <SummaryRow
                                 bordered
-                                label={copy.subtotal}
+                                label={hasUnpriced ? totalLabel : copy.subtotal}
                                 value={money(
                                     totals.subtotalBeforeDiscount,
                                     profile.currency,
@@ -1009,7 +1034,7 @@ export default function ServiceCalculator({
                                                             {item.component.title}
                                                         </p>
                                                         <p className="mt-1 text-xs text-on-surface-variant">
-                                                            {selection.quantity} × {money(
+                                                            {selection.quantity} × {item.component.priceOnRequest ? priceOnRequest : money(
                                                                 item.component
                                                                     .unitPrice,
                                                                 profile.currency,
@@ -1018,7 +1043,7 @@ export default function ServiceCalculator({
                                                         </p>
                                                     </div>
                                                     <p className="text-right text-xs font-semibold text-primary">
-                                                        {money(
+                                                        {item.component.priceOnRequest ? priceOnRequest : money(
                                                             item.component
                                                                 .unitPrice *
                                                                 selection.quantity,
@@ -1048,7 +1073,7 @@ export default function ServiceCalculator({
                             <Icon name="mail" />
                             {copy.exactQuote}
                         </button>
-                    </aside>
+                    </aside> : null}
                 </div>
             </div>
         </section>
