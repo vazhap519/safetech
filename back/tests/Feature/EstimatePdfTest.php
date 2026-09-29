@@ -44,6 +44,47 @@ class EstimatePdfTest extends TestCase
         $this->assertStringStartsWith('%PDF-', (string) $response->getContent());
     }
 
+    public function test_quote_engine_pdf_uses_client_note_and_never_internal_notes(): void
+    {
+        $estimate = Estimate::query()->create([
+            'client_name' => 'კლიენტი',
+            'project_type' => 'service',
+            'project_title' => 'დომოფონის პროექტი',
+            'location' => 'თბილისი',
+            'final_total' => 1500,
+            'notes' => 'შიდა თვითღირებულება და მომწოდებლის პირადი შენიშვნა',
+            'calculation' => [
+                'quote_engine' => true,
+                'service_name' => 'ვიდეოდომოფონი',
+                'client_note' => 'შეთავაზება მოქმედებს 7 დღე.',
+                'summary' => [
+                    'სერვისი' => 'ვიდეოდომოფონი',
+                    'პარამეტრები' => '34 ბინა · 1 კარი',
+                ],
+                'line_items' => [[
+                    'label' => 'ვიდეოდომოფონის მონიტორი',
+                    'quantity' => 34,
+                    'unit' => 'pcs',
+                    'unit_cost' => 100,
+                    'sell_unit' => 160,
+                    'sell_total' => 5440,
+                ]],
+            ],
+        ]);
+
+        $html = view('estimates.pdf', [
+            'estimate' => $estimate,
+            'calculation' => $estimate->calculation,
+            'branding' => [],
+            'contact' => [],
+        ])->render();
+
+        $this->assertStringContainsString('შეთავაზება მოქმედებს 7 დღე.', $html);
+        $this->assertStringContainsString('34 ბინა · 1 კარი', $html);
+        $this->assertStringNotContainsString('შიდა თვითღირებულება', $html);
+        $this->assertStringNotContainsString('100.00', $html);
+    }
+
     public function test_non_admin_cannot_download_an_estimate_pdf(): void
     {
         $user = User::factory()->create(['is_admin' => false]);
