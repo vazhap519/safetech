@@ -1,6 +1,9 @@
+import Image from "next/image";
+import LocalizedLink from "@/components/ui/LocalizedLink";
 import TranslatedText from "@/components/i18n/TranslatedText";
 import type { ProjectDetail } from "@/lib/projectDetails";
-import { getYouTubeEmbedUrl, getYouTubeWatchUrl } from "@/lib/youtube";
+import { projectVideoPath } from "@/lib/project-video";
+import { getYouTubeEmbedUrl, getYouTubeThumbnailUrl } from "@/lib/youtube";
 
 export default function ProjectVideoSection({
     project,
@@ -8,7 +11,8 @@ export default function ProjectVideoSection({
     project: ProjectDetail;
 }) {
     const embedUrl = getYouTubeEmbedUrl(project.videoUrl);
-    const watchUrl = getYouTubeWatchUrl(project.videoUrl);
+    const watchUrl = projectVideoPath(project.slug);
+    const thumbnailUrl = getYouTubeThumbnailUrl(project.videoUrl);
 
     if (!embedUrl) return null;
 
@@ -27,15 +31,12 @@ export default function ProjectVideoSection({
                 <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
                     <div className="overflow-hidden rounded-[22px] border border-white/10 bg-black shadow-2xl">
                         <div className="relative aspect-video w-full">
-                            <iframe
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowFullScreen
-                                className="absolute inset-0 h-full w-full"
-                                loading="eager"
-                                referrerPolicy="strict-origin-when-cross-origin"
-                                src={embedUrl}
-                                title={title}
-                            />
+                            <LocalizedLink href={watchUrl} aria-label={title} className="absolute inset-0 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-secondary">
+                                <Image src={thumbnailUrl} alt="" fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
+                                <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                    <span className="flex size-16 items-center justify-center rounded-full bg-black/75 text-3xl text-white">▶</span>
+                                </span>
+                            </LocalizedLink>
                         </div>
                     </div>
 
@@ -71,23 +72,21 @@ export default function ProjectVideoSection({
                         ) : null}
 
                         {watchUrl ? (
-                            <a
+                            <LocalizedLink
                                 className="mt-6 inline-flex min-h-11 w-fit items-center gap-2 rounded-full border border-outline-variant/15 bg-surface-container px-4 py-2.5 text-sm font-semibold text-on-surface transition hover:-translate-y-0.5 hover:border-secondary/40 hover:bg-secondary/10 hover:text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
                                 href={watchUrl}
-                                rel="noopener noreferrer"
-                                target="_blank"
                             >
                                 <span aria-hidden="true">▶</span>
                                 <TranslatedText
                                     fallback={{
-                                        ka: "YouTube-ზე ნახვა",
-                                        en: "Watch on YouTube",
-                                        ru: "Смотреть на YouTube",
+                                        ka: "ვიდეოს ნახვა",
+                                        en: "Watch video",
+                                        ru: "Смотреть видео",
                                     }}
-                                    translationKey="projects.detail.video.youtubeLink"
+                                    translationKey="projects.detail.video.watchLink"
                                 />
                                 <span aria-hidden="true">↗</span>
-                            </a>
+                            </LocalizedLink>
                         ) : null}
                     </div>
                 </div>

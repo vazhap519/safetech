@@ -1586,6 +1586,125 @@ class CmsContentGeneratorTest extends TestCase
         }
     }
 
+    public function test_project_text_inputs_receive_strings_from_multilingual_ai_objects(): void
+    {
+        $localized = ['ka' => 'ქართული ტექსტი', 'en' => 'English text', 'ru' => 'Русский текст'];
+        Http::fake(function (Request $request) use ($localized) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum');
+
+            return Http::response($this->responseWithPatches(array_map(fn (string $path): array => [
+                'path' => $path,
+                'value_json' => json_encode($path === 'results' ? [] : ($path === 'seo.keywords' ? ['Wi-Fi'] : $localized)),
+            ], $targets)));
+        });
+
+        $updates = app(CmsContentGenerator::class)->generate('project', 'თბილისი, გლდანი, ერთი Wi-Fi კამერის აღდგენა', [
+            'title' => '', 'description' => '', 'image_alt' => '', 'technology' => '',
+            'meta' => [['value' => '1', 'label' => 'კამერა', 'translations' => [
+                'en' => ['value' => '1', 'label' => 'Camera'],
+                'ru' => ['value' => '1', 'label' => 'Камера'],
+            ]]],
+            'scope' => [['value' => '1', 'label' => 'კამერა', 'translations' => [
+                'en' => ['value' => '1', 'label' => 'Camera'],
+                'ru' => ['value' => '1', 'label' => 'Камера'],
+            ]]],
+            'specs' => [['value' => 'Wi-Fi', 'label' => 'ტექნოლოგია', 'translations' => [
+                'en' => ['value' => 'Wi-Fi', 'label' => 'Technology'],
+                'ru' => ['value' => 'Wi-Fi', 'label' => 'Технология'],
+            ]]],
+            'challenges' => [['title' => 'პრობლემა', 'description' => 'აღწერა', 'translations' => [
+                'en' => ['title' => 'Problem', 'description' => 'Description'],
+                'ru' => ['title' => 'Проблема', 'description' => 'Описание'],
+            ]]],
+            'solutions' => [['title' => 'გამართვა', 'description' => 'აღწერა', 'translations' => [
+                'en' => ['title' => 'Configuration', 'description' => 'Description'],
+                'ru' => ['title' => 'Настройка', 'description' => 'Описание'],
+            ]]],
+            'process' => [['title' => 'დიაგნოსტიკა', 'description' => 'აღწერა', 'translations' => [
+                'en' => ['title' => 'Diagnostics', 'description' => 'Description'],
+                'ru' => ['title' => 'Диагностика', 'description' => 'Описание'],
+            ]]],
+        ]);
+
+        foreach (['title', 'description', 'image_alt', 'technology'] as $field) {
+            $this->assertSame($localized['ka'], $updates[$field]);
+        }
+        $this->assertSame($localized['en'], data_get($updates, 'translations.fields.title.en'));
+        $this->assertSame($localized['ru'], data_get($updates, 'translations.fields.title.ru'));
+        $this->assertSame($localized['ka'], data_get($updates, 'translations.fields.featured.title.ka'));
+        $this->assertSame(['Wi-Fi'], data_get($updates, 'seo.keywords'));
+    }
+
+    public function test_invalid_text_objects_retry_without_using_another_language(): void
+    {
+        Http::fakeSequence()
+            ->push($this->responseWithPatches([
+                ['path' => 'image_alt', 'value_json' => json_encode(['en' => 'Wrong language'])],
+            ]))
+            ->push($this->responseWithPatches([
+                ['path' => 'image_alt', 'value_json' => json_encode('კამერის აღდგენა გლდანში')],
+            ]));
+
+        $updates = app(CmsContentGenerator::class)->generate('project', 'კამერის აღდგენა გლდანში', ['image_alt' => '']);
+
+        $this->assertSame('კამერის აღდგენა გლდანში', $updates['image_alt']);
+        Http::assertSentCount(2);
+    }
+
+    public function test_arbitrary_objects_and_object_string_placeholders_are_rejected(): void
+    {
+        Http::fakeSequence()
+            ->push($this->responseWithPatches([
+                ['path' => 'image_alt', 'value_json' => json_encode(['text' => 'Not a scalar'])],
+            ]))
+            ->push($this->responseWithPatches([
+                ['path' => 'image_alt', 'value_json' => json_encode('[object Object]')],
+            ]));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('(image_alt)');
+
+        app(CmsContentGenerator::class)->generate('project', 'კამერის აღდგენა', ['image_alt' => '']);
+    }
+
+    public function test_empty_mode_repairs_existing_object_values_and_preserves_healthy_copy(): void
+    {
+        foreach (['[object Object]', ['ka' => 'დაზიანებული ველი', 'en' => 'Old text']] as $corrupt) {
+            Http::fake(function (Request $request) {
+                $this->assertSame(['image_alt'], data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum'));
+
+                return Http::response($this->responseWithPatches([
+                    ['path' => 'image_alt', 'value_json' => json_encode('აღდგენილი კამერა')],
+                ]));
+            });
+
+            $state = ['image_alt' => $corrupt, 'technology' => 'Wi-Fi'];
+            $generator = app(CmsContentGenerator::class);
+            $updated = $generator->mergeIntoState($state, $generator->generate('project', 'კამერა', $state));
+
+            $this->assertSame('აღდგენილი კამერა', $updated['image_alt']);
+            $this->assertSame('Wi-Fi', $updated['technology']);
+        }
+    }
+
+    public function test_locale_objects_in_repeater_text_leaves_use_the_requested_language(): void
+    {
+        Http::fake(fn () => Http::response($this->responseWithPatches([
+            ['path' => 'solutions.0.translations.ru.title', 'value_json' => json_encode([
+                'ka' => 'გამართვა', 'en' => 'Configuration', 'ru' => 'Настройка',
+            ])],
+        ])));
+
+        $updates = app(CmsContentGenerator::class)->generate('project', 'Wi-Fi კამერის გამართვა', [
+            'solutions' => [['title' => 'გამართვა', 'description' => 'აღწერა', 'translations' => [
+                'en' => ['title' => 'Configuration', 'description' => 'Description'],
+                'ru' => ['title' => '', 'description' => 'Описание'],
+            ]]],
+        ]);
+
+        $this->assertSame('Настройка', data_get($updates, 'solutions.0.translations.ru.title'));
+    }
+
     /** @param array<int, array{path: string, value_json: string}> $patches
      * @return array<string, mixed>
      */

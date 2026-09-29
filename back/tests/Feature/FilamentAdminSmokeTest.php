@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\AccessIntercomConfiguratorPage;
+use App\Filament\Pages\BarrierConfiguratorPage;
 use App\Models\Project;
 use App\Models\ProjectCategory;
 use App\Models\User;
@@ -30,22 +32,26 @@ class FilamentAdminSmokeTest extends TestCase
 
     public function test_barrier_configurator_is_admin_only_and_renders(): void
     {
-        $this->get('/admin/barrier-configurator')
+        $url = BarrierConfiguratorPage::getUrl();
+
+        $this->get($url)
             ->assertRedirect('/admin/login');
 
         $this->actingAs($this->administrator())
-            ->get('/admin/barrier-configurator')
+            ->get($url)
             ->assertOk()
             ->assertSee('შლაგბაუმი / LPR / UHF კონფიგურატორი');
     }
 
     public function test_access_intercom_configurator_is_admin_only_and_renders(): void
     {
-        $this->get('/admin/access-intercom-configurator')
+        $url = AccessIntercomConfiguratorPage::getUrl();
+
+        $this->get($url)
             ->assertRedirect('/admin/login');
 
         $this->actingAs($this->administrator())
-            ->get('/admin/access-intercom-configurator')
+            ->get($url)
             ->assertOk()
             ->assertSee('RFID / დაშვების და დომოფონის კონფიგურატორი');
     }

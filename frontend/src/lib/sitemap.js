@@ -1,4 +1,5 @@
 import { getBaseUrl } from "@/lib/config";
+import { getYouTubeEmbedUrl } from "@/lib/youtube";
 import {
   DEFAULT_LOCALE,
   getLanguageTag,
@@ -375,6 +376,9 @@ export async function getSitemapIndexPaths() {
   }
 
   if (indexableProjects.length) paths.push("/sitemap-projects.xml");
+  if (indexableProjects.some((project) => getYouTubeEmbedUrl(project.videoUrl || project.video_url))) {
+    paths.push("/sitemap-videos.xml");
+  }
   if (indexablePages.length) paths.push("/sitemap-pages.xml");
   if (hasEligibleCategory(
     projectCategoriesResponse,
@@ -430,4 +434,23 @@ ${uniqueItems.map((item) => `  <url>\n    <loc>${escapeXml(item.loc)}</loc>\n   
 
 export function xmlResponse(xml) {
   return new Response(xml, { headers: sitemapHeaders });
+}
+
+export function videoUrlset(items) {
+  const uniqueItems = [...new Map(items.map((item) => [item.loc, item])).values()];
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+${uniqueItems.map(({ loc, video }) => `  <url>
+    <loc>${escapeXml(loc)}</loc>
+    <video:video>
+      <video:thumbnail_loc>${escapeXml(video.thumbnailUrl)}</video:thumbnail_loc>
+      <video:title>${escapeXml(Array.from(video.title).slice(0, 100).join(""))}</video:title>
+      <video:description>${escapeXml(Array.from(video.description).slice(0, 2048).join(""))}</video:description>
+      <video:player_loc>${escapeXml(video.embedUrl)}</video:player_loc>
+      ${video.uploadDate ? `<video:publication_date>${escapeXml(video.uploadDate)}</video:publication_date>` : ""}
+    </video:video>
+  </url>`).join("\n")}
+</urlset>`;
 }

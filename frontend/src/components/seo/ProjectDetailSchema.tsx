@@ -2,6 +2,7 @@ import JsonLd from "@/components/seo/JsonLd";
 import type { LocalServiceLandingSummary } from "@/lib/local-service-landings";
 import { getLanguageTag } from "@/lib/locales";
 import type { ProjectDetail } from "@/lib/projectDetails";
+import { projectVideoPath } from "@/lib/project-video";
 import {
     absoluteLocalizedUrl,
     absoluteSiteUrl,
@@ -13,32 +14,30 @@ import {
     type StructuredDataValue,
 } from "@/lib/structured-data";
 import { createTranslator } from "@/lib/translations";
-import { getYouTubeEmbedUrl, getYouTubeWatchUrl } from "@/lib/youtube";
+import { getYouTubeEmbedUrl } from "@/lib/youtube";
 
-function ensureVideoUploadDate(
-    data: StructuredDataValue,
-    uploadDate: string,
-): StructuredDataValue {
+function withoutEmbeddedVideoSchema(data: StructuredDataValue): StructuredDataValue {
     const enrich = (value: unknown): unknown => {
-        if (Array.isArray(value)) return value.map(enrich);
+        if (Array.isArray(value)) return value.map(enrich).filter((item) => item !== undefined);
         if (!value || typeof value !== "object") return value;
 
         const normalized = Object.fromEntries(
-            Object.entries(value).map(([key, nestedValue]) => [key, enrich(nestedValue)]),
+            Object.entries(value)
+                .map(([key, nestedValue]) => [key, enrich(nestedValue)])
+                .filter(([, nestedValue]) => nestedValue !== undefined),
         );
         const type = normalized["@type"];
         const isVideoObject =
             type === "VideoObject" ||
             (Array.isArray(type) && type.includes("VideoObject"));
 
-        if (isVideoObject && !normalized.uploadDate && uploadDate) {
-            normalized.uploadDate = uploadDate;
-        }
+        // Playback and its VideoObject now belong to the dedicated watch page.
+        if (isVideoObject) return undefined;
 
         return normalized;
     };
 
-    return enrich(data) as StructuredDataValue;
+    return (enrich(data) ?? []) as StructuredDataValue;
 }
 
 function structuredDataItems(data: StructuredDataValue) {
@@ -56,10 +55,7 @@ export default async function ProjectDetailSchema({
     const t = createTranslator(translations, locale);
     const url = absoluteLocalizedUrl(`/projects/${project.slug}`, locale);
     const projectId = `${url}#project`;
-    const videoId = `${url}#video`;
     const videoEmbedUrl = getYouTubeEmbedUrl(project.videoUrl);
-    const videoWatchUrl = getYouTubeWatchUrl(project.videoUrl);
-    const videoUploadDate = project.publishedAt || project.updated_at || "";
     const description = project.seoDescription || project.description;
     const projectImage = project.image || branding.defaultImage || DEFAULT_SOCIAL_IMAGE;
     const organizationLogo =
@@ -84,22 +80,6 @@ export default async function ProjectDetailSchema({
             })),
     ];
     const about = [...serviceTopics, ...projectTopics];
-    const videoObject =
-        videoEmbedUrl && videoWatchUrl && videoUploadDate
-            ? {
-                  "@type": "VideoObject",
-                  "@id": videoId,
-                  name: project.title || project.name,
-                  description,
-                  thumbnailUrl: absoluteSiteUrl(projectImage),
-                  uploadDate: videoUploadDate,
-                  url: videoWatchUrl,
-                  embedUrl: videoEmbedUrl,
-                  mainEntityOfPage: url,
-                  isPartOf: { "@id": projectId },
-                  inLanguage: getLanguageTag(locale),
-              }
-            : null;
     const graph: Record<string, unknown>[] = [
         {
             "@type": project.seo?.schemaType || "Article",
@@ -115,7 +95,10 @@ export default async function ProjectDetailSchema({
                 : {}),
             ...(project.publishedAt ? { datePublished: project.publishedAt } : {}),
             ...(project.updated_at ? { dateModified: project.updated_at } : {}),
-            ...(videoObject ? { video: { "@id": videoId } } : {}),
+            ...(videoEmbedUrl ? { subjectOf: {
+                "@type": "WebPage",
+                url: absoluteLocalizedUrl(projectVideoPath(project.slug), locale),
+            } } : {}),
             creator: {
                 "@type": "Organization",
                 name: branding.siteName,
@@ -124,7 +107,6 @@ export default async function ProjectDetailSchema({
             },
             inLanguage: getLanguageTag(locale),
         },
-        ...(videoObject ? [videoObject] : []),
         buildBreadcrumbSchema([
             {
                 name: t("nav.home", { ka: "მთავარი", en: "Home", ru: "Главная" }),
@@ -144,7 +126,7 @@ export default async function ProjectDetailSchema({
     const schema = { "@context": "https://schema.org", "@graph": graph };
 
     if (project.seo?.schema) {
-        const customSchema = ensureVideoUploadDate(project.seo.schema, videoUploadDate);
+        const customSchema = withoutEmbeddedVideoSchema(project.seo.schema);
         return <JsonLd data={[schema, ...structuredDataItems(customSchema)]} />;
     }
 

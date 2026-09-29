@@ -18,6 +18,7 @@ const sitemapRoutes = [
     "/sitemap-local-services.xml",
     "/sitemap-service-categories.xml",
     "/sitemap-projects.xml",
+    "/sitemap-videos.xml",
     "/sitemap-project-categories.xml",
     "/sitemap-pages.xml",
     "/sitemap-images.xml",

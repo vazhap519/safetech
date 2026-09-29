@@ -10,6 +10,7 @@ function getYouTubeVideoId(url?: string | null) {
         const parsed = new URL(
             value.startsWith("http") ? value : `https://${value}`,
         );
+        if (!["http:", "https:"].includes(parsed.protocol)) return null;
         const hostname = parsed.hostname.replace(/^www\./, "");
 
         if (hostname === "youtu.be") {
@@ -17,7 +18,10 @@ function getYouTubeVideoId(url?: string | null) {
             return id && YOUTUBE_ID_PATTERN.test(id) ? id : null;
         }
 
-        if (hostname !== "youtube.com" && !hostname.endsWith(".youtube.com")) {
+        if (
+            hostname !== "youtube.com" && !hostname.endsWith(".youtube.com") &&
+            hostname !== "youtube-nocookie.com" && !hostname.endsWith(".youtube-nocookie.com")
+        ) {
             return null;
         }
 
@@ -51,4 +55,10 @@ export function getYouTubeEmbedUrl(url?: string | null) {
     return videoId
         ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`
         : "";
+}
+
+export function getYouTubeThumbnailUrl(url?: string | null) {
+    const videoId = getYouTubeVideoId(url);
+
+    return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : "";
 }

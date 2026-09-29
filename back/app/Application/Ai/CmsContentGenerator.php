@@ -242,6 +242,8 @@ final class CmsContentGenerator
                 $value = $this->normalizeProjectResults($value);
             }
 
+            $value = $this->normalizeGeneratedTextValue($profile, $path, $value);
+
             if (! $this->isGeneratedValueComplete($profile, $path, $value)) {
                 continue;
             }
@@ -366,6 +368,7 @@ NON-NEGOTIABLE RULES:
 - Return exactly one patch for every path in EXACT TARGET PATHS. Never omit a path and never return a path outside that list.
 - Each patch has {"path":"exact.path","value_json":"..."}. value_json is a JSON-encoded non-empty string or non-empty array, not ordinary unescaped prose.
 - Example: text uses "value_json":"\"ქართული ტექსტი\"" and tags use "value_json":"[\"ერთი\",\"ორი\"]".
+- Each text field must decode to a plain string, never an object or a language map. Unlocalized text fields hold Georgian; localized paths hold only their requested language. Return each translation as its own targeted patch.
 - Never invent a product model, quantity, price, warranty, SLA, location, certification, client result, statistic, date, person or company claim.
 - Numbers and product names supplied by the editor must remain exact in every language.
 - If a non-factual marketing field needs wording, use neutral truthful wording without adding unsupported claims.
@@ -410,8 +413,14 @@ PROMPT;
             // atomically. Traversing an existing Filament repeater row here
             // exposes UUID-scoped leaves (results.<uuid>.value, etc.) and
             // incorrectly forces the model to invent/fill a KPI. The project
-            // form-specific pass below handles the whole results array.
+            // Keep this atomic for focused results-only actions as well as
+            // the full form; the latter also offers an absent results field.
             if ($profile === 'project' && $root === 'results') {
+                $items = $state[$root];
+                if ($overwrite || ! is_array($items) || $items === [] || $this->projectResultsNeedGeneration($items)) {
+                    $targets[] = 'results';
+                }
+
                 continue;
             }
 
@@ -1032,6 +1041,14 @@ PROMPT;
         }
 
         if (is_array($value)) {
+            // Old generations could put a locale object into a text input.
+            // Repair the input itself, not fictitious children like title.ka.
+            if ($this->isTextFieldPath($profile, $path)) {
+                $targets[] = $path;
+
+                return;
+            }
+
             if ($value === []) {
                 if ($this->isGeneratableCollectionPath($profile, $path)) {
                     $targets[] = $path;
@@ -1051,9 +1068,44 @@ PROMPT;
             return;
         }
 
-        if ($overwrite || trim((string) $value) === '') {
+        if ($overwrite || trim((string) $value) === '' || $this->isCorruptedText($value)) {
             $targets[] = $path;
         }
+    }
+
+    private function isTextFieldPath(string $profile, string $path): bool
+    {
+        if ($this->isGeneratableCollectionPath($profile, $path)
+            || preg_match('/(?:^|\.)translations\.(?:ka|en|ru)$/', $path) === 1) {
+            return false;
+        }
+
+        $containers = ['translations', 'seo', 'lead_form', 'overview', 'about_page_translations', 'managed_page_translations', 'value', 'footer', 'hero', 'cta'];
+
+        return in_array($path, array_diff($this->allowedRoots($profile), $containers), true)
+            || preg_match('/(?:^|[._])(?:ka|en|ru)$/', $path) === 1
+            || preg_match('/\.translations\.(?:ka|en|ru)\.[^.]+$/', $path) === 1;
+    }
+
+    private function isCorruptedText(mixed $value): bool
+    {
+        return is_string($value) && str_contains($value, '[object Object]');
+    }
+
+    private function normalizeGeneratedTextValue(string $profile, string $path, mixed $value): mixed
+    {
+        if ($this->isGeneratableCollectionPath($profile, $path)
+            || ($profile === 'service' && $path === 'overview')
+            || ! is_array($value)) {
+            return $value;
+        }
+
+        // Recover only an exact requested locale. Never fall back to another
+        // language or stringify an arbitrary object into an editorial field.
+        preg_match_all('/(?:^|[._])(ka|en|ru)(?=[._]|$)/', $path, $matches);
+        $locale = $matches[1] === [] ? 'ka' : $matches[1][array_key_last($matches[1])];
+
+        return is_string($value[$locale] ?? null) ? $value[$locale] : $value;
     }
 
     /** @return array<int, string> */
@@ -1099,6 +1151,12 @@ PROMPT;
 
     private function isGeneratedValueComplete(string $profile, string $path, mixed $value): bool
     {
+        if (! $this->isGeneratableCollectionPath($profile, $path)
+            && ! ($profile === 'service' && $path === 'overview')
+            && (! is_string($value) || $this->isCorruptedText($value))) {
+            return false;
+        }
+
         if (is_string($value)) {
             $maxLength = $this->generatedTextMaxLength($profile, $path);
 
@@ -1416,7 +1474,7 @@ PROMPT;
 
             if (! $overwrite) {
                 $existing = data_get($currentState, $path);
-                if (is_string($existing) && trim($existing) !== '') {
+                if (is_string($existing) && trim($existing) !== '' && ! $this->isCorruptedText($existing)) {
                     return null;
                 }
             }

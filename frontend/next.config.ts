@@ -34,7 +34,10 @@ const nextConfig: NextConfig = {
     formats: ["image/webp"],
     qualities: [68, 75, 82],
     minimumCacheTTL: 2678400,
-    remotePatterns: apiOrigin ? [new URL(`${apiOrigin}/storage/**`)] : [],
+    remotePatterns: [
+      ...(apiOrigin ? [new URL(`${apiOrigin}/storage/**`)] : []),
+      new URL("https://i.ytimg.com/vi/**"),
+    ],
   },
   async headers() {
     return [
