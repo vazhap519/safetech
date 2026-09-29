@@ -25,14 +25,23 @@ class Estimate extends Model
             'poe_switch_unit_cost' => 'decimal:2',
             'connector_unit_cost' => 'decimal:2',
             'markup_rate' => 'decimal:4',
+            'discount_percentage' => 'decimal:2',
             'required_storage_tb' => 'decimal:2',
             'cost_total' => 'decimal:2',
             'markup_total' => 'decimal:2',
             'final_total' => 'decimal:2',
             'profit_total' => 'decimal:2',
             'manual_items' => 'array',
+            'configuration' => 'array',
+            'component_overrides' => 'array',
+            'pricing_complete' => 'boolean',
             'calculation' => 'array',
         ];
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
     }
 
     public function creator(): BelongsTo
