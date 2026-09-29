@@ -57,6 +57,7 @@ final class SystemContentSeeder extends ContentSeeder
         $this->call(LocalServiceCoverageSeeder::class);
         $this->call(ExistingLocalLandingTranslationsSeeder::class);
         $this->call(LegacyLocalLandingItemsSeeder::class);
+        $this->call(PriorityCityLocalSeoSeeder::class);
         $this->call(LocalSeoFieldCompletionSeeder::class);
         $this->call(AiKnowledgeBaseSeeder::class);
     }
