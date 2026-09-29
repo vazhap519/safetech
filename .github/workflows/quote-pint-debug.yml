@@ -1,0 +1,24 @@
+name: Quote Pint Debug
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pint-diff:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Show Pint diff
+        run: |
+          vendor/bin/pint app/Support/Estimators/ServiceQuoteCalculator.php || true
+          git diff -- app/Support/Estimators/ServiceQuoteCalculator.php
+          test -z "$(git diff --name-only -- app/Support/Estimators/ServiceQuoteCalculator.php)"
