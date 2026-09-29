@@ -253,7 +253,7 @@ final class ServiceQuoteCalculator
                     $missingCostCount++;
                 }
 
-                if ($salePrice <= 0 && (bool) ($component['quote_required'] ?? false)) {
+                if ($salePrice <= 0 && $category !== 'labor') {
                     $missingSaleCount++;
                 }
             }
@@ -276,7 +276,7 @@ final class ServiceQuoteCalculator
                 'brand' => $catalogItem?->brand,
                 'model' => $catalogItem?->model,
                 'warranty_months' => $catalogItem?->warranty_months,
-                'price_on_request' => $salePrice <= 0 && (bool) ($component['quote_required'] ?? false),
+                'price_on_request' => $salePrice <= 0 && $category !== 'labor',
             ];
         }
 
