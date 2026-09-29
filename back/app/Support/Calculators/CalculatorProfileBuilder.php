@@ -59,7 +59,7 @@ final class CalculatorProfileBuilder
     }
 
     /** @return array<string, mixed> */
-    private function config(Service $service): array
+    public function config(Service $service): array
     {
         $slug = $this->string($service->slug);
         $name = $this->string($service->name ?: $service->title);
