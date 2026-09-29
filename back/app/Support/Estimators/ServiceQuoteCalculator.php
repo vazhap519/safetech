@@ -4,6 +4,8 @@ namespace App\Support\Estimators;
 
 use App\Models\QuoteCatalogItem;
 use App\Models\Service;
+use App\Support\Calculators\BarrierConfigurator;
+use App\Support\Calculators\BarrierQuoteProfile;
 use App\Support\Calculators\CalculatorProfileBuilder;
 use App\Support\Calculators\IntercomPlanner;
 
@@ -14,9 +16,19 @@ final class ServiceQuoteCalculator
     ) {}
 
     /** @return array<string, mixed> */
+    public function config(Service $service): array
+    {
+        if (BarrierQuoteProfile::matches((string) $service->slug, (string) $service->name)) {
+            return BarrierQuoteProfile::profile();
+        }
+
+        return $this->profiles->config($service);
+    }
+
+    /** @return array<string, mixed> */
     public function initialValues(Service $service): array
     {
-        $config = $this->profiles->config($service);
+        $config = $this->config($service);
         $values = [];
 
         foreach ((array) ($config['extra_fields'] ?? []) as $field) {
@@ -50,7 +62,7 @@ final class ServiceQuoteCalculator
      */
     public function calculate(Service $service, array $state = []): array
     {
-        $config = $this->profiles->config($service);
+        $config = $this->config($service);
         $pricing = is_array($config['pricing'] ?? null) ? $config['pricing'] : [];
         $currency = strtoupper(trim((string) ($pricing['currency'] ?? 'GEL'))) ?: 'GEL';
         $values = array_replace(
@@ -416,7 +428,7 @@ final class ServiceQuoteCalculator
         $created = 0;
 
         foreach ($services as $service) {
-            $config = $this->profiles->config($service);
+            $config = $this->config($service);
 
             foreach ((array) ($config['components'] ?? []) as $component) {
                 if (! is_array($component) || blank($component['key'] ?? null)) {
@@ -575,6 +587,12 @@ final class ServiceQuoteCalculator
     /** @return array<string, mixed> */
     private function withDerivedValues(array $config, array $values): array
     {
+        $values['project_count'] = 1;
+
+        if (isset($config['barrier_quote_version'])) {
+            return (new BarrierConfigurator)->normalize($values);
+        }
+
         if (isset($config['intercom_version'])) {
             return (new IntercomPlanner)->quantities($values);
         }
