@@ -21,7 +21,7 @@ final class ServiceQuoteCalculator
         $values = [];
 
         foreach ((array) ($config['extra_fields'] ?? []) as $field) {
-            if (! is_array($field) || blank($field['key'] ?? null)) {
+            if (!is_array($field) || blank($field['key'] ?? null)) {
                 continue;
             }
 
@@ -118,7 +118,7 @@ final class ServiceQuoteCalculator
         }
 
         foreach ((array) ($config['extra_fields'] ?? []) as $field) {
-            if (! is_array($field) || blank($field['key'] ?? null)) {
+            if (!is_array($field) || blank($field['key'] ?? null)) {
                 continue;
             }
 
@@ -322,7 +322,7 @@ final class ServiceQuoteCalculator
         }
 
         foreach ($components as $component) {
-            if (! $component['selected']) {
+            if (!$component['selected']) {
                 continue;
             }
 
@@ -420,7 +420,7 @@ final class ServiceQuoteCalculator
             $config = $this->profiles->config($service);
 
             foreach ((array) ($config['components'] ?? []) as $component) {
-                if (! is_array($component) || blank($component['key'] ?? null)) {
+                if (!is_array($component) || blank($component['key'] ?? null)) {
                     continue;
                 }
 
@@ -429,7 +429,7 @@ final class ServiceQuoteCalculator
                     'component_key' => (string) $component['key'],
                 ]);
 
-                if (! $item->exists) {
+                if (!$item->exists) {
                     $item->fill([
                         'name' => $this->localized($component, 'title', (string) $component['key']),
                         'category' => (string) ($component['category'] ?? 'other'),
@@ -458,7 +458,7 @@ final class ServiceQuoteCalculator
         string $propertyType,
         string $packageKey,
     ): array {
-        if (! is_array($components)) {
+        if (!is_array($components)) {
             return [];
         }
 
@@ -536,12 +536,12 @@ final class ServiceQuoteCalculator
         string $propertyType,
         string $packageKey,
     ): bool {
-        if (! is_array($rules)) {
+        if (!is_array($rules)) {
             return true;
         }
 
         foreach ($rules as $rule) {
-            if (! is_array($rule) || blank($rule['field'] ?? null)) {
+            if (!is_array($rule) || blank($rule['field'] ?? null)) {
                 continue;
             }
 
@@ -561,11 +561,11 @@ final class ServiceQuoteCalculator
                 'lte' => (float) $actual <= (float) $expected,
                 'contains' => str_contains(strtolower((string) $actual), strtolower((string) $expected)),
                 'truthy' => $this->truthy($actual),
-                'falsy' => ! $this->truthy($actual),
+                'falsy' => !$this->truthy($actual),
                 default => strtolower((string) $actual) === strtolower((string) $expected),
             };
 
-            if (! $matches) {
+            if (!$matches) {
                 return false;
             }
         }
@@ -599,7 +599,7 @@ final class ServiceQuoteCalculator
         }
 
         foreach ((array) ($config['extra_fields'] ?? []) as $field) {
-            if (! is_array($field) || blank($field['key'] ?? null)) {
+            if (!is_array($field) || blank($field['key'] ?? null)) {
                 continue;
             }
 
@@ -624,7 +624,7 @@ final class ServiceQuoteCalculator
 
     private function optionByValue(mixed $options, string $value): ?array
     {
-        if (! is_array($options)) {
+        if (!is_array($options)) {
             return null;
         }
 
@@ -639,7 +639,7 @@ final class ServiceQuoteCalculator
 
     private function packageByKey(mixed $packages, string $key): ?array
     {
-        if (! is_array($packages) || $key === '') {
+        if (!is_array($packages) || $key === '') {
             return null;
         }
 
@@ -715,7 +715,7 @@ final class ServiceQuoteCalculator
 
     private function nullableMoney(mixed $value): ?float
     {
-        if ($value === null || $value === '' || ! is_numeric($value)) {
+        if ($value === null || $value === '' || !is_numeric($value)) {
             return null;
         }
 
