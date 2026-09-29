@@ -28,11 +28,11 @@ class EstimateResource extends Resource
 {
     protected static ?string $model = Estimate::class;
 
-    protected static ?string $navigationLabel = 'კალკულატორი';
+    protected static ?string $navigationLabel = 'შეთავაზებები';
 
     protected static ?string $modelLabel = 'შეფასება';
 
-    protected static ?string $pluralModelLabel = 'შეფასებები';
+    protected static ?string $pluralModelLabel = 'შეთავაზებები';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
 
@@ -54,10 +54,20 @@ class EstimateResource extends Resource
                             'cctv' => 'CCTV',
                             'network' => 'Network',
                             'it' => 'IT',
+                            'service' => 'სხვა სერვისი / Quote Engine',
                         ])
                         ->default('cctv')
                         ->required()
                         ->live(),
+                    Select::make('service_id')
+                        ->label('სერვისი')
+                        ->relationship('service', 'name')
+                        ->searchable()
+                        ->preload(),
+                    TextInput::make('project_title')
+                        ->label('პროექტის სათაური'),
+                    TextInput::make('location')
+                        ->label('ობიექტი / მისამართი'),
                     TextInput::make('client_name')
                         ->label('კლიენტის სახელი'),
                     TextInput::make('company')
@@ -291,6 +301,13 @@ class EstimateResource extends Resource
                     ->label('კოდი')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('service.name')
+                    ->label('სერვისი')
+                    ->toggleable(),
+                TextColumn::make('project_title')
+                    ->label('პროექტი')
+                    ->searchable()
+                    ->toggleable(),
                 TextColumn::make('client_name')
                     ->label('კლიენტი')
                     ->searchable()
@@ -328,6 +345,7 @@ class EstimateResource extends Resource
                         'cctv' => 'CCTV',
                         'network' => 'Network',
                         'it' => 'IT',
+                        'service' => 'სხვა სერვისი / Quote Engine',
                     ]),
             ])
             ->recordActions([
