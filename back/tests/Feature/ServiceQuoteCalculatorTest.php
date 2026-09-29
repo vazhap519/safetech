@@ -169,7 +169,10 @@ class ServiceQuoteCalculatorTest extends TestCase
             ->where('component_key', 'switch-8')
             ->firstOrFail();
 
-        $this->assertSame('200.00', $item->sale_price);
+        $this->assertNull($item->sale_price);
+
+        $fallbackQuote = $calculator->calculate($service);
+        $this->assertSame(200.0, $fallbackQuote['components'][0]['sale_price']);
 
         $item->update([
             'purchase_price' => 90,
