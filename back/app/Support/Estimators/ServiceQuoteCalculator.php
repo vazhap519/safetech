@@ -724,6 +724,6 @@ final class ServiceQuoteCalculator
 
     private function percentage(mixed $value): float
     {
-        return round(min(100, max(0, is_numeric($value) ? (float) $value : 0)), 2);
+        return round(min(1000, max(0, is_numeric($value) ? (float) $value : 0)), 2);
     }
 }
