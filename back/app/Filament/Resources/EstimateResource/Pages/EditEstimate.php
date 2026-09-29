@@ -32,6 +32,10 @@ class EditEstimate extends EditRecord
      */
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        if ((bool) data_get($this->record->calculation, 'quote_engine', false)) {
+            return $data;
+        }
+
         return EstimateResource::hydrateCalculatedFields($data);
     }
 }
