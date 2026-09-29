@@ -19,7 +19,7 @@ class QuoteEnginePage extends Page
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-currency-dollar';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calculator';
 
     protected static ?int $navigationSort = 15;
 
