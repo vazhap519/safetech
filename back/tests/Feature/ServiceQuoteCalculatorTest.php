@@ -128,6 +128,44 @@ class ServiceQuoteCalculatorTest extends TestCase
         $this->assertNull($quote['gross_margin_percentage']);
     }
 
+
+    public function test_barrier_quote_uses_specialized_lpr_profile_and_normalizes_incompatible_model(): void
+    {
+        $service = Service::query()->create([
+            'slug' => 'barrier-gate-installation',
+            'name' => 'შლაგბაუმების მონტაჟი',
+            'title' => 'შლაგბაუმების მონტაჟი',
+            'description' => 'შლაგბაუმის მონტაჟი',
+            'seo_description' => 'შლაგბაუმის მონტაჟი',
+            'is_published' => true,
+            'lead_form' => [],
+        ]);
+
+        $quote = app(ServiceQuoteCalculator::class)->calculate($service, [
+            'values' => [
+                'lanes' => 2,
+                'boom_length' => 4.5,
+                'boom_type' => 'straight',
+                'barrier_id' => 'hikvision-tmg4b0-3m',
+                'access_mode' => 'lpr',
+                'lpr_camera_id' => 'hikvision-tcg406-e',
+                'vehicle_trigger' => 'video',
+            ],
+        ]);
+
+        $this->assertNotSame('hikvision-tmg4b0-3m', $quote['values']['barrier_id']);
+
+        $components = collect($quote['components'])->keyBy('key');
+
+        $this->assertSame(2.0, $components[$quote['values']['barrier_id']]['quantity']);
+        $this->assertSame(2.0, $components['hikvision-tcg406-e']['quantity']);
+        $this->assertSame(2.0, $components['loop-detector']['quantity']);
+        $this->assertSame(2.0, $components['safety-photocell']['quantity']);
+        $this->assertSame(1.0, $components['lpr-network']['quantity']);
+        $this->assertArrayHasKey('barrier-ups', $components->all());
+        $this->assertArrayHasKey('barrier-installation', $components->all());
+    }
+
     public function test_catalog_sync_creates_missing_component_rows_without_overwriting_prices(): void
     {
         $service = Service::query()->create([
