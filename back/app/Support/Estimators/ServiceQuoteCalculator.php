@@ -433,7 +433,7 @@ final class ServiceQuoteCalculator
                     $item->fill([
                         'name' => $this->localized($component, 'title', (string) $component['key']),
                         'category' => (string) ($component['category'] ?? 'other'),
-                        'sale_price' => $this->money($component['unit_price'] ?? 0) ?: null,
+                        'sale_price' => null,
                         'markup_percentage' => 60,
                         'is_active' => true,
                     ]);
