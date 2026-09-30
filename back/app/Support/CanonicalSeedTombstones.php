@@ -10,7 +10,6 @@ use App\Models\SeoPage;
 use App\Models\Service;
 use App\Models\SiteSetting;
 use Database\Seeders\ConsultationCopySeeder;
-use Database\Seeders\GoogleBusinessServicesSeeder;
 use Database\Seeders\PageContentSeeder;
 use Database\Seeders\PrivacyPageSeeder;
 use Database\Seeders\SeoPageSeeder;
@@ -335,7 +334,6 @@ final class CanonicalSeedTombstones
     {
         return self::$categorySlugs ??= array_values(array_unique([
             ...ServiceCatalogSeeder::canonicalCategorySlugs(),
-            ...GoogleBusinessServicesSeeder::canonicalCategorySlugs(),
         ]));
     }
 
@@ -344,7 +342,6 @@ final class CanonicalSeedTombstones
     {
         return self::$serviceSlugs ??= array_values(array_unique([
             ...ServiceCatalogSeeder::canonicalServiceSlugs(),
-            ...GoogleBusinessServicesSeeder::canonicalServiceSlugs(),
         ]));
     }
 
