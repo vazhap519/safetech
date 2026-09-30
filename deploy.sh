@@ -19,6 +19,11 @@ trap cleanup_patched_deploy EXIT INT TERM
 
 bash "${SCRIPT_DIR}/scripts/repair-backend-runtime.sh"
 
+if ! grep -q 'safetech:refresh-public-content --force' "${DEPLOY_SCRIPT}"; then
+    printf '%s\n' 'Canonical public-content refresh hook is missing from scripts/deploy-production.sh.' >&2
+    exit 1
+fi
+
 # Fetch first so we can compare the next release against the last frontend that
 # was actually deployed successfully. Comparing only the current checkout to
 # origin/main is not sufficient after a failed frontend build because Git may
