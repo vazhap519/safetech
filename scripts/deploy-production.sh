@@ -429,6 +429,10 @@ rsync -a --delete \
     "${FRONTEND_DIR}/" "${FRONTEND_STAGE_DIR}/"
 
 log "Installing staged frontend dependencies"
+# Reconcile the staged lockfile with package.json before the clean install.
+# This keeps the production source tree immutable while allowing emergency
+# security patch releases to be pinned in package.json immediately.
+npm --prefix "${FRONTEND_STAGE_DIR}" install --package-lock-only --ignore-scripts --no-audit --no-fund
 npm --prefix "${FRONTEND_STAGE_DIR}" ci --no-audit --no-fund
 npm --prefix "${FRONTEND_STAGE_DIR}" audit --omit=dev --audit-level=high
 
