@@ -79,6 +79,7 @@ class LocalServiceLandingApiTest extends TestCase
 
         $this->getJson('/api/local-service-landings/security-camera-installation/tbilisi?locale=en')
             ->assertOk()
+            ->assertJsonPath('data.translationAvailable', true)
             ->assertJsonPath('data.locationName', 'Tbilisi')
             ->assertJsonPath('data.title', 'Security camera installation in Tbilisi')
             ->assertJsonPath('data.benefits.0.title', 'Correct planning')
@@ -89,6 +90,7 @@ class LocalServiceLandingApiTest extends TestCase
 
         $summary = $this->getJson('/api/local-service-landings?view=summary&locale=en')
             ->assertOk()
+            ->assertJsonPath('data.0.translationAvailable', true)
             ->assertJsonPath('data.0.locationName', 'Tbilisi')
             ->assertJsonPath('data.0.title', 'Security camera installation in Tbilisi')
             ->assertJsonPath('data.0.projects.0.slug', 'tbilisi-cctv-project')
@@ -102,6 +104,8 @@ class LocalServiceLandingApiTest extends TestCase
         $sitemap = $this->getJson('/api/local-service-landings?view=sitemap')
             ->assertOk()
             ->assertJsonPath('data.0.locationSlug', 'tbilisi')
+            ->assertJsonPath('data.0.availableLocales.0', 'ka')
+            ->assertJsonPath('data.0.availableLocales.1', 'en')
             ->assertJsonPath('data.0.service.slug', 'security-camera-installation')
             ->assertJsonPath('data.0.indexable', true)
             ->assertJsonPath('data.0.seo.noindex', false);
@@ -133,4 +137,54 @@ class LocalServiceLandingApiTest extends TestCase
         $this->getJson('/api/local-service-landings/network-cable-installation/tbilisi')
             ->assertNotFound();
     }
+
+    public function test_it_does_not_fallback_to_georgian_for_missing_english_local_copy(): void
+    {
+        $service = Service::query()->create([
+            'slug' => 'business-it-support',
+            'name' => 'IT მხარდაჭერა',
+            'title' => 'IT მხარდაჭერა',
+            'description' => 'IT მხარდაჭერა ბიზნესისთვის.',
+            'seo_description' => 'IT მხარდაჭერა ბიზნესისთვის.',
+            'is_published' => true,
+        ]);
+
+        LocalServiceLanding::query()->create([
+            'service_id' => $service->id,
+            'location_slug' => 'bakuriani',
+            'location_name' => 'ბაკურიანი',
+            'title' => 'IT მხარდაჭერა ბაკურიანში',
+            'content' => 'ქართული ტექსტი, რომელიც ინგლისურ URL-ზე არ უნდა გამოჩნდეს.',
+            'seo_title' => 'IT მხარდაჭერა ბაკურიანში',
+            'seo_description' => 'ქართული SEO აღწერა.',
+            'translations' => [
+                'fields' => [
+                    'locationName' => ['ru' => 'Бакуриани'],
+                    'title' => ['ru' => 'IT-поддержка в Бакуриани'],
+                    'content' => ['ru' => 'Русский текст.'],
+                    'seoTitle' => ['ru' => 'IT-поддержка в Бакуриани'],
+                    'seoDescription' => ['ru' => 'Русское SEO-описание.'],
+                ],
+            ],
+            'is_published' => true,
+            'noindex' => false,
+        ]);
+
+        $this->getJson('/api/local-service-landings/business-it-support/bakuriani?locale=en')
+            ->assertNotFound();
+
+        $this->getJson('/api/local-service-landings?view=summary&locale=en')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->getJson('/api/local-service-landings/business-it-support/bakuriani?locale=ru')
+            ->assertOk()
+            ->assertJsonPath('data.translationAvailable', true)
+            ->assertJsonPath('data.title', 'IT-поддержка в Бакуриани');
+
+        $this->getJson('/api/local-service-landings?view=sitemap')
+            ->assertOk()
+            ->assertJsonPath('data.0.availableLocales', ['ka', 'ru']);
+    }
+
 }
