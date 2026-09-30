@@ -93,14 +93,26 @@ export function withSiteTitle(title: string, siteName = SITE_NAME): string {
 
     if (!cleanTitle) return cleanSiteName;
 
-    const normalizedTitle = cleanTitle.toLocaleLowerCase();
-    const brandNames = [cleanSiteName, SITE_NAME]
-        .map((name) => cleanText(name).toLocaleLowerCase())
-        .filter(Boolean);
+    const brandNames = [...new Set([cleanSiteName, SITE_NAME].map(cleanText).filter(Boolean))]
+        .sort((left, right) => right.length - left.length);
+    const lowerBrands = brandNames.map((name) => name.toLocaleLowerCase());
+    let baseTitle = cleanTitle;
 
-    return brandNames.some((brandName) => normalizedTitle.includes(brandName))
-        ? cleanTitle
-        : cleanTitle + " | " + cleanSiteName;
+    while (true) {
+        const separatorMatch = baseTitle.match(/^(.*?)(?:\s*[|—-]\s*)([^|—-]+)\s*$/);
+        if (!separatorMatch) break;
+
+        const suffix = separatorMatch[2].trim().toLocaleLowerCase();
+        if (!lowerBrands.includes(suffix)) break;
+
+        baseTitle = separatorMatch[1].trim();
+    }
+
+    if (!baseTitle || lowerBrands.includes(baseTitle.toLocaleLowerCase())) {
+        return cleanSiteName;
+    }
+
+    return `${baseTitle} | ${cleanSiteName}`;
 }
 
 export function createMetadata({
