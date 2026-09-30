@@ -9,9 +9,9 @@ use App\Models\Service;
 use App\Models\SiteSetting;
 use App\Support\MultilingualContent;
 use Database\Seeders\ContentSeeder;
+use Database\Seeders\ProductionContentSeeder;
 use Database\Seeders\SeoPageSeeder;
 use Database\Seeders\ServiceCatalogSeeder;
-use Database\Seeders\ProductionContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
