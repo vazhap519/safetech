@@ -22,8 +22,8 @@ class ServiceCatalogSeederTest extends TestCase
         $this->seed(ServiceCatalogSeeder::class);
 
         $this->assertDatabaseCount('category_for_services', 5);
-        $this->assertDatabaseCount('services', 57);
-        $this->assertDatabaseCount('faqs', 136);
+        $this->assertDatabaseCount('services', count(ServiceCatalogSeeder::canonicalServiceSlugs()));
+        $this->assertDatabaseCount('faqs', count(ServiceCatalogSeeder::canonicalFaqContexts()));
 
         $service = Service::query()
             ->with(['category', 'faqs'])
@@ -135,22 +135,32 @@ class ServiceCatalogSeederTest extends TestCase
             'patch-panel-network-outlet-installation',
             'barrier-gate-installation',
         ];
-        $googleBusinessSlugs = array_column(
-            GoogleBusinessServiceDefinitions::all(),
-            'slug',
-        );
-        $expectedSlugs = [...$coreSlugs, ...$googleBusinessSlugs];
+        $googleBusinessSlugs = collect(GoogleBusinessServiceDefinitions::all())
+            ->pluck('slug')
+            ->reject(fn (string $slug): bool => array_key_exists(
+                $slug,
+                GoogleBusinessServiceDefinitions::CANONICAL_ALIASES,
+            ))
+            ->values()
+            ->all();
+        $expectedSlugs = array_values(array_unique([...$coreSlugs, ...$googleBusinessSlugs]));
 
         $services = Service::query()->whereIn('slug', $expectedSlugs)->get();
 
         $this->assertCount(count($expectedSlugs), $services);
+        foreach (array_keys(GoogleBusinessServiceDefinitions::CANONICAL_ALIASES) as $alias) {
+            $this->assertDatabaseMissing('services', ['slug' => $alias]);
+        }
         $this->assertTrue($services->every(fn (Service $service): bool => $service->category_for_service_id !== null));
         $this->assertTrue($services->every(fn (Service $service): bool => filled(data_get($service->seo, 'title'))));
         $this->assertTrue($services->every(fn (Service $service): bool => filled($service->seo_description)));
         $this->assertTrue($services->every(fn (Service $service): bool => is_array($service->keywords) && count($service->keywords) >= 3));
 
         $this->assertSame(5, CategoryForService::query()->count());
-        $this->assertSame(136, Faq::query()->count());
+        $this->assertSame(
+            count(ServiceCatalogSeeder::canonicalFaqContexts()),
+            Faq::query()->count(),
+        );
 
         $itSupport = Service::query()->where('slug', 'business-it-support')->firstOrFail();
         $this->assertSame(
@@ -177,13 +187,21 @@ class ServiceCatalogSeederTest extends TestCase
     {
         $this->seed(ServiceCatalogSeeder::class);
 
-        $expected = collect(GoogleBusinessServiceDefinitions::all())->keyBy('slug');
+        $expected = collect(GoogleBusinessServiceDefinitions::all())
+            ->reject(fn (array $definition): bool => array_key_exists(
+                $definition['slug'],
+                GoogleBusinessServiceDefinitions::CANONICAL_ALIASES,
+            ))
+            ->keyBy('slug');
         $services = Service::query()
             ->whereIn('slug', $expected->keys())
             ->get()
             ->keyBy('slug');
 
         $this->assertCount($expected->count(), $services);
+        foreach (array_keys(GoogleBusinessServiceDefinitions::CANONICAL_ALIASES) as $alias) {
+            $this->assertDatabaseMissing('services', ['slug' => $alias]);
+        }
 
         foreach ($expected as $slug => $definition) {
             $service = $services->get($slug);
@@ -229,15 +247,18 @@ class ServiceCatalogSeederTest extends TestCase
     {
         $this->seed(ServiceCatalogSeeder::class);
 
-        $this->getJson('/api/services/ip-camera-installation?locale=en')
+        $this->getJson('/api/services/security-camera-installation?locale=en')
             ->assertOk()
-            ->assertJsonPath('data.name', 'IP Camera Installation')
+            ->assertJsonPath('data.name', 'Security Camera Installation and Setup')
             ->assertJsonPath('data.category.name', 'Security and Access Automation');
 
-        $this->getJson('/api/services/ip-camera-installation?locale=ru')
+        $this->getJson('/api/services/security-camera-installation?locale=ru')
             ->assertOk()
-            ->assertJsonPath('data.name', 'Монтаж IP-камер')
+            ->assertJsonPath('data.name', 'Монтаж и настройка камер видеонаблюдения')
             ->assertJsonPath('data.category.name', 'Безопасность и автоматизация доступа');
+
+        $this->getJson('/api/services/ip-camera-installation?locale=en')
+            ->assertNotFound();
 
         $this->getJson('/api/service-categories?locale=en')
             ->assertOk()
