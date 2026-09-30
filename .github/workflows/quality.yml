@@ -229,6 +229,11 @@ jobs:
           grep -q 'NEXT_PUBLIC_AI_ASSISTANT_ENABLED' scripts/configure-ai-assistant.sh
           grep -q 'safetech_marketing_consent' frontend/deploy/nginx/safetech.example.conf
           grep -q 'safetech_has_marketing_consent_cookie' frontend/deploy/nginx/safetech.example.conf
+          grep -q 'http2 on;' frontend/deploy/nginx/safetech.example.conf
+          if grep -Eq 'listen .*443.*http2' frontend/deploy/nginx/safetech.example.conf; then
+            echo 'HTTP/2 must use the dedicated http2 directive instead of listen protocol options.' >&2
+            exit 1
+          fi
           if grep -q 'image/avif' frontend/next.config.ts; then
             echo 'AVIF optimization must stay disabled until SafeTech intentionally re-enables it after the 2026 advisory.' >&2
             exit 1
