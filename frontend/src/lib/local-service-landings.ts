@@ -17,6 +17,7 @@ export type LocalServiceLandingProjectReference = {
 
 export type LocalServiceLandingSummary = {
     id: number;
+    translationAvailable?: boolean;
     locationSlug: string;
     locationName: string;
     title: string;
@@ -129,7 +130,9 @@ export async function getLocalServiceLanding(
         ),
     );
 
-    return landing ? normalizeLanding(landing) : undefined;
+    return landing && landing.translationAvailable !== false
+        ? normalizeLanding(landing)
+        : undefined;
 }
 
 export async function getLocalServiceLandings(
@@ -144,8 +147,10 @@ export async function getLocalServiceLandings(
         }),
     );
 
-    return (landings ?? []).map((landing) => ({
-        ...landing,
-        projects: landing.projects ?? [],
-    }));
+    return (landings ?? [])
+        .filter((landing) => landing.translationAvailable !== false)
+        .map((landing) => ({
+            ...landing,
+            projects: landing.projects ?? [],
+        }));
 }
