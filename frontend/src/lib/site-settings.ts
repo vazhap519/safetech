@@ -20,6 +20,7 @@ type SiteContact = {
     phones: string[];
     email: string;
     address: string;
+    serviceAreaBusiness: boolean;
     whatsapp: string;
     whatsappEnabled: boolean;
     whatsappMessage: string;
@@ -375,6 +376,7 @@ const defaultSiteContact: SiteContact = {
     phones: [],
     email: "",
     address: "",
+    serviceAreaBusiness: true,
     whatsapp: "",
     whatsappEnabled: false,
     whatsappMessage: "",
@@ -432,16 +434,23 @@ export const getSiteSettings = cache(async () => {
         configuredContact.whatsapp,
         defaultSiteContact.whatsapp,
     );
+    const serviceAreaBusiness = normalizeBoolean(
+        configuredContact.service_area_business,
+        defaultSiteContact.serviceAreaBusiness,
+    );
     const contact = {
         phone: phones[0] ?? defaultSiteContact.phone,
         phones,
         email: pickString(configuredContact.email, defaultSiteContact.email),
-        address: pickLocalizedString(
-            configuredContact,
-            "address",
-            locale,
-            defaultSiteContact.address,
-        ),
+        address: serviceAreaBusiness
+            ? ""
+            : pickLocalizedString(
+                  configuredContact,
+                  "address",
+                  locale,
+                  defaultSiteContact.address,
+              ),
+        serviceAreaBusiness,
         whatsapp,
         whatsappEnabled: whatsapp
             ? normalizeBoolean(configuredContact.whatsapp_enabled, true)
