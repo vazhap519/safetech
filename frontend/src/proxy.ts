@@ -64,7 +64,7 @@ export function proxy(request: NextRequest) {
     const serviceSlugIndex = serviceRootIndex + 1;
     const serviceSlug = segments[serviceSlugIndex];
     const canonicalServiceSlug =
-        segments[serviceRootIndex] === "services"
+        segments[serviceRootIndex] === "services" && serviceSlug
             ? SERVICE_CANONICAL_ALIASES[serviceSlug]
             : undefined;
 
@@ -81,7 +81,8 @@ export function proxy(request: NextRequest) {
         const redirectedServiceSlugIndex = redirectedServiceRootIndex + 1;
         const redirectedServiceSlug = redirectedSegments[redirectedServiceSlugIndex];
         const redirectedCanonicalSlug =
-            redirectedSegments[redirectedServiceRootIndex] === "services"
+            redirectedSegments[redirectedServiceRootIndex] === "services" &&
+            redirectedServiceSlug
                 ? SERVICE_CANONICAL_ALIASES[redirectedServiceSlug]
                 : undefined;
 
