@@ -10,6 +10,43 @@ namespace Database\Seeders;
  */
 final class GoogleBusinessServiceDefinitions
 {
+    /**
+     * GBP can list granular names while the website keeps one canonical landing
+     * per search intent. These legacy/granular slugs permanently redirect to
+     * richer canonical pages and must not be seeded as separate indexable pages.
+     *
+     * @var array<string, string>
+     */
+    public const CANONICAL_ALIASES = [
+        'ip-camera-installation' => 'security-camera-installation',
+        'video-surveillance-system-installation' => 'security-camera-installation',
+        'intercom-installation' => 'intercom-access-control-installation',
+        'access-control-system-installation' => 'access-control-installation',
+        'barrier-gate-setup' => 'barrier-gate-installation',
+        'personal-computer-assembly' => 'custom-computer-build',
+        'computer-upgrade-optimization' => 'computer-setup-optimization',
+        'computer-component-replacement' => 'computer-component-upgrades',
+        'computer-preventive-maintenance' => 'computer-cleaning-maintenance',
+        'computer-peripheral-troubleshooting' => 'computer-peripheral-setup',
+        'cat6-cabling' => 'network-cable-installation',
+        'lan-installation' => 'lan-network-installation',
+        'wifi-network-installation' => 'router-wifi-configuration',
+        'network-rack-installation' => 'rack-assembly-cable-management',
+        'patch-panel-installation' => 'patch-panel-network-outlet-installation',
+        'it-technical-support' => 'business-it-support',
+        'computers-workstations-setup' => 'workstation-setup',
+        'microsoft-365-setup-migration' => 'microsoft-365-migration',
+        'computer-network-diagnostics' => 'network-diagnostics',
+        'data-backup-recovery' => 'backup-setup',
+        'macos-installation-configuration' => 'macos-installation',
+        'macbook-imac-software-setup' => 'mac-software-setup',
+        'mac-software-installation' => 'mac-app-installation',
+        'mac-diagnostics-repair' => 'mac-diagnostics',
+        'mac-data-recovery-backup' => 'mac-backup-migration',
+        'structured-cabling-installation' => 'structured-cabling',
+        'telecommunications-infrastructure-installation' => 'communications-infrastructure',
+    ];
+
     /** @return array<int, array<string, mixed>> */
     public static function all(): array
     {
