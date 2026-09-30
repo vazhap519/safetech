@@ -100,7 +100,10 @@ test("SEO canonical URLs exclude duplicate service intents", async ({ page, requ
     for (const [source, target] of [
         ["/services/ip-camera-installation", "/services/security-camera-installation"],
         ["/services/video-surveillance-system-installation", "/services/security-camera-installation"],
+        ["/services/barrier-gate-setup", "/services/barrier-gate-installation"],
         ["/en/services/it-technical-support", "/en/services/business-it-support"],
+        ["/services/intercom-installation", "/services/intercom-access-control-installation"],
+        ["/services/access-control-system-installation", "/services/access-control-installation"],
     ] as const) {
         const response = await page.goto(source, { waitUntil: "domcontentloaded" });
 
@@ -114,6 +117,12 @@ test("SEO canonical URLs exclude duplicate service intents", async ({ page, requ
     expect(sitemapXml).not.toContain("ip-camera-installation");
     expect(sitemapXml).not.toContain("video-surveillance-system-installation");
     expect(sitemapXml).not.toContain("it-technical-support");
+    expect(sitemapXml).not.toContain("barrier-gate-setup");
+    expect(sitemapXml).not.toContain("intercom-installation");
+    expect(sitemapXml).not.toContain("access-control-system-installation");
+
+    await page.goto("/services/security-camera-installation", { waitUntil: "domcontentloaded" });
+    await expect(page.locator('a[href*="/services?service="]')).toHaveCount(0);
 });
 
 test("filtered services state is noindex and contact schema has no public street address", async ({ page }) => {
