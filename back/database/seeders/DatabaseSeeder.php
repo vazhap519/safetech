@@ -11,11 +11,7 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $this->call(SystemContentSeeder::class);
-        $this->call(GoogleBusinessServicesSeeder::class);
-        $this->call(PriorityLocalSeoSeeder::class);
-        $this->call(LocalSeoFieldCompletionSeeder::class);
-        $this->call(SeoPageSeeder::class);
+        $this->call(ProductionContentSeeder::class);
         $this->call(AdminUserSeeder::class);
     }
 }
