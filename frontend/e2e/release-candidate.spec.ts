@@ -96,6 +96,42 @@ async function fillConsultationForm(form: Locator, phone: string, details: strin
     await form.locator('input[name="privacy"]').check();
 }
 
+test("SEO canonical URLs exclude duplicate service intents", async ({ page, request }) => {
+    for (const [source, target] of [
+        ["/services/ip-camera-installation", "/services/security-camera-installation"],
+        ["/services/video-surveillance-system-installation", "/services/security-camera-installation"],
+        ["/en/services/it-technical-support", "/en/services/business-it-support"],
+    ] as const) {
+        const response = await page.goto(source, { waitUntil: "domcontentloaded" });
+
+        expect(response?.status()).toBe(200);
+        expect(new URL(page.url()).pathname).toBe(target);
+    }
+
+    const serviceSitemap = await request.get("/sitemap-services.xml");
+    expect(serviceSitemap.ok()).toBeTruthy();
+    const sitemapXml = await serviceSitemap.text();
+    expect(sitemapXml).not.toContain("ip-camera-installation");
+    expect(sitemapXml).not.toContain("video-surveillance-system-installation");
+    expect(sitemapXml).not.toContain("it-technical-support");
+});
+
+test("filtered services state is noindex and contact schema has no public street address", async ({ page }) => {
+    await page.goto("/services?service=security-camera-installation", {
+        waitUntil: "domcontentloaded",
+    });
+
+    const robots = page.locator('meta[name="robots"]');
+    await expect(robots).toHaveAttribute("content", /noindex/i);
+
+    const canonical = page.locator('link[rel="canonical"]');
+    await expect(canonical).toHaveAttribute("href", /\/services$/);
+
+    await page.goto("/contact", { waitUntil: "domcontentloaded" });
+    const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
+    expect(schemas.join(" ")).not.toContain('"streetAddress"');
+});
+
 test.describe("release candidate public matrix", () => {
     for (const { locale, prefix, lang } of locales) {
         for (const route of publicRoutes) {
