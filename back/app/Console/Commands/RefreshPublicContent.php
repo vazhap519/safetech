@@ -12,6 +12,7 @@ use Database\Seeders\PrivacyPageSeeder;
 use Database\Seeders\ProductionContentSeeder;
 use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -150,8 +151,8 @@ final class RefreshPublicContent extends Command
         );
     }
 
-    /** @return \Illuminate\Support\Collection<int, object> */
-    private function snapshotProjectLinks()
+    /** @return Collection<int, object> */
+    private function snapshotProjectLinks(): Collection
     {
         if (
             ! Schema::hasTable('local_service_landing_project')
@@ -172,7 +173,8 @@ final class RefreshPublicContent extends Command
             ->get();
     }
 
-    private function restoreProjectLinks($links): void
+    /** @param Collection<int, object> $links */
+    private function restoreProjectLinks(Collection $links): void
     {
         if (
             $links->isEmpty()
