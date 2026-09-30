@@ -76,6 +76,11 @@ class SiteSettingResource extends Resource
                                 ->required(),
                         )
                         ->default([]),
+                    Toggle::make('value.service_area_business')
+                        ->label('Service-area business (no public office)')
+                        ->helperText('Keep this enabled when customers are served on-site and no public storefront/office should appear in LocalBusiness schema.')
+                        ->default(true)
+                        ->columnSpanFull(),
                     TextInput::make('value.email')
                         ->label('Public contact email')
                         ->email()
@@ -117,13 +122,16 @@ class SiteSettingResource extends Resource
                     Textarea::make('value.address')
                         ->label('Address — KA')
                         ->rows(2)
-                        ->required(),
+                        ->helperText('Used only when Service-area business is disabled.')
+                        ->visible(fn (Get $get): bool => ! (bool) $get('value.service_area_business')),
                     Textarea::make('value.address_en')
                         ->label('Address — EN')
-                        ->rows(2),
+                        ->rows(2)
+                        ->visible(fn (Get $get): bool => ! (bool) $get('value.service_area_business')),
                     Textarea::make('value.address_ru')
                         ->label('Address — RU')
-                        ->rows(2),
+                        ->rows(2)
+                        ->visible(fn (Get $get): bool => ! (bool) $get('value.service_area_business')),
                 ])
                 ->columns(2)
                 ->visible(fn (Get $get): bool => $get('key') === 'contact'),
