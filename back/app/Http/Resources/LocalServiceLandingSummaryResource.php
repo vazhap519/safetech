@@ -15,9 +15,19 @@ class LocalServiceLandingSummaryResource extends JsonResource
         $locale = $this->locale($request);
         $service = $this->service;
         $title = $this->translated('title', $this->title, $locale);
+        $translationAvailable = $this->hasLocalizedFieldsForLocale(
+            $this->resource,
+            [
+                'locationName' => $this->location_name,
+                'title' => $this->title,
+                'seoTitle' => $this->seo_title ?: $this->title,
+            ],
+            $locale,
+        );
 
         return [
             'id' => $this->id,
+            'translationAvailable' => $translationAvailable,
             'locationSlug' => $this->location_slug,
             'locationName' => $this->translated('locationName', $this->location_name, $locale),
             'title' => $title,
