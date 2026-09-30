@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\LocalServiceLanding;
 use App\Models\Project;
 use App\Models\Service;
-use Database\Seeders\SystemContentSeeder;
+use Database\Seeders\ProductionContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -16,7 +16,7 @@ class CameraLocalSearchMigrationTest extends TestCase
 
     public function test_it_strengthens_camera_search_intent_and_moves_verified_project_to_bakuriani(): void
     {
-        $this->seed(SystemContentSeeder::class);
+        $this->seed(ProductionContentSeeder::class);
 
         $service = Service::query()->where('slug', 'security-camera-installation')->sole();
         $tbilisi = $this->landing($service, 'tbilisi', 'თბილისი');
