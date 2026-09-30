@@ -7,6 +7,7 @@ use App\Http\Resources\LocalServiceLandingResource;
 use App\Http\Resources\LocalServiceLandingSitemapResource;
 use App\Http\Resources\LocalServiceLandingSummaryResource;
 use App\Models\LocalServiceLanding;
+use App\Support\MultilingualContent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\JsonResponse;
@@ -68,14 +69,28 @@ final class LocalServiceLandingController extends Controller
                     'noindex',
                     'updated_at',
                     'sort_order',
-                ]);
+                ])
+                ->filter(fn (LocalServiceLanding $landing): bool => $this->hasLocaleTranslation(
+                    $landing,
+                    $this->requestedLocale($request),
+                    false,
+                ))
+                ->values();
 
             return LocalServiceLandingSummaryResource::collection($landings);
         }
 
-        return LocalServiceLandingResource::collection(
-            $query->with(['service', 'publicProjects'])->get(),
-        );
+        $landings = $query
+            ->with(['service', 'publicProjects'])
+            ->get()
+            ->filter(fn (LocalServiceLanding $landing): bool => $this->hasLocaleTranslation(
+                $landing,
+                $this->requestedLocale($request),
+                true,
+            ))
+            ->values();
+
+        return LocalServiceLandingResource::collection($landings);
     }
 
     public function show(
@@ -93,10 +108,56 @@ final class LocalServiceLandingController extends Controller
             )
             ->first();
 
-        if (! $landing) {
+        if (! $landing || ! $this->hasLocaleTranslation(
+            $landing,
+            $this->requestedLocale($request),
+            true,
+        )) {
             return response()->json(['message' => 'Local service landing not found.'], 404);
         }
 
         return new LocalServiceLandingResource($landing);
+    }
+
+    private function requestedLocale(Request $request): string
+    {
+        $locale = trim($request->string('locale')->toString());
+
+        if (! in_array($locale, MultilingualContent::LOCALES, true)) {
+            $locale = trim((string) $request->header('X-Safetech-Locale', ''));
+        }
+
+        return in_array($locale, MultilingualContent::LOCALES, true) ? $locale : 'ka';
+    }
+
+    private function hasLocaleTranslation(
+        LocalServiceLanding $landing,
+        string $locale,
+        bool $requireFullContent,
+    ): bool {
+        if ($locale === 'ka') {
+            return true;
+        }
+
+        $fields = [
+            'locationName' => $landing->location_name,
+            'title' => $landing->title,
+            'seoTitle' => $landing->seo_title ?: $landing->title,
+        ];
+
+        if ($requireFullContent) {
+            $fields['content'] = $landing->content;
+            $fields['seoDescription'] = $landing->seo_description ?: ($landing->excerpt ?: $landing->content);
+        }
+
+        foreach ($fields as $field => $fallback) {
+            $values = MultilingualContent::valuesForField($landing, $field, $fallback);
+
+            if (blank($values[$locale] ?? null)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
