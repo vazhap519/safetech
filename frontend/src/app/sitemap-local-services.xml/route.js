@@ -25,6 +25,7 @@ export async function GET() {
         changefreq: "weekly",
         priority: "0.8",
       },
+      landing.availableLocales,
     ));
 
   return xmlResponse(addSitemapStylesheet(urlset(urls)));
