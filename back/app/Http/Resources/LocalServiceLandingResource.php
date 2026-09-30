@@ -30,9 +30,21 @@ class LocalServiceLandingResource extends JsonResource
         $keywords = is_array($localizedKeywords)
             ? array_values(array_filter($localizedKeywords, 'is_string'))
             : ($this->keywords ?? []);
+        $translationAvailable = $this->hasLocalizedFieldsForLocale(
+            $this->resource,
+            [
+                'locationName' => $this->location_name,
+                'title' => $this->title,
+                'content' => $this->content,
+                'seoTitle' => $this->seo_title ?: $this->title,
+                'seoDescription' => $this->seo_description ?: ($this->excerpt ?: $this->content),
+            ],
+            $locale,
+        );
 
         return [
             'id' => $this->id,
+            'translationAvailable' => $translationAvailable,
             'locationSlug' => $this->location_slug,
             'locationName' => $this->translated('locationName', $this->location_name, $locale),
             'eyebrow' => $this->translated('eyebrow', $this->eyebrow, $locale),
