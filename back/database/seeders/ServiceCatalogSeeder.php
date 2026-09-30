@@ -15,6 +15,14 @@ class ServiceCatalogSeeder extends Seeder
 {
     private const LOCALES = ['ka', 'en', 'ru'];
 
+    private bool $overwriteExisting = false;
+
+    public function rebuild(): void
+    {
+        $this->overwriteExisting = true;
+        $this->run();
+    }
+
     public function run(): void
     {
         $categories = $this->seedCategories();
@@ -249,6 +257,12 @@ class ServiceCatalogSeeder extends Seeder
 
     private function fillMissing($model, array $defaults): void
     {
+        if ($this->overwriteExisting) {
+            $model->fill($defaults);
+
+            return;
+        }
+
         if (! $model->exists) {
             $model->fill($defaults);
 
@@ -537,8 +551,8 @@ class ServiceCatalogSeeder extends Seeder
             $this->category(
                 'computer-services',
                 self::t('კომპიუტერული სერვისები', 'Computer Services', 'Компьютерные услуги'),
-                self::t('კომპიუტერის შეკეთება, აწყობა და პროგრამული მომსახურება', 'Computer Repair, Assembly and Software Services', 'Ремонт, сборка и программное обслуживание компьютеров'),
-                self::t('Windows-ისა და სხვა ოპერაციული სისტემების ინსტალაცია, კომპიუტერის აწყობა, პროფილაქტიკური გაწმენდა და ტექნიკური გამართვა თბილისში და საქართველოს მასშტაბით.', 'Operating system installation, custom PC assembly, preventive cleaning, and computer setup across Georgia.', 'Установка операционных систем, сборка компьютеров, профилактическая чистка и настройка по всей Грузии.'),
+                self::t('კომპიუტერის გამართვა, აწყობა და პროგრამული მომსახურება', 'Computer Setup, Assembly & Software Services', 'Настройка, сборка и программное обслуживание компьютеров'),
+                self::t('Windows-ისა და სხვა ოპერაციული სისტემების ინსტალაცია, კომპიუტერის აწყობა, კომპონენტების განახლება, პროფილაქტიკური გაწმენდა და პროგრამული/ტექნიკური გამართვა. SafeTech არ ახორციელებს კომპონენტურ აპარატურულ შეკეთებას.', 'Operating system installation, custom PC assembly, component upgrades, preventive cleaning, and software or technical setup. SafeTech does not provide component-level hardware repair.', 'Установка операционных систем, сборка ПК, модернизация компонентов, профилактическая чистка и программная/техническая настройка. SafeTech не выполняет компонентный аппаратный ремонт.'),
                 [
                     self::t('კომპიუტერის სერვისი', 'computer service', 'компьютерный сервис'),
                     self::t('Windows-ის ინსტალაცია', 'Windows installation', 'установка Windows'),
