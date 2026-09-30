@@ -81,18 +81,36 @@ function apiPath(path: string, params: Record<string, string | undefined> = {}) 
 }
 
 async function fetchData<T>(path: string): Promise<T | undefined> {
-    try {
-        const response = await fetch(`${serverApiBase}${path}`, {
-            next: { revalidate: 300, tags: ["cms"] },
-            signal: AbortSignal.timeout(3000),
-        });
+    const url = `${serverApiBase}${path}`;
 
-        if (!response.ok) return undefined;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+            const response = await fetch(url, {
+                next: { revalidate: 300, tags: ["cms"] },
+                signal: AbortSignal.timeout(7000),
+            });
 
-        return ((await response.json()) as { data: T }).data;
-    } catch {
-        return undefined;
+            if (response.status === 404) return undefined;
+
+            if (!response.ok) {
+                if ((response.status === 429 || response.status >= 500) && attempt === 0) {
+                    continue;
+                }
+
+                return undefined;
+            }
+
+            const payload = (await response.json()) as { data?: T };
+
+            if (payload.data !== undefined) return payload.data;
+
+            if (attempt === 0) continue;
+        } catch {
+            if (attempt === 0) continue;
+        }
     }
+
+    return undefined;
 }
 
 function normalizeLanding(landing: LocalServiceLanding): LocalServiceLanding {
