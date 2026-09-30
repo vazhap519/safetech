@@ -11,7 +11,7 @@ use App\Support\MultilingualContent;
 use Database\Seeders\ContentSeeder;
 use Database\Seeders\SeoPageSeeder;
 use Database\Seeders\ServiceCatalogSeeder;
-use Database\Seeders\SystemContentSeeder;
+use Database\Seeders\ProductionContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,7 +21,7 @@ class CanonicalSeedDeletionPersistenceTest extends TestCase
 
     public function test_deleted_canonical_records_are_not_recreated_by_later_seed_runs(): void
     {
-        $this->seed(SystemContentSeeder::class);
+        $this->seed(ProductionContentSeeder::class);
         $this->seed(SeoPageSeeder::class);
 
         $category = CategoryForService::query()
@@ -46,7 +46,7 @@ class CanonicalSeedDeletionPersistenceTest extends TestCase
         SiteSetting::query()->where('key', 'translations')->firstOrFail()->delete();
         SeoPage::query()->where('key', 'contact')->firstOrFail()->delete();
 
-        $this->seed(SystemContentSeeder::class);
+        $this->seed(ProductionContentSeeder::class);
         $this->seed(SeoPageSeeder::class);
 
         $this->assertDatabaseMissing('category_for_services', [
@@ -94,7 +94,7 @@ class CanonicalSeedDeletionPersistenceTest extends TestCase
 
     public function test_explicit_empty_repeaters_survive_subsequent_seed_runs(): void
     {
-        $this->seed(SystemContentSeeder::class);
+        $this->seed(ProductionContentSeeder::class);
         $this->seed(SeoPageSeeder::class);
 
         $service = Service::query()
@@ -151,7 +151,7 @@ class CanonicalSeedDeletionPersistenceTest extends TestCase
 
     public function test_deleted_canonical_translation_entries_are_not_reseeded_and_can_be_restored(): void
     {
-        $this->seed(SystemContentSeeder::class);
+        $this->seed(ProductionContentSeeder::class);
 
         $translations = SiteSetting::query()->where('key', 'translations')->firstOrFail();
         $value = $translations->value;
@@ -182,7 +182,7 @@ class CanonicalSeedDeletionPersistenceTest extends TestCase
             ]);
         }
 
-        $this->seed(SystemContentSeeder::class);
+        $this->seed(ProductionContentSeeder::class);
 
         $translations->refresh();
         $map = MultilingualContent::mapFrom($translations->value);
@@ -207,7 +207,7 @@ class CanonicalSeedDeletionPersistenceTest extends TestCase
             'key' => 'nav.home',
         ]);
 
-        $this->seed(SystemContentSeeder::class);
+        $this->seed(ProductionContentSeeder::class);
 
         $translations->refresh();
         $map = MultilingualContent::mapFrom($translations->value);
