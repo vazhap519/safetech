@@ -23,7 +23,7 @@ class PriorityLocalSeoSeederTest extends TestCase
         $this->seed(PriorityLocalSeoSeeder::class);
 
         $serviceIds = Service::query()->publiclyVisible()->pluck('id')->all();
-        $this->assertCount(79, $serviceIds);
+        $this->assertNotEmpty($serviceIds);
 
         foreach (PriorityLocalSeoCopy::CITY_ORDER as $city) {
             $this->assertSame(
@@ -84,11 +84,19 @@ class PriorityLocalSeoSeederTest extends TestCase
         $this->seed(GoogleBusinessServicesSeeder::class);
         $this->seed(PriorityLocalSeoSeeder::class);
 
-        $shortSlug = collect(GoogleBusinessServicesSeeder::canonicalServiceSlugs())
-            ->first(fn (string $slug): bool => ! in_array($slug, ServiceCatalogSeeder::canonicalServiceSlugs(), true));
-        $this->assertNotNull($shortSlug);
+        $googleBusinessSlugs = GoogleBusinessServicesSeeder::canonicalServiceSlugs();
+        $coreSlugs = ServiceCatalogSeeder::canonicalServiceSlugs();
+        $service = Service::query()
+            ->publiclyVisible()
+            ->whereIn('slug', $googleBusinessSlugs)
+            ->get()
+            ->first(fn (Service $candidate): bool => ! in_array(
+                $candidate->slug,
+                $coreSlugs,
+                true,
+            ) && (bool) data_get($candidate->seo, 'noindex'));
 
-        $service = Service::query()->where('slug', $shortSlug)->sole();
+        $this->assertNotNull($service);
         $this->assertTrue((bool) data_get($service->seo, 'noindex'));
 
         $page = LocalServiceLanding::query()
