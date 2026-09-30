@@ -117,13 +117,19 @@ final class SiteSettings
             ?? ''
         ));
 
+        $serviceAreaBusiness = filter_var(
+            $contact['service_area_business'] ?? true,
+            FILTER_VALIDATE_BOOL,
+            FILTER_NULL_ON_FAILURE,
+        ) ?? true;
+
         return (object) [
             'site_name' => $siteName !== '' ? $siteName : config('app.name'),
             'site_description' => $siteDescription !== '' ? $siteDescription : null,
             'phone' => $primaryPhone,
             'phones' => $phones,
             'email' => $contact['email'] ?? null,
-            'address' => $contact['address'] ?? null,
+            'address' => $serviceAreaBusiness ? null : ($contact['address'] ?? null),
             'city' => $seo['city'] ?? null,
             'country' => $seo['country'] ?? 'GE',
             'postal_code' => $seo['postal_code'] ?? null,
