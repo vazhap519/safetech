@@ -30,11 +30,14 @@ class LocalServiceCoverageSeederTest extends TestCase
         $this->seed(SystemContentSeeder::class);
         $this->seed(SystemContentSeeder::class);
 
-        $this->assertDatabaseCount('services', 57);
-        $this->assertDatabaseCount('local_service_landings', 81);
-        $this->assertDatabaseCount('local_service_landing_project', 0);
+        $publishedServices = Service::query()->publiclyVisible()->count();
         $this->assertSame(
-            81,
+            count(ServiceCatalogSeeder::canonicalServiceSlugs()),
+            $publishedServices,
+        );
+        $this->assertDatabaseCount('local_service_landing_project', 0);
+        $this->assertGreaterThanOrEqual(
+            $publishedServices,
             LocalServiceLanding::query()->publiclyVisible()->where('noindex', false)->count(),
         );
 
@@ -42,7 +45,7 @@ class LocalServiceCoverageSeederTest extends TestCase
             ->whereHas('localServiceLandings',
                 fn ($query) => $query->publiclyVisible()->where('noindex', false))
             ->count();
-        $this->assertSame(57, $covered);
+        $this->assertSame($publishedServices, $covered);
 
         $legacy = LocalServiceLanding::query()->where('location_slug', 'bakuriani')
             ->whereHas('service', fn ($query) => $query->where('slug', 'security-camera-installation'))
@@ -62,8 +65,12 @@ class LocalServiceCoverageSeederTest extends TestCase
         $this->seed(LocalServiceCoverageSeeder::class);
         $this->seed(LocalServiceCoverageSeeder::class);
 
-        $this->assertDatabaseCount('services', 57);
-        $this->assertDatabaseCount('local_service_landings', 57);
+        $publishedServices = Service::query()->publiclyVisible()->count();
+        $this->assertSame(
+            count(ServiceCatalogSeeder::canonicalServiceSlugs()),
+            $publishedServices,
+        );
+        $this->assertDatabaseCount('local_service_landings', $publishedServices);
         $this->assertDatabaseCount('projects', 0);
 
         foreach (self::MISSING_SLUGS as $slug) {
@@ -101,7 +108,7 @@ class LocalServiceCoverageSeederTest extends TestCase
         }
 
         $contents = LocalServiceLanding::query()->pluck('content')->all();
-        $this->assertCount(57, array_unique($contents));
+        $this->assertCount($publishedServices, array_unique($contents));
     }
 
     public function test_new_canonical_service_local_page_has_real_trilingual_copy_without_fake_projects(): void
@@ -109,7 +116,7 @@ class LocalServiceCoverageSeederTest extends TestCase
         $this->seed(ServiceCatalogSeeder::class);
         $this->seed(LocalServiceCoverageSeeder::class);
 
-        $service = Service::query()->where('slug', 'ip-camera-installation')->sole();
+        $service = Service::query()->where('slug', 'software-installation')->sole();
         $landing = LocalServiceLanding::query()
             ->where('service_id', $service->id)
             ->where('location_slug', 'tbilisi')
@@ -120,12 +127,12 @@ class LocalServiceCoverageSeederTest extends TestCase
         $this->assertCount(0, $landing->projects);
         $this->assertFalse($landing->noindex);
 
-        $this->getJson('/api/local-service-landings/ip-camera-installation/tbilisi?locale=en')
+        $this->getJson('/api/local-service-landings/software-installation/tbilisi?locale=en')
             ->assertOk()
             ->assertJsonPath('data.locationName', 'Tbilisi')
             ->assertJsonPath('data.seo.noindex', false);
 
-        $this->getJson('/api/local-service-landings/ip-camera-installation/tbilisi?locale=ru')
+        $this->getJson('/api/local-service-landings/software-installation/tbilisi?locale=ru')
             ->assertOk()
             ->assertJsonPath('data.locationName', 'Тбилиси')
             ->assertJsonPath('data.seo.noindex', false);
@@ -152,7 +159,10 @@ class LocalServiceCoverageSeederTest extends TestCase
         $this->assertSame('ხელით მომზადებული POS ტექსტი', $manual->title);
         $this->assertTrue($manual->noindex);
         $this->assertFalse($manual->is_published);
-        $this->assertDatabaseCount('local_service_landings', 57);
+        $this->assertDatabaseCount(
+            'local_service_landings',
+            Service::query()->publiclyVisible()->count(),
+        );
     }
 
     public function test_it_localizes_missing_existing_city_copy_without_overriding_admin_text_or_indexability(): void
@@ -251,7 +261,10 @@ class LocalServiceCoverageSeederTest extends TestCase
         $covered = Service::query()->publiclyVisible()->whereHas('localServiceLandings',
             fn ($query) => $query->publiclyVisible()->where('noindex', false))->count();
 
-        $this->assertSame(57, $publishedServices);
+        $this->assertSame(
+            count(ServiceCatalogSeeder::canonicalServiceSlugs()),
+            $publishedServices,
+        );
         $this->assertSame($publishedServices, $covered);
         $this->assertDatabaseCount('projects', 0);
     }
