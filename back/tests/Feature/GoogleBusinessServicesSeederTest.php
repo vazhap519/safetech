@@ -55,6 +55,10 @@ class GoogleBusinessServicesSeederTest extends TestCase
         $this->assertDatabaseHas('services', ['slug' => 'pos-system-installation']);
         $this->assertDatabaseMissing('services', ['slug' => 'laptop-screen-repair']);
 
+        $alias = Service::query()->where('slug', 'ip-camera-installation')->firstOrFail();
+        $this->assertFalse($alias->is_published);
+        $this->assertTrue((bool) data_get($alias->seo, 'noindex'));
+
         $new = Service::query()->where('slug', 'mac-app-installation')->firstOrFail();
         $this->assertTrue($new->is_published);
         $this->assertTrue((bool) data_get($new->seo, 'noindex'));
