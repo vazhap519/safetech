@@ -66,6 +66,10 @@ final class GoogleBusinessServicesSeeder extends Seeder
         foreach ($this->services() as $definition) {
             $sort++;
             $slug = $definition['slug'];
+            $isCanonicalAlias = array_key_exists(
+                $slug,
+                GoogleBusinessServiceDefinitions::CANONICAL_ALIASES,
+            );
             $category = $categories[$definition['category']] ?? null;
             if ($category === null || CanonicalSeedTombstones::serviceWasDeleted($slug)) {
                 continue;
@@ -84,7 +88,7 @@ final class GoogleBusinessServicesSeeder extends Seeder
                     'description' => $definition['description']['ka'],
                     'noindex' => true, // New short pages need fuller content before indexing.
                 ];
-                $service->is_published = true;
+                $service->is_published = ! $isCanonicalAlias;
                 $service->sort_order = $sort;
             } else {
                 // Never clobber an administrator's full SEO page or gallery.
@@ -100,6 +104,13 @@ final class GoogleBusinessServicesSeeder extends Seeder
                 $service->name = $definition['name']['ka'];
                 $serviceTranslations = $this->updateUneditedCanonicalNames($serviceTranslations, $definition);
             }
+            if ($isCanonicalAlias) {
+                $seo = is_array($service->seo) ? $service->seo : [];
+                $seo['noindex'] = true;
+                $service->seo = $seo;
+                $service->is_published = false;
+            }
+
             $service->category_for_service_id = $category->getKey();
             $service->translations = $this->mergeMissingTranslations(
                 $serviceTranslations,
