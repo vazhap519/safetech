@@ -32,6 +32,26 @@ trait LocalizesResourceContent
         return $values[$locale] ?: (is_string($fallback) ? $fallback : '');
     }
 
+    /**
+     * @param  array<string, mixed>  $fields
+     */
+    private function hasLocalizedFieldsForLocale(Model $model, array $fields, string $locale): bool
+    {
+        if ($locale === 'ka') {
+            return true;
+        }
+
+        foreach ($fields as $field => $fallback) {
+            $values = MultilingualContent::valuesForField($model, $field, $fallback);
+
+            if (blank($values[$locale] ?? null)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private function translatedEntry(Model $model, string $key, mixed $fallback, string $locale): string
     {
         $translations = $model->getAttribute('translations');
