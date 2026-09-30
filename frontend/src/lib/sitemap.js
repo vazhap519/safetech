@@ -9,6 +9,35 @@ import {
 
 const DEFAULT_API_BASE = "http://127.0.0.1:8000/api";
 const SITEMAP_FETCH_TIMEOUT_MS = 2000;
+const NON_CANONICAL_SERVICE_SLUGS = new Set([
+  "ip-camera-installation",
+  "video-surveillance-system-installation",
+  "intercom-installation",
+  "access-control-system-installation",
+  "barrier-gate-setup",
+  "personal-computer-assembly",
+  "computer-upgrade-optimization",
+  "computer-component-replacement",
+  "computer-preventive-maintenance",
+  "computer-peripheral-troubleshooting",
+  "cat6-cabling",
+  "lan-installation",
+  "wifi-network-installation",
+  "network-rack-installation",
+  "patch-panel-installation",
+  "it-technical-support",
+  "computers-workstations-setup",
+  "microsoft-365-setup-migration",
+  "computer-network-diagnostics",
+  "data-backup-recovery",
+  "macos-installation-configuration",
+  "macbook-imac-software-setup",
+  "mac-software-installation",
+  "mac-diagnostics-repair",
+  "mac-data-recovery-backup",
+  "structured-cabling-installation",
+  "telecommunications-infrastructure-installation",
+]);
 
 const sitemapHeaders = {
   "Content-Type": "application/xml; charset=utf-8",
@@ -165,6 +194,7 @@ export function hasValidSitemapSlug(value) {
 export function isIndexableService(service) {
   return Boolean(
     hasValidSitemapSlug(service?.slug)
+    && !NON_CANONICAL_SERVICE_SLUGS.has(service.slug)
     && !service?.seo?.noindex
     && (
       service?.indexable === true
@@ -190,6 +220,7 @@ export function isIndexableService(service) {
 export function isIndexableLocalServiceLanding(landing) {
   return Boolean(
     hasValidSitemapSlug(landing?.service?.slug)
+    && !NON_CANONICAL_SERVICE_SLUGS.has(landing.service.slug)
     && hasValidSitemapSlug(landing?.locationSlug)
     && !landing?.seo?.noindex
     && (
