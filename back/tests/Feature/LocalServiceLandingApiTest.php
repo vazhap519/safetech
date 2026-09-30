@@ -186,5 +186,4 @@ class LocalServiceLandingApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.availableLocales', ['ka', 'ru']);
     }
-
 }
