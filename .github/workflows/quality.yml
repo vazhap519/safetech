@@ -151,12 +151,12 @@ jobs:
           node - <<'NODE'
           const version = require('next/package.json').version;
           const parts = version.split('.').map(Number);
-          const minimum = [16, 3, 3];
+          const minimum = [16, 3, 8];
           const secure = parts[0] > minimum[0]
             || (parts[0] === minimum[0] && parts[1] > minimum[1])
             || (parts[0] === minimum[0] && parts[1] === minimum[1] && parts[2] >= minimum[2]);
           if (!secure) {
-            console.error(`Next.js ${version} is below the SafeTech security baseline 16.3.3.`);
+            console.error(`Next.js ${version} is below the SafeTech security baseline 16.3.8.`);
             process.exit(1);
           }
           console.log(`Next.js security baseline satisfied: ${version}`);
