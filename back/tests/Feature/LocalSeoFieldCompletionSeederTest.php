@@ -21,7 +21,7 @@ class LocalSeoFieldCompletionSeederTest extends TestCase
 
         $landing = LocalServiceLanding::query()
             ->where('location_slug', 'tbilisi')
-            ->whereHas('service', fn ($query) => $query->where('slug', 'ip-camera-installation'))
+            ->whereHas('service', fn ($query) => $query->where('slug', 'software-installation'))
             ->sole();
 
         $this->assertEmpty($landing->benefits);
