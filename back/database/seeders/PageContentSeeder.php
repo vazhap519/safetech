@@ -136,6 +136,9 @@ class PageContentSeeder extends Seeder
             // choices. Do not append the canonical phone numbers on deploy.
             $value['phones'] = $existingPhones;
         }
+        $value['service_area_business'] = array_key_exists('service_area_business', $value)
+            ? (bool) $value['service_area_business']
+            : true;
         $value['whatsapp'] = filled($value['whatsapp'] ?? null)
             ? trim((string) $value['whatsapp'])
             : '571430169';
