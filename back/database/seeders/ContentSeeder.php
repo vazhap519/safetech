@@ -148,6 +148,7 @@ class ContentSeeder extends Seeder
                 // different lead inbox in Site settings.
                 'email' => 'info@safetech.ge',
                 'lead_email' => 'info@safetech.ge',
+                'service_area_business' => true,
                 'address' => '',
                 'address_en' => '',
                 'address_ru' => '',
