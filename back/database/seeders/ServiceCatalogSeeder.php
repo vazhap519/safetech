@@ -847,7 +847,13 @@ class ServiceCatalogSeeder extends Seeder
                     ),
                 ],
             ];
-        }, GoogleBusinessServiceDefinitions::all());
+        }, array_values(array_filter(
+            GoogleBusinessServiceDefinitions::all(),
+            fn (array $definition): bool => ! array_key_exists(
+                $definition['slug'],
+                GoogleBusinessServiceDefinitions::CANONICAL_ALIASES,
+            ),
+        )));
     }
 
     private function service(
