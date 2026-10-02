@@ -16,6 +16,46 @@ class RefreshPublicContentCommandTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_refresh_removes_legacy_aliases_when_the_canonical_content_version_advances(): void
+    {
+        $this->seed(ProductionContentSeeder::class);
+
+        $canonical = Service::query()
+            ->where('slug', 'security-camera-installation')
+            ->sole();
+
+        $alias = $canonical->replicate();
+        $alias->slug = 'ip-camera-installation';
+        $alias->name = 'Legacy IP camera service';
+        $alias->title = 'Legacy IP camera service';
+        $alias->save();
+
+        SiteSetting::query()->updateOrCreate(
+            ['key' => 'system_content_seed_version'],
+            [
+                'group' => 'system',
+                'is_public' => false,
+                'value' => [
+                    'version' => '2026-09-30-canonical-seo-v4',
+                    'applied_at' => now()->subDay()->toAtomString(),
+                ],
+            ],
+        );
+
+        $this->artisan('safetech:refresh-public-content', ['--force' => true])
+            ->assertExitCode(0);
+
+        $this->assertDatabaseMissing('services', ['slug' => 'ip-camera-installation']);
+        $this->assertDatabaseHas('services', ['slug' => 'security-camera-installation']);
+        $this->assertSame(
+            '2026-10-02-canonical-seo-v5',
+            data_get(
+                SiteSetting::query()->where('key', 'system_content_seed_version')->sole()->value,
+                'version',
+            ),
+        );
+    }
+
     public function test_refresh_rebuilds_public_seo_and_preserves_projects_categories_and_quote_data(): void
     {
         $this->seed(ProductionContentSeeder::class);
