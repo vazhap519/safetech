@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Schema;
 
 final class RefreshPublicContent extends Command
 {
-    private const VERSION = '2026-09-30-canonical-seo-v4';
+    private const VERSION = '2026-10-02-canonical-seo-v5';
 
     private const STATE_KEY = 'system_content_seed_version';
 
