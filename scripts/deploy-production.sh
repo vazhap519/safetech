@@ -253,6 +253,26 @@ install_nginx_config() {
     rendered_config="$(mktemp)"
     render_path_file "${NGINX_CONFIG_SOURCE}" "${rendered_config}"
 
+    # Nginx before 1.25.1 does not recognize the standalone "http2 on" directive.
+    # Render the legacy listen syntax only for those installed runtimes.
+    local nginx_version
+    nginx_version="$(nginx -v 2>&1)"
+    if [[ "${nginx_version}" =~ nginx/([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+        local nginx_major="${BASH_REMATCH[1]}"
+        local nginx_minor="${BASH_REMATCH[2]}"
+        local nginx_patch="${BASH_REMATCH[3]}"
+        if (( nginx_major < 1 || (nginx_major == 1 && (nginx_minor < 25 || (nginx_minor == 25 && nginx_patch < 1))) )); then
+            log "Rendering legacy HTTP/2 syntax for ${nginx_version}"
+            sed -i -e '/^[[:space:]]*http2 on;[[:space:]]*$/d' \
+                -e '/^[[:space:]]*listen 443 ssl;[[:space:]]*$/s/listen 443 ssl;/listen 443 ssl http2;/' \
+                -e '/^[[:space:]]*listen \[::\]:443 ssl;[[:space:]]*$/s/listen \[::\]:443 ssl;/listen [::]:443 ssl http2;/' \
+                "${rendered_config}"
+        fi
+    else
+        rm -f "${rendered_config}"
+        fail "cannot determine installed Nginx version: ${nginx_version}"
+    fi
+
     if [[ -f "${NGINX_CONFIG_TARGET}" ]]; then
         backup_config="${NGINX_CONFIG_TARGET}.pre-deploy"
         cp -a "${NGINX_CONFIG_TARGET}" "${backup_config}"
