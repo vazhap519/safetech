@@ -10,6 +10,8 @@ type FeaturedService = {
     description: string;
     slug: string;
     title: string;
+    image?: string | null;
+    heroImage?: string | null;
 };
 
 export default async function FeaturedCardComponent({
@@ -33,14 +35,16 @@ export default async function FeaturedCardComponent({
 
     if (!service.slug || (!service.title && !service.description)) return null;
 
+    const serviceImage = service.image || service.heroImage || branding.defaultImage;
+
     return (
         <article className="group relative aspect-[4/5] overflow-hidden rounded-lg border border-outline-variant/20">
-            {branding.defaultImage ? (
+            {serviceImage ? (
                 <Image
                     alt={imageAlt || service.title}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    src={branding.defaultImage}
+                    src={serviceImage}
                 />
             ) : null}
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
