@@ -55,6 +55,9 @@ class QuoteEnginePage extends Page
 
     public float $discountPercentage = 0;
 
+    /** @var array<int, array<string, mixed>> */
+    public array $manualItems = [];
+
     /** @var array<string, mixed> */
     public array $values = [];
 
@@ -174,6 +177,69 @@ class QuoteEnginePage extends Page
         }
     }
 
+    public function addManualItem(): void
+    {
+        $this->manualItems[] = [
+            'category' => 'equipment',
+            'label' => '',
+            'quantity' => 1,
+            'unit' => 'pcs',
+            'purchase_price' => 0,
+            'markup_percentage' => 60,
+            'sale_price' => 0,
+        ];
+    }
+
+    public function removeManualItem(int $index): void
+    {
+        if (! array_key_exists($index, $this->manualItems)) {
+            return;
+        }
+
+        unset($this->manualItems[$index]);
+        $this->manualItems = array_values($this->manualItems);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function normalizedManualItems(): array
+    {
+        return collect($this->manualItems)
+            ->map(function (array $item): array {
+                $quantity = max(0, (float) ($item['quantity'] ?? 0));
+                $purchase = max(0, (float) ($item['purchase_price'] ?? 0));
+                $markup = min(1000, max(0, (float) ($item['markup_percentage'] ?? 0)));
+                $sale = max(0, (float) ($item['sale_price'] ?? 0));
+                if ($sale <= 0 && $purchase > 0) {
+                    $sale = round($purchase * (1 + $markup / 100), 2);
+                }
+
+                return [
+                    'category' => (string) ($item['category'] ?? 'other'),
+                    'label' => trim((string) ($item['label'] ?? '')),
+                    'quantity' => round($quantity, 2),
+                    'unit' => (string) ($item['unit'] ?? 'pcs'),
+                    'purchase_price' => round($purchase, 2),
+                    'markup_percentage' => round($markup, 2),
+                    'sale_price' => round($sale, 2),
+                    'cost_total' => round($purchase * $quantity, 2),
+                    'sale_total' => round($sale * $quantity, 2),
+                ];
+            })
+            ->filter(fn (array $item): bool => $item['label'] !== '' && $item['quantity'] > 0)
+            ->values()
+            ->all();
+    }
+
+    /** @return array<string, float> */
+    public function manualTotals(): array
+    {
+        $items = $this->normalizedManualItems();
+        $cost = round((float) collect($items)->sum('cost_total'), 2);
+        $sale = round((float) collect($items)->sum('sale_total'), 2);
+
+        return ['cost' => $cost, 'sale' => $sale, 'profit' => round($sale - $cost, 2)];
+    }
+
     public function syncCatalog(): void
     {
         $count = app(ServiceQuoteCalculator::class)->syncCatalog($this->serviceId);
@@ -204,6 +270,25 @@ class QuoteEnginePage extends Page
         $calculation['project_title'] = trim($this->projectTitle);
         $calculation['location'] = trim($this->location);
         $calculation['components_internal'] = $quote['components'];
+        $manualItems = $this->normalizedManualItems();
+        $manualTotals = $this->manualTotals();
+        foreach ($manualItems as $item) {
+            $calculation['line_items'][] = [
+                'label' => $item['label'],
+                'quantity' => $item['quantity'],
+                'unit' => $item['unit'],
+                'sell_unit' => $item['sale_price'],
+                'sell_total' => $item['sale_total'],
+                'category' => $item['category'],
+                'manual' => true,
+            ];
+        }
+        $baseFinalTotal = (float) $quote['final_total'];
+        $finalTotal = round($baseFinalTotal + $manualTotals['sale'], 2);
+        $knownCostTotal = round((float) $quote['known_cost_total'] + $manualTotals['cost'], 2);
+        $profitTotal = $quote['profit_total'] === null
+            ? null
+            : round((float) $quote['profit_total'] + $manualTotals['profit'], 2);
 
         $estimate = Estimate::query()->create([
             'client_name' => trim($this->clientName) ?: null,
@@ -217,11 +302,11 @@ class QuoteEnginePage extends Page
             'markup_rate' => 0,
             'discount_percentage' => $quote['discount_percentage'],
             'required_storage_tb' => 0,
-            'cost_total' => $quote['known_cost_total'],
-            'markup_total' => $quote['profit_total'] ?? 0,
-            'final_total' => $quote['final_total'],
-            'profit_total' => $quote['profit_total'] ?? 0,
-            'manual_items' => [],
+            'cost_total' => $knownCostTotal,
+            'markup_total' => $profitTotal ?? 0,
+            'final_total' => $finalTotal,
+            'profit_total' => $profitTotal ?? 0,
+            'manual_items' => $manualItems,
             'configuration' => [
                 'values' => $quote['values'],
                 'project_size' => $quote['project_size'],
@@ -266,7 +351,16 @@ class QuoteEnginePage extends Page
 
         $lines[] = '';
 
-        foreach ($quote['calculation']['line_items'] ?? [] as $item) {
+        $clientLineItems = $quote['calculation']['line_items'] ?? [];
+        foreach ($this->normalizedManualItems() as $manualItem) {
+            $clientLineItems[] = [
+                'label' => $manualItem['label'],
+                'quantity' => $manualItem['quantity'],
+                'sell_unit' => $manualItem['sale_price'],
+                'sell_total' => $manualItem['sale_total'],
+            ];
+        }
+        foreach ($clientLineItems as $item) {
             $quantity = (float) ($item['quantity'] ?? 0);
             $total = (float) ($item['sell_total'] ?? 0);
             $lines[] = sprintf(
@@ -279,7 +373,8 @@ class QuoteEnginePage extends Page
         }
 
         $lines[] = '';
-        $lines[] = 'სულ: '.number_format((float) ($quote['final_total'] ?? 0), 2, '.', ' ').' ₾';
+        $clientFinalTotal = (float) ($quote['final_total'] ?? 0) + $this->manualTotals()['sale'];
+        $lines[] = 'სულ: '.number_format($clientFinalTotal, 2, '.', ' ').' ₾';
 
         if (trim($this->clientNote) !== '') {
             $lines[] = trim($this->clientNote);
@@ -302,6 +397,7 @@ class QuoteEnginePage extends Page
             $this->laborPrice = 0;
             $this->discountPercentage = 0;
             $this->componentOverrides = [];
+            $this->manualItems = [];
 
             return;
         }
@@ -320,6 +416,7 @@ class QuoteEnginePage extends Page
         $this->laborPrice = round(max(0, (float) ($pricing['labor_price'] ?? 0)), 2);
         $this->discountPercentage = round(min(100, max(0, (float) ($pricing['discount_percentage'] ?? 0))), 2);
         $this->componentOverrides = [];
+        $this->manualItems = [];
     }
 
     private function services()
