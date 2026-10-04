@@ -264,8 +264,8 @@ install_nginx_config() {
         if (( nginx_major < 1 || (nginx_major == 1 && (nginx_minor < 25 || (nginx_minor == 25 && nginx_patch < 1))) )); then
             log "Rendering legacy HTTP/2 syntax for ${nginx_version}"
             sed -i -e '/^[[:space:]]*http2 on;[[:space:]]*$/d' \
-                -e '/^[[:space:]]*listen 443 ssl;[[:space:]]*$/s/listen 443 ssl;/listen 443 ssl http2;/' \
-                -e '/^[[:space:]]*listen \[::\]:443 ssl;[[:space:]]*$/s/listen \[::\]:443 ssl;/listen [::]:443 ssl http2;/' \
+                -e '0,/^[[:space:]]*listen 443 ssl;[[:space:]]*$/s/listen 443 ssl;/listen 443 ssl http2;/' \
+                -e '0,/^[[:space:]]*listen \[::\]:443 ssl;[[:space:]]*$/s/listen \[::\]:443 ssl;/listen [::]:443 ssl http2;/' \
                 "${rendered_config}"
         fi
     else
