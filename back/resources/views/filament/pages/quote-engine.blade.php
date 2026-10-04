@@ -199,6 +199,44 @@
         </div>
     </section>
 
+    <section class="qe-card">
+        <div class="flex items-start justify-between gap-4 flex-wrap mb-4">
+            <div>
+                <h2 class="text-xl font-bold">4. ხელით დამატებული პოზიციები</h2>
+                <p class="qe-note">დაამატე ნებისმიერი მოწყობილობა, მასალა, ხელობა, ტრანსპორტი ან სხვა ხარჯი. თვითღირებულება და ფასნამატი კლიენტის PDF-ში არ გამოჩნდება.</p>
+            </div>
+            <x-filament::button wire:click="addManualItem">+ პოზიციის დამატება</x-filament::button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="qe-table">
+                <thead><tr><th>ტიპი</th><th>დასახელება</th><th>რაოდ.</th><th>ერთეული</th><th>თვითღ.</th><th>Markup %</th><th>გასაყიდი ფასი</th><th>ჯამი</th><th></th></tr></thead>
+                <tbody>
+                @forelse($manualItems as $index => $item)
+                    @php($normalized = $this->normalizedManualItems())
+                    <tr wire:key="manual-item-{{ $index }}">
+                        <td><select wire:model.live="manualItems.{{ $index }}.category"><option value="equipment">მოწყობილობა</option><option value="material">მასალა</option><option value="labor">ხელობა</option><option value="transport">ტრანსპორტი</option><option value="other">სხვა</option></select></td>
+                        <td><input style="width:220px" type="text" wire:model.live.debounce.400ms="manualItems.{{ $index }}.label" placeholder="მაგ. IP კამერა"></td>
+                        <td><input type="number" min="0" step=".01" wire:model.live.debounce.300ms="manualItems.{{ $index }}.quantity"></td>
+                        <td><select wire:model.live="manualItems.{{ $index }}.unit"><option value="pcs">ცალი</option><option value="m">მეტრი</option><option value="set">კომპლექტი</option><option value="job">სამუშაო</option><option value="hour">საათი</option></select></td>
+                        <td><input type="number" min="0" step=".01" wire:model.live.debounce.300ms="manualItems.{{ $index }}.purchase_price"></td>
+                        <td><input type="number" min="0" max="1000" step=".1" wire:model.live.debounce.300ms="manualItems.{{ $index }}.markup_percentage"></td>
+                        <td><input type="number" min="0" step=".01" wire:model.live.debounce.300ms="manualItems.{{ $index }}.sale_price" placeholder="0 = ავტომატური"></td>
+                        <td class="qe-money"><strong>{{ number_format((float)($this->normalizedManualItems()[$index]['sale_total'] ?? 0), 2, '.', ' ') }} ₾</strong></td>
+                        <td><button type="button" wire:click="removeManualItem({{ $index }})" class="text-danger-600">წაშლა</button></td>
+                    </tr>
+                @empty
+                    <tr><td colspan="9" class="qe-note">ხელით დამატებული პოზიციები ჯერ არ არის.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+        @php($manualTotals = $this->manualTotals())
+        @if($manualTotals['sale'] > 0)
+            <div class="qe-note mt-3">ხელით დამატებული პოზიციები: თვითღირებულება {{ number_format($manualTotals['cost'], 2, '.', ' ') }} ₾ · გაყიდვა {{ number_format($manualTotals['sale'], 2, '.', ' ') }} ₾ · მოგება {{ number_format($manualTotals['profit'], 2, '.', ' ') }} ₾</div>
+        @endif
+    </section>
+
     @if($quote['pricing_complete'])
         <div class="qe-ok mb-4"><strong>✓ ფასები სრულადაა შევსებული.</strong> მოგებისა და მარჟის დათვლა დასრულებულია.</div>
     @else
@@ -210,13 +248,14 @@
     @endif
 
     <section class="qe-card">
-        <h2 class="text-xl font-bold mb-4">4. ფინანსური შეჯამება</h2>
+        <h2 class="text-xl font-bold mb-4">5. ფინანსური შეჯამება</h2>
         <div class="qe-grid">
             <div class="qe-metric"><span class="qe-note">სერვისი</span><strong>{{ number_format((float)($quote['service_subtotal'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
             <div class="qe-metric"><span class="qe-note">კომპონენტები</span><strong>{{ number_format((float)($quote['component_subtotal'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
             <div class="qe-metric"><span class="qe-note">სამუშაო</span><strong>{{ number_format((float)($quote['labor_subtotal'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
             <div class="qe-metric"><span class="qe-note">ფასდაკლება</span><strong>-{{ number_format((float)($quote['discount_amount'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
-            <div class="qe-metric"><span class="qe-note">კლიენტის საბოლოო ფასი</span><strong>{{ number_format((float)($quote['final_total'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
+            <div class="qe-metric"><span class="qe-note">ხელით დამატებული</span><strong>{{ number_format((float)$this->manualTotals()['sale'], 2, '.', ' ') }} ₾</strong></div>
+            <div class="qe-metric"><span class="qe-note">კლიენტის საბოლოო ფასი</span><strong>{{ number_format((float)($quote['final_total'] ?? 0) + (float)$this->manualTotals()['sale'], 2, '.', ' ') }} ₾</strong></div>
             <div class="qe-metric"><span class="qe-note">ცნობილი თვითღირებულება</span><strong>{{ number_format((float)($quote['known_cost_total'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
             <div class="qe-metric"><span class="qe-note">მოგება (overhead-მდე)</span><strong>{{ $quote['profit_total'] === null ? 'დასაზუსტებელია' : number_format((float)$quote['profit_total'], 2, '.', ' ').' ₾' }}</strong></div>
             <div class="qe-metric"><span class="qe-note">მარჟა</span><strong>{{ $quote['gross_margin_percentage'] === null ? '—' : number_format((float)$quote['gross_margin_percentage'], 1). '%' }}</strong></div>
@@ -224,7 +263,7 @@
     </section>
 
     <section class="qe-card">
-        <h2 class="text-xl font-bold mb-4">5. კლიენტის ტექსტი და შენახვა</h2>
+        <h2 class="text-xl font-bold mb-4">6. კლიენტის ტექსტი და შენახვა</h2>
         <div class="qe-grid">
             <label class="qe-field"><span>კლიენტისთვის შენიშვნა</span><textarea wire:model.live.debounce.500ms="clientNote" rows="4" placeholder="მაგ. შეთავაზება მოქმედებს 7 დღე."></textarea></label>
             <label class="qe-field"><span>შიდა შენიშვნა (PDF-ში არ შევა)</span><textarea wire:model.blur="internalNotes" rows="4"></textarea></label>
