@@ -9,6 +9,7 @@ use App\Filament\Support\NavigationGroup;
 use App\Filament\Support\StableSlug;
 use App\Filament\Support\StructuredDataJsonField;
 use App\Models\LocalServiceLanding;
+use App\Models\Project;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -133,10 +134,32 @@ class LocalServiceLandingResource extends Resource
                             'projects',
                             'name',
                             modifyQueryUsing: fn (Builder $query): Builder => $query
-                                ->select(['projects.id', 'projects.name']),
+                                ->select([
+                                    'projects.id',
+                                    'projects.name',
+                                    'projects.city',
+                                    'projects.category_id',
+                                    'projects.is_published',
+                                ])
+                                ->with('projectCategory:id,name')
+                                ->orderByDesc('projects.is_published')
+                                ->orderBy('projects.city')
+                                ->orderBy('projects.name'),
                         )
+                        ->getOptionLabelFromRecordUsing(function (Project $record): string {
+                            $context = collect([
+                                $record->city,
+                                $record->projectCategory?->name,
+                                $record->is_published ? 'გამოქვეყნებული' : 'დრაფტი',
+                            ])->filter()->implode(' | ');
+
+                            return $context !== ''
+                                ? "{$record->name} — {$context}"
+                                : $record->name;
+                        })
+                        ->helperText('აჩვენებს პროექტის ქალაქს, კატეგორიას და გამოქვეყნების სტატუსს. მიაბით მხოლოდ რეალურად შესაბამისი პროექტი; სისტემა ავტომატურად არაფერს აკავშირებს.')
                         ->multiple()
-                        ->searchable()
+                        ->searchable(['name', 'city'])
                         ->preload(),
                 ]),
 
