@@ -310,7 +310,7 @@ LOCAL SEO profile:
 - Location and service facts must match EDITOR FACTS/current state exactly.
 - Keep the current Local SEO city/service unchanged. Never invent additional service areas, installed projects, an office address, opening hours or availability; Batumi must not be substituted for an existing target city.
 - For each local landing, create a clear H1, useful service- and location-specific body, concise CTA, factual benefits and practical FAQs in KA/EN/RU. All SEO and Open Graph descriptions must be no longer than 320 characters.
-- Existing project relationships, canonical override, Open Graph image URL, custom schema, published status and noindex are editor-managed, not generation targets.
+- Existing project relationships, canonical override, Open Graph image upload, custom schema, published status and noindex are editor-managed, not generation targets.
 RULES,
             'category' => <<<'RULES'
 CATEGORY profile:
