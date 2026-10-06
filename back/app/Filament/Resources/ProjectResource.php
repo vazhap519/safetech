@@ -260,7 +260,15 @@ class ProjectResource extends Resource
                         'CreativeWork' => 'CreativeWork',
                         'WebPage' => 'WebPage',
                     ])->default('Article'),
-                    TextInput::make('seo.image')->label('Open Graph image URL')->url(),
+                    SpatieMediaLibraryFileUpload::make('og_image')
+                        ->label('Open Graph image')
+                        ->helperText('რეკომენდებული ზომაა 1200×630. ატვირთვისას ავტომატურად იქმნება WebP ვერსია.')
+                        ->collection('og_image')
+                        ->conversion('og')
+                        ->image()
+                        ->imageEditor()
+                        ->maxSize(10240)
+                        ->imagePreviewHeight('150'),
                     Toggle::make('seo.noindex')->label('Noindex')->default(false),
                     ...LocalizedContentFields::inputs('card.title', 'Card title'),
                     ...LocalizedContentFields::inputs('card.description', 'Card description', textarea: true),
