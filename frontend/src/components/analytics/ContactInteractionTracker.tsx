@@ -62,7 +62,10 @@ export default function ContactInteractionTracker() {
             }
 
             trackEvent("contact", { method });
-            trackContactClick(method, getCurrentPagePath());
+
+            if (method === "phone" || method === "email") {
+                trackContactClick(method, getCurrentPagePath());
+            }
         }
 
         document.addEventListener("click", handleClick);
