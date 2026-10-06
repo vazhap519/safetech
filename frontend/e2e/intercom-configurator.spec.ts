@@ -14,7 +14,7 @@ for (const [locale, labels] of Object.entries(copy)) {
     test(`intercom staged selection and quantities (${locale})`, async ({ page }) => {
         const errors: string[] = [];
         page.on("pageerror", (error) => errors.push(error.message));
-        await page.goto(`${labels.prefix}/services?service=${service}#service-calculator`);
+        await page.goto(`${labels.prefix}/services/${service}#service-calculator`);
         const scope = page.locator("#service-calculator");
         await expect(scope.getByLabel(labels.apartments)).toBeVisible();
         const rejectCookies = page.getByRole("button", { name: /^(უარყოფა|Reject|Отклонить)$/ });
