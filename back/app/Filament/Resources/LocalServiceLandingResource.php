@@ -188,7 +188,15 @@ class LocalServiceLandingResource extends Resource
                     ...LocalizedContentFields::inputs('ogTitle', 'Open Graph title', maxLength: 255),
                     ...LocalizedContentFields::inputs('ogDescription', 'Open Graph description', textarea: true, maxLength: 320),
                     TextInput::make('translations.seo.canonical')->label('Canonical URL override')->url(),
-                    TextInput::make('translations.seo.image')->label('Open Graph image URL')->url(),
+                    SpatieMediaLibraryFileUpload::make('og_image')
+                        ->label('Open Graph image')
+                        ->helperText('რეკომენდებული ზომაა 1200×630. ატვირთვისას ავტომატურად იქმნება WebP ვერსია.')
+                        ->collection('og_image')
+                        ->conversion('og')
+                        ->image()
+                        ->imageEditor()
+                        ->maxSize(10240)
+                        ->imagePreviewHeight('150'),
                     Select::make('translations.seo.schema_type')->label('Schema.org type')->options([
                         'Service' => 'Service',
                         'WebPage' => 'WebPage',
