@@ -3,15 +3,21 @@
 namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
+use App\Support\CmsMedia;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class LocalServiceLanding extends Model
+class LocalServiceLanding extends Model implements HasMedia
 {
     use FlushesPublicContentCache;
+    use InteractsWithMedia;
 
     protected $guarded = ['id'];
 
@@ -55,6 +61,33 @@ class LocalServiceLanding extends Model
             ->whereHas('service', fn (Builder $service): Builder => $service->publiclyVisible())
             ->orderBy('sort_order')
             ->orderBy('id');
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('og_image')
+            ->useDisk('public')
+            ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
+            ->singleFile();
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('og')
+            ->fit(Fit::Crop, 1200, 630)
+            ->format('webp')
+            ->quality(85)
+            ->performOnCollections('og_image')
+            ->nonQueued();
+    }
+
+    public function getOgImageUrlAttribute(): ?string
+    {
+        $media = $this->getFirstMedia('og_image');
+
+        return $media?->hasGeneratedConversion('og')
+            ? $media->getUrl('og')
+            : $media?->getUrl();
     }
 
     public function service(): BelongsTo
