@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+const LOCALE_COOKIE_NAME = "safetech_locale";
+
 const SERVICE_CANONICAL_ALIASES: Record<string, string> = {
     "ip-camera-installation": "security-camera-installation",
     "video-surveillance-system-installation": "security-camera-installation",
@@ -55,6 +57,15 @@ function withLocaleHeaders(response: NextResponse, locale: Locale) {
     return response;
 }
 
+function withLocaleCookie(response: NextResponse, locale: Locale) {
+    response.cookies.set(LOCALE_COOKIE_NAME, locale, {
+        path: "/",
+        sameSite: "lax",
+    });
+
+    return withLocaleHeaders(response, locale);
+}
+
 export function proxy(request: NextRequest) {
     const segments = request.nextUrl.pathname.split("/").filter(Boolean);
     const firstSegment = segments[0];
@@ -88,7 +99,7 @@ export function proxy(request: NextRequest) {
         url.pathname = `${localePrefix}/services/${targetService}`;
         url.search = "";
 
-        return withLocaleHeaders(NextResponse.redirect(url, 308), locale);
+        return withLocaleCookie(NextResponse.redirect(url, 308), locale);
     }
 
     if (firstSegment === DEFAULT_LOCALE || canonicalServiceSlug) {
@@ -115,7 +126,7 @@ export function proxy(request: NextRequest) {
 
         url.pathname = "/" + redirectedSegments.join("/");
 
-        return withLocaleHeaders(NextResponse.redirect(url, 308), locale);
+        return withLocaleCookie(NextResponse.redirect(url, 308), locale);
     }
 
     const requestHeaders = new Headers(request.headers);
@@ -127,15 +138,7 @@ export function proxy(request: NextRequest) {
         },
     });
 
-    // Persist the resolved locale so the root layout and metadata can resolve
-    // the same locale even when Next.js performs an internal follow-up request
-    // that does not preserve the proxy-injected request header.
-    response.cookies.set("safetech_locale", locale, {
-        path: "/",
-        sameSite: "lax",
-    });
-
-    return withLocaleHeaders(response, locale);
+    return withLocaleCookie(response, locale);
 }
 
 export const config = {
