@@ -65,6 +65,11 @@ class Page extends Model implements HasMedia
             ->useDisk('public')
             ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
             ->singleFile();
+
+        $this->addMediaCollection('og_image')
+            ->useDisk('public')
+            ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
+            ->singleFile();
     }
 
     public function registerMediaConversions(?Media $media = null): void
@@ -75,6 +80,22 @@ class Page extends Model implements HasMedia
             ->quality(82)
             ->performOnCollections('cover')
             ->nonQueued();
+
+        $this->addMediaConversion('og')
+            ->fit(Fit::Crop, 1200, 630)
+            ->format('webp')
+            ->quality(85)
+            ->performOnCollections('og_image')
+            ->nonQueued();
+    }
+
+    public function getOgImageUrlAttribute(): ?string
+    {
+        $media = $this->getFirstMedia('og_image');
+
+        return $media?->hasGeneratedConversion('og')
+            ? $media->getUrl('og')
+            : $media?->getUrl();
     }
 
     public function getCoverImageAttribute(): ?string
