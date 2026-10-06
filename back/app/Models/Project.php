@@ -129,6 +129,11 @@ class Project extends Model implements HasMedia
             ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
             ->singleFile();
 
+        $this->addMediaCollection('og_image')
+            ->useDisk('public')
+            ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
+            ->singleFile();
+
         $this->addMediaCollection('gallery')
             ->useDisk('public')
             ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES);
@@ -143,12 +148,25 @@ class Project extends Model implements HasMedia
             ->performOnCollections('cover', 'gallery')
             ->nonQueued();
 
+        $this->addMediaConversion('og')
+            ->fit(Fit::Crop, 1200, 630)
+            ->format('webp')
+            ->quality(85)
+            ->performOnCollections('og_image')
+            ->nonQueued();
+
         $this->addMediaConversion('thumb')
             ->fit(Fit::Crop, 720, 480)
             ->format('webp')
             ->quality(78)
             ->performOnCollections('cover', 'gallery')
             ->nonQueued();
+    }
+
+    public function getOgImageUrlAttribute(): ?string
+    {
+        return $this->mediaUrl('og_image', 'og')
+            ?? $this->mediaUrl('og_image');
     }
 
     public function getCoverUrlAttribute(): ?string
