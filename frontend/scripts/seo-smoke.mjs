@@ -281,12 +281,8 @@ async function validateLegacyCalculatorRedirect() {
         `${path}: expected HTTP redirect, got ${response.status}`,
     );
     assert(
-        location.includes("/services?service=custom-computer-build"),
-        `${path}: redirect does not preserve the selected service (${location})`,
-    );
-    assert(
-        location.includes("#service-calculator"),
-        `${path}: redirect does not target the embedded calculator (${location})`,
+        location.includes("/services/custom-computer-build"),
+        `${path}: redirect does not target the canonical service URL (${location})`,
     );
 }
 
