@@ -61,9 +61,9 @@ class ServiceConfiguratorResource extends Resource
             ->label($label)
             ->schema([
                 TextInput::make('value')
-                    ->label('ტექნიკური მნიშვნელობა')
+                    ->label('სისტემური კოდი (Key)')
                     ->required()
-                    ->helperText('მაგალითი: ip, 4mp, small'),
+                    ->helperText('გამოიყენება წესებში და API-ში. მაგალითად: ip, 4mp, small. არსებული მნიშვნელობა უმიზეზოდ არ შეცვალოთ.'),
                 TextInput::make('ka')->label('დასახელება (KA)')->required(),
                 TextInput::make('en')->label('დასახელება (EN)'),
                 TextInput::make('ru')->label('დასახელება (RU)'),
@@ -91,7 +91,7 @@ class ServiceConfiguratorResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('არჩეული სერვისი')
+            Section::make('1. სერვისი და კალკულატორის სტატუსი')
                 ->description('კალკულატორის კონფიგურაცია ინახება უშუალოდ ამ სერვისში.')
                 ->schema([
                     TextInput::make('name')
@@ -108,7 +108,7 @@ class ServiceConfiguratorResource extends Resource
                 ])
                 ->columns(3),
 
-            Section::make('ფასები, მომსახურება და ფასდაკლება')
+            Section::make('2. ძირითადი ფასები და ფასდაკლება')
                 ->description('საბოლოო ფასი ითვლება ქვემოთ აღწერილი ყველა ფენის ჯამით. შეინახეთ ცვლილება და საჯარო კალკულატორი განახლდება ავტომატურად.')
                 ->schema([
                     Placeholder::make('pricing_help')
@@ -167,7 +167,7 @@ class ServiceConfiguratorResource extends Resource
                 ])
                 ->columns(3),
 
-            Section::make('პროექტის ტიპები და მასშტაბები')
+            Section::make('3. პროექტის ზომა და ობიექტის ტიპი')
                 ->description('ეს არჩევანი გამოჩნდება კალკულატორის ზედა ნაწილში.')
                 ->schema([
                     ...self::localizedFields('lead_form.project_size_label', 'მასშტაბის ველი'),
@@ -184,16 +184,16 @@ class ServiceConfiguratorResource extends Resource
                 ->columns(3)
                 ->collapsible(),
 
-            Section::make('მომსახურების პარამეტრები')
+            Section::make('4. მომსახურების პარამეტრები')
                 ->description('მაგალითად: კამერების რაოდენობა, ტექნოლოგია, გარჩევადობა, ობიექტივი, კაბელის მეტრაჟი.')
                 ->schema([
                     Repeater::make('lead_form.extra_fields')
                         ->label('კალკულატორის ველები')
                         ->schema([
                             TextInput::make('key')
-                                ->label('ველის გასაღები')
+                                ->label('სისტემური კოდი (Key)')
                                 ->required()
-                                ->helperText('მაგალითი: camera_count, resolution, lens'),
+                                ->helperText('ამ კოდს კომპონენტების წესები იყენებს. მაგალითად: camera_count, resolution, lens. უკვე გამოყენებული Key არ შეცვალოთ.'),
                             Select::make('type')
                                 ->label('ველის ტიპი')
                                 ->options([
@@ -234,8 +234,8 @@ class ServiceConfiguratorResource extends Resource
                                 ->minValue(0)
                                 ->default(0),
                             TextInput::make('price_multiplier_field')
-                                ->label('ფასის გამრავლების ველი')
-                                ->helperText('მაგალითად არჩევანის ფასი გაამრავლე camera_count-ზე.'),
+                                ->label('რომელი რაოდენობით გამრავლდეს ფასი?')
+                                ->helperText('მიუთითეთ სხვა რიცხვითი ველის Key. მაგალითად camera_count — არჩეული ფასი გამრავლდება კამერების რაოდენობაზე.'),
                             Repeater::make('options')
                                 ->label('არჩევანის ვარიანტები')
                                 ->schema([
@@ -274,7 +274,7 @@ class ServiceConfiguratorResource extends Resource
                 ->collapsible()
                 ->collapsed(),
 
-            Section::make('მომსახურების პაკეტები')
+            Section::make('5. მომსახურების პაკეტები')
                 ->schema([
                     Repeater::make('lead_form.packages')
                         ->label('პაკეტები')
@@ -310,7 +310,7 @@ class ServiceConfiguratorResource extends Resource
                 ->collapsible()
                 ->collapsed(),
 
-            Section::make('კომპონენტების კატალოგი და თავსებადობა')
+            Section::make('6. კომპონენტები და თავსებადობის წესები')
                 ->description('აქ ემატება მოწყობილობები, მასალები და სამუშაოები. წესები განსაზღვრავს, როდის უნდა შესთავაზოს სისტემა კონკრეტული NVR, DVR, სვიჩი, დისკი ან სხვა კომპონენტი.')
                 ->schema([
                     Repeater::make('lead_form.components')
@@ -339,8 +339,8 @@ class ServiceConfiguratorResource extends Resource
                                 ->default('other')
                                 ->required(),
                             TextInput::make('exclusive_group')
-                                ->label('ექსკლუზიური ჯგუფი')
-                                ->helperText('ერთ ჯგუფში მხოლოდ ყველაზე მაღალი პრიორიტეტის თავსებადი კომპონენტი აირჩევა. მაგალითი: recorder.'),
+                                ->label('არჩევანის ჯგუფი (Exclusive group)')
+                                ->helperText('თუ რამდენიმე თავსებადი მოწყობილობიდან მხოლოდ ერთი უნდა აირჩეს, ყველას ერთი ჯგუფი მიეცით. მაგალითად: recorder ან poe_switch. სისტემა აირჩევს ყველაზე მაღალი პრიორიტეტის თავსებად კომპონენტს.'),
                             TextInput::make('priority')
                                 ->label('პრიორიტეტი')
                                 ->numeric()
@@ -364,18 +364,18 @@ class ServiceConfiguratorResource extends Resource
                                 ->minValue(0)
                                 ->default(0),
                             Select::make('quantity_mode')
-                                ->label('რაოდენობის გამოთვლა')
+                                ->label('როგორ დაითვალოს რაოდენობა')
                                 ->options([
-                                    'fixed' => 'ფიქსირებული რაოდენობა',
-                                    'field' => 'პირდაპირ ველიდან',
-                                    'ceil' => 'ველის გაყოფა ტევადობაზე და დამრგვალება ზემოთ',
+                                    'fixed' => 'ფიქსირებული რაოდენობა — ყოველთვის მითითებული ცალი',
+                                    'field' => 'პირდაპირ პარამეტრიდან — მაგ. camera_count',
+                                    'ceil' => 'ტევადობით — მაგ. 20 კამერა / 16 არხი = 2 ჩამწერი',
                                 ])
                                 ->default('fixed')
                                 ->required()
                                 ->live(),
                             TextInput::make('quantity_field')
-                                ->label('რაოდენობის წყარო ველი')
-                                ->helperText('მაგალითი: camera_count')
+                                ->label('რომელი პარამეტრიდან აიღოს რაოდენობა?')
+                                ->helperText('მიუთითეთ პარამეტრის Key. მაგალითი: camera_count, cable_length, recording_days.')
                                 ->visible(
                                     fn (Get $get): bool => in_array(
                                         $get('quantity_mode'),
@@ -389,11 +389,11 @@ class ServiceConfiguratorResource extends Resource
                                 ->minValue(0)
                                 ->default(1),
                             TextInput::make('units_per_component')
-                                ->label('ტევადობა ერთ კომპონენტზე')
+                                ->label('ერთი კომპონენტის ტევადობა')
                                 ->numeric()
                                 ->minValue(1)
                                 ->default(1)
-                                ->helperText('მაგალითად 16-არხიანი NVR-ისთვის მიუთითე 16.')
+                                ->helperText('მაგალითი: 16-არხიანი NVR = 16; 8-პორტიანი PoE switch = 8. სისტემა საჭირო რაოდენობას ავტომატურად დაამრგვალებს ზემოთ.')
                                 ->visible(
                                     fn (Get $get): bool => $get('quantity_mode') === 'ceil',
                                 ),
@@ -411,28 +411,28 @@ class ServiceConfiguratorResource extends Resource
                             Toggle::make('recommended')
                                 ->label('რეკომენდებულია — ავტომატურად მონიშნული'),
                             Repeater::make('rules')
-                                ->label('თავსებადობის წესები')
+                                ->label('როდის უნდა გამოჩნდეს/აირჩეს ეს კომპონენტი?')
                                 ->schema([
                                     TextInput::make('field')
-                                        ->label('ველის გასაღები')
+                                        ->label('რომელი პარამეტრი შევამოწმოთ?')
                                         ->required()
-                                        ->helperText('camera_count, resolution, lens, project_size, property_type, package'),
+                                        ->helperText('მაგალითად: camera_count, recording_days, resolution, project_size, property_type, package'),
                                     Select::make('operator')
-                                        ->label('ოპერატორი')
+                                        ->label('შედარების პირობა')
                                         ->options([
-                                            'equals' => 'უდრის',
-                                            'not_equals' => 'არ უდრის',
-                                            'gte' => 'მეტია ან ტოლია',
-                                            'lte' => 'ნაკლებია ან ტოლია',
+                                            'equals' => 'უდრის (=)',
+                                            'not_equals' => 'არ უდრის (≠)',
+                                            'gte' => 'მეტია ან ტოლია (≥)',
+                                            'lte' => 'ნაკლებია ან ტოლია (≤)',
                                             'contains' => 'შეიცავს',
-                                            'truthy' => 'ჩართულია',
-                                            'falsy' => 'გამორთულია',
+                                            'truthy' => 'ჩართულია / დიახ',
+                                            'falsy' => 'გამორთულია / არა',
                                         ])
                                         ->default('equals')
                                         ->required(),
                                     TextInput::make('value')
-                                        ->label('მნიშვნელობა')
-                                        ->helperText('truthy/falsy ოპერატორზე შეიძლება ცარიელი დარჩეს.'),
+                                        ->label('რა მნიშვნელობას შევადაროთ?')
+                                        ->helperText('მაგალითად: 9, 16, 4mp, ip. „ჩართულია/გამორთულია“ პირობისას ცარიელი დატოვეთ.'),
                                 ])
                                 ->columns(3)
                                 ->default([])
@@ -451,7 +451,7 @@ class ServiceConfiguratorResource extends Resource
                 ->collapsible()
                 ->collapsed(),
 
-            Section::make('განმარტება')
+            Section::make('7. მომხმარებლისთვის ნაჩვენები განმარტება')
                 ->schema([
                     Textarea::make('lead_form.calculator_disclaimer_ka')
                         ->label('განმარტება (KA)')
