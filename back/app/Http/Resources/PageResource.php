@@ -36,7 +36,7 @@ class PageResource extends JsonResource
                 'title' => $seoTitle ?: $title,
                 'description' => $seoDescription,
                 'keywords' => $keywords,
-                'image' => data_get($this->translations, 'seo.image', $this->cover_image),
+                'image' => $this->og_image_url ?: $this->cover_image,
                 'noindex' => $this->noindex,
                 'canonical' => data_get($this->translations, 'seo.canonical'),
                 'schemaType' => data_get($this->translations, 'seo.schema_type', 'WebPage'),
