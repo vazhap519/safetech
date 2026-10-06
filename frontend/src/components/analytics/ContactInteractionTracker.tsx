@@ -9,7 +9,9 @@ import {
 } from "@/lib/analytics-events";
 import { trackEvent } from "@/lib/analytics";
 
-function contactMethod(href: string): "phone" | "email" | "whatsapp" | null {
+function contactMethod(
+    href: string,
+): "phone" | "email" | "whatsapp" | "messenger" | null {
     const normalizedHref = href.trim();
 
     if (normalizedHref.startsWith("tel:")) return "phone";
@@ -27,8 +29,15 @@ function contactMethod(href: string): "phone" | "email" | "whatsapp" | null {
             url.hostname === "api.whatsapp.com" ||
             url.hostname === "web.whatsapp.com";
         const hasRecipient = /\d/.test(url.pathname);
+        const isMessenger =
+            url.hostname === "m.me" ||
+            url.hostname === "messenger.com" ||
+            url.hostname === "www.messenger.com";
 
-        return isWhatsApp && hasRecipient ? "whatsapp" : null;
+        if (isWhatsApp && hasRecipient) return "whatsapp";
+        if (isMessenger && url.pathname !== "/") return "messenger";
+
+        return null;
     } catch {
         return null;
     }
