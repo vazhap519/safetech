@@ -73,7 +73,15 @@ class PageResource extends Resource
                     Textarea::make('seo_description')->label('SEO description')->rows(3)->maxLength(320),
                     TagsInput::make('keywords')->label('Keywords'),
                     TextInput::make('translations.seo.canonical')->label('Canonical URL override')->url(),
-                    TextInput::make('translations.seo.image')->label('Open Graph image URL')->url(),
+                    SpatieMediaLibraryFileUpload::make('og_image')
+                        ->label('Open Graph image')
+                        ->helperText('რეკომენდებული ზომაა 1200×630. ატვირთვისას ავტომატურად იქმნება WebP ვერსია.')
+                        ->collection('og_image')
+                        ->conversion('og')
+                        ->image()
+                        ->imageEditor()
+                        ->maxSize(10240)
+                        ->imagePreviewHeight('150'),
                     Select::make('translations.seo.schema_type')->label('Schema.org type')->options([
                         'WebPage' => 'WebPage',
                         'Article' => 'Article',
