@@ -67,6 +67,29 @@ export function proxy(request: NextRequest) {
         segments[serviceRootIndex] === "services" && serviceSlug
             ? SERVICE_CANONICAL_ALIASES[serviceSlug]
             : undefined;
+    const legacyQueryService = request.nextUrl.searchParams.get("service")?.trim();
+    const isServicesIndex =
+        segments[serviceRootIndex] === "services" &&
+        segments.length === serviceRootIndex + 1;
+
+    if (
+        isServicesIndex &&
+        legacyQueryService &&
+        /^[a-z0-9-]+$/.test(legacyQueryService)
+    ) {
+        const url = request.nextUrl.clone();
+        const targetService =
+            SERVICE_CANONICAL_ALIASES[legacyQueryService] || legacyQueryService;
+        const localePrefix =
+            hasLocalePrefix && firstSegment !== DEFAULT_LOCALE
+                ? `/${firstSegment}`
+                : "";
+
+        url.pathname = `${localePrefix}/services/${targetService}`;
+        url.search = "";
+
+        return withLocaleHeaders(NextResponse.redirect(url, 308), locale);
+    }
 
     if (firstSegment === DEFAULT_LOCALE || canonicalServiceSlug) {
         const url = request.nextUrl.clone();
