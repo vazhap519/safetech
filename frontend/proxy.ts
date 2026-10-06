@@ -121,14 +121,21 @@ export function proxy(request: NextRequest) {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-safetech-locale", locale);
 
-    return withLocaleHeaders(
-        NextResponse.next({
-            request: {
-                headers: requestHeaders,
-            },
-        }),
-        locale,
-    );
+    const response = NextResponse.next({
+        request: {
+            headers: requestHeaders,
+        },
+    });
+
+    // Persist the resolved locale so the root layout and metadata can resolve
+    // the same locale even when Next.js performs an internal follow-up request
+    // that does not preserve the proxy-injected request header.
+    response.cookies.set("safetech_locale", locale, {
+        path: "/",
+        sameSite: "lax",
+    });
+
+    return withLocaleHeaders(response, locale);
 }
 
 export const config = {
