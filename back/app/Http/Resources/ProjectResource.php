@@ -88,7 +88,7 @@ class ProjectResource extends JsonResource
                 'title' => $seoTitle ?: $title,
                 'description' => $seoDescription ?: $description,
                 'keywords' => data_get($this->seo, 'keywords', []),
-                'image' => data_get($this->seo, 'image', $image),
+                'image' => $this->og_image_url ?: $image,
                 'noindex' => (bool) data_get($this->seo, 'noindex', false),
                 'canonical' => data_get($this->seo, 'canonical'),
                 'schemaType' => data_get($this->seo, 'schema_type', 'Article'),
