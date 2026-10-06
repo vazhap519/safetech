@@ -162,6 +162,11 @@ class Service extends Model implements HasMedia
             ->useDisk('public')
             ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
             ->singleFile();
+
+        $this->addMediaCollection('og_image')
+            ->useDisk('public')
+            ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
+            ->singleFile();
     }
 
     public function registerMediaConversions(?Media $media = null): void
@@ -180,12 +185,28 @@ class Service extends Model implements HasMedia
             ->performOnCollections('services')
             ->nonQueued();
 
+        $this->addMediaConversion('og')
+            ->fit(Fit::Crop, 1200, 630)
+            ->format('webp')
+            ->quality(85)
+            ->performOnCollections('og_image')
+            ->nonQueued();
+
         $this->addMediaConversion('thumb')
             ->fit(Fit::Crop, 720, 480)
             ->format('webp')
             ->quality(78)
             ->performOnCollections('services')
             ->nonQueued();
+    }
+
+    public function getOgImageUrlAttribute(): ?string
+    {
+        $media = $this->getFirstMedia('og_image');
+
+        return $media?->hasGeneratedConversion('og')
+            ? $media->getUrl('og')
+            : $media?->getUrl();
     }
 
     public function getImageAttribute(): ?string
