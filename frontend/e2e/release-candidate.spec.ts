@@ -125,17 +125,24 @@ test("SEO canonical URLs exclude duplicate service intents", async ({ page, requ
     await expect(page.locator('a[href*="/services?service="]')).toHaveCount(0);
 });
 
-test("filtered services state is noindex and contact schema has no public street address", async ({ page }) => {
-    await page.goto("/services?service=security-camera-installation", {
-        waitUntil: "domcontentloaded",
-    });
+test("legacy service query URLs redirect to canonical service pages", async ({ page }) => {
+    for (const [source, target] of [
+        ["/services?service=security-camera-installation", "/services/security-camera-installation"],
+        ["/en/services?service=custom-computer-build", "/en/services/custom-computer-build"],
+        ["/en/services?service=pos-system-installation", "/en/services/pos-system-installation"],
+        ["/ru/services?service=security-camera-installation", "/ru/services/security-camera-installation"],
+        ["/services?service=ip-camera-installation", "/services/security-camera-installation"],
+    ] as const) {
+        const response = await page.goto(source, { waitUntil: "domcontentloaded" });
 
-    const robots = page.locator('meta[name="robots"]');
-    await expect(robots).toHaveAttribute("content", /noindex/i);
+        expect(response?.status()).toBe(200);
+        const url = new URL(page.url());
+        expect(url.pathname).toBe(target);
+        expect(url.search).toBe("");
+    }
+});
 
-    const canonical = page.locator('link[rel="canonical"]');
-    await expect(canonical).toHaveAttribute("href", /\/services$/);
-
+test("contact schema has no public street address", async ({ page }) => {
     await page.goto("/contact", { waitUntil: "domcontentloaded" });
     const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
     expect(schemas.join(" ")).not.toContain('"streetAddress"');
