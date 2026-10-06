@@ -100,7 +100,7 @@ class LocalServiceLandingResource extends JsonResource
                 'title' => $seoTitle ?: $title,
                 'description' => $seoDescription,
                 'keywords' => $keywords,
-                'image' => data_get($this->translations, 'seo.image', $service->social_image_url ?: $service->image),
+                'image' => $this->og_image_url ?: ($service->og_image_url ?: $service->social_image_url ?: $service->image),
                 'noindex' => $this->noindex,
                 'canonical' => data_get($this->translations, 'seo.canonical'),
                 'schemaType' => data_get($this->translations, 'seo.schema_type', 'Service'),
