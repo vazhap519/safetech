@@ -40,10 +40,7 @@ class ServiceResource extends JsonResource
         $keywords = $this->translatedStringArray('keywords', $this->keywords ?? [], $locale);
         $highlights = $this->translatedStringArray('highlights', $this->highlights ?? [], $locale);
         $industries = $this->translatedStringArray('industries', $this->industries ?? [], $locale);
-        $configuredSeoImage = trim((string) data_get($this->seo, 'image', ''));
-        $socialImage = $configuredSeoImage !== ''
-            ? $configuredSeoImage
-            : $this->social_image_url;
+        $socialImage = $this->og_image_url ?: $this->social_image_url;
         $faqs = $this->relationLoaded('faqs')
             ? $this->faqs->map(fn ($faq) => [
                 'question' => $this->translatedModel($faq, 'question', $faq->question, $locale),
