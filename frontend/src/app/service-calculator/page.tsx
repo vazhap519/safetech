@@ -23,7 +23,7 @@ export default async function LegacyServiceCalculatorPage({
     const selectedService = firstSearchParam(resolvedSearchParams?.service);
     const locale = await getCurrentLocale();
     const target = selectedService
-        ? `/services?service=${encodeURIComponent(selectedService)}#service-calculator`
+        ? `/services/${encodeURIComponent(selectedService)}`
         : "/services#service-calculator";
 
     permanentRedirect(localizeHref(target, locale));
