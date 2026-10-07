@@ -267,12 +267,28 @@ export default async function RootLayout({
             <head>
                 <meta property="fb:app_id" content={FACEBOOK_APP_ID} />
                 {googleConsentEnabled ? (
-                    <script
-                        id="google-consent-default"
-                        dangerouslySetInnerHTML={{
-                            __html: "window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied'});",
-                        }}
-                    />
+                    <>
+                        <script
+                            id="google-consent-default"
+                            dangerouslySetInnerHTML={{
+                                __html: "window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied'});",
+                            }}
+                        />
+                        {googleAnalyticsId ? (
+                            <>
+                                <script
+                                    async
+                                    src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
+                                />
+                                <script
+                                    id="google-analytics-bootstrap"
+                                    dangerouslySetInnerHTML={{
+                                        __html: `gtag('js',new Date());gtag('config','${googleAnalyticsId}',{anonymize_ip:true,send_page_view:false});`,
+                                    }}
+                                />
+                            </>
+                        ) : null}
+                    </>
                 ) : null}
                 {publicApiOrigin ? (
                     <>
