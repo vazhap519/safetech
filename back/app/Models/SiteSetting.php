@@ -97,7 +97,7 @@ class SiteSetting extends Model implements HasMedia
             return null;
         }
 
-        return $media->hasGeneratedConversion('webp')
+        return $media->hasGeneratedConversion('webp') && is_file($media->getPath('webp'))
             ? $media->getUrl('webp')
             : $media->getUrl();
     }
