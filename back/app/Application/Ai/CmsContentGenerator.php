@@ -1032,7 +1032,7 @@ PROMPT;
     {
         // Translation entry keys route copy to the frontend. Existing keys
         // must never become rewrite targets.
-        if (preg_match('/^translations\.entries\.\d+\.key$/', $path) === 1) {
+        if (preg_match('/^translations\.entries\.[^.]+\.key$/', $path) === 1) {
             return;
         }
 
@@ -1539,7 +1539,7 @@ PROMPT;
 
         if ($profile === 'service' && (
             $path === 'lead_form'
-            || preg_match('/^lead_form\.(?:extra_fields|components|project_size_options|property_type_options|packages)(?:\.\d+)?(?:\.options(?:\.\d+)?)?$/', $path) === 1
+            || preg_match('/^lead_form\.(?:extra_fields|components|project_size_options|property_type_options|packages)(?:\.[^.]+)?(?:\.options(?:\.[^.]+)?)?$/', $path) === 1
         )) {
             // A nested container is traversable; only its locale-specific
             // editorial leaves may become AI targets (never prices or keys).
