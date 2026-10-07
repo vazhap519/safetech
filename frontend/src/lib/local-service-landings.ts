@@ -80,13 +80,13 @@ function apiPath(path: string, params: Record<string, string | undefined> = {}) 
     return query.size ? `${path}?${query.toString()}` : path;
 }
 
-async function fetchData<T>(path: string): Promise<T | undefined> {
+async function fetchData<T>(path: string, fresh = false): Promise<T | undefined> {
     const url = `${serverApiBase}${path}`;
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
             const response = await fetch(url, {
-                next: { revalidate: 300, tags: ["cms"] },
+                ...(fresh ? { cache: "no-store" as const } : { next: { revalidate: 300, tags: ["cms"] } }),
                 signal: AbortSignal.timeout(7000),
             });
 
@@ -146,6 +146,7 @@ export async function getLocalServiceLanding(
             `/local-service-landings/${encodeURIComponent(serviceSlug)}/${encodeURIComponent(locationSlug)}`,
             { locale },
         ),
+        true,
     );
 
     return landing && landing.translationAvailable !== false
