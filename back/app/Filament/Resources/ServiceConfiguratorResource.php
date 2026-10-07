@@ -14,6 +14,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -449,170 +451,208 @@ class ServiceConfiguratorResource extends Resource
                 ->collapsible()
                 ->collapsed(),
 
-            Section::make('6. კომპონენტები და თავსებადობის წესები')
-                ->description('მოწყობილობები, მასალები და სამუშაოები. ჯერ აირჩიეთ მზა CCTV წესი, შემდეგ შეავსეთ დასახელება და ფასი. ტექნიკური პირობები ქვემოთ ავტომატურად შეივსება; სურვილისამებრ ხელითაც შეცვლით.')
+            Section::make('6. კომპონენტები და ფასები')
+                ->description('აქ ქმნით კალკულატორის სრულ ფასების კატალოგს: კამერები, NVR/DVR, PoE სვიჩები, HDD, კაბელი, UPS, აქსესუარები და სამუშაო. თითო ჩანაწერი არის ერთი გასაყიდი კომპონენტი ან ერთი სამუშაო.')
                 ->schema([
+                    Placeholder::make('components_guide')
+                        ->hiddenLabel()
+                        ->content(new HtmlString(
+                            '<div style="padding:1rem;border:1px solid rgba(59,130,246,.35);border-radius:.75rem;background:rgba(59,130,246,.08);line-height:1.65">'.
+                            '<strong>როგორ შეავსოთ კომპონენტები?</strong>'.
+                            '<ol style="margin:.65rem 0 0 1.25rem;list-style:decimal">'.
+                            '<li><strong>დაამატეთ კომპონენტი</strong> — მაგალითად „8-არხიანი PoE NVR“.</li>'.
+                            '<li><strong>ძირითადი ინფორმაცია</strong> — მიუთითეთ დასახელება და კატეგორია.</li>'.
+                            '<li><strong>ფასი და რაოდენობა</strong> — ჩაწერეთ გასაყიდი ფასი და საიდან ითვლება რაოდენობა.</li>'.
+                            '<li><strong>ავტომატური შერჩევა</strong> — მზა CCTV წესით მიუთითეთ როდის უნდა დაემატოს კომპონენტი.</li>'.
+                            '<li><strong>Advanced</strong> — მხოლოდ მაშინ გამოიყენეთ, თუ მზა წესები არ გყოფნით.</li>'.
+                            '</ol>'.
+                            '<p style="margin-top:.65rem"><strong>მაგალითი:</strong> NVR 8 არხი — ფასი 239 ₾; ფიქსირებული რაოდენობა 1; წესი: IP + კამერების რაოდენობა 5–8.</p>'.
+                            '</div>'
+                        ))
+                        ->columnSpanFull(),
                     Repeater::make('lead_form.components')
-                        ->label('კომპონენტები — მოწყობილობები, მასალები, სამუშაოები')
-                        ->helperText('ახალი ჩანაწერი = ერთი მოწყობილობის მოდელი ან სამუშაო. მაგალითად NVR 8 არხი, PoE 8 პორტი, HDD 4TB, Cat6 კაბელი ან კამერის მონტაჟი. თითოეულს თავისი გასაყიდი ფასი და რაოდენობის წესი აქვს.')
+                        ->label('კომპონენტების ჩამონათვალი და ფასები')
+                        ->helperText('აქ უნდა იყოს ყველა მოწყობილობა/მასალა/სამუშაო, რომლის ფასიც კალკულატორმა უნდა დაითვალოს. ღილაკით „დაამატე კომპონენტი“ შექმენით ახალი პოზიცია.')
                         ->schema([
-                            TextInput::make('key')
-                                ->label('მოწყობილობის უნიკალური კოდი')
-                                ->required()
-                                ->helperText('შეიყვანეთ ამ კომპონენტის იდენტიფიკატორი, მაგ. nvr-16ch-poe. არ უნდა ემთხვეოდეს სხვა კომპონენტის კოდს.'),
-                            Select::make('category')
-                                ->label('რა ტიპის კომპონენტია?')
-                                ->helperText('აირჩიეთ: კამერა, ჩამწერი, PoE, HDD, კაბელი, კვება ან სამუშაო. ეს კატეგორია განსაზღვრავს საჯარო შეთავაზებაში დაჯგუფებას.')
-                                ->options([
-                                    'camera' => 'კამერა',
-                                    'recorder' => 'ჩამწერი NVR/DVR',
-                                    'storage' => 'დისკი/საცავი',
-                                    'network' => 'ქსელი/PoE',
-                                    'cabling' => 'კაბელი',
-                                    'power' => 'კვება/UPS',
-                                    'intercom' => 'ინტერკომი',
-                                    'lock' => 'საკეტი',
-                                    'accessory' => 'აქსესუარი',
-                                    'server' => 'სერვერი',
-                                    'labor' => 'სამუშაო',
-                                    'other' => 'სხვა',
-                                ])
-                                ->default('other')
-                                ->required(),
-                            Select::make('exclusive_group')
-                                ->label('არჩევანის ჯგუფი')
-                                ->options([
-                                    'camera-model' => 'კამერის მოდელი — ერთ-ერთი',
-                                    'recorder' => 'NVR / DVR — ერთ-ერთი',
-                                    'poe-switch' => 'PoE სვიჩი — ერთ-ერთი',
-                                    'storage' => 'HDD / საცავი — ერთ-ერთი',
-                                    'ups' => 'UPS / კვება — ერთ-ერთი',
-                                ])
-                                ->searchable()
-                                ->native(false)
-                                ->helperText('ერთ ჯგუფში სისტემა მხოლოდ ყველაზე მაღალი პრიორიტეტის თავსებად კომპონენტს აირჩევს.'),
-                            TextInput::make('priority')
-                                ->label('არჩევის პრიორიტეტი')
-                                ->helperText('ერთ ჯგუფში რამდენიმე კომპონენტი თუ შეესაბამება წესებს, უფრო მაღალი რიცხვი იმარჯვებს. განსხვავებული პირობებისას დატოვეთ 0.')
-                                ->numeric()
-                                ->default(0),
-                            TextInput::make('title_ka')->label('კომპონენტის დასახელება (KA)')->helperText('ეს სახელი გამოჩნდება მომხმარებლისთვის, მაგ. 8-არხიანი PoE NVR.')->required(),
-                            TextInput::make('title_en')->label('დასახელება (EN)'),
-                            TextInput::make('title_ru')->label('დასახელება (RU)'),
-                            Textarea::make('description_ka')->label('აღწერა (KA)')->rows(2),
-                            Textarea::make('description_en')->label('აღწერა (EN)')->rows(2),
-                            Textarea::make('description_ru')->label('აღწერა (RU)')->rows(2),
-                            TextInput::make('unit_price')
-                                ->label('ერთი ცალის / მეტრის ფასი')
-                                ->helperText('ეს არის გასაყიდი ფასი. საბოლოო ღირებულება = ერთეულის ფასი × გამოთვლილი რაოდენობა. კაბელისთვის მიუთითეთ 1 მეტრის ფასი.')
-                                ->numeric()
-                                ->minValue(0)
-                                ->default(0),
-                            Toggle::make('quote_required')->label('დაუფასებელი კომპონენტი: ფასი დასაზუსტებელია')->helperText('თუ ერთეულის ფასი 0-ია, საჯარო გვერდზე უფასოდ არ გამოჩნდება.'),
-                            Toggle::make('quantity_locked')->label('რაოდენობა ავტომატურად დაითვალოს'),
-                            TextInput::make('monthly_price')
-                                ->label('ყოველთვიური ერთეულის ფასი')
-                                ->numeric()
-                                ->minValue(0)
-                                ->default(0),
-                            Select::make('quantity_mode')
-                                ->label('როგორ დაითვალოს რაოდენობა')
-                                ->options([
-                                    'fixed' => 'ფიქსირებული რაოდენობა — ყოველთვის მითითებული ცალი',
-                                    'field' => 'პირდაპირ პარამეტრიდან — მაგ. camera_count',
-                                    'ceil' => 'ტევადობით — მაგ. 20 კამერა / 16 არხი = 2 ჩამწერი',
-                                ])
-                                ->default('fixed')
-                                ->required()
-                                ->live(),
-                            Select::make('quantity_field')
-                                ->label('რომელი პარამეტრიდან აიღოს რაოდენობა?')
-                                ->options(self::calculatorFieldOptions())
-                                ->searchable()
-                                ->native(false)
-                                ->helperText('აირჩიეთ პარამეტრი — Key-ის ხელით ჩაწერა აღარ არის საჭირო.')
-                                ->visible(
-                                    fn (Get $get): bool => in_array(
-                                        $get('quantity_mode'),
-                                        ['field', 'ceil'],
-                                        true,
-                                    ),
-                                ),
-                            TextInput::make('default_quantity')
-                                ->label('ფიქსირებული რაოდენობა')
-                                ->helperText('გამოიყენება მხოლოდ ფიქსირებული რეჟიმისას: მაგალითად ერთი NVR ან ერთი UPS.')
-                                ->numeric()
-                                ->minValue(0)
-                                ->default(1),
-                            TextInput::make('units_per_component')
-                                ->label('ერთი კომპონენტის ტევადობა')
-                                ->numeric()
-                                ->minValue(1)
-                                ->default(1)
-                                ->helperText('მაგალითი: 16-არხიანი NVR = 16; 8-პორტიანი PoE switch = 8. სისტემა საჭირო რაოდენობას ავტომატურად დაამრგვალებს ზემოთ.')
-                                ->visible(
-                                    fn (Get $get): bool => $get('quantity_mode') === 'ceil',
-                                ),
-                            TextInput::make('minimum_quantity')
-                                ->label('მინ. რაოდენობა')
-                                ->helperText('ავტომატური გამოთვლის ქვედა ზღვარი. 0 ნიშნავს, რომ მინიმალური რაოდენობა არ არის მოთხოვნილი.')
-                                ->numeric()
-                                ->minValue(0)
-                                ->default(0),
-                            TextInput::make('maximum_quantity')
-                                ->label('მაქს. რაოდენობა')
-                                ->helperText('სურვილისამებრ შეზღუდვა; ცარიელი = შეზღუდვის გარეშე.')
-                                ->numeric()
-                                ->minValue(1),
-                            Toggle::make('required')
-                                ->label('აუცილებელია — მომხმარებელი ვერ გამორთავს'),
-                            Toggle::make('recommended')
-                                ->label('რეკომენდებულია — ავტომატურად მონიშნული'),
-                            Repeater::make('rules')
-                                ->label('თავსებადობის პირობები — როდის დაემატოს?')
-                                ->helperText('მაგალითი: IP NVR 8 არხი ემატება მხოლოდ მაშინ, როცა ტექნოლოგია არის IP და კამერების რაოდენობა 5-დან 8-მდეა. რამდენიმე პირობა ერთად უნდა შესრულდეს.')
-                                ->schema([
-                                    Select::make('field')
-                                        ->label('რომელი პარამეტრი შევამოწმოთ?')
-                                        ->options(self::calculatorFieldOptions())
-                                        ->searchable()
-                                        ->native(false)
-                                        ->required()
-                                        ->helperText('აირჩიეთ პარამეტრი სიიდან — ტექნიკური Key ავტომატურად შეინახება.'),
-                                    Select::make('operator')
-                                        ->label('შედარების პირობა')
-                                        ->options([
-                                            'equals' => 'უდრის (=)',
-                                            'not_equals' => 'არ უდრის (≠)',
-                                            'gte' => 'მეტია ან ტოლია (≥)',
-                                            'lte' => 'ნაკლებია ან ტოლია (≤)',
-                                            'contains' => 'შეიცავს',
-                                            'truthy' => 'ჩართულია / დიახ',
-                                            'falsy' => 'გამორთულია / არა',
+                            Tabs::make('component_editor')
+                                ->tabs([
+                                    Tab::make('1. ძირითადი ინფორმაცია')
+                                        ->schema([
+                                            TextInput::make('title_ka')
+                                                ->label('დასახელება ქართულად')
+                                                ->placeholder('მაგ: 8-არხიანი PoE NVR')
+                                                ->helperText('ეს დასახელება გამოჩნდება მომხმარებლის კალკულატორში და შეთავაზებაში.')
+                                                ->required(),
+                                            Select::make('category')
+                                                ->label('კომპონენტის კატეგორია')
+                                                ->options([
+                                                    'camera' => 'კამერა',
+                                                    'recorder' => 'ჩამწერი NVR/DVR',
+                                                    'storage' => 'HDD / საცავი',
+                                                    'network' => 'ქსელი / PoE სვიჩი',
+                                                    'cabling' => 'კაბელი',
+                                                    'power' => 'კვება / UPS',
+                                                    'intercom' => 'ინტერკომი',
+                                                    'lock' => 'საკეტი',
+                                                    'accessory' => 'აქსესუარი / კონექტორი / კოლოფი',
+                                                    'server' => 'სერვერი',
+                                                    'labor' => 'სამუშაო / მონტაჟი',
+                                                    'other' => 'სხვა',
+                                                ])
+                                                ->helperText('კატეგორია მხოლოდ აჯგუფებს პოზიციას და გეხმარებათ კომპონენტების ორგანიზებაში.')
+                                                ->required(),
+                                            TextInput::make('key')
+                                                ->label('სისტემური კოდი')
+                                                ->placeholder('მაგ: nvr-8ch-poe')
+                                                ->helperText('უნიკალური ტექნიკური კოდი. გამოიყენეთ ინგლისური პატარა ასოები და დეფისი. ერთხელ შექმნის შემდეგ უმიზეზოდ ნუ შეცვლით.')
+                                                ->required(),
+                                            TextInput::make('title_en')->label('დასახელება ინგლისურად')->placeholder('8-channel PoE NVR'),
+                                            TextInput::make('title_ru')->label('დასახელება რუსულად')->placeholder('8-канальный PoE NVR'),
+                                            Textarea::make('description_ka')->label('აღწერა ქართულად')->helperText('მოკლედ აღწერეთ რას აკეთებს კომპონენტი ან რას მოიცავს სამუშაო.')->rows(2),
+                                            Textarea::make('description_en')->label('აღწერა ინგლისურად')->rows(2),
+                                            Textarea::make('description_ru')->label('აღწერა რუსულად')->rows(2),
                                         ])
-                                        ->default('equals')
-                                        ->required(),
-                                    TextInput::make('value')
-                                        ->label('რა მნიშვნელობას შევადაროთ?')
-                                        ->helperText('მაგალითად: 9, 16, 4mp, ip. „ჩართულია/გამორთულია“ პირობისას ცარიელი დატოვეთ.'),
+                                        ->columns(2),
+
+                                    Tab::make('2. ფასი და რაოდენობა')
+                                        ->schema([
+                                            TextInput::make('unit_price')
+                                                ->label('გასაყიდი ფასი — 1 ერთეული')
+                                                ->prefix('₾')
+                                                ->placeholder('მაგ: 239')
+                                                ->helperText('აქ ჩაწერეთ კლიენტისთვის გასაყიდი ფასი. კამერა/NVR/HDD — 1 ცალის ფასი; კაბელი — 1 მეტრის ფასი; სამუშაო — 1 კამერის/წერტილის/საათის ფასი.')
+                                                ->numeric()->minValue(0)->default(0),
+                                            TextInput::make('monthly_price')
+                                                ->label('ყოველთვიური ფასი — 1 ერთეული')
+                                                ->prefix('₾')
+                                                ->helperText('მხოლოდ პერიოდული მომსახურებისთვის. ჩვეულებრივ მოწყობილობაზე დატოვეთ 0.')
+                                                ->numeric()->minValue(0)->default(0),
+                                            Toggle::make('quote_required')
+                                                ->label('ფასი წინასწარ უცნობია / დასაზუსტებელია')
+                                                ->helperText('ჩართეთ, თუ ფასი 0-ია და მომხმარებელს უნდა ეწეროს „ფასი დასაზუსტებელია“, ნაცვლად უფასო პოზიციისა.'),
+                                            Select::make('quantity_mode')
+                                                ->label('როგორ დაითვალოს რაოდენობა?')
+                                                ->options([
+                                                    'fixed' => 'ფიქსირებული — ყოველთვის მითითებული რაოდენობა',
+                                                    'field' => 'პირდაპირ პარამეტრიდან — მაგ. 6 კამერა = 6 ცალი',
+                                                    'ceil' => 'ტევადობით — მაგ. 20 კამერა / 16 არხი = 2 ცალი',
+                                                ])
+                                                ->helperText('კამერისთვის ჩვეულებრივ „პირდაპირ პარამეტრიდან“; NVR/PoE-სთვის შეიძლება „ტევადობით“; ერთი UPS-ისთვის — „ფიქსირებული“.')
+                                                ->default('fixed')->required()->live(),
+                                            TextInput::make('default_quantity')
+                                                ->label('ფიქსირებული რაოდენობა')
+                                                ->helperText('მაგალითად 1 NVR ან 1 UPS. გამოიყენება მხოლოდ „ფიქსირებული“ რეჟიმისას.')
+                                                ->numeric()->minValue(0)->default(1)
+                                                ->visible(fn (Get $get): bool => ($get('quantity_mode') ?? 'fixed') === 'fixed'),
+                                            Select::make('quantity_field')
+                                                ->label('რომელი მონაცემიდან აიღოს რაოდენობა?')
+                                                ->options(self::calculatorFieldOptions())
+                                                ->searchable()->native(false)
+                                                ->helperText('მაგ: კამერისთვის „კამერების რაოდენობა“; კაბელისთვის „კაბელის მეტრაჟი“; HDD-ის სპეციალური წესისთვის შეიძლება „არქივის დღეები“.')
+                                                ->visible(fn (Get $get): bool => in_array($get('quantity_mode'), ['field', 'ceil'], true)),
+                                            TextInput::make('units_per_component')
+                                                ->label('ერთი მოწყობილობის ტევადობა')
+                                                ->helperText('მხოლოდ „ტევადობით“ რეჟიმში. 16-არხიანი NVR = 16; 8-პორტიანი PoE switch = 8.')
+                                                ->numeric()->minValue(1)->default(1)
+                                                ->visible(fn (Get $get): bool => $get('quantity_mode') === 'ceil'),
+                                            TextInput::make('minimum_quantity')
+                                                ->label('მინიმალური რაოდენობა')
+                                                ->helperText('0 = შეზღუდვის გარეშე. მაგალითად თუ ყოველთვის მინიმუმ 1 უნდა დაემატოს, მიუთითეთ 1.')
+                                                ->numeric()->minValue(0)->default(0),
+                                            TextInput::make('maximum_quantity')
+                                                ->label('მაქსიმალური რაოდენობა')
+                                                ->helperText('ცარიელი = ზედა შეზღუდვა არ არის.')
+                                                ->numeric()->minValue(1),
+                                            Toggle::make('quantity_locked')
+                                                ->label('მომხმარებელმა რაოდენობა ვერ შეცვალოს')
+                                                ->helperText('ჩართეთ, როცა რაოდენობა აუცილებლად ავტომატურად უნდა გამოითვალოს.'),
+                                        ])
+                                        ->columns(2),
+
+                                    Tab::make('3. ავტომატური CCTV შერჩევა')
+                                        ->schema([
+                                            Select::make('_cctv_preset')
+                                                ->label('რას ვამატებ? — მზა CCTV წესი')
+                                                ->options(self::cctvPresetOptions())
+                                                ->placeholder('აირჩიეთ NVR / DVR / PoE / HDD / კაბელი / სამუშაო')
+                                                ->helperText('ეს არჩევანი ავტომატურად ავსებს რაოდენობის მეთოდს და თავსებადობის პირობებს. მაგალითად NVR 8: IP კამერები + რაოდენობა 5–8.')
+                                                ->live()->dehydrated(false)
+                                                ->afterStateUpdated(fn (?string $state, Set $set) => self::applyCctvPreset($state, $set)),
+                                            Placeholder::make('preset_explanation')
+                                                ->label('როგორ მუშაობს')
+                                                ->content('მზა წესი ფასს არ წერს — ფასი თქვენ უნდა მიუთითოთ „ფასი და რაოდენობა“ ჩანართში. მზა წესი მხოლოდ განსაზღვრავს, როდის დაემატოს კომპონენტი და როგორ დაითვალოს მისი რაოდენობა.'),
+                                            Toggle::make('required')
+                                                ->label('აუცილებელი კომპონენტია')
+                                                ->helperText('ჩართეთ, თუ მომხმარებელი ამ კომპონენტს ვერ უნდა თიშავდეს.'),
+                                            Toggle::make('recommended')
+                                                ->label('რეკომენდებულია / წინასწარ მონიშნული')
+                                                ->helperText('ჩართეთ, თუ კომპონენტი ავტომატურად უნდა იყოს არჩეული, მაგრამ მომხმარებელს შეუძლია გამორთვა.'),
+                                        ])
+                                        ->columns(2),
+
+                                    Tab::make('4. Advanced წესები')
+                                        ->schema([
+                                            Placeholder::make('advanced_help')
+                                                ->hiddenLabel()
+                                                ->content('ეს ნაწილი საჭიროა მხოლოდ რთული შემთხვევებისთვის. თუ მზა CCTV წესი სწორად მუშაობს, აქ არაფრის შეცვლა არ არის საჭირო.')
+                                                ->columnSpanFull(),
+                                            Select::make('exclusive_group')
+                                                ->label('ურთიერთგამომრიცხავი ჯგუფი')
+                                                ->options([
+                                                    'camera-model' => 'კამერის მოდელი — ერთ-ერთი',
+                                                    'recorder' => 'NVR / DVR — ერთ-ერთი',
+                                                    'poe-switch' => 'PoE სვიჩი — ერთ-ერთი',
+                                                    'storage' => 'HDD / საცავი — ერთ-ერთი',
+                                                    'ups' => 'UPS / კვება — ერთ-ერთი',
+                                                ])
+                                                ->searchable()->native(false)
+                                                ->helperText('მაგალითად ყველა NVR-ს ჯგუფი recorder. თუ რამდენიმე NVR ემთხვევა, სისტემა მხოლოდ ერთს აირჩევს.'),
+                                            TextInput::make('priority')
+                                                ->label('არჩევის პრიორიტეტი')
+                                                ->helperText('თუ ერთ ჯგუფში ერთდროულად რამდენიმე პოზიცია ემთხვევა, უფრო მაღალი რიცხვი იმარჯვებს.')
+                                                ->numeric()->default(0),
+                                            Repeater::make('rules')
+                                                ->label('თავსებადობის პირობები')
+                                                ->helperText('ყველა ჩამოთვლილი პირობა ერთად უნდა შესრულდეს. მაგ: ტექნოლოგია = IP, კამერების რაოდენობა ≥ 5 და ≤ 8.')
+                                                ->schema([
+                                                    Select::make('field')
+                                                        ->label('რას ვამოწმებთ?')
+                                                        ->options(self::calculatorFieldOptions())
+                                                        ->searchable()->native(false)->required(),
+                                                    Select::make('operator')
+                                                        ->label('პირობა')
+                                                        ->options([
+                                                            'equals' => 'უდრის (=)',
+                                                            'not_equals' => 'არ უდრის (≠)',
+                                                            'gte' => 'მეტია ან ტოლია (≥)',
+                                                            'lte' => 'ნაკლებია ან ტოლია (≤)',
+                                                            'contains' => 'შეიცავს',
+                                                            'truthy' => 'ჩართულია / დიახ',
+                                                            'falsy' => 'გამორთულია / არა',
+                                                        ])->default('equals')->required(),
+                                                    TextInput::make('value')
+                                                        ->label('მნიშვნელობა')
+                                                        ->placeholder('მაგ: ip, 8, 4mp')
+                                                        ->helperText('ჩაწერეთ რას უნდა შეედაროს არჩეული პარამეტრი.'),
+                                                ])
+                                                ->columns(3)->default([])->collapsible()->collapsed()->reorderable(),
+                                        ])
+                                        ->columns(2),
                                 ])
-                                ->columns(2)
-                                ->default([])
-                                ->collapsible()
-                                ->collapsed()
-                                ->reorderable(),
+                                ->columnSpanFull(),
                         ])
-                        ->columns(2)
+                        ->columns(1)
                         ->default([])
                         ->collapsible()
                         ->collapsed()
                         ->reorderable()
-                        ->itemLabel(
-                            fn (array $state): ?string => $state['title_ka'] ?? $state['key'] ?? null,
-                        ),
+                        ->addActionLabel('დაამატე კომპონენტი / მასალა / სამუშაო')
+                        ->itemLabel(fn (array $state): ?string => trim(
+                            ($state['title_ka'] ?? $state['key'] ?? 'ახალი კომპონენტი').
+                            (isset($state['unit_price']) ? ' — '.number_format((float) $state['unit_price'], 2).' ₾' : '')
+                        )),
                 ])
-                ->collapsible()
-                ->collapsed(),
+                ->collapsible(),
 
             Section::make('7. მომხმარებლისთვის ნაჩვენები განმარტება')
                 ->schema([
