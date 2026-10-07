@@ -186,7 +186,7 @@ class Project extends Model implements HasMedia
     {
         $mediaItems = $this->getMedia('gallery')
             ->map(fn (Media $media): array => [
-                'src' => $media->hasGeneratedConversion('webp') ? $media->getUrl('webp') : $media->getUrl(),
+                'src' => $media->hasGeneratedConversion('webp') && is_file($media->getPath('webp')) ? $media->getUrl('webp') : $media->getUrl(),
                 'alt' => $media->getCustomProperty('alt') ?: $this->image_alt ?: $this->title ?: $this->name ?: '',
             ])
             ->values()
@@ -253,7 +253,7 @@ class Project extends Model implements HasMedia
             return null;
         }
 
-        if ($conversion && $media->hasGeneratedConversion($conversion)) {
+        if ($conversion && $media->hasGeneratedConversion($conversion) && is_file($media->getPath($conversion))) {
             return $media->getUrl($conversion);
         }
 
