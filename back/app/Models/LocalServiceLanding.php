@@ -85,7 +85,7 @@ class LocalServiceLanding extends Model implements HasMedia
     {
         $media = $this->getFirstMedia('og_image');
 
-        return $media?->hasGeneratedConversion('og')
+        return $media && $media->hasGeneratedConversion('og') && is_file($media->getPath('og'))
             ? $media->getUrl('og')
             : $media?->getUrl();
     }
