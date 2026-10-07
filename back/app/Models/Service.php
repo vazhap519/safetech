@@ -204,7 +204,7 @@ class Service extends Model implements HasMedia
     {
         $media = $this->getFirstMedia('og_image');
 
-        return $media?->hasGeneratedConversion('og')
+        return $media && $media->hasGeneratedConversion('og') && is_file($media->getPath('og'))
             ? $media->getUrl('og')
             : $media?->getUrl();
     }
@@ -214,7 +214,7 @@ class Service extends Model implements HasMedia
         $media = $this->getFirstMedia('services');
 
         if ($media) {
-            return $media->hasGeneratedConversion('webp')
+            return $media->hasGeneratedConversion('webp') && is_file($media->getPath('webp'))
                 ? $media->getUrl('webp')
                 : $media->getUrl();
         }
@@ -231,7 +231,7 @@ class Service extends Model implements HasMedia
     {
         $media = $this->getFirstMedia('services');
 
-        if ($media?->hasGeneratedConversion('social')) {
+        if ($media?->hasGeneratedConversion('social') && is_file($media->getPath('social'))) {
             return $media->getUrl('social');
         }
 
