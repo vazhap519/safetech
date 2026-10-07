@@ -320,7 +320,7 @@ class ServiceConfiguratorResource extends Resource
                         ->label('კალკულატორის ველები')
                         ->schema([
                             Select::make('_cctv_preset')
-                                ->label('სწრაფი CCTV წესი')
+                                ->label('აირჩიეთ მზა CCTV კონფიგურაცია')
                                 ->options(self::cctvPresetOptions())
                                 ->placeholder('აირჩიეთ მხოლოდ თუ გინდათ ავტომატური შევსება')
                                 ->helperText('არჩევისას სისტემა ავტომატურად შეავსებს კატეგორიას, რაოდენობის წესს და თავსებადობის პირობებს. შენახულ JSON-ში ეს დამხმარე ველი არ ჩაიწერება.')
@@ -368,6 +368,7 @@ class ServiceConfiguratorResource extends Resource
                                 ->default(0),
                             TextInput::make('monthly_unit_price')
                                 ->label('ყოველთვიური ერთეულის ფასი')
+                                ->helperText('შეავსეთ მხოლოდ პერიოდული მომსახურებისთვის; ერთჯერად მოწყობილობაზე დატოვეთ 0.')
                                 ->numeric()
                                 ->minValue(0)
                                 ->default(0),
@@ -449,17 +450,19 @@ class ServiceConfiguratorResource extends Resource
                 ->collapsed(),
 
             Section::make('6. კომპონენტები და თავსებადობის წესები')
-                ->description('აქ ემატება მოწყობილობები, მასალები და სამუშაოები. წესები განსაზღვრავს, როდის უნდა შესთავაზოს სისტემა კონკრეტული NVR, DVR, სვიჩი, დისკი ან სხვა კომპონენტი.')
+                ->description('მოწყობილობები, მასალები და სამუშაოები. ჯერ აირჩიეთ მზა CCTV წესი, შემდეგ შეავსეთ დასახელება და ფასი. ტექნიკური პირობები ქვემოთ ავტომატურად შეივსება; სურვილისამებრ ხელითაც შეცვლით.')
                 ->schema([
                     Repeater::make('lead_form.components')
-                        ->label('კომპონენტები')
+                        ->label('კომპონენტები — მოწყობილობები, მასალები, სამუშაოები')
+                        ->helperText('ახალი ჩანაწერი = ერთი მოწყობილობის მოდელი ან სამუშაო. მაგალითად NVR 8 არხი, PoE 8 პორტი, HDD 4TB, Cat6 კაბელი ან კამერის მონტაჟი. თითოეულს თავისი გასაყიდი ფასი და რაოდენობის წესი აქვს.')
                         ->schema([
                             TextInput::make('key')
-                                ->label('უნიკალური გასაღები')
+                                ->label('მოწყობილობის უნიკალური კოდი')
                                 ->required()
-                                ->helperText('მაგალითი: nvr-16ch-poe'),
+                                ->helperText('შეიყვანეთ ამ კომპონენტის იდენტიფიკატორი, მაგ. nvr-16ch-poe. არ უნდა ემთხვეოდეს სხვა კომპონენტის კოდს.'),
                             Select::make('category')
-                                ->label('კატეგორია')
+                                ->label('რა ტიპის კომპონენტია?')
+                                ->helperText('აირჩიეთ: კამერა, ჩამწერი, PoE, HDD, კაბელი, კვება ან სამუშაო. ეს კატეგორია განსაზღვრავს საჯარო შეთავაზებაში დაჯგუფებას.')
                                 ->options([
                                     'camera' => 'კამერა',
                                     'recorder' => 'ჩამწერი NVR/DVR',
@@ -489,17 +492,19 @@ class ServiceConfiguratorResource extends Resource
                                 ->native(false)
                                 ->helperText('ერთ ჯგუფში სისტემა მხოლოდ ყველაზე მაღალი პრიორიტეტის თავსებად კომპონენტს აირჩევს.'),
                             TextInput::make('priority')
-                                ->label('პრიორიტეტი')
+                                ->label('არჩევის პრიორიტეტი')
+                                ->helperText('ერთ ჯგუფში რამდენიმე კომპონენტი თუ შეესაბამება წესებს, უფრო მაღალი რიცხვი იმარჯვებს. განსხვავებული პირობებისას დატოვეთ 0.')
                                 ->numeric()
                                 ->default(0),
-                            TextInput::make('title_ka')->label('დასახელება (KA)')->required(),
+                            TextInput::make('title_ka')->label('კომპონენტის დასახელება (KA)')->helperText('ეს სახელი გამოჩნდება მომხმარებლისთვის, მაგ. 8-არხიანი PoE NVR.')->required(),
                             TextInput::make('title_en')->label('დასახელება (EN)'),
                             TextInput::make('title_ru')->label('დასახელება (RU)'),
                             Textarea::make('description_ka')->label('აღწერა (KA)')->rows(2),
                             Textarea::make('description_en')->label('აღწერა (EN)')->rows(2),
                             Textarea::make('description_ru')->label('აღწერა (RU)')->rows(2),
                             TextInput::make('unit_price')
-                                ->label('ერთეულის ფასი')
+                                ->label('ერთი ცალის / მეტრის ფასი')
+                                ->helperText('ეს არის გასაყიდი ფასი. საბოლოო ღირებულება = ერთეულის ფასი × გამოთვლილი რაოდენობა. კაბელისთვის მიუთითეთ 1 მეტრის ფასი.')
                                 ->numeric()
                                 ->minValue(0)
                                 ->default(0),
@@ -535,6 +540,7 @@ class ServiceConfiguratorResource extends Resource
                                 ),
                             TextInput::make('default_quantity')
                                 ->label('ფიქსირებული რაოდენობა')
+                                ->helperText('გამოიყენება მხოლოდ ფიქსირებული რეჟიმისას: მაგალითად ერთი NVR ან ერთი UPS.')
                                 ->numeric()
                                 ->minValue(0)
                                 ->default(1),
@@ -549,11 +555,13 @@ class ServiceConfiguratorResource extends Resource
                                 ),
                             TextInput::make('minimum_quantity')
                                 ->label('მინ. რაოდენობა')
+                                ->helperText('ავტომატური გამოთვლის ქვედა ზღვარი. 0 ნიშნავს, რომ მინიმალური რაოდენობა არ არის მოთხოვნილი.')
                                 ->numeric()
                                 ->minValue(0)
                                 ->default(0),
                             TextInput::make('maximum_quantity')
                                 ->label('მაქს. რაოდენობა')
+                                ->helperText('სურვილისამებრ შეზღუდვა; ცარიელი = შეზღუდვის გარეშე.')
                                 ->numeric()
                                 ->minValue(1),
                             Toggle::make('required')
@@ -561,7 +569,8 @@ class ServiceConfiguratorResource extends Resource
                             Toggle::make('recommended')
                                 ->label('რეკომენდებულია — ავტომატურად მონიშნული'),
                             Repeater::make('rules')
-                                ->label('როდის უნდა გამოჩნდეს/აირჩეს ეს კომპონენტი?')
+                                ->label('თავსებადობის პირობები — როდის დაემატოს?')
+                                ->helperText('მაგალითი: IP NVR 8 არხი ემატება მხოლოდ მაშინ, როცა ტექნოლოგია არის IP და კამერების რაოდენობა 5-დან 8-მდეა. რამდენიმე პირობა ერთად უნდა შესრულდეს.')
                                 ->schema([
                                     Select::make('field')
                                         ->label('რომელი პარამეტრი შევამოწმოთ?')
@@ -587,12 +596,13 @@ class ServiceConfiguratorResource extends Resource
                                         ->label('რა მნიშვნელობას შევადაროთ?')
                                         ->helperText('მაგალითად: 9, 16, 4mp, ip. „ჩართულია/გამორთულია“ პირობისას ცარიელი დატოვეთ.'),
                                 ])
-                                ->columns(3)
+                                ->columns(2)
                                 ->default([])
                                 ->collapsible()
+                                ->collapsed()
                                 ->reorderable(),
                         ])
-                        ->columns(4)
+                        ->columns(2)
                         ->default([])
                         ->collapsible()
                         ->collapsed()
