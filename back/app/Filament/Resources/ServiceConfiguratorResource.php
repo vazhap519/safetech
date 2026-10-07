@@ -15,6 +15,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -86,6 +87,134 @@ class ServiceConfiguratorResource extends Resource
                 fn (array $state): ?string => $state['ka'] ?? $state['value'] ?? null,
             )
             ->reorderable();
+    }
+
+    /** @return array<string, string> */
+    private static function calculatorFieldOptions(): array
+    {
+        return [
+            'camera_count' => 'კამერების რაოდენობა',
+            'camera_technology' => 'კამერის ტექნოლოგია — IP / Analog',
+            'resolution' => 'გარჩევადობა — 2MP / 4MP / 8MP',
+            'lens' => 'ობიექტივი',
+            'full_color' => 'Full Color',
+            'microphone' => 'მიკროფონი',
+            'recording_days' => 'ჩაწერის/არქივის დღეები',
+            'cable_meters' => 'კაბელის მეტრაჟი',
+            'backup_power' => 'UPS / სარეზერვო კვება',
+            'project_size' => 'პროექტის ზომა',
+            'property_type' => 'ობიექტის ტიპი',
+            'package' => 'არჩეული პაკეტი',
+        ];
+    }
+
+    /** @return array<string, string> */
+    private static function cctvPresetOptions(): array
+    {
+        return [
+            'camera' => 'კამერა — რაოდენობა პირდაპირ კამერების რაოდენობიდან',
+            'nvr4' => 'NVR 4 არხი — IP, 1–4 კამერა',
+            'nvr8' => 'NVR 8 არხი — IP, 5–8 კამერა',
+            'nvr16' => 'NVR 16 არხი — IP, 9+ კამერა / 16 კამერაზე 1 ცალი',
+            'dvr8' => 'DVR 8 არხი — Analog / 8 კამერაზე 1 ცალი',
+            'poe8' => 'PoE სვიჩი 8 პორტი — IP, 1–8 კამერა',
+            'poe16' => 'PoE სვიჩი 16 პორტი — IP, 9+ კამერა / 16 კამერაზე 1 ცალი',
+            'hdd' => 'HDD — რაოდენობა/ტევადობა Advanced წესით',
+            'cable' => 'კაბელი — რაოდენობა კაბელის მეტრაჟიდან',
+            'labor' => 'კამერის მონტაჟი — რაოდენობა კამერების რაოდენობიდან',
+        ];
+    }
+
+    private static function applyCctvPreset(?string $preset, Set $set): void
+    {
+        $rules = [];
+
+        switch ($preset) {
+            case 'camera':
+                $set('category', 'camera');
+                $set('quantity_mode', 'field');
+                $set('quantity_field', 'camera_count');
+                break;
+            case 'nvr4':
+                $set('category', 'recorder');
+                $set('exclusive_group', 'recorder');
+                $set('quantity_mode', 'fixed');
+                $set('default_quantity', 1);
+                $rules = [
+                    ['field' => 'camera_technology', 'operator' => 'equals', 'value' => 'ip'],
+                    ['field' => 'camera_count', 'operator' => 'lte', 'value' => '4'],
+                ];
+                break;
+            case 'nvr8':
+                $set('category', 'recorder');
+                $set('exclusive_group', 'recorder');
+                $set('quantity_mode', 'fixed');
+                $set('default_quantity', 1);
+                $rules = [
+                    ['field' => 'camera_technology', 'operator' => 'equals', 'value' => 'ip'],
+                    ['field' => 'camera_count', 'operator' => 'gte', 'value' => '5'],
+                    ['field' => 'camera_count', 'operator' => 'lte', 'value' => '8'],
+                ];
+                break;
+            case 'nvr16':
+                $set('category', 'recorder');
+                $set('exclusive_group', 'recorder');
+                $set('quantity_mode', 'ceil');
+                $set('quantity_field', 'camera_count');
+                $set('units_per_component', 16);
+                $rules = [
+                    ['field' => 'camera_technology', 'operator' => 'equals', 'value' => 'ip'],
+                    ['field' => 'camera_count', 'operator' => 'gte', 'value' => '9'],
+                ];
+                break;
+            case 'dvr8':
+                $set('category', 'recorder');
+                $set('exclusive_group', 'recorder');
+                $set('quantity_mode', 'ceil');
+                $set('quantity_field', 'camera_count');
+                $set('units_per_component', 8);
+                $rules = [['field' => 'camera_technology', 'operator' => 'equals', 'value' => 'analog']];
+                break;
+            case 'poe8':
+                $set('category', 'network');
+                $set('exclusive_group', 'poe-switch');
+                $set('quantity_mode', 'fixed');
+                $set('default_quantity', 1);
+                $rules = [
+                    ['field' => 'camera_technology', 'operator' => 'equals', 'value' => 'ip'],
+                    ['field' => 'camera_count', 'operator' => 'lte', 'value' => '8'],
+                ];
+                break;
+            case 'poe16':
+                $set('category', 'network');
+                $set('exclusive_group', 'poe-switch');
+                $set('quantity_mode', 'ceil');
+                $set('quantity_field', 'camera_count');
+                $set('units_per_component', 16);
+                $rules = [
+                    ['field' => 'camera_technology', 'operator' => 'equals', 'value' => 'ip'],
+                    ['field' => 'camera_count', 'operator' => 'gte', 'value' => '9'],
+                ];
+                break;
+            case 'hdd':
+                $set('category', 'storage');
+                $set('exclusive_group', 'storage');
+                break;
+            case 'cable':
+                $set('category', 'cabling');
+                $set('quantity_mode', 'field');
+                $set('quantity_field', 'cable_meters');
+                break;
+            case 'labor':
+                $set('category', 'labor');
+                $set('quantity_mode', 'field');
+                $set('quantity_field', 'camera_count');
+                break;
+        }
+
+        if ($rules !== []) {
+            $set('rules', $rules);
+        }
     }
 
     public static function form(Schema $schema): Schema
@@ -190,6 +319,15 @@ class ServiceConfiguratorResource extends Resource
                     Repeater::make('lead_form.extra_fields')
                         ->label('კალკულატორის ველები')
                         ->schema([
+                            Select::make('_cctv_preset')
+                                ->label('სწრაფი CCTV წესი')
+                                ->options(self::cctvPresetOptions())
+                                ->placeholder('აირჩიეთ მხოლოდ თუ გინდათ ავტომატური შევსება')
+                                ->helperText('არჩევისას სისტემა ავტომატურად შეავსებს კატეგორიას, რაოდენობის წესს და თავსებადობის პირობებს. შენახულ JSON-ში ეს დამხმარე ველი არ ჩაიწერება.')
+                                ->live()
+                                ->dehydrated(false)
+                                ->afterStateUpdated(fn (?string $state, Set $set) => self::applyCctvPreset($state, $set))
+                                ->columnSpanFull(),
                             TextInput::make('key')
                                 ->label('სისტემური კოდი (Key)')
                                 ->required()
@@ -338,9 +476,18 @@ class ServiceConfiguratorResource extends Resource
                                 ])
                                 ->default('other')
                                 ->required(),
-                            TextInput::make('exclusive_group')
-                                ->label('არჩევანის ჯგუფი (Exclusive group)')
-                                ->helperText('თუ რამდენიმე თავსებადი მოწყობილობიდან მხოლოდ ერთი უნდა აირჩეს, ყველას ერთი ჯგუფი მიეცით. მაგალითად: recorder ან poe_switch. სისტემა აირჩევს ყველაზე მაღალი პრიორიტეტის თავსებად კომპონენტს.'),
+                            Select::make('exclusive_group')
+                                ->label('არჩევანის ჯგუფი')
+                                ->options([
+                                    'camera-model' => 'კამერის მოდელი — ერთ-ერთი',
+                                    'recorder' => 'NVR / DVR — ერთ-ერთი',
+                                    'poe-switch' => 'PoE სვიჩი — ერთ-ერთი',
+                                    'storage' => 'HDD / საცავი — ერთ-ერთი',
+                                    'ups' => 'UPS / კვება — ერთ-ერთი',
+                                ])
+                                ->searchable()
+                                ->native(false)
+                                ->helperText('ერთ ჯგუფში სისტემა მხოლოდ ყველაზე მაღალი პრიორიტეტის თავსებად კომპონენტს აირჩევს.'),
                             TextInput::make('priority')
                                 ->label('პრიორიტეტი')
                                 ->numeric()
@@ -373,9 +520,12 @@ class ServiceConfiguratorResource extends Resource
                                 ->default('fixed')
                                 ->required()
                                 ->live(),
-                            TextInput::make('quantity_field')
+                            Select::make('quantity_field')
                                 ->label('რომელი პარამეტრიდან აიღოს რაოდენობა?')
-                                ->helperText('მიუთითეთ პარამეტრის Key. მაგალითი: camera_count, cable_length, recording_days.')
+                                ->options(self::calculatorFieldOptions())
+                                ->searchable()
+                                ->native(false)
+                                ->helperText('აირჩიეთ პარამეტრი — Key-ის ხელით ჩაწერა აღარ არის საჭირო.')
                                 ->visible(
                                     fn (Get $get): bool => in_array(
                                         $get('quantity_mode'),
@@ -413,10 +563,13 @@ class ServiceConfiguratorResource extends Resource
                             Repeater::make('rules')
                                 ->label('როდის უნდა გამოჩნდეს/აირჩეს ეს კომპონენტი?')
                                 ->schema([
-                                    TextInput::make('field')
+                                    Select::make('field')
                                         ->label('რომელი პარამეტრი შევამოწმოთ?')
+                                        ->options(self::calculatorFieldOptions())
+                                        ->searchable()
+                                        ->native(false)
                                         ->required()
-                                        ->helperText('მაგალითად: camera_count, recording_days, resolution, project_size, property_type, package'),
+                                        ->helperText('აირჩიეთ პარამეტრი სიიდან — ტექნიკური Key ავტომატურად შეინახება.'),
                                     Select::make('operator')
                                         ->label('შედარების პირობა')
                                         ->options([
