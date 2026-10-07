@@ -41,7 +41,7 @@ trait HasOptimizedSingleImage
         $media = $this->getFirstMedia($this->imageCollectionName());
 
         if ($media) {
-            return $media->hasGeneratedConversion('webp')
+            return $media->hasGeneratedConversion('webp') && is_file($media->getPath('webp'))
                 ? $media->getUrl('webp')
                 : $media->getUrl();
         }
