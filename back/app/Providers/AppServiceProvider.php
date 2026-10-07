@@ -32,6 +32,7 @@ use App\Observers\ProjectSocialAutomationObserver;
 use App\Support\CanonicalSeedTombstones;
 use App\Support\Observability\SlowQueryLogger;
 use App\Support\QueueWorkerHeartbeat;
+use App\Support\Seo\IndexNow;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -76,6 +77,10 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Project::observe(ProjectSocialAutomationObserver::class);
+
+        foreach ([Service::class, Project::class, LocalServiceLanding::class] as $indexableModel) {
+            $indexableModel::saved(fn (Model $model) => IndexNow::submitModel($model));
+        }
 
         $this->registerPublicContentMediaInvalidation();
         $this->registerSlowQueryLogging();
