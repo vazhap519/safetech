@@ -1553,6 +1553,49 @@ class CmsContentGeneratorTest extends TestCase
         $this->assertNotContains('value.entries.1.ka', $targets);
     }
 
+    public function test_service_uuid_repeater_locale_leaves_survive_sanitization_and_merge(): void
+    {
+        $uuid = 'ff781978-8c4a-48ce-a3e3-c20fb6c235d0';
+
+        Http::fake(function (Request $request) use ($uuid) {
+            $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum');
+
+            return Http::response($this->responseWithPatches(array_map(fn (string $path): array => [
+                'path' => $path,
+                'value_json' => json_encode(match (true) {
+                    str_ends_with($path, '.ka') => '1–8 კამერა',
+                    str_ends_with($path, '.en') => '1–8 cameras',
+                    str_ends_with($path, '.ru') => '1–8 камер',
+                    default => 'ტექსტი',
+                }, JSON_UNESCAPED_UNICODE),
+            ], $targets)));
+        });
+
+        $state = [
+            'lead_form' => [
+                'project_size_options' => [
+                    $uuid => [
+                        'value' => '1-8',
+                        'ka' => '',
+                        'en' => '',
+                        'ru' => '',
+                        'price_adjustment' => 0,
+                    ],
+                ],
+            ],
+        ];
+
+        $generator = app(CmsContentGenerator::class);
+        $updates = $generator->generate('service', 'CCTV: 1–8 კამერა', $state);
+        $merged = $generator->mergeIntoState($state, $updates);
+
+        $this->assertSame('1–8 კამერა', data_get($merged, "lead_form.project_size_options.{$uuid}.ka"));
+        $this->assertSame('1–8 cameras', data_get($merged, "lead_form.project_size_options.{$uuid}.en"));
+        $this->assertSame('1–8 камер', data_get($merged, "lead_form.project_size_options.{$uuid}.ru"));
+        $this->assertSame('1-8', data_get($merged, "lead_form.project_size_options.{$uuid}.value"));
+        $this->assertSame(0, data_get($merged, "lead_form.project_size_options.{$uuid}.price_adjustment"));
+    }
+
     public function test_project_results_with_uuid_repeater_keys_are_generated_atomically(): void
     {
         $uuid = '19444055-97cc-4813-bfe4-200a9ae7120a';
