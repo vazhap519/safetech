@@ -25,6 +25,41 @@ import {
 const serverApiBase = getServerApiBase();
 const publicApiOrigin = getPublicApiOrigin();
 
+const NON_CANONICAL_SERVICE_SLUGS = new Set([
+    "ip-camera-installation",
+    "video-surveillance-system-installation",
+    "intercom-installation",
+    "access-control-system-installation",
+    "barrier-gate-setup",
+    "personal-computer-assembly",
+    "computer-upgrade-optimization",
+    "computer-component-replacement",
+    "computer-preventive-maintenance",
+    "computer-peripheral-troubleshooting",
+    "cat6-cabling",
+    "lan-installation",
+    "wifi-network-installation",
+    "network-rack-installation",
+    "patch-panel-installation",
+    "it-technical-support",
+    "computers-workstations-setup",
+    "microsoft-365-setup-migration",
+    "computer-network-diagnostics",
+    "data-backup-recovery",
+    "macos-installation-configuration",
+    "macbook-imac-software-setup",
+    "mac-software-installation",
+    "mac-diagnostics-repair",
+    "mac-data-recovery-backup",
+    "structured-cabling-installation",
+    "telecommunications-infrastructure-installation",
+]);
+
+function isCanonicalServiceSlug(slug?: string | null) {
+    const normalized = slug?.trim();
+    return Boolean(normalized && !NON_CANONICAL_SERVICE_SLUGS.has(normalized));
+}
+
 export type ContentFilterKind = "services" | "projects";
 
 export type ContentFilterCategory = {
@@ -468,7 +503,7 @@ export async function getBackendServices(category?: string) {
 
     if (!remote?.length) return [];
 
-    return remote.map((service) => {
+    return remote.filter((service) => isCanonicalServiceSlug(service.slug)).map((service) => {
         const prefix = `service.${service.slug}`;
 
         return {
@@ -509,7 +544,7 @@ export async function getBackendFooterServices(): Promise<FooterServiceLink[]> {
         for (const service of localizedServices) {
             const slug = service.slug?.trim();
 
-            if (!slug) continue;
+            if (!isCanonicalServiceSlug(slug)) continue;
 
             const entry = services.get(slug) ?? {
                 slug,
@@ -560,7 +595,7 @@ export async function getBackendContactServices(): Promise<
 
     if (!remote?.length) return [];
 
-    return remote.map((service) => ({
+    return remote.filter((service) => isCanonicalServiceSlug(service.slug)).map((service) => ({
         slug: service.slug,
         label: t(
             `service.${service.slug}.name`,
