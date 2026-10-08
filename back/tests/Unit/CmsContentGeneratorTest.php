@@ -1557,7 +1557,7 @@ class CmsContentGeneratorTest extends TestCase
     {
         $uuid = 'ff781978-8c4a-48ce-a3e3-c20fb6c235d0';
 
-        Http::fake(function (Request $request) use ($uuid) {
+        Http::fake(function (Request $request) {
             $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum');
 
             return Http::response($this->responseWithPatches(array_map(fn (string $path): array => [

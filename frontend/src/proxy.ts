@@ -6,7 +6,7 @@ const SERVICE_CANONICAL_ALIASES: Record<string, string> = {
     "ip-camera-installation": "security-camera-installation",
     "video-surveillance-system-installation": "security-camera-installation",
     "intercom-installation": "intercom-access-control-installation",
-    "access-control-system-installation": "access-control-installation",
+    "access-control-system-installation": "intercom-access-control-installation",
     "barrier-gate-setup": "barrier-gate-installation",
     "personal-computer-assembly": "custom-computer-build",
     "computer-upgrade-optimization": "computer-setup-optimization",

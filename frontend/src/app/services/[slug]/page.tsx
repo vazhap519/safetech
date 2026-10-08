@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import LocalServiceLinks from "@/components/seo/LocalServiceLinks";
+import ServiceCalculatorSlot from "@/components/calculator/ServiceCalculatorSlot";
 import ServiceDetailView from "@/features/service-detail/ServiceDetailView";
 import ServiceStructuredData from "@/features/service-detail/components/ServiceStructuredData";
 import { getBackendService } from "@/lib/backend";
@@ -156,6 +157,9 @@ export default async function ServicePage({ params }: ServicePageProps) {
                     </div>
                 </section>
             ) : null}
+            <section className="mx-auto max-w-container-max px-5 md:px-8 xl:px-14">
+                <ServiceCalculatorSlot initialService={service.slug} />
+            </section>
             <LocalServiceLinks locale={locale} serviceSlug={service.slug} />
         </>
     );

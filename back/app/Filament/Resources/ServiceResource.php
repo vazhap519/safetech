@@ -197,6 +197,21 @@ class ServiceResource extends Resource
                     ...LocalizedContentFields::secondaryInputs('sla', 'SLA terms', textarea: true),
                 ]),
 
+            Section::make('Calculator project sizes')
+                ->description('Edit or remove project-size options used by the service lead form.')
+                ->schema([
+                    Repeater::make('lead_form.project_size_options')
+                        ->label('Project sizes')
+                        ->schema([
+                            TextInput::make('value')->label('Value')->required(),
+                            TextInput::make('ka')->label('ქართული')->required(),
+                            TextInput::make('en')->label('English'),
+                            TextInput::make('ru')->label('Русский'),
+                        ])
+                        ->columns(4)
+                        ->collapsible(),
+                ]),
+
             Section::make('Schema JSON-LD')
                 ->description('სერვისის structured data ავტომატურად გენერირდება. Custom override გამოიყენეთ მხოლოდ მაშინ, როცა ავტომატური schema მთლიანად უნდა ჩაანაცვლოთ ან გააფართოოთ.')
                 ->schema([
