@@ -31,6 +31,51 @@ final class TbilisiNeighborhoodSeoSeeder extends Seeder
         'barrier-gate-installation' => ['შლაგბაუმების მონტაჟი', 'Barrier gate installation', 'Установка шлагбаумов'],
     ];
 
+    /**
+     * Neighbourhood-specific planning questions, not claims about completed work.
+     * Copy remains a draft until an editor verifies the site and project evidence.
+     */
+    private const LOCAL_BRIEFS = [
+        'varketili' => [
+            'ka' => 'მრავალბინიანი კორპუსის საერთო შესასვლელი, მცირე მაღაზია ან სამეურნეო ობიექტი: დააზუსტეთ კვების წერტილები, კაბელის ტრასა და ქსელთან წვდომა.',
+            'en' => 'For an apartment entrance, small shop or utility property, confirm power points, cable routing and network access.',
+            'ru' => 'Для подъезда, небольшого магазина или хозяйственного объекта уточните питание, кабельные трассы и доступ к сети.',
+        ],
+        'samgori' => [
+            'ka' => 'სავაჭრო ან სასაწყობე სივრცისთვის წინასწარ შეაფასეთ დატვირთვა, შიდა და გარე ზონები, მოწყობილობების დაცვა და მომსახურებისთვის მისადგომობა.',
+            'en' => 'For a retail or storage property, assess operating patterns, indoor and outdoor zones, device protection and maintenance access.',
+            'ru' => 'Для торгового или складского объекта оцените режим работы, внутренние и наружные зоны, защиту устройств и доступ для обслуживания.',
+        ],
+        'isani' => [
+            'ka' => 'კორპუსის, ოფისისა თუ კომერციული ობიექტის შემთხვევაში დააზუსტეთ საერთო სივრცეებზე დაშვების წესები, საკაბელო არხები და სამუშაო საათები.',
+            'en' => 'For apartments, offices and commercial premises, check shared-area permissions, cable ducts and working hours.',
+            'ru' => 'Для жилого дома, офиса или коммерческого помещения уточните доступ в общие зоны, кабельные каналы и время работ.',
+        ],
+        'vazisubani' => [
+            'ka' => 'საცხოვრებელ კორპუსსა და კერძო ობიექტზე წინასწარ შეამოწმეთ სადარბაზოს კომუნიკაციები, გარე მოწყობილობების კვება და ინტერნეტის ხელმისაწვდომობა.',
+            'en' => 'For residential buildings and private properties, inspect entrance wiring, outdoor power supply and internet availability.',
+            'ru' => 'Для жилых домов и частных объектов проверьте проводку подъезда, питание наружных устройств и доступность интернета.',
+        ],
+    ];
+
+    private const SERVICE_BRIEFS = [
+        'security-camera-installation' => [
+            'ka' => 'განისაზღვროს ხედვის ზონები, ღამის განათება, PoE კვება, NVR არქივის მოცულობა და მობილურიდან უსაფრთხო წვდომა.',
+            'en' => 'Plan camera coverage, night lighting, PoE power, NVR retention and secure mobile access.',
+            'ru' => 'Спланируйте зоны обзора, ночное освещение, питание PoE, архив NVR и безопасный доступ с телефона.',
+        ],
+        'intercom-access-control-installation' => [
+            'ka' => 'დაზუსტდეს კარების და აბონენტების რაოდენობა, ელექტროსაკეტის ტიპი, გასვლის ღილაკი, ავარიული გახსნა და კაბელების თავსებადობა.',
+            'en' => 'Confirm door and subscriber counts, electric lock type, exit button, emergency egress and cable compatibility.',
+            'ru' => 'Уточните количество дверей и абонентов, тип электрозамка, кнопку выхода, аварийный выход и совместимость кабелей.',
+        ],
+        'barrier-gate-installation' => [
+            'ka' => 'შემოწმდეს გასავლელის სიგანე, ქვეითთა უსაფრთხოება, საძირკველი, 220V კვება, ფოტოსენსორები და GSM გახსნის მართვა.',
+            'en' => 'Check driveway width, pedestrian safety, foundation, 220V supply, photocells and GSM opening control.',
+            'ru' => 'Проверьте ширину проезда, безопасность пешеходов, фундамент, питание 220В, фотоэлементы и управление через GSM.',
+        ],
+    ];
+
     public function run(): void
     {
         foreach (self::SERVICES as $slug => [$kaService, $enService, $ruService]) {
@@ -51,9 +96,11 @@ final class TbilisiNeighborhoodSeoSeeder extends Seeder
                 $kaTitle = "{$kaService} {$kaIn}";
                 $enTitle = "{$enService} in {$enArea}";
                 $ruTitle = "{$ruService} в районе {$ruArea}";
-                $kaContent = "{$kaTitle}. ეს არის რედაქტორის სამუშაო ვერსია. გამოქვეყნებამდე საჭიროა {$kaArea} მდებარე ობიექტების ტიპების, მონტაჟის პირობების, რეალური სამუშაოების და შესაბამისი პროექტების გადამოწმება.";
-                $enContent = "{$enTitle}. Editorial draft: verify property types, installation constraints and relevant completed projects in {$enArea} before publishing.";
-                $ruContent = "{$ruTitle}. Черновик редактора: перед публикацией проверьте типы объектов, условия монтажа и реальные проекты в районе {$ruArea}.";
+                $local = self::LOCAL_BRIEFS[$areaSlug] ?? null;
+                $technical = self::SERVICE_BRIEFS[$slug];
+                $kaContent = "{$kaTitle}. ".($local['ka'] ?? 'ობიექტის პირობები უნდა დაზუსტდეს ადგილზე.')." {$technical['ka']} სამუშაოს მოცულობა და ღირებულება განისაზღვრება ობიექტის შეფასების შემდეგ. რედაქტორმა გამოქვეყნებამდე უნდა გადაამოწმოს ადგილობრივი ფაქტები და რეალური პროექტების ბმულები.";
+                $enContent = "{$enTitle}. ".($local['en'] ?? 'Confirm the property requirements on site.')." {$technical['en']} Scope and pricing follow a site assessment. Editorial draft: verify local facts and real project links before publication.";
+                $ruContent = "{$ruTitle}. ".($local['ru'] ?? 'Уточните условия на объекте.')." {$technical['ru']} Объём и цена определяются после оценки объекта. Черновик: проверьте местные факты и ссылки на реальные проекты.";
 
                 LocalServiceLanding::query()->create([
                     'service_id' => $service->getKey(),
