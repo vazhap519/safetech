@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 export default function ErrorPage({
@@ -33,12 +34,12 @@ export default function ErrorPage({
                     >
                         ხელახლა ცდა
                     </button>
-                    <a
+                    <Link
                         className="rounded-xl border border-outline-variant/40 px-6 py-3 font-semibold text-on-surface transition hover:bg-surface-container-high"
                         href="/"
                     >
                         მთავარ გვერდზე დაბრუნება
-                    </a>
+                    </Link>
                 </div>
             </div>
         </section>
