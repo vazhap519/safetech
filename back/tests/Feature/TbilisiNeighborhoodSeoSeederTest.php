@@ -28,6 +28,7 @@ class TbilisiNeighborhoodSeoSeederTest extends TestCase
 
         $this->assertSame(24, LocalServiceLanding::query()->count());
         $this->assertSame(0, LocalServiceLanding::query()->where('is_published', true)->count());
+        $this->assertSame(0, LocalServiceLanding::query()->publiclyVisible()->count());
         $this->assertSame(24, LocalServiceLanding::query()->where('noindex', true)->count());
 
         $this->assertSame(
@@ -39,6 +40,13 @@ class TbilisiNeighborhoodSeoSeederTest extends TestCase
         $landing = LocalServiceLanding::query()->where('location_slug', 'gldani')->firstOrFail();
         $this->assertSame('Gldani', data_get($landing->translations, 'fields.locationName.en'));
         $this->assertSame('Глдани', data_get($landing->translations, 'fields.locationName.ru'));
+        $varketili = LocalServiceLanding::query()->where('location_slug', 'varketili')->where('service_id', Service::query()->where('slug', 'security-camera-installation')->value('id'))->firstOrFail();
+        $samgori = LocalServiceLanding::query()->where('location_slug', 'samgori')->where('service_id', $varketili->service_id)->firstOrFail();
+        $this->assertStringContainsString('PoE', $varketili->content);
+        $this->assertStringContainsString('NVR', $varketili->content);
+        $this->assertNotSame($varketili->content, $samgori->content);
+        $this->assertStringContainsString('storage', data_get($samgori->translations, 'fields.content.en'));
+        $this->assertSame(0, $varketili->projects()->count());
         $landing->update(['title' => 'Reviewed editorial title']);
 
         $this->seed(TbilisiNeighborhoodSeoSeeder::class);
