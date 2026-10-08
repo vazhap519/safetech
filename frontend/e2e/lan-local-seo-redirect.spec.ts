@@ -14,7 +14,7 @@ for (const locale of locales) {
 
                 expect(response.status()).toBe(308);
                 const location = response.headers()["location"];
-                expect(new URL(location).pathname).toBe(
+                expect(new URL(location, "https://safetech.ge").pathname).toBe(
                     `${locale}/services/network-cable-installation/${city}`,
                 );
             });
