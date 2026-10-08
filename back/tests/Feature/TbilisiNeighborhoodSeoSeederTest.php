@@ -12,7 +12,7 @@ class TbilisiNeighborhoodSeoSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_stages_fifteen_private_localized_drafts_without_overwriting_editor_changes(): void
+    public function test_it_stages_twenty_four_private_localized_drafts_without_overwriting_editor_changes(): void
     {
         foreach (['security-camera-installation', 'intercom-access-control-installation', 'barrier-gate-installation'] as $slug) {
             Service::query()->create([
@@ -26,9 +26,15 @@ class TbilisiNeighborhoodSeoSeederTest extends TestCase
 
         $this->seed(TbilisiNeighborhoodSeoSeeder::class);
 
-        $this->assertSame(15, LocalServiceLanding::query()->count());
+        $this->assertSame(24, LocalServiceLanding::query()->count());
         $this->assertSame(0, LocalServiceLanding::query()->where('is_published', true)->count());
-        $this->assertSame(15, LocalServiceLanding::query()->where('noindex', true)->count());
+        $this->assertSame(24, LocalServiceLanding::query()->where('noindex', true)->count());
+
+        $this->assertSame(
+            ['varketili', 'samgori', 'isani', 'vazisubani'],
+            LocalServiceLanding::query()->where('service_id', Service::query()->where('slug', 'security-camera-installation')->value('id'))
+                ->orderBy('sort_order')->limit(4)->pluck('location_slug')->all(),
+        );
 
         $landing = LocalServiceLanding::query()->where('location_slug', 'gldani')->firstOrFail();
         $this->assertSame('Gldani', data_get($landing->translations, 'fields.locationName.en'));
