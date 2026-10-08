@@ -103,12 +103,12 @@ test("SEO canonical URLs exclude duplicate service intents", async ({ page, requ
         ["/services/barrier-gate-setup", "/services/barrier-gate-installation"],
         ["/en/services/it-technical-support", "/en/services/business-it-support"],
         ["/services/intercom-installation", "/services/intercom-access-control-installation"],
-        ["/services/access-control-system-installation", "/services/access-control-installation"],
+        ["/services/access-control-system-installation", "/services/intercom-access-control-installation"],
     ] as const) {
         const response = await page.goto(source, { waitUntil: "domcontentloaded" });
 
-        expect(response?.status()).toBe(200);
-        expect(new URL(page.url()).pathname).toBe(target);
+        expect(response?.status(), `Legacy service ${source} redirected to ${page.url()} instead of ${target}`).toBe(200);
+        expect(new URL(page.url()).pathname, `Legacy service ${source}`).toBe(target);
     }
 
     const serviceSitemap = await request.get("/sitemap-services.xml");

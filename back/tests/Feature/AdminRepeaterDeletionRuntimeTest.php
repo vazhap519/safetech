@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\ProjectResource\Pages\EditProject;
+use App\Filament\Resources\ServiceConfiguratorResource\Pages\EditServiceConfigurator;
 use App\Filament\Resources\ServiceResource\Pages\EditService;
 use App\Models\CategoryForService;
 use App\Models\Project;
@@ -74,6 +75,12 @@ class AdminRepeaterDeletionRuntimeTest extends TestCase
                 'benefits' => [
                     ['title' => 'Keep', 'description' => 'Keep this benefit.'],
                 ],
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        Livewire::test(EditServiceConfigurator::class, ['record' => $service->getRouteKey()])
+            ->fillForm([
                 'lead_form.project_size_options' => [
                     ['value' => 'small', 'ka' => 'პატარა', 'en' => 'Small', 'ru' => 'Маленький'],
                 ],
