@@ -83,8 +83,8 @@ class CmsContentGeneratorTest extends TestCase
                 && data_get($data, 'text.format.strict') === true
                 && in_array('benefits.0.translations.en.title', $targets, true)
                 && in_array('faq.0.translations.ru.answer', $targets, true)
-                && ! in_array('location_slug', $targets, true)
-                && ! in_array('noindex', $targets, true);
+                && !in_array('location_slug', $targets, true)
+                && !in_array('noindex', $targets, true);
         });
     }
 
@@ -809,10 +809,10 @@ class CmsContentGeneratorTest extends TestCase
             $targets = data_get($request->data(), 'text.format.schema.properties.patches.items.properties.path.enum', []);
 
             return in_array('lead_form.extra_fields.0.en', $targets, true)
-                && ! in_array('lead_form.extra_fields.0.type', $targets, true)
-                && ! in_array('lead_form.extra_fields.0.default', $targets, true)
-                && ! in_array('lead_form.extra_fields.0.options.0.value', $targets, true)
-                && ! in_array('lead_form.extra_fields.0.options.0.one_time_price', $targets, true);
+                && !in_array('lead_form.extra_fields.0.type', $targets, true)
+                && !in_array('lead_form.extra_fields.0.default', $targets, true)
+                && !in_array('lead_form.extra_fields.0.options.0.value', $targets, true)
+                && !in_array('lead_form.extra_fields.0.options.0.one_time_price', $targets, true);
         });
     }
 
