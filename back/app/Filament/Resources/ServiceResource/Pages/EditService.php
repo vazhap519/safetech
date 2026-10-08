@@ -13,6 +13,16 @@ class EditService extends EditRecord
 
     protected static string $resource = ServiceResource::class;
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (isset($data['lead_form']) && is_array($data['lead_form'])) {
+            $existing = $this->record->lead_form ?? [];
+            $data['lead_form'] = array_replace($existing, $data['lead_form']);
+        }
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
