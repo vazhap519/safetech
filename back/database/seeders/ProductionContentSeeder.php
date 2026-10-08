@@ -38,6 +38,7 @@ final class ProductionContentSeeder extends Seeder
         $this->call(IntercomConfiguratorSeeder::class);
         $this->call(QuoteCatalogSeeder::class);
         $this->call(CanonicalLocalSeoSeeder::class);
+        $this->call(TbilisiNeighborhoodSeoSeeder::class);
         $this->call(SeoPageSeeder::class);
         $this->call(AiKnowledgeBaseSeeder::class);
     }
