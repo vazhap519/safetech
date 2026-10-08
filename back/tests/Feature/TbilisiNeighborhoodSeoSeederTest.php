@@ -51,7 +51,7 @@ class TbilisiNeighborhoodSeoSeederTest extends TestCase
 
         $this->seed(TbilisiNeighborhoodSeoSeeder::class);
 
-        $this->assertSame(15, LocalServiceLanding::query()->count());
+        $this->assertSame(24, LocalServiceLanding::query()->count());
         $this->assertSame('Reviewed editorial title', $landing->fresh()->title);
     }
 }
