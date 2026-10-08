@@ -103,7 +103,7 @@ test("SEO canonical URLs exclude duplicate service intents", async ({ page, requ
         ["/services/barrier-gate-setup", "/services/barrier-gate-installation"],
         ["/en/services/it-technical-support", "/en/services/business-it-support"],
         ["/services/intercom-installation", "/services/intercom-access-control-installation"],
-        ["/services/access-control-system-installation", "/services/access-control-installation"],
+        ["/services/access-control-system-installation", "/services/intercom-access-control-installation"],
     ] as const) {
         const response = await page.goto(source, { waitUntil: "domcontentloaded" });
 
