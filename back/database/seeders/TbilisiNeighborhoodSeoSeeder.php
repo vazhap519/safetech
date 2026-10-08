@@ -15,8 +15,11 @@ use Illuminate\Database\Seeder;
 final class TbilisiNeighborhoodSeoSeeder extends Seeder
 {
     private const NEIGHBORHOODS = [
-        'gldani' => ['გლდანი', 'Gldani', 'Глдани', 'გლდანში'],
         'varketili' => ['ვარკეთილი', 'Varketili', 'Варкетили', 'ვარკეთილში'],
+        'samgori' => ['სამგორი', 'Samgori', 'Самгори', 'სამგორში'],
+        'isani' => ['ისანი', 'Isani', 'Исани', 'ისანში'],
+        'vazisubani' => ['ვაზისუბანი', 'Vazisubani', 'Вазисубани', 'ვაზისუბანში'],
+        'gldani' => ['გლდანი', 'Gldani', 'Глдани', 'გლდანში'],
         'saburtalo' => ['საბურთალო', 'Saburtalo', 'Сабуртало', 'საბურთალოზე'],
         'didi-dighomi' => ['დიდი დიღომი', 'Didi Dighomi', 'Большой Дигоми', 'დიდ დიღომში'],
         'dighomi' => ['დიღომი', 'Dighomi', 'Дигоми', 'დიღომში'],
@@ -78,7 +81,7 @@ final class TbilisiNeighborhoodSeoSeeder extends Seeder
                     'is_published' => false,
                     'noindex' => true,
                     'published_at' => null,
-                    'sort_order' => 20000,
+                    'sort_order' => 20000 + array_search($areaSlug, array_keys(self::NEIGHBORHOODS), true) * 100,
                 ]);
             }
         }
