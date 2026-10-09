@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 
@@ -35,11 +35,7 @@ function MarketingRouteTracker({
     const previousPath = useRef<string | null>(null);
 
     useEffect(() => {
-        if (previousPath.current === null) {
-            previousPath.current = pathname;
-            return;
-        }
-
+        // Capture the first page after consent as well as client-side navigation.
         if (previousPath.current === pathname) return;
         previousPath.current = pathname;
         const pageViewParameters = withAnalyticsContext({
@@ -48,14 +44,14 @@ function MarketingRouteTracker({
             page_title: document.title,
         });
 
-        if (googleTagManagerId) {
+        if (googleAnalyticsId && window.gtag) {
+            window.gtag("event", "page_view", pageViewParameters);
+        } else if (googleTagManagerId) {
             window.dataLayer = window.dataLayer || [];
             window.dataLayer.push({
                 event: "virtual_page_view",
                 ...pageViewParameters,
             });
-        } else if (googleAnalyticsId && window.gtag) {
-            window.gtag("event", "page_view", pageViewParameters);
         }
 
         if (metaPixelId && window.fbq) {
@@ -78,6 +74,9 @@ export default function MarketingScriptsClient({
     const gtmId = validId(googleTagManagerId, /^GTM-[A-Z0-9]+$/i);
     const gaId = validId(googleAnalyticsId, /^G-[A-Z0-9]+$/i);
     const pixelId = validId(metaPixelId, /^\d{5,30}$/);
+    // Prefer direct GA4 and do not load a second GTM measurement path.
+    const activeGtmId = gaId ? "" : gtmId;
+    const [tagReady, setTagReady] = useState(false);
 
     useEffect(() => {
         captureCampaignAttribution();
@@ -85,15 +84,15 @@ export default function MarketingScriptsClient({
 
     return (
         <>
-            {gtmId ? (
-                <Script id="google-tag-manager" strategy="afterInteractive">
-                    {`gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
+            {activeGtmId ? (
+                <Script id="google-tag-manager" strategy="afterInteractive" onReady={() => setTagReady(true)}>
+                    {`gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${activeGtmId}');`}
                 </Script>
             ) : null}
 
             {gaId ? (
-                <Script id="google-analytics-consent" strategy="afterInteractive">
-                    {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});gtag('config','${gaId}',{anonymize_ip:true,send_page_view:true});`}
+                <Script id="google-analytics-consent" strategy="afterInteractive" onReady={() => setTagReady(true)}>
+                    {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});gtag('config','${gaId}',{anonymize_ip:true,send_page_view:false});`}
                 </Script>
             ) : null}
 
@@ -103,11 +102,13 @@ export default function MarketingScriptsClient({
                 </Script>
             ) : null}
 
-            <MarketingRouteTracker
-                googleAnalyticsId={gaId}
-                googleTagManagerId={gtmId}
-                metaPixelId={pixelId}
-            />
+            {tagReady ? (
+                <MarketingRouteTracker
+                    googleAnalyticsId={gaId}
+                    googleTagManagerId={activeGtmId}
+                    metaPixelId={pixelId}
+                />
+            ) : null}
         </>
     );
 }
