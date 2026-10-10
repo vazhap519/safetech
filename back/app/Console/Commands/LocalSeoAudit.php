@@ -9,7 +9,7 @@ use Illuminate\Support\Arr;
 
 final class LocalSeoAudit extends Command
 {
-    protected $signature = 'safetech:local-seo-audit {--strict : Fail on missing indexable service coverage or localized metadata}';
+    protected $signature = 'safetech:local-seo-audit {--strict : Fail on missing indexable service coverage or localized metadata} {--list-unlinked : List Local pages without linked public projects for editorial review} {--unlinked-limit=25 : Maximum unlinked Local pages to display (0 means all)}';
 
     protected $description = 'Audit published services, Local SEO URLs, translations and genuine project links without changing CMS data';
 
@@ -42,6 +42,36 @@ final class LocalSeoAudit extends Command
             $indexable->count(),
             $withoutProjects->count(),
         ));
+
+        if ((bool) $this->option('list-unlinked')) {
+            $limit = filter_var($this->option('unlinked-limit'), FILTER_VALIDATE_INT);
+            if ($limit === false || $limit < 0) {
+                $this->error('--unlinked-limit must be a non-negative integer (0 means all).');
+
+                return self::FAILURE;
+            }
+
+            $rows = $withoutProjects
+                ->sortBy(fn (LocalServiceLanding $landing): string => $landing->service->slug.'/'.$landing->location_slug)
+                ->values();
+            if ($limit > 0) {
+                $rows = $rows->take($limit);
+            }
+
+            $this->table(
+                ['Service', 'Location', 'Local page path'],
+                $rows->map(fn (LocalServiceLanding $landing): array => [
+                    $landing->service->slug,
+                    $landing->location_slug,
+                    "/services/{$landing->service->slug}/{$landing->location_slug}",
+                ])->all(),
+            );
+            $this->line(sprintf(
+                'Showing %d of %d Local pages without linked public projects. This is an editorial review list, not an SEO error.',
+                $rows->count(),
+                $withoutProjects->count(),
+            ));
+        }
 
         foreach ($missing as $service) {
             $problems[] = "Missing indexable Local landing: {$service->slug}";
