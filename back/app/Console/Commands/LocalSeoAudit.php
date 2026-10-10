@@ -69,6 +69,44 @@ final class LocalSeoAudit extends Command
             }
         }
 
+        // Reused localized titles/descriptions can make distinct location pages
+        // indistinguishable to search engines. Report candidates for editorial
+        // review; do not automatically noindex, rewrite or unpublish pages.
+        foreach (['ka', 'en', 'ru'] as $locale) {
+            foreach (['seoTitle' => 'seo_title', 'seoDescription' => 'seo_description'] as $field => $root) {
+                $groups = [];
+
+                foreach ($indexable as $landing) {
+                    $value = trim((string) Arr::get(
+                        $landing->translations ?? [],
+                        "fields.{$field}.{$locale}",
+                        $locale === 'ka' ? $landing->{$root} : '',
+                    ));
+                    $normalized = mb_strtolower(preg_replace('/\\s+/u', ' ', $value) ?? $value);
+
+                    if ($normalized === '') {
+                        continue;
+                    }
+
+                    $groups[$normalized][] = "/services/{$landing->service->slug}/{$landing->location_slug}";
+                }
+
+                foreach ($groups as $paths) {
+                    if (count($paths) < 2) {
+                        continue;
+                    }
+
+                    $this->warn(sprintf(
+                        'Duplicate %s %s across %d indexable Local pages: %s',
+                        $locale,
+                        $field,
+                        count($paths),
+                        implode(', ', $paths),
+                    ));
+                }
+            }
+        }
+
         foreach ($problems as $problem) {
             $this->error($problem);
         }
