@@ -52,17 +52,17 @@ final class LocalSeoAudit extends Command
             }
 
             $rows = $withoutProjects
-                ->sortBy(fn (LocalServiceLanding $landing): string => $landing->service->slug.'/'.$landing->location_slug)
+                ->sortBy(fn (LocalServiceLanding $landing): string => $landing->location_slug.'/'.$landing->service->slug)
                 ->values();
             if ($limit > 0) {
                 $rows = $rows->take($limit);
             }
 
             $this->table(
-                ['Service', 'Location', 'Local page path'],
+                ['Location', 'Service', 'Local page path'],
                 $rows->map(fn (LocalServiceLanding $landing): array => [
-                    $landing->service->slug,
                     $landing->location_slug,
+                    $landing->service->slug,
                     "/services/{$landing->service->slug}/{$landing->location_slug}",
                 ])->all(),
             );
