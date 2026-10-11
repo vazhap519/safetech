@@ -102,7 +102,7 @@ export function proxy(request: NextRequest) {
         return withLocaleCookie(NextResponse.redirect(url, 308), locale);
     }
 
-    if (firstSegment === DEFAULT_LOCALE || canonicalServiceSlug) {
+    // A legacy query must not produce a second indexable catalog URL, even if\n    // the service value is empty or invalid. Preserve the clean catalog path.\n    if (isServicesIndex && request.nextUrl.searchParams.has("service")) {\n        const url = request.nextUrl.clone();\n        url.searchParams.delete("service");\n        return withLocaleCookie(NextResponse.redirect(url, 308), locale);\n    }\n\n    if (firstSegment === DEFAULT_LOCALE || canonicalServiceSlug) {
         const url = request.nextUrl.clone();
         const redirectedSegments = [...segments];
 
