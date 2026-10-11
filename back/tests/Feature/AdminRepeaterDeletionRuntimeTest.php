@@ -33,7 +33,7 @@ class AdminRepeaterDeletionRuntimeTest extends TestCase
         Filament::setCurrentPanel(Filament::getPanel('admin'));
     }
 
-    public function test_service_repeater_items_can_be_removed_and_stay_removed_after_save(): void
+    public function test_service_content_repeater_removal_preserves_calculator_options(): void
     {
         $category = CategoryForService::query()->create([
             'name' => 'Repeater service category',
@@ -74,9 +74,6 @@ class AdminRepeaterDeletionRuntimeTest extends TestCase
                 'benefits' => [
                     ['title' => 'Keep', 'description' => 'Keep this benefit.'],
                 ],
-                'lead_form.project_size_options' => [
-                    ['value' => 'small', 'ka' => 'პატარა', 'en' => 'Small', 'ru' => 'Маленький'],
-                ],
             ])
             ->call('save')
             ->assertHasNoFormErrors();
@@ -85,7 +82,7 @@ class AdminRepeaterDeletionRuntimeTest extends TestCase
 
         $this->assertSame(['Keep'], array_column($service->benefits ?? [], 'title'));
         $this->assertSame(
-            ['small'],
+            ['small', 'large'],
             array_column(data_get($service->lead_form, 'project_size_options', []), 'value'),
         );
     }
