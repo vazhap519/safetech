@@ -19,7 +19,7 @@ class EditServiceConfigurator extends EditRecord
             $data['lead_form'] = $this->mergePreservingUnmanagedSettings(
                 is_array($existing) ? $existing : [],
                 $data['lead_form'],
-            );;
+            );
         }
 
         return $data;
@@ -29,8 +29,8 @@ class EditServiceConfigurator extends EditRecord
      * Preserve unmanaged associative settings while replacing admin-managed lists
      * wholesale, including intentionally emptied repeaters.
      *
-     * @param array<string, mixed> $existing
-     * @param array<string, mixed> $incoming
+     * @param  array<string, mixed>  $existing
+     * @param  array<string, mixed>  $incoming
      * @return array<string, mixed>
      */
     private function mergePreservingUnmanagedSettings(array $existing, array $incoming): array
@@ -40,7 +40,7 @@ class EditServiceConfigurator extends EditRecord
                 isset($existing[$key])
                 && is_array($existing[$key])
                 && is_array($value)
-                && ! array_is_list($existing[$key])
+                && !array_is_list($existing[$key])
                 && ! array_is_list($value)
             ) {
                 $existing[$key] = $this->mergePreservingUnmanagedSettings($existing[$key], $value);
