@@ -40,7 +40,7 @@ class EditServiceConfigurator extends EditRecord
                 isset($existing[$key])
                 && is_array($existing[$key])
                 && is_array($value)
-                && !array_is_list($existing[$key])
+                && ! array_is_list($existing[$key])
                 && ! array_is_list($value)
             ) {
                 $existing[$key] = $this->mergePreservingUnmanagedSettings($existing[$key], $value);
