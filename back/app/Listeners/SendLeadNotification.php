@@ -3,7 +3,8 @@
 namespace App\Listeners;
 
 use App\Events\LeadCreated;
-use App\Models\SiteSetting;
+use App\Support\Leads\LeadNotificationRecipient;
+use Illuminate\Support\Facades\Log;
 use App\Notifications\NewContactLeadNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;
@@ -17,21 +18,12 @@ final class SendLeadNotification implements ShouldQueue
 
     public function handle(LeadCreated $event): void
     {
-        $contactSettings = SiteSetting::query()
-            ->where('key', 'contact')
-            ->first()?->value ?? [];
+        $recipient = app(LeadNotificationRecipient::class)->resolve();
 
-        $configuredRecipient = trim((string) config('leads.notification_email'));
-        $settingsRecipient = trim((string) data_get($contactSettings, 'lead_email', ''));
-
-        // The CMS recipient is intentional, editable business data. The
-        // environment value remains a safe deployment fallback when no valid
-        // address has been saved in the Contact settings yet.
-        $recipient = filter_var($settingsRecipient, FILTER_VALIDATE_EMAIL)
-            ? $settingsRecipient
-            : (filter_var($configuredRecipient, FILTER_VALIDATE_EMAIL)
-                ? $configuredRecipient
-                : (string) config('mail.from.address'));
+        if ($recipient === null) {
+            Log::error('Lead notification has no valid recipient.', ['lead_id' => $event->lead->getKey()]);
+            throw new \RuntimeException('Lead notification has no valid recipient.');
+        }
 
         $recipients = [$recipient];
         $priorityRecipient = trim((string) config('leads.high_priority_email'));
@@ -42,8 +34,25 @@ final class SendLeadNotification implements ShouldQueue
         }
 
         foreach (array_unique($recipients) as $email) {
-            Notification::route('mail', $email)
-                ->notify(new NewContactLeadNotification($event->lead));
+            try {
+                Notification::route('mail', $email)
+                    ->notify(new NewContactLeadNotification($event->lead));
+
+                // SMTP acceptance is not proof of final inbox delivery.
+                Log::info('Lead notification accepted by mail transport.', [
+                    'lead_id' => $event->lead->getKey(),
+                    'recipient' => $email,
+                    'mailer' => config('mail.default'),
+                ]);
+            } catch (\Throwable $exception) {
+                Log::error('Lead notification mail transport failed.', [
+                    'lead_id' => $event->lead->getKey(),
+                    'recipient' => $email,
+                    'exception' => $exception::class,
+                ]);
+
+                throw $exception;
+            }
         }
     }
 }
