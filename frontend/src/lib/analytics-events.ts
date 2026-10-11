@@ -66,7 +66,7 @@ function extractServiceSlugFromPath(pagePath?: string | null) {
         return null;
     }
 
-    const match = stripLocalePrefix(pagePath).match(/^\/services\/([^/?#]+)/);
+    const match = stripLocalePrefix(pagePath).match(/^\/services\/([^/?#]+)\/?$/);
 
     return match?.[1] ?? null;
 }
