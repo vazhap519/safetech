@@ -165,6 +165,7 @@ class AdminRemainingRepeaterDeletionRuntimeTest extends TestCase
             'seo_description' => 'Preserve settings SEO description.',
             'lead_form' => [
                 'calculator_enabled' => true,
+                'pricing' => ['currency' => 'GEL'],
                 'legacy_external_setting' => ['enabled' => true],
                 'project_size_options' => [
                     ['value' => 'small', 'ka' => 'პატარა'],
