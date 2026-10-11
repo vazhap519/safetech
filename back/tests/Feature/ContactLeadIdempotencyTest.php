@@ -73,6 +73,47 @@ class ContactLeadIdempotencyTest extends TestCase
         Event::assertDispatchedTimes(LeadCreated::class, 1);
     }
 
+    public function test_same_key_with_different_payload_is_rejected_after_cache_loss(): void
+    {
+        Event::fake([LeadCreated::class]);
+        $service = $this->publishedService();
+        $headers = ['Idempotency-Key' => 'lead-cache-conflict-12345678'];
+
+        $this->withHeaders($headers)
+            ->postJson('/api/contact-leads', $this->payload($service))
+            ->assertCreated();
+
+        Cache::flush();
+
+        $changedPayload = $this->payload($service);
+        $changedPayload['message'] = 'A changed request after the idempotency cache was lost.';
+
+        $this->withHeaders($headers)
+            ->postJson('/api/contact-leads', $changedPayload)
+            ->assertStatus(409);
+
+        $this->assertDatabaseCount('contact_leads', 1);
+        Event::assertDispatchedTimes(LeadCreated::class, 1);
+    }
+
+    public function test_distinct_submission_keys_allow_independent_requests(): void
+    {
+        Event::fake([LeadCreated::class]);
+        $service = $this->publishedService();
+        $payload = $this->payload($service);
+
+        $first = $this->withHeaders(['Idempotency-Key' => 'lead-distinct-one-12345678'])
+            ->postJson('/api/contact-leads', $payload);
+        $second = $this->withHeaders(['Idempotency-Key' => 'lead-distinct-two-12345678'])
+            ->postJson('/api/contact-leads', $payload);
+
+        $first->assertCreated();
+        $second->assertCreated();
+        $this->assertNotSame($first->json('data.id'), $second->json('data.id'));
+        $this->assertDatabaseCount('contact_leads', 2);
+        Event::assertDispatchedTimes(LeadCreated::class, 2);
+    }
+
     public function test_invalid_idempotency_key_is_rejected_without_creating_a_lead(): void
     {
         $service = $this->publishedService();
