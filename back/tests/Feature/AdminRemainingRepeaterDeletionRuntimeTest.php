@@ -149,6 +149,41 @@ class AdminRemainingRepeaterDeletionRuntimeTest extends TestCase
         );
     }
 
+    public function test_service_configurator_preserves_unmanaged_lead_form_settings(): void
+    {
+        $category = CategoryForService::query()->create([
+            'name' => 'Preserve settings category',
+            'slug' => 'preserve-settings-category',
+        ]);
+        $service = Service::query()->create([
+            'category_for_service_id' => $category->id,
+            'name' => 'Preserve configurator service',
+            'slug' => 'preserve-configurator-service',
+            'icon' => 'settings',
+            'title' => 'Preserve configurator service',
+            'description' => 'Preserve unrelated lead form options.',
+            'seo_description' => 'Preserve settings SEO description.',
+            'lead_form' => [
+                'calculator_enabled' => true,
+                'legacy_external_setting' => ['enabled' => true],
+                'project_size_options' => [
+                    ['value' => 'small', 'ka' => 'პატარა'],
+                ],
+            ],
+            'is_published' => false,
+        ]);
+
+        Livewire::test(EditServiceConfigurator::class, ['record' => $service->getRouteKey()])
+            ->fillForm(['lead_form.calculator_enabled' => false])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $leadForm = $service->refresh()->lead_form ?? [];
+        $this->assertFalse((bool) data_get($leadForm, 'calculator_enabled'));
+        $this->assertSame(['enabled' => true], data_get($leadForm, 'legacy_external_setting'));
+        $this->assertSame('small', data_get($leadForm, 'project_size_options.0.value'));
+    }
+
     public function test_service_configurator_nested_rows_can_be_deleted_and_stay_deleted(): void
     {
         $category = CategoryForService::query()->create([
