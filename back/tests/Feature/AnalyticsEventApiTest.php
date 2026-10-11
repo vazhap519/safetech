@@ -79,6 +79,54 @@ class AnalyticsEventApiTest extends TestCase
         ]);
     }
 
+    public function test_nested_local_service_page_is_not_attributed_to_parent_service(): void
+    {
+        Service::query()->create([
+            'slug' => 'cctv',
+            'name' => 'CCTV',
+            'title' => 'CCTV',
+            'description' => 'Test description',
+            'seo_description' => 'Test SEO description',
+            'is_published' => true,
+        ]);
+
+        $this->postJson('/api/analytics/events', [
+            'event_type' => AnalyticsEvent::TYPE_SERVICE_VIEW,
+            'page_path' => '/ka/services/cctv/tbilisi',
+            'visitor_id' => 'local-landing-browser',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('analytics_events', [
+            'page_path' => '/ka/services/cctv/tbilisi',
+            'service_id' => null,
+            'service_slug' => null,
+        ]);
+    }
+
+    public function test_service_page_with_trailing_slash_is_attributed_to_service(): void
+    {
+        $service = Service::query()->create([
+            'slug' => 'cctv',
+            'name' => 'CCTV',
+            'title' => 'CCTV',
+            'description' => 'Test description',
+            'seo_description' => 'Test SEO description',
+            'is_published' => true,
+        ]);
+
+        $this->postJson('/api/analytics/events', [
+            'event_type' => AnalyticsEvent::TYPE_SERVICE_VIEW,
+            'page_path' => '/en/services/cctv/',
+            'visitor_id' => 'trailing-slash-browser',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('analytics_events', [
+            'page_path' => '/en/services/cctv/',
+            'service_id' => $service->id,
+            'service_slug' => 'cctv',
+        ]);
+    }
+
     public function test_it_accepts_consultation_and_lead_conversion_events(): void
     {
         $this->postJson('/api/analytics/events', [
