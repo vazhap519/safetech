@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\CameraPlan;
-use App\Models\SiteSetting;
+use App\Support\Leads\LeadNotificationRecipient;
 use App\Notifications\NewCameraPlanNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,24 +32,30 @@ final class SendCameraPlanNotification implements ShouldQueue
             return;
         }
 
-        $contactSettings = SiteSetting::query()
-            ->where('key', 'contact')
-            ->first()?->value ?? [];
-
-        $settingsRecipient = trim((string) data_get($contactSettings, 'lead_email', ''));
-        $configuredRecipient = trim((string) config('leads.notification_email'));
-        $fallback = trim((string) config('mail.from.address'));
-
-        $recipient = collect([$settingsRecipient, $configuredRecipient, $fallback])
-            ->first(fn (string $address): bool => filter_var($address, FILTER_VALIDATE_EMAIL) !== false);
+        $recipient = app(LeadNotificationRecipient::class)->resolve();
 
         if ($recipient === null) {
-            Log::warning('Camera plan notification has no valid recipient.', ['plan_id' => $plan->getKey()]);
-
-            return;
+            Log::error('Camera plan notification has no valid recipient.', ['plan_id' => $plan->getKey()]);
+            throw new \RuntimeException('Camera plan notification has no valid recipient.');
         }
 
-        Notification::route('mail', $recipient)
-            ->notify(new NewCameraPlanNotification($plan));
+        try {
+            Notification::route('mail', $recipient)
+                ->notify(new NewCameraPlanNotification($plan));
+
+            Log::info('Camera plan notification accepted by mail transport.', [
+                'plan_id' => $plan->getKey(),
+                'recipient' => $recipient,
+                'mailer' => config('mail.default'),
+            ]);
+        } catch (\Throwable $exception) {
+            Log::error('Camera plan notification mail transport failed.', [
+                'plan_id' => $plan->getKey(),
+                'recipient' => $recipient,
+                'exception' => $exception::class,
+            ]);
+
+            throw $exception;
+        }
     }
 }
