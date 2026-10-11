@@ -3,9 +3,9 @@
 namespace App\Listeners;
 
 use App\Events\LeadCreated;
+use App\Notifications\NewContactLeadNotification;
 use App\Support\Leads\LeadNotificationRecipient;
 use Illuminate\Support\Facades\Log;
-use App\Notifications\NewContactLeadNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;
 
