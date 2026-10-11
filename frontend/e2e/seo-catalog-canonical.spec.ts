@@ -54,3 +54,14 @@ for (const prefix of ["", "/en", "/ru"]) {
         }
     });
 }
+
+for (const prefix of ["", "/en", "/ru"]) {
+    test(`${prefix || "ka"} invalid legacy service query does not leave a duplicate catalog URL`, async ({ page }) => {
+        const response = await page.goto(`${prefix}/services?service=%20%20&ref=seo-test`);
+        expect(response?.status()).toBe(200);
+        const url = new URL(page.url());
+        expect(url.pathname).toBe(`${prefix}/services`);
+        expect(url.searchParams.has("service")).toBe(false);
+        expect(url.searchParams.get("ref")).toBe("seo-test");
+    });
+}
