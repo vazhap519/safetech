@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\CameraPlan;
-use App\Support\Leads\LeadNotificationRecipient;
 use App\Notifications\NewCameraPlanNotification;
+use App\Support\Leads\LeadNotificationRecipient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
