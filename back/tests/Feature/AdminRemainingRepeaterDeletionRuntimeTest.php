@@ -185,6 +185,44 @@ class AdminRemainingRepeaterDeletionRuntimeTest extends TestCase
         $this->assertSame('small', data_get($leadForm, 'project_size_options.0.value'));
     }
 
+    public function test_service_configurator_preserves_unmanaged_nested_pricing_settings(): void
+    {
+        $category = CategoryForService::query()->create([
+            'name' => 'Nested pricing category',
+            'slug' => 'nested-pricing-category',
+        ]);
+        $service = Service::query()->create([
+            'category_for_service_id' => $category->id,
+            'name' => 'Nested pricing service',
+            'slug' => 'nested-pricing-service',
+            'icon' => 'settings',
+            'title' => 'Nested pricing service',
+            'description' => 'Preserve nested pricing configuration.',
+            'seo_description' => 'Nested pricing SEO description.',
+            'lead_form' => [
+                'calculator_enabled' => true,
+                'pricing' => [
+                    'currency' => 'GEL',
+                    'base_price' => 25,
+                    'external_pricing_rule' => ['enabled' => true, 'factor' => 1.2],
+                ],
+            ],
+            'is_published' => false,
+        ]);
+
+        Livewire::test(EditServiceConfigurator::class, ['record' => $service->getRouteKey()])
+            ->fillForm(['lead_form.pricing.base_price' => 40])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $pricing = data_get($service->refresh()->lead_form, 'pricing');
+        $this->assertEquals(40, $pricing['base_price']);
+        $this->assertSame(
+            ['enabled' => true, 'factor' => 1.2],
+            $pricing['external_pricing_rule'],
+        );
+    }
+
     public function test_service_configurator_nested_rows_can_be_deleted_and_stay_deleted(): void
     {
         $category = CategoryForService::query()->create([
