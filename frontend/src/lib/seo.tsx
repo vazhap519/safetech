@@ -22,7 +22,7 @@ export type SeoProps = {
     ogDescription?: string;
     robotsIndex?: boolean;
     robotsFollow?: boolean;
-    availableLocales?: Locale[];
+    availableLocales?: readonly Locale[];
 };
 
 export const SITE_NAME = "SafeTech";
@@ -52,7 +52,7 @@ export function absoluteLocalizedUrl(
     return absoluteSiteUrl(localizePath(path, locale));
 }
 
-export function buildLanguageAlternates(path: string, locales: Locale[] = supportedLocales) {
+export function buildLanguageAlternates(path: string, locales: readonly Locale[] = supportedLocales) {
     return Object.fromEntries(
         locales.map((locale) => [
             getLanguageTag(locale),
