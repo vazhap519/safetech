@@ -38,10 +38,11 @@ class LocalLandingPerformanceTable extends TableWidget
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('indexing_status')
-                    ->label('Indexing ნებართვა')
-                    ->getStateUsing(fn (LocalServiceLanding $record): string => $record->noindex ? 'Noindex' : 'Indexable')
+                    ->label('ინდექსირების ნებართვა')
+                    ->getStateUsing(fn (LocalServiceLanding $record): string => $record->noindex ? 'Noindex' : 'Allowed')
                     ->badge()
-                    ->color(fn (string $state): string => $state === 'Indexable' ? 'success' : 'warning'),
+                    ->color(fn (string $state): string => $state === 'Allowed' ? 'success' : 'warning')
+                    ->tooltip('Allowed ნიშნავს, რომ CMS არ კრძალავს ინდექსირებას; Google-ში რეალური ინდექსირება მხოლოდ Search Console-ით დასტურდება.'),
                 Tables\Columns\TextColumn::make('published_projects_count')
                     ->label('რეალური პროექტები')
                     ->numeric()
