@@ -60,13 +60,14 @@ class LocalLandingPerformanceTable extends TableWidget
                     ->getStateUsing(fn (LocalServiceLanding $record): int => (int) $this->analytics($record)['whatsapp_clicks'])
                     ->numeric(),
                 Tables\Columns\TextColumn::make('leads')
-                    ->label('ლიდები')
+                    ->label('Analytics ლიდის მოვლენები')
                     ->getStateUsing(fn (LocalServiceLanding $record): int => (int) $this->analytics($record)['leads'])
                     ->numeric(),
                 Tables\Columns\TextColumn::make('lead_conversion_rate')
-                    ->label('Lead CVR')
+                    ->label('Tracked Lead CVR')
                     ->getStateUsing(fn (LocalServiceLanding $record): float => (float) $this->analytics($record)['lead_conversion_rate'])
                     ->suffix('%')
+                    ->tooltip('ბრაუზერის analytics მოვლენების შეფარდება უნიკალურ ვიზიტორებთან; რეალური ContactLead ჩანაწერების რაოდენობა არ არის')
                     ->badge()
                     ->color(fn (float $state): string => match (true) {
                         $state >= 5 => 'success',
