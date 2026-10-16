@@ -43,3 +43,11 @@ test("installed project equipment keeps its name without Product offer markup", 
     expect(equipment).toMatchObject({ "@type": "Thing", description: "2 — QA PoE camera" });
     expect(nodes.some((node) => node["@type"] === "Product")).toBe(false);
 });
+
+test("local quote CTA keeps the CCTV service and Tbilisi location", async ({ page }) => {
+    await page.goto("/services/security-camera-installation/tbilisi");
+    await page.getByRole("button", { name: "მოითხოვეთ მონტაჟის შეთავაზება", exact: true }).first().click();
+    const form = page.locator("#consultation-modal form");
+    await expect(form.locator('select[name="serviceSlug"]')).toHaveValue("security-camera-installation");
+    await expect(form.locator('input[name="details__location"]')).toHaveValue("თბილისი");
+});

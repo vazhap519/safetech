@@ -85,6 +85,23 @@ for (const mode of ["gtm", "meta"]) {
     });
 }
 
+test("revoking consent in another tab also disables the current tab", async ({ page }) => {
+    await page.goto("/qa-marketing/one?mode=both");
+    await page.getByRole("button", { name: "დათანხმება", exact: true }).click();
+    await expect.poll(() => googleEvents(page, "page_view")).toHaveLength(1);
+    await page.evaluate(() => {
+        localStorage.setItem("safetech_marketing_consent", "rejected");
+        document.cookie = "safetech_marketing_consent=rejected; Path=/";
+        window.dispatchEvent(new StorageEvent("storage", {
+            key: "safetech_marketing_consent", newValue: "rejected",
+        }));
+    });
+    await expect(page.locator("[data-qa-counter]")).toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as Record<string, unknown>)["ga-disable-G-QATEST1"])).toBe(true);
+    await page.getByRole("link", { name: "QA phone", exact: true }).click();
+    expect(await googleEvents(page, "phone_click")).toHaveLength(0);
+});
+
 for (const item of [
     { status: 201, replayed: false, consent: "accepted", expected: 1 },
     { status: 200, replayed: true, consent: "accepted", expected: 0 },

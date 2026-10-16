@@ -43,7 +43,10 @@ export function subscribeToAnalyticsConsent(onStoreChange: () => void) {
     if (typeof window === "undefined") return () => undefined;
 
     const handleStorage = (event: StorageEvent) => {
-        if (event.key === ANALYTICS_CONSENT_KEY) onStoreChange();
+        if (event.key === ANALYTICS_CONSENT_KEY || event.key === null) {
+            if (readAnalyticsConsent() !== "accepted") revokeMarketingConsent();
+            onStoreChange();
+        }
     };
 
     window.addEventListener("storage", handleStorage);
