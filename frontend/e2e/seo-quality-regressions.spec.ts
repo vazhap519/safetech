@@ -26,7 +26,7 @@ test("partial Local SEO translations are omitted from hreflang", async ({ page, 
     expect(languages).toContain("ka-GE");
     expect(languages).not.toContain("en-GE");
     expect(languages).not.toContain("ru-GE");
-    await expect(page.getByRole("link", { name: "EN", exact: true }).first())
+    await expect(page.getByRole("link", { name: "EN", exact: true, includeHidden: true }).first())
         .toHaveAttribute("href", `/en/services/${landing.service.slug}`);
 });
 
@@ -49,7 +49,7 @@ test("installed project equipment keeps its name without Product offer markup", 
 
 test("local quote CTA keeps the CCTV service and Tbilisi location", async ({ page }) => {
     await page.goto("/services/security-camera-installation/tbilisi");
-    await expect(page.getByRole("link", { name: "EN", exact: true }).first())
+    await expect(page.getByRole("link", { name: "EN", exact: true, includeHidden: true }).first())
         .toHaveAttribute("href", "/en/services/security-camera-installation/tbilisi");
     await page.getByRole("button", { name: "მოითხოვეთ მონტაჟის შეთავაზება", exact: true }).first().click();
     const form = page.locator("#consultation-modal form");
