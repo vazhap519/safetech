@@ -1,4 +1,5 @@
 import JsonLd from "@/components/seo/JsonLd";
+import PrivacyIntegrations from "@/components/pages/PrivacyIntegrations";
 import type { BackendPage } from "@/lib/backend";
 import type { Locale } from "@/lib/locales";
 import { absoluteLocalizedUrl } from "@/lib/seo";
@@ -162,6 +163,7 @@ export default function LegalPage({
                                 </p>
                             );
                         })}
+                        {canonicalPath === "/privacy" ? <PrivacyIntegrations locale={locale} /> : null}
                     </div>
                 </article>
             </div>

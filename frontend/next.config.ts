@@ -16,7 +16,7 @@ const contentSecurityPolicy = [
   "font-src 'self' https://fonts.gstatic.com data:",
   `img-src 'self' data: blob: ${apiOrigin} https://www.google-analytics.com https://www.google.com https://www.google.ge https://stats.g.doubleclick.net https://www.facebook.com https://counter.top.ge`,
   `connect-src 'self' ${apiOrigin} https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://www.google.com https://www.google.ge https://stats.g.doubleclick.net https://www.facebook.com https://connect.facebook.net`,
-  "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
+  "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://www.googletagmanager.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
