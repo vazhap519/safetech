@@ -9,6 +9,7 @@ This change combines the relevant fixes proposed in #101, #104, #118 and #119 on
 - Changing the privacy choice sends Google denial and Meta revocation, disables the active direct GA4 property, removes stored campaign attribution and stops application event helpers until consent is granted again.
 - The known TOP.GE snippet uses its public image counter endpoint through React. It does not install the vendor's permanent `history.pushState` override, so navigation after revocation cannot keep sending detached-image counter requests.
 - Local SEO summary links, detail availability and sitemap locale eligibility agree. Hreflang lists only available translations.
+- The visible language switcher uses those declared translations too. If local copy is unavailable, it links to the service overview in the chosen language rather than a 404 local URL.
 - During a rolling release with the old backend, language availability comes from its existing strict sitemap endpoint. The sitewide audit compares each page's hreflang URLs with its own sitemap language set, including KA-only pages.
 - Installed equipment uses `Thing` within project context. Image sitemap includes cover and gallery images, deduplicates identical page/image pairs and excludes noindex projects.
 - Privacy lists the active Google, Meta and TOP.GE integrations from the same settings used by the loaders, with a working choice control.

@@ -16,7 +16,8 @@ test("image sitemap includes gallery photos once and excludes noindex projects",
 
 test("partial Local SEO translations are omitted from hreflang", async ({ page, request }) => {
     const api = process.env.E2E_API_BASE || "http://127.0.0.1:8000/api";
-    const response = await request.get(`${api}/local-service-landings?view=summary`);
+    const response = await request.get(`${api}/local-service-landings?view=summary`, { headers: { Accept: "application/json" } });
+    expect(response.ok()).toBeTruthy();
     const body = await response.json();
     const landing = body.data.find((item: { locationSlug: string }) => item.locationSlug === "qa-tbilisi");
     expect(landing).toBeTruthy();
@@ -25,6 +26,8 @@ test("partial Local SEO translations are omitted from hreflang", async ({ page, 
     expect(languages).toContain("ka-GE");
     expect(languages).not.toContain("en-GE");
     expect(languages).not.toContain("ru-GE");
+    await expect(page.getByRole("link", { name: "EN", exact: true }).first())
+        .toHaveAttribute("href", `/en/services/${landing.service.slug}`);
 });
 
 test("installed project equipment keeps its name without Product offer markup", async ({ page }) => {
@@ -46,6 +49,8 @@ test("installed project equipment keeps its name without Product offer markup", 
 
 test("local quote CTA keeps the CCTV service and Tbilisi location", async ({ page }) => {
     await page.goto("/services/security-camera-installation/tbilisi");
+    await expect(page.getByRole("link", { name: "EN", exact: true }).first())
+        .toHaveAttribute("href", "/en/services/security-camera-installation/tbilisi");
     await page.getByRole("button", { name: "მოითხოვეთ მონტაჟის შეთავაზება", exact: true }).first().click();
     const form = page.locator("#consultation-modal form");
     await expect(form.locator('select[name="serviceSlug"]')).toHaveValue("security-camera-installation");

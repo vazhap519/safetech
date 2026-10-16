@@ -154,6 +154,13 @@ jobs:
           EOF
 
           mkdir -p 'src/app/qa-marketing/[step]'
+          cat > src/app/qa-marketing/layout.tsx <<'EOF'
+          import { Suspense, type ReactNode } from "react";
+          import { MarketingBoundary } from "../../../e2e/fixtures/MarketingHarness";
+          export default function Layout({ children }: { children: ReactNode }) {
+              return <Suspense fallback={null}><MarketingBoundary>{children}</MarketingBoundary></Suspense>;
+          }
+          EOF
           cat > 'src/app/qa-marketing/[step]/page.tsx' <<'EOF'
           import MarketingHarness from "../../../../e2e/fixtures/MarketingHarness";
           export const dynamic = "force-dynamic";
