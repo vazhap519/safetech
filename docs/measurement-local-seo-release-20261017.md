@@ -7,7 +7,9 @@ This change combines the relevant fixes proposed in #101, #104, #118 and #119 on
 - Direct GA4 takes precedence over GTM. The external Google tag, Meta Pixel and trusted footer counter load after consent. Initial and client navigation page views use one application path per provider, with a previous-page referrer.
 - Phone, email and WhatsApp clicks have distinct events. They are contact intent, not completed calls or orders. `generate_lead` is not repeated for an idempotent response with `data.replayed=true`.
 - Changing the privacy choice sends Google denial and Meta revocation, disables the active direct GA4 property, removes stored campaign attribution and stops application event helpers until consent is granted again.
+- The known TOP.GE snippet uses its public image counter endpoint through React. It does not install the vendor's permanent `history.pushState` override, so navigation after revocation cannot keep sending detached-image counter requests.
 - Local SEO summary links, detail availability and sitemap locale eligibility agree. Hreflang lists only available translations.
+- During a rolling release with the old backend, language availability comes from its existing strict sitemap endpoint. The sitewide audit compares each page's hreflang URLs with its own sitemap language set, including KA-only pages.
 - Installed equipment uses `Thing` within project context. Image sitemap includes cover and gallery images, deduplicates identical page/image pairs and excludes noindex projects.
 - Privacy lists the active Google, Meta and TOP.GE integrations from the same settings used by the loaders, with a working choice control.
 

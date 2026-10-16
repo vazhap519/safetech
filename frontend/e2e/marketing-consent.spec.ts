@@ -16,26 +16,32 @@ async function metaPageViews(page: Page) {
 test.beforeEach(async ({ page }) => {
     // No test traffic reaches Google, Meta, TOP.GE or production lead endpoints.
     await page.route(/https:\/\/(www\.googletagmanager\.com|connect\.facebook\.net|counter\.top\.ge)\//,
-        (route) => route.fulfill({ contentType: "application/javascript", body: "/* test transport */" }));
+        (route) => route.request().url().includes("count222")
+            ? route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==", "base64") })
+            : route.fulfill({ contentType: "application/javascript", body: "/* test transport */" }));
     await page.route("**/api/analytics/events", (route) => route.fulfill({ json: { data: { tracked: true } } }));
 });
 
 test("consent gates tags; GA4 owns initial and SPA views; revocation stops app events", async ({ page }) => {
     const loaded: string[] = [];
+    const counterRequests: string[] = [];
     page.on("request", (request) => {
         if (/googletagmanager|fbevents\.js/.test(request.url())) loaded.push(request.url());
+        if (request.url().includes("counter.top.ge/cgi-bin/count222")) counterRequests.push(request.url());
     });
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto("/qa-marketing/one?mode=both");
     await expect(page.getByRole("button", { name: "დათანხმება", exact: true })).toBeVisible();
     expect(loaded).toHaveLength(0);
+    expect(counterRequests).toHaveLength(0);
     await expect(page.locator("[data-qa-counter]")).toHaveCount(0);
 
     await page.getByRole("button", { name: "დათანხმება", exact: true }).click();
     await expect.poll(() => googleEvents(page, "page_view")).toHaveLength(1);
     await expect.poll(() => metaPageViews(page)).toBe(1);
     await expect(page.locator("[data-qa-counter]")).toHaveCount(1);
+    await expect.poll(() => counterRequests.length).toBe(1);
     expect(loaded.filter((url) => url.includes("gtm.js"))).toHaveLength(0);
     expect(loaded.filter((url) => url.includes("gtag/js"))).toHaveLength(1);
     expect(await page.evaluate(() => (window.dataLayer || []).map((x) => Array.from(x as ArrayLike<unknown>))
@@ -48,6 +54,7 @@ test("consent gates tags; GA4 owns initial and SPA views; revocation stops app e
     await page.getByRole("link", { name: "Next test view" }).click();
     await expect.poll(() => googleEvents(page, "page_view")).toHaveLength(2);
     await expect.poll(() => metaPageViews(page)).toBe(2);
+    await expect.poll(() => counterRequests.length).toBe(2);
     const second = (await googleEvents(page, "page_view"))[1][2] as Record<string, string>;
     expect(second.page_referrer).toContain("/qa-marketing/one");
     expect(second.page_path).toBe("/qa-marketing/two");
@@ -57,6 +64,10 @@ test("consent gates tags; GA4 owns initial and SPA views; revocation stops app e
     expect(await googleEvents(page, "phone_click")).toHaveLength(1);
     await expect(page.locator("[data-qa-counter]")).toHaveCount(0);
     expect(await page.evaluate(() => (window as unknown as Record<string, unknown>)["ga-disable-G-QATEST1"])).toBe(true);
+    await page.getByRole("link", { name: "Next test view" }).click();
+    await expect(page).toHaveURL(/qa-marketing\/one/);
+    expect(counterRequests).toHaveLength(2);
+    expect(await googleEvents(page, "page_view")).toHaveLength(2);
     expect(errors).toEqual([]);
 });
 

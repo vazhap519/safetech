@@ -150,9 +150,20 @@ export async function getLocalServiceLanding(
         true,
     );
 
-    return landing && landing.translationAvailable !== false
-        ? normalizeLanding(landing)
-        : undefined;
+    if (!landing || landing.translationAvailable === false) return undefined;
+
+    // During a rolling release, the previous API already exposes strict locale
+    // availability in its sitemap view, but not yet in the detail response.
+    if (!landing.availableLocales?.length) {
+        const sitemap = await fetchData<Array<{
+            locationSlug: string;
+            availableLocales: Array<"ka" | "en" | "ru">;
+        }>>(apiPath("/local-service-landings", {
+            service: serviceSlug, location: locationSlug, view: "sitemap",
+        }));
+        landing.availableLocales = sitemap?.find((item) => item.locationSlug === locationSlug)?.availableLocales ?? [locale];
+    }
+    return normalizeLanding(landing);
 }
 
 export async function getLocalServiceLandings(

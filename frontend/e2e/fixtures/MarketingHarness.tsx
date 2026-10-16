@@ -15,6 +15,7 @@ export default function MarketingHarness({ mode, step }: { mode: string; step: s
             googleTagManagerId={mode === "both" || mode === "gtm" ? "GTM-QATEST2" : undefined}
             metaPixelId="123456789" />
         <ConsentFooterCode enabled code={'<div data-qa-counter></div><script>window.qaFooterLoads=(window.qaFooterLoads||0)+1</script>'} />
+        <ConsentFooterCode enabled code={'<div id="top-ge-counter-container" data-site-id="12345"></div><script async src="https://counter.top.ge/counter.js"></script>'} />
         <ConsentSettingsButton enabled />
         <Link href={`/qa-marketing/${step === "one" ? "two" : "one"}?mode=${mode}`}>Next test view</Link>
         <a href="tel:+995555000111" onClick={(event) => event.preventDefault()}>QA phone</a>
