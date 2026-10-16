@@ -15,14 +15,15 @@ import {
 
 function subscribeToMetadata(onChange: () => void) {
     const observer = new MutationObserver(onChange);
-    observer.observe(document.head, { childList: true, subtree: true, attributes: true, attributeFilter: ["href", "hreflang"] });
+    // Next.js can stream page metadata into the body before hoisting it.
+    observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["href", "hreflang"] });
     return () => observer.disconnect();
 }
 
 function translatedLocales(pathname: string) {
     return supportedLocales.filter((locale) => {
-        const href = document.head.querySelector<HTMLLinkElement>(`link[rel="alternate"][hreflang="${getLanguageTag(locale)}"]`)?.href;
-        return href && new URL(href).pathname === localizePath(pathname, locale);
+        const links = document.querySelectorAll<HTMLLinkElement>(`link[rel="alternate"][hreflang="${getLanguageTag(locale)}"]`);
+        return Array.from(links).some((link) => new URL(link.href).pathname === localizePath(pathname, locale));
     }).join(",");
 }
 

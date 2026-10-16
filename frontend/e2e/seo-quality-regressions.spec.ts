@@ -49,6 +49,10 @@ test("installed project equipment keeps its name without Product offer markup", 
 
 test("local quote CTA keeps the CCTV service and Tbilisi location", async ({ page }) => {
     await page.goto("/services/security-camera-installation/tbilisi");
+    const english = page.locator('link[rel="alternate"][hreflang="en-GE"]');
+    await expect(english).toHaveAttribute("href", /\/en\/services\/security-camera-installation\/tbilisi$/);
+    // Cover Next.js streaming metadata outside document.head as well.
+    await english.evaluateAll((links) => links.forEach((link) => document.body.append(link)));
     await expect(page.getByRole("link", { name: "EN", exact: true, includeHidden: true }).first())
         .toHaveAttribute("href", "/en/services/security-camera-installation/tbilisi");
     await page.getByRole("button", { name: "მოითხოვეთ მონტაჟის შეთავაზება", exact: true }).first().click();
