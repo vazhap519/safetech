@@ -58,12 +58,14 @@ export default function ContactInteractionTracker() {
 
             if (method === "whatsapp") {
                 trackWhatsAppClick(getCurrentPagePath());
+                trackEvent("whatsapp_click", { method });
                 return;
             }
 
             trackEvent("contact", { method });
 
             if (method === "phone" || method === "email") {
+                trackEvent(method === "phone" ? "phone_click" : "email_click", { method });
                 trackContactClick(method, getCurrentPagePath());
             }
         }

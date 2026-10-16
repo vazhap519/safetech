@@ -14,6 +14,7 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 type LeadResponse = {
     message?: string;
     errors?: Record<string, string[]>;
+    data?: { id?: number; replayed?: boolean };
 };
 
 type PendingSubmission = {
@@ -212,11 +213,14 @@ export function useLeadForm(source: string) {
             setStatus("success");
             setMessage(result?.message || t("forms.success.submit", null));
 
-            trackEvent("generate_lead", {
-                form_source: source,
-                service_slug: serviceSlug || undefined,
-            });
-            trackLeadCreated(source, serviceSlug || undefined);
+            // A successful idempotency replay is the same saved request.
+            if (!result?.data?.replayed) {
+                trackEvent("generate_lead", {
+                    form_source: source,
+                    service_slug: serviceSlug || undefined,
+                });
+                trackLeadCreated(source, serviceSlug || undefined);
+            }
         } catch (error) {
             setStatus("error");
 

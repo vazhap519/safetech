@@ -102,8 +102,10 @@ jobs:
           php artisan migrate:fresh --seed --force
           php artisan safetech:local-seo-audit --strict
           php artisan tinker --execute="\
+          \$integration = App\\Models\\SiteSetting::query()->where('key', 'integrations')->firstOrFail(); \
+          \$integration->forceFill(['value' => array_merge(\$integration->value ?? [], ['marketing_enabled' => false])])->save(); \
           \$category = App\\Models\\ProjectCategory::query()->updateOrCreate(['slug' => 'qa-project-category'], ['name' => 'QA Project Category', 'sort_order' => 999]); \
-          App\\Models\\Project::query()->updateOrCreate(['slug' => 'qa-release-project'], ['title' => 'QA Release Project', 'excerpt' => 'Release candidate project route probe.', 'content' => 'Release candidate project route probe content.', 'category_id' => \$category->id, 'is_published' => true, 'published_at' => now(), 'video_url' => 'https://youtube.com/shorts/JMO-UtBYR7Y', 'sort_order' => 999, 'results' => [['value' => '13 cameras; 10 originally installed; 3 added later', 'title' => 'Project results', 'description' => 'Verified cameras installed.', 'accent' => 'primary']], 'specs' => [['value' => '13 cameras; 10 initial; 3 additional', 'label' => 'Camera coverage']], 'challenges' => [['title' => 'Project challenge', 'description' => 'Additional camera coverage required.']], 'solutions' => [['title' => 'Project solution', 'description' => 'Install the additional cameras.']], 'process' => [['title' => 'Installation', 'description' => 'Install and verify the system.']]]); \
+          App\\Models\\Project::query()->updateOrCreate(['slug' => 'qa-release-project'], ['equipment' => [['name' => 'QA PoE camera', 'quantity' => '2']], 'title' => 'QA Release Project', 'excerpt' => 'Release candidate project route probe.', 'content' => 'Release candidate project route probe content.', 'category_id' => \$category->id, 'is_published' => true, 'published_at' => now(), 'video_url' => 'https://youtube.com/shorts/JMO-UtBYR7Y', 'sort_order' => 999, 'results' => [['value' => '13 cameras; 10 originally installed; 3 added later', 'title' => 'Project results', 'description' => 'Verified cameras installed.', 'accent' => 'primary']], 'specs' => [['value' => '13 cameras; 10 initial; 3 additional', 'label' => 'Camera coverage']], 'challenges' => [['title' => 'Project challenge', 'description' => 'Additional camera coverage required.']], 'solutions' => [['title' => 'Project solution', 'description' => 'Install the additional cameras.']], 'process' => [['title' => 'Installation', 'description' => 'Install and verify the system.']]]); \
           \$localService = App\\Models\\Service::query()->publiclyVisible()->orderBy('sort_order')->orderBy('id')->firstOrFail(); \
           App\\Models\\LocalServiceLanding::query()->updateOrCreate(['service_id' => \$localService->id, 'location_slug' => 'qa-tbilisi'], ['location_name' => 'Tbilisi', 'title' => 'QA Local Service Tbilisi', 'excerpt' => 'Release candidate Local SEO route probe.', 'content' => 'Release candidate Local SEO route probe content with enough detail for an indexable service landing.', 'primary_keyword' => 'qa local service tbilisi', 'keywords' => ['qa local service', 'tbilisi'], 'is_published' => true, 'noindex' => false, 'published_at' => now(), 'sort_order' => 999]); \
           App\\Models\\Page::query()->updateOrCreate(['slug' => 'qa-dynamic-page'], ['title' => 'QA Dynamic Page', 'excerpt' => 'Release candidate dynamic page route probe.', 'content' => 'Release candidate dynamic page route probe content.', 'is_published' => true, 'noindex' => true, 'published_at' => now(), 'sort_order' => 999]); \
@@ -148,6 +150,18 @@ jobs:
 
           export default function QaRuntimeErrorProbe() {
               throw new Error("Intentional release-candidate runtime error probe.");
+          }
+          EOF
+
+          mkdir -p 'src/app/qa-marketing/[step]'
+          cat > 'src/app/qa-marketing/[step]/page.tsx' <<'EOF'
+          import MarketingHarness from "../../../../e2e/fixtures/MarketingHarness";
+          export const dynamic = "force-dynamic";
+          export default async function QaMarketing({ params, searchParams }: {
+              params: Promise<{ step: string }>;
+              searchParams: Promise<{ mode?: string }>;
+          }) {
+              return <MarketingHarness step={(await params).step} mode={(await searchParams).mode || "both"} />;
           }
           EOF
 

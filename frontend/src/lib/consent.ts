@@ -64,6 +64,7 @@ export function saveAnalyticsConsent(
         // The consent cookie remains the durable fallback.
     }
     writeConsentCookie(consent);
+    if (consent === "rejected") revokeMarketingConsent();
     window.dispatchEvent(new Event(ANALYTICS_CONSENT_EVENT));
 }
 
@@ -72,6 +73,7 @@ export function hasAnalyticsConsent() {
 }
 
 export function resetAnalyticsConsent() {
+    revokeMarketingConsent();
     try {
         window.localStorage.removeItem(ANALYTICS_CONSENT_KEY);
     } catch {
@@ -80,4 +82,22 @@ export function resetAnalyticsConsent() {
     const secure = window.location.protocol === "https:" ? "; Secure" : "";
     document.cookie = `${ANALYTICS_CONSENT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${secure}`;
     window.dispatchEvent(new Event(ANALYTICS_CONSENT_EVENT));
+}
+
+function revokeMarketingConsent() {
+    window.gtag?.("consent", "update", {
+        ad_storage: "denied", ad_user_data: "denied",
+        ad_personalization: "denied", analytics_storage: "denied",
+    });
+    const gaId = window.safetechGoogleAnalyticsId;
+    if (gaId) {
+        (window as unknown as Record<string, unknown>)[`ga-disable-${gaId}`] = true;
+    }
+    window.fbq?.("consent", "revoke");
+    try {
+        window.sessionStorage.removeItem("safetech_campaign_attribution");
+        window.localStorage.removeItem("safetech_visitor_id");
+    } catch {
+        // Consent remains effective when browser storage is unavailable.
+    }
 }

@@ -18,6 +18,7 @@ export type LocalServiceLandingProjectReference = {
 export type LocalServiceLandingSummary = {
     id: number;
     translationAvailable?: boolean;
+    availableLocales?: Array<"ka" | "en" | "ru">;
     locationSlug: string;
     locationName: string;
     title: string;

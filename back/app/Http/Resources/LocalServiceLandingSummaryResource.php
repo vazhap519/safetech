@@ -21,6 +21,8 @@ class LocalServiceLandingSummaryResource extends JsonResource
                 'locationName' => $this->location_name,
                 'title' => $this->title,
                 'seoTitle' => $this->seo_title ?: $this->title,
+                'content' => $this->content,
+                'seoDescription' => $this->seo_description ?: ($this->excerpt ?: $this->content),
             ],
             $locale,
         );
