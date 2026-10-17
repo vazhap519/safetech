@@ -1,3 +1,4 @@
+import Script from "next/script";
 import ConsentSettingsButton from "@/components/analytics/ConsentSettingsButton";
 import FooterCopy from "@/components/Footer/components/FooterCopy";
 import TranslatedText from "@/components/i18n/TranslatedText";
@@ -15,11 +16,12 @@ export default async function FooterBottom({
             <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center">
                 <FooterCopy />
                 {footerCounterCode ? (
-                    <div
-                        className="flex min-h-5 items-center justify-center"
-                        dangerouslySetInnerHTML={{ __html: footerCounterCode }}
-                        suppressHydrationWarning
-                    />
+                    <div className="flex min-h-5 items-center justify-center">
+                        <div dangerouslySetInnerHTML={{ __html: footerCounterCode.replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi, "") }} />
+                        {footerCounterCode.includes("counter.top.ge/counter.js") ? (
+                            <Script id="top-ge-counter-script" src="https://counter.top.ge/counter.js" strategy="afterInteractive" />
+                        ) : null}
+                    </div>
                 ) : null}
             </div>
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:justify-end">
