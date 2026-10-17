@@ -38,10 +38,11 @@ class LocalLandingPerformanceTable extends TableWidget
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('indexing_status')
-                    ->label('Indexing ნებართვა')
-                    ->getStateUsing(fn (LocalServiceLanding $record): string => $record->noindex ? 'Noindex' : 'Indexable')
+                    ->label('ინდექსირების ნებართვა')
+                    ->getStateUsing(fn (LocalServiceLanding $record): string => $record->noindex ? 'Noindex' : 'Allowed')
                     ->badge()
-                    ->color(fn (string $state): string => $state === 'Indexable' ? 'success' : 'warning'),
+                    ->color(fn (string $state): string => $state === 'Allowed' ? 'success' : 'warning')
+                    ->tooltip('Allowed ნიშნავს, რომ CMS არ კრძალავს ინდექსირებას; Google-ში რეალური ინდექსირება მხოლოდ Search Console-ით დასტურდება.'),
                 Tables\Columns\TextColumn::make('published_projects_count')
                     ->label('რეალური პროექტები')
                     ->numeric()
@@ -59,13 +60,14 @@ class LocalLandingPerformanceTable extends TableWidget
                     ->getStateUsing(fn (LocalServiceLanding $record): int => (int) $this->analytics($record)['whatsapp_clicks'])
                     ->numeric(),
                 Tables\Columns\TextColumn::make('leads')
-                    ->label('ლიდები')
+                    ->label('Analytics ლიდის მოვლენები')
                     ->getStateUsing(fn (LocalServiceLanding $record): int => (int) $this->analytics($record)['leads'])
                     ->numeric(),
                 Tables\Columns\TextColumn::make('lead_conversion_rate')
-                    ->label('Lead CVR')
+                    ->label('Tracked Lead CVR')
                     ->getStateUsing(fn (LocalServiceLanding $record): float => (float) $this->analytics($record)['lead_conversion_rate'])
                     ->suffix('%')
+                    ->tooltip('ბრაუზერის analytics მოვლენების შეფარდება უნიკალურ ვიზიტორებთან; რეალური ContactLead ჩანაწერების რაოდენობა არ არის')
                     ->badge()
                     ->color(fn (float $state): string => match (true) {
                         $state >= 5 => 'success',

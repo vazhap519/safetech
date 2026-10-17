@@ -54,13 +54,13 @@ class LocalSeoOpportunityTable extends TableWidget
                 Tables\Columns\TextColumn::make('local_pages_count')
                     ->label('Local დრაფტები')
                     ->numeric()
-                    ->description('არსებული, მაგრამ ჯერ არაინდექსირებადი'),
+                    ->description('ყველა Local გვერდი, მათ შორის გამოქვეყნებულიც; მხოლოდ დრაფტები არ არის'),
                 Tables\Columns\TextColumn::make('slug')
                     ->label('სერვისის slug')
                     ->copyable()
                     ->searchable(),
             ])
-            ->emptyStateHeading('ყველა გამოქვეყნებულ სერვისს აქვს ინდექსირებადი Local SEO გვერდი')
+            ->emptyStateHeading('ყველა გამოქვეყნებულ სერვისს აქვს CMS-ში ინდექსირებაზე დაშვებული Local SEO გვერდი')
             ->emptyStateDescription('შემდეგი ფოკუსი გადაიტანეთ გვერდების ხარისხზე, პროექტებზე და კონვერსიაზე.')
             ->paginated([10, 25, 50]);
     }

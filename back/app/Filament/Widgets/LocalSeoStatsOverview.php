@@ -46,14 +46,14 @@ class LocalSeoStatsOverview extends StatsOverviewWidget
             Stat::make('Local SEO დაფარვა', "{$coveredServices} / {$publishedServices}")
                 ->description("{$coverage}% გამოქვეყნებული სერვისებისა")
                 ->color($coverage >= 70 ? 'success' : ($coverage >= 30 ? 'warning' : 'danger')),
-            Stat::make('ინდექსირებადი Local გვერდები', $indexablePages)
-                ->description('Published + noindex გამორთული')
-                ->color('success'),
+            Stat::make('ინდექსირებაზე დაშვებული Local გვერდები', $indexablePages)
+                ->description('CMS: გამოქვეყნებული + noindex გამორთული; Google-ის ინდექსირება დაუდასტურებელია')
+                ->color('info'),
             Stat::make('SEO შესაძლებლობები', $opportunities)
-                ->description('სერვისები ინდექსირებადი Local გვერდის გარეშე')
+                ->description('სერვისები CMS-ში ინდექსირებაზე დაშვებული Local გვერდის გარეშე')
                 ->color($opportunities > 0 ? 'warning' : 'success'),
             Stat::make('რეალური პროექტის გარეშე', $withoutProjectProof)
-                ->description('დაკავშირებული რეალური საჯარო პროექტის გარეშე; ხელით გადასამოწმებელია')
+                ->description('დაკავშირებული საჯარო პროექტის გარეშე; ეს თავისთავად SEO დარღვევა არ არის')
                 ->color($withoutProjectProof > 0 ? 'warning' : 'success'),
             Stat::make('Live, მაგრამ noindex', $liveNoindexPages)
                 ->description('კონტენტის დასრულების შემდეგ გადაამოწმეთ')
