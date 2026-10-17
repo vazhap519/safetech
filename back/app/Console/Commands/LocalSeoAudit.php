@@ -35,6 +35,7 @@ final class LocalSeoAudit extends Command
             ->get();
 
         $problems = [];
+        $editorialWarnings = 0;
         $this->info(sprintf(
             'Local SEO technical coverage: %d/%d indexable published services, %d indexable Local pages, %d with no linked public project.',
             $indexableServices->count() - $missing->count(),
@@ -96,6 +97,7 @@ final class LocalSeoAudit extends Command
                         continue;
                     }
 
+                    $editorialWarnings++;
                     $this->warn(sprintf(
                         'Duplicate %s %s across %d indexable Local pages: %s',
                         $locale,
@@ -111,6 +113,7 @@ final class LocalSeoAudit extends Command
             $this->error($problem);
         }
 
+        $this->line(sprintf('SEO audit summary: %d technical/metadata issues, %d duplicate metadata groups requiring editorial review, %d Local pages without linked public projects.', count($problems), $editorialWarnings, $withoutProjects->count()));
         $this->warn('Linked proof is a separate editorial task: never invent or misattribute a completed project to clear a warning.');
         $this->line('Indexable here means published and noindex=false, NOT verified indexing or a Google ranking.');
         $this->line('Check Google Search Console URL Inspection, Core Web Vitals and actual organic conversions after deployment.');
