@@ -3,14 +3,14 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 
-import { trackServiceView } from "@/lib/analytics-events";
+import { trackInternalEvent, trackServiceView } from "@/lib/analytics-events";
 import {
     readAnalyticsConsent,
     subscribeToAnalyticsConsent,
 } from "@/lib/consent";
 
 type ServiceViewTrackerProps = {
-    serviceSlug: string;
+    serviceSlug?: string;
 };
 
 export default function ServiceViewTracker({
@@ -32,7 +32,11 @@ export default function ServiceViewTracker({
             return;
         }
 
-        if (trackServiceView(serviceSlug, pagePath)) {
+        const tracked = serviceSlug
+            ? trackServiceView(serviceSlug, pagePath)
+            : trackInternalEvent("service_view", { pagePath });
+
+        if (tracked) {
             lastTrackedKey.current = trackingKey;
         }
     }, [consent, pagePath, serviceSlug]);

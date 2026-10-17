@@ -139,7 +139,7 @@ export default function LocalServiceLandingView({
 
     return (
         <article className="pt-[76px]">
-            <ServiceViewTracker serviceSlug={landing.service.slug} />
+            <ServiceViewTracker />
             <JsonLd data={schemas} />
 
             <section className="relative overflow-hidden px-5 py-14 md:px-8 md:py-20 xl:px-14">
