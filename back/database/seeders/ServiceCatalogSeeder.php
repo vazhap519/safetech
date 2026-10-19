@@ -812,7 +812,22 @@ class ServiceCatalogSeeder extends Seeder
                 ]),
         ];
 
-        return [...$services, ...$this->googleBusinessServices()];
+        // The public catalog is deliberately limited to the seven approved offerings.
+        // Granular Google Business Profile entries remain definitions, not public pages.
+        $canonical = [
+            'security-camera-installation',
+            'rack-assembly-cable-management',
+            'barrier-gate-installation',
+            'intercom-access-control-installation',
+            'business-it-support',
+            'router-wifi-configuration',
+            'operating-system-installation',
+        ];
+
+        return array_values(array_filter(
+            $services,
+            static fn (array $service): bool => in_array($service['slug'], $canonical, true),
+        ));
     }
 
     /** @return array<int, array<string, mixed>> */
