@@ -16,7 +16,7 @@ class RefreshPublicContentCommandTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_refresh_removes_legacy_aliases_when_the_canonical_content_version_advances(): void
+    public function test_destructive_refresh_is_blocked_until_seven_service_migration_is_verified(): void
     {
         $this->seed(ProductionContentSeeder::class);
 
@@ -43,17 +43,10 @@ class RefreshPublicContentCommandTest extends TestCase
         );
 
         $this->artisan('safetech:refresh-public-content', ['--force' => true])
-            ->assertExitCode(0);
+            ->assertExitCode(1);
 
-        $this->assertDatabaseMissing('services', ['slug' => 'ip-camera-installation']);
-        $this->assertDatabaseHas('services', ['slug' => 'security-camera-installation']);
-        $this->assertSame(
-            '2026-10-02-canonical-seo-v5',
-            data_get(
-                SiteSetting::query()->where('key', 'system_content_seed_version')->sole()->value,
-                'version',
-            ),
-        );
+        $this->assertDatabaseHas('services', ['slug' => 'ip-camera-installation']);
+        $this->assertSame('2026-09-30-canonical-seo-v4', data_get(SiteSetting::query()->where('key', 'system_content_seed_version')->sole()->value, 'version'));
     }
 
     public function test_refresh_rebuilds_public_seo_and_preserves_projects_categories_and_quote_data(): void
@@ -113,50 +106,12 @@ class RefreshPublicContentCommandTest extends TestCase
         $contact->save();
 
         $this->artisan('safetech:refresh-public-content', ['--force' => true])
-            ->assertExitCode(0);
-
-        $this->assertDatabaseHas('projects', [
-            'id' => $project->id,
-            'slug' => 'real-project',
-            'category_id' => $projectCategory->id,
-        ]);
-        $this->assertDatabaseHas('project_categories', [
-            'id' => $projectCategory->id,
-            'slug' => 'real-project-category',
-        ]);
-
-        $this->assertDatabaseMissing('services', ['slug' => 'ip-camera-installation']);
-
-        $canonical->refresh();
-        $this->assertDatabaseHas('quote_catalog_items', [
-            'service_id' => $canonical->id,
-            'component_key' => 'legacy-camera',
-        ]);
-
-        $rebuiltLanding = LocalServiceLanding::query()
-            ->where('service_id', $canonical->id)
-            ->where('location_slug', 'tbilisi')
-            ->sole();
-        $this->assertDatabaseHas('local_service_landing_project', [
-            'landing_id' => $rebuiltLanding->id,
-            'project_id' => $project->id,
-        ]);
-
-        $contact->refresh();
-        $this->assertTrue((bool) data_get($contact->value, 'service_area_business'));
-        $this->assertSame('', data_get($contact->value, 'address'));
-        $this->assertSame('', data_get($contact->value, 'address_en'));
-        $this->assertSame('', data_get($contact->value, 'address_ru'));
-
-        $this->assertDatabaseHas('site_settings', [
-            'key' => 'system_content_seed_version',
-            'is_public' => false,
-        ]);
-
-        $this->artisan('safetech:refresh-public-content')
-            ->assertExitCode(0);
+            ->assertExitCode(1);
 
         $this->assertDatabaseHas('projects', ['id' => $project->id]);
         $this->assertDatabaseHas('project_categories', ['id' => $projectCategory->id]);
+        $this->assertDatabaseHas('services', ['slug' => 'ip-camera-installation']);
+        $this->assertDatabaseHas('quote_catalog_items', ['service_id' => $alias->id, 'component_key' => 'legacy-camera']);
+        $this->assertDatabaseHas('local_service_landing_project', ['landing_id' => $landing->id, 'project_id' => $project->id]);
     }
 }
