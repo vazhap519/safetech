@@ -22,9 +22,9 @@ class ServiceCatalogSeederTest extends TestCase
             'barrier-gate-installation',
             'business-it-support',
             'intercom-access-control-installation',
-            'operating-system-installation',
             'low-voltage-cabling',
             'network-installation-configuration',
+            'operating-system-installation',
             'security-camera-installation',
         ];
 
