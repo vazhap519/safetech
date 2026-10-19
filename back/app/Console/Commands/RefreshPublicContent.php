@@ -30,6 +30,15 @@ final class RefreshPublicContent extends Command
 
     public function handle(): int
     {
+        // Catalog reduction must never run through the legacy destructive refresh.
+        // A dedicated, backed-up service-reference migration is required first.
+        if (count(ServiceCatalogSeeder::canonicalServiceSlugs()) === 7 &&
+            ((bool) $this->option('reset') || $this->currentVersion() !== self::VERSION)) {
+            $this->error('Seven-service migration is not approved for destructive refresh. Preserve existing service references and run a dedicated verified migration first.');
+
+            return self::FAILURE;
+        }
+
         $currentVersion = $this->currentVersion();
         $needsReset = (bool) $this->option('reset') || $currentVersion !== self::VERSION;
 
