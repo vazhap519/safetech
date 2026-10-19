@@ -547,7 +547,7 @@ class ServiceCatalogSeeder extends Seeder
     /** @return array<int, array<string, mixed>> */
     private function categories(): array
     {
-        return [
+        $categories =
             $this->category(
                 'computer-services',
                 self::t('კომპიუტერული სერვისები', 'Computer Services', 'Компьютерные услуги'),
@@ -604,6 +604,16 @@ class ServiceCatalogSeeder extends Seeder
                 ],
             ),
         ];
+
+        return array_values(array_filter(
+            $categories,
+            static fn (array $category): bool => in_array($category['slug'], [
+                'computer-services',
+                'business-it',
+                'network-infrastructure',
+                'security-access-automation',
+            ], true),
+        ));
     }
 
     private function category(string $slug, array $name, array $seoTitle, array $description, array $keywords): array
