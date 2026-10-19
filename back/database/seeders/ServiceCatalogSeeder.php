@@ -547,7 +547,7 @@ class ServiceCatalogSeeder extends Seeder
     /** @return array<int, array<string, mixed>> */
     private function categories(): array
     {
-        $categories =
+        $categories = [
             $this->category(
                 'computer-services',
                 self::t('კომპიუტერული სერვისები', 'Computer Services', 'Компьютерные услуги'),
