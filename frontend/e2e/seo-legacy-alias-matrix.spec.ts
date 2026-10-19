@@ -2,6 +2,12 @@ import { expect, test } from "@playwright/test";
 
 const aliases = [
   ["ip-camera-installation", "security-camera-installation"],
+  ["rack-assembly-cable-management", "low-voltage-cabling"],
+  ["network-rack-installation", "low-voltage-cabling"],
+  ["router-wifi-configuration", "network-installation-configuration"],
+  ["lan-network-installation", "network-installation-configuration"],
+  ["custom-computer-build", "operating-system-installation"],
+  ["pos-system-installation", "business-it-support"],
   ["video-surveillance-system-installation", "security-camera-installation"],
   ["barrier-gate-setup", "barrier-gate-installation"],
   ["it-technical-support", "business-it-support"],
