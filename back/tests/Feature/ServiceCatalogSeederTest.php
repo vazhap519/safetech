@@ -16,6 +16,27 @@ class ServiceCatalogSeederTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_only_the_seven_approved_services_are_seeded(): void
+    {
+        $expected = [
+            'barrier-gate-installation',
+            'business-it-support',
+            'intercom-access-control-installation',
+            'operating-system-installation',
+            'rack-assembly-cable-management',
+            'router-wifi-configuration',
+            'security-camera-installation',
+        ];
+
+        $this->assertSame($expected, collect(ServiceCatalogSeeder::canonicalServiceSlugs())->sort()->values()->all());
+
+        $this->seed(ServiceCatalogSeeder::class);
+        $this->seed(ServiceCatalogSeeder::class);
+
+        $this->assertDatabaseCount('services', 7);
+        $this->assertSame($expected, Service::query()->pluck('slug')->sort()->values()->all());
+    }
+
     public function test_it_seeds_the_complete_multilingual_it_service_catalog_idempotently(): void
     {
         $this->seed(ServiceCatalogSeeder::class);
