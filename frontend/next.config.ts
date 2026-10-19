@@ -42,6 +42,10 @@ const nextConfig: NextConfig = {
   async redirects() {
     const aliases: Record<string, string> = {
       "rack-assembly-cable-management": "low-voltage-cabling",
+      "custom-computer-build": "operating-system-installation",
+      "pos-system-installation": "business-it-support",
+      "computer-cleaning-maintenance": "operating-system-installation",
+      "patch-panel-installation": "low-voltage-cabling",
       "network-rack-installation": "low-voltage-cabling",
       "network-cable-installation": "low-voltage-cabling",
       "patch-panel-network-outlet-installation": "low-voltage-cabling",
