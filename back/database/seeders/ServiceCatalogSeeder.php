@@ -1004,7 +1004,7 @@ class ServiceCatalogSeeder extends Seeder
                 ['en' => 'Reassembly and load testing', 'ru' => 'Сборка и нагрузочный тест'],
             ],
         ],
-        'rack-assembly-cable-management' => [
+        'low-voltage-cabling' => [
             'highlights' => [
                 ['en' => 'Correct U-space allocation', 'ru' => 'Правильное распределение U-мест'],
                 ['en' => 'Labeled cables', 'ru' => 'Маркированные кабели'],
@@ -1064,7 +1064,7 @@ class ServiceCatalogSeeder extends Seeder
                 ['en' => 'Access, app, and security testing', 'ru' => 'Тестирование доступа, приложения и безопасности'],
             ],
         ],
-        'router-wifi-configuration' => [
+        'network-installation-configuration' => [
             'highlights' => [
                 ['en' => 'Stable Wi-Fi coverage', 'ru' => 'Стабильное покрытие Wi-Fi'],
                 ['en' => 'Secure network settings', 'ru' => 'Защищенные настройки сети'],
