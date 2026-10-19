@@ -33,6 +33,11 @@ class ServiceCatalogSeederTest extends TestCase
         $this->seed(ServiceCatalogSeeder::class);
         $this->seed(ServiceCatalogSeeder::class);
 
+        $this->assertSame(
+            ['business-it', 'computer-services', 'network-infrastructure', 'security-access-automation'],
+            collect(ServiceCatalogSeeder::canonicalCategorySlugs())->sort()->values()->all(),
+        );
+        $this->assertDatabaseCount('category_for_services', 4);
         $this->assertDatabaseCount('services', 7);
         $this->assertSame($expected, Service::query()->pluck('slug')->sort()->values()->all());
     }
@@ -42,7 +47,7 @@ class ServiceCatalogSeederTest extends TestCase
         $this->seed(ServiceCatalogSeeder::class);
         $this->seed(ServiceCatalogSeeder::class);
 
-        $this->assertDatabaseCount('category_for_services', 5);
+        $this->assertDatabaseCount('category_for_services', 4);
         $this->assertDatabaseCount('services', count(ServiceCatalogSeeder::canonicalServiceSlugs()));
         $this->assertDatabaseCount('faqs', count(ServiceCatalogSeeder::canonicalFaqContexts()));
 
@@ -155,7 +160,7 @@ class ServiceCatalogSeederTest extends TestCase
         $this->assertTrue($services->every(fn (Service $service): bool => filled($service->seo_description)));
         $this->assertTrue($services->every(fn (Service $service): bool => is_array($service->keywords) && count($service->keywords) >= 3));
 
-        $this->assertSame(5, CategoryForService::query()->count());
+        $this->assertSame(4, CategoryForService::query()->count());
         $this->assertSame(
             count(ServiceCatalogSeeder::canonicalFaqContexts()),
             Faq::query()->count(),
