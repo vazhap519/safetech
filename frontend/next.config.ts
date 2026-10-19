@@ -39,6 +39,31 @@ const nextConfig: NextConfig = {
       new URL("https://i.ytimg.com/vi/**"),
     ],
   },
+  async redirects() {
+    const aliases: Record<string, string> = {
+      "rack-assembly-cable-management": "low-voltage-cabling",
+      "network-rack-installation": "low-voltage-cabling",
+      "network-cable-installation": "low-voltage-cabling",
+      "patch-panel-network-outlet-installation": "low-voltage-cabling",
+      "cat6-cabling": "low-voltage-cabling",
+      "structured-cabling": "low-voltage-cabling",
+      "router-wifi-configuration": "network-installation-configuration",
+      "lan-installation": "network-installation-configuration",
+      "lan-network-installation": "network-installation-configuration",
+      "wifi-network-installation": "network-installation-configuration",
+      "access-control-installation": "intercom-access-control-installation",
+      "access-control-system-installation": "intercom-access-control-installation",
+      "ip-camera-installation": "security-camera-installation",
+      "barrier-gate-setup": "barrier-gate-installation",
+      "it-technical-support": "business-it-support",
+    };
+    return Object.entries(aliases).flatMap(([source, target]) =>
+      ["", "/en", "/ru"].flatMap((prefix) => [
+        { source: `${prefix}/services/${source}`, destination: `${prefix}/services/${target}`, permanent: true },
+        { source: `${prefix}/services/${source}/:city`, destination: `${prefix}/services/${target}/:city`, permanent: true },
+      ]),
+    );
+  },
   async headers() {
     return [
       {
