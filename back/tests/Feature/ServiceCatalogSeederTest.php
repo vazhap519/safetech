@@ -23,8 +23,8 @@ class ServiceCatalogSeederTest extends TestCase
             'business-it-support',
             'intercom-access-control-installation',
             'operating-system-installation',
-            'rack-assembly-cable-management',
-            'router-wifi-configuration',
+            'low-voltage-cabling',
+            'network-installation-configuration',
             'security-camera-installation',
         ];
 
@@ -79,18 +79,18 @@ class ServiceCatalogSeederTest extends TestCase
         );
         $this->assertSame(
             'VLAN, VPN and firewall',
-            $translationMap['service.router-wifi-configuration.highlight.2']['en'] ?? null,
+            $translationMap['service.network-installation-configuration.highlight.2']['en'] ?? null,
         );
         $this->assertSame(
             'VLAN, VPN и межсетевой экран',
-            $translationMap['service.router-wifi-configuration.benefit.2.title']['ru'] ?? null,
+            $translationMap['service.network-installation-configuration.benefit.2.title']['ru'] ?? null,
         );
         $this->assertSame(
             'Настройка драйверов и программ',
             $translationMap['service.operating-system-installation.solution.1.title']['ru'] ?? null,
         );
         $this->assertNotEmpty(
-            $translationMap['service.router-wifi-configuration.seoDescription']['ru'] ?? null,
+            $translationMap['service.network-installation-configuration.seoDescription']['ru'] ?? null,
         );
     }
 
@@ -104,13 +104,13 @@ class ServiceCatalogSeederTest extends TestCase
                 'value' => [
                     'entries' => [
                         [
-                            'key' => 'service.router-wifi-configuration.highlight.2',
+                            'key' => 'service.network-installation-configuration.highlight.2',
                             'ka' => 'VLAN, VPN და Firewall',
                             'en' => 'VLAN, VPN და Firewall',
                             'ru' => 'VLAN, VPN და Firewall',
                         ],
                         [
-                            'key' => 'service.router-wifi-configuration.benefit.2.title',
+                            'key' => 'service.network-installation-configuration.benefit.2.title',
                             'ka' => 'VLAN, VPN და Firewall',
                             'en' => 'VLAN, VPN და Firewall',
                             'ru' => 'VLAN, VPN და Firewall',
@@ -127,19 +127,19 @@ class ServiceCatalogSeederTest extends TestCase
 
         $this->assertSame(
             'VLAN, VPN and firewall',
-            $translationMap['service.router-wifi-configuration.highlight.2']['en'] ?? null,
+            $translationMap['service.network-installation-configuration.highlight.2']['en'] ?? null,
         );
         $this->assertSame(
             'VLAN, VPN и межсетевой экран',
-            $translationMap['service.router-wifi-configuration.highlight.2']['ru'] ?? null,
+            $translationMap['service.network-installation-configuration.highlight.2']['ru'] ?? null,
         );
         $this->assertSame(
             'VLAN, VPN and firewall',
-            $translationMap['service.router-wifi-configuration.benefit.2.title']['en'] ?? null,
+            $translationMap['service.network-installation-configuration.benefit.2.title']['en'] ?? null,
         );
         $this->assertSame(
             'VLAN, VPN и межсетевой экран',
-            $translationMap['service.router-wifi-configuration.benefit.2.title']['ru'] ?? null,
+            $translationMap['service.network-installation-configuration.benefit.2.title']['ru'] ?? null,
         );
     }
 
