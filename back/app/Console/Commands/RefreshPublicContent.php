@@ -225,6 +225,30 @@ final class RefreshPublicContent extends Command
         }
     }
 
+    /**
+     * Fail closed if a legacy service still owns operational records. The
+     * old destructive refresh must not cascade-delete these relationships.
+     */
+    private function assertSafeServiceDeletion(): void
+    {
+        $canonical = ServiceCatalogSeeder::canonicalServiceSlugs();
+        $legacyIds = DB::table('services')->whereNotIn('slug', $canonical)->pluck('id')->all();
+        if ($legacyIds === []) {
+            return;
+        }
+
+        foreach (['quote_catalog_items', 'estimates', 'analytics_events', 'local_service_landings', 'faqs'] as $table) {
+            if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'service_id')) {
+                continue;
+            }
+
+            $count = DB::table($table)->whereIn('service_id', $legacyIds)->count();
+            if ($count > 0) {
+                throw new \\RuntimeException("Refusing to delete legacy services: {$table} still has {$count} linked rows.");
+            }
+        }
+    }
+
     private function remapAliasReferences(): void
     {
         if (! Schema::hasTable('services')) {
@@ -286,6 +310,8 @@ final class RefreshPublicContent extends Command
         if ($canonicalSlugs === []) {
             throw new \RuntimeException('Canonical service list is empty; refusing to delete services.');
         }
+
+        $this->assertSafeServiceDeletion();
 
         DB::table('services')
             ->whereNotIn('slug', $canonicalSlugs)
