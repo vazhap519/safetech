@@ -7,7 +7,6 @@ use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Artisan;
 
 /**
  * Read-only preflight for the production seven-service consolidation.
@@ -17,8 +16,7 @@ use Illuminate\Support\Facades\Artisan;
  */
 final class SevenServiceMigration extends Command
 {
-    protected $signature = 'safetech:seven-service-preflight\n        {--audit-collisions : Verify complete collision groups without changing any data}
-        {--execute : Consolidate public visibility and project links without deleting legacy data}';
+    protected $signature = 'safetech:seven-service-preflight {--audit-collisions} {--execute}';
 
     protected $description = 'Audit service consolidation without modifying production data';
 
@@ -47,7 +45,7 @@ final class SevenServiceMigration extends Command
 
         foreach ($canonicalSlugs as $slug) {
             if (! $services->has($slug)) {
-                $this->error("Missing canonical target: {$slug}");
+                $this->warn("Missing canonical target (created during execute): {$slug}");
             }
         }
 
