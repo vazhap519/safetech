@@ -49,7 +49,7 @@ final class SevenServiceMigration extends Command
             }
         }
 
-        if ($unknown->isNotEmpty() || collect($canonicalSlugs)->contains(fn (string $slug): bool => ! $services->has($slug))) {
+        if ($unknown->isNotEmpty()) {
             return self::FAILURE;
         }
 
@@ -63,13 +63,13 @@ final class SevenServiceMigration extends Command
             }
 
             $targetSlug = $aliases[$source->slug];
-            if (! in_array($targetSlug, $canonicalSlugs, true) || ! $services->has($targetSlug)) {
+            if (! in_array($targetSlug, $canonicalSlugs, true)) {
                 $this->error("Invalid destination for {$source->slug}: {$targetSlug}");
 
                 return self::FAILURE;
             }
 
-            $targetId = $services->get($targetSlug)->id;
+            // A canonical target may be created only by the future migration.\n            $targetId = $services->get($targetSlug)?->id;
             $landingCollisions = 0;
             $linkedLandings = 0;
             $quotes = 0;
@@ -77,18 +77,18 @@ final class SevenServiceMigration extends Command
 
             if (Schema::hasTable('local_service_landings')) {
                 $linkedLandings = DB::table('local_service_landings')->where('service_id', $source->id)->count();
-                $landingCollisions = DB::table('local_service_landings as source')
+                if ($targetId !== null) {\n                    $landingCollisions = DB::table('local_service_landings as source')
                     ->join('local_service_landings as target', function ($join) use ($targetId): void {
                         $join->on('source.location_slug', '=', 'target.location_slug')
                             ->where('target.service_id', $targetId);
                     })
                     ->where('source.service_id', $source->id)
-                    ->count();
+                    ->count();\n                }\n                }
             }
 
             if (Schema::hasTable('quote_catalog_items')) {
                 $quotes = DB::table('quote_catalog_items')->where('service_id', $source->id)->count();
-                $quoteCollisions = DB::table('quote_catalog_items as source')
+                if ($targetId !== null) {\n                    $quoteCollisions = DB::table('quote_catalog_items as source')
                     ->join('quote_catalog_items as target', function ($join) use ($targetId): void {
                         $join->on('source.component_key', '=', 'target.component_key')
                             ->where('target.service_id', $targetId);
