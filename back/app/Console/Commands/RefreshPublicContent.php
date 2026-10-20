@@ -246,7 +246,7 @@ final class RefreshPublicContent extends Command
                 $column = $reference->column_name;
                 $count = DB::table($table)->whereIn($column, $legacyIds)->count();
                 if ($count > 0) {
-                    throw new \\RuntimeException("Refusing to delete legacy services: {$table}.{$column} still has {$count} linked rows.");
+                    throw new \RuntimeException("Refusing to delete legacy services: {$table}.{$column} still has {$count} linked rows.");
                 }
             }
         }
@@ -258,7 +258,7 @@ final class RefreshPublicContent extends Command
 
             $count = DB::table($table)->whereIn('service_id', $legacyIds)->count();
             if ($count > 0) {
-                throw new \\RuntimeException("Refusing to delete legacy services: {$table} still has {$count} linked rows.");
+                throw new \RuntimeException("Refusing to delete legacy services: {$table} still has {$count} linked rows.");
             }
         }
     }
@@ -297,7 +297,7 @@ final class RefreshPublicContent extends Command
                         ->exists();
 
                     if ($duplicate) {
-                        throw new \\RuntimeException("Quote catalog conflict: {$alias} -> {$canonical}, component {$item->component_key}. Refusing to discard pricing records.");
+                        throw new \RuntimeException("Quote catalog conflict: {$alias} -> {$canonical}, component {$item->component_key}. Refusing to discard pricing records.");
                     }
 
                     DB::table('quote_catalog_items')
