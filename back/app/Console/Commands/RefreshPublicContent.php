@@ -237,6 +237,20 @@ final class RefreshPublicContent extends Command
             return;
         }
 
+        // Inspect every database FK pointing to services, including future modules.
+        // PostgreSQL's FK catalog is authoritative for production.
+        if (DB::getDriverName() === 'pgsql') {
+            $references = DB::select("SELECT DISTINCT src.relname AS table_name, attr.attname AS column_name FROM pg_constraint fk JOIN pg_class src ON src.oid = fk.conrelid JOIN pg_class dest ON dest.oid = fk.confrelid JOIN pg_attribute attr ON attr.attrelid = fk.conrelid AND attr.attnum = fk.conkey[1] WHERE fk.contype = 'f' AND dest.relname = 'services' AND cardinality(fk.conkey) = 1");
+            foreach ($references as $reference) {
+                $table = $reference->table_name;
+                $column = $reference->column_name;
+                $count = DB::table($table)->whereIn($column, $legacyIds)->count();
+                if ($count > 0) {
+                    throw new \\RuntimeException("Refusing to delete legacy services: {$table}.{$column} still has {$count} linked rows.");
+                }
+            }
+        }
+
         foreach (['quote_catalog_items', 'estimates', 'analytics_events', 'local_service_landings', 'faqs'] as $table) {
             if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'service_id')) {
                 continue;
