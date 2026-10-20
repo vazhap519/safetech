@@ -26,7 +26,7 @@ for (const locale of locales) {
                 ru: "Монтаж и настройка камер видеонаблюдения",
             }[locale.lang.slice(0, 2) as "ka" | "en" | "ru"],
         });
-        await expect(installationLink).toHaveAttribute(
+        await expect(installationLink.first()).toHaveAttribute(
             "href", locale.prefix + "/services/security-camera-installation",
         );
 
