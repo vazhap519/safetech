@@ -30,6 +30,14 @@ final class RefreshPublicContent extends Command
 
     public function handle(): int
     {
+        // Never rebuild destructively for the reduced catalog, even when the stored
+        // version matches. The legacy path deletes local landings and quote rows.
+        if (count(ServiceCatalogSeeder::canonicalServiceSlugs()) === 7 && (bool) $this->option('reset')) {
+            $this->error('Destructive reset is disabled for the seven-service catalog.');
+
+            return self::FAILURE;
+        }
+
         // Catalog reduction must never run through the legacy destructive refresh.
         // A dedicated, backed-up service-reference migration is required first.
         if (count(ServiceCatalogSeeder::canonicalServiceSlugs()) === 7 &&
