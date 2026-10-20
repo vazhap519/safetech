@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Schema;
  */
 final class SevenServiceMigration extends Command
 {
-    protected $signature = 'safetech:seven-service-preflight';
+    protected $signature = 'safetech:seven-service-preflight\n        {--audit-collisions : Verify complete collision groups without changing any data}';
 
     protected $description = 'Audit service consolidation without modifying production data';
 
@@ -117,6 +117,42 @@ final class SevenServiceMigration extends Command
 
         // Collision counts are indicative: two different legacy services can also
         // collide once both are moved to the same target.
+        if ((bool) $this->option('audit-collisions')) {
+            foreach ($canonicalSlugs as $targetSlug) {
+                $sourceIds = $services
+                    ->filter(fn (object $service): bool => $service->slug === $targetSlug
+                        || ($aliases[$service->slug] ?? null) === $targetSlug)
+                    ->pluck('id')
+                    ->all();
+
+                if ($sourceIds === []) {
+                    continue;
+                }
+
+                foreach ([
+                    ['local_service_landings', 'location_slug'],
+                    ['quote_catalog_items', 'component_key'],
+                ] as [$table, $key]) {
+                    if (! Schema::hasTable($table)) {
+                        continue;
+                    }
+
+                    $groups = DB::table($table)
+                        ->select($key)
+                        ->selectRaw('COUNT(*) AS duplicate_count')
+                        ->whereIn('service_id', $sourceIds)
+                        ->groupBy($key)
+                        ->havingRaw('COUNT(*) > 1')
+                        ->orderByDesc('duplicate_count')
+                        ->get();
+
+                    foreach ($groups as $group) {
+                        $this->warn("FULL COLLISION {$targetSlug}: {$table}.{$key}={$group->{$key}} ({$group->duplicate_count} rows)");
+                    }
+                }
+            }
+        }
+
         $this->warn('READ-ONLY preflight completed. No records were updated or deleted.');
         $this->warn('A separate tested migration is required to reconcile content, project pivots and media.');
 
