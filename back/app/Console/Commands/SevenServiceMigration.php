@@ -9,10 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Read-only preflight for the production seven-service consolidation.
- *
- * This command intentionally has no write mode until all legacy content
- * collisions, media, and historical references have a tested migration path.
+ * Audit and transactionally consolidate public services while retaining historical records.
  */
 final class SevenServiceMigration extends Command
 {
