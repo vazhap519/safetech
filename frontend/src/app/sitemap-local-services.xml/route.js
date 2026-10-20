@@ -8,6 +8,16 @@ import {
 } from "@/lib/sitemap";
 import { addSitemapStylesheet } from "@/lib/sitemap-style";
 
+const CANONICAL_SERVICE_SLUGS = new Set([
+  "security-camera-installation",
+  "low-voltage-cabling",
+  "barrier-gate-installation",
+  "intercom-access-control-installation",
+  "business-it-support",
+  "network-installation-configuration",
+  "operating-system-installation"
+]);
+
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -17,7 +27,7 @@ export async function GET() {
   ));
   const landings = Array.isArray(response?.data) ? response.data : [];
   const urls = landings
-    .filter(isIndexableLocalServiceLanding)
+    .filter((landing) => isIndexableLocalServiceLanding(landing) && CANONICAL_SERVICE_SLUGS.has(landing.service?.slug))
     .flatMap((landing) => localizedUrlEntries(
       `/services/${encodeURIComponent(landing.service.slug)}/${encodeURIComponent(landing.locationSlug)}`,
       {
