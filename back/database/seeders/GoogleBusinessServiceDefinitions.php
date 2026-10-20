@@ -18,6 +18,22 @@ final class GoogleBusinessServiceDefinitions
      * @var array<string, string>
      */
     public const CANONICAL_ALIASES = [
+        'corporate-email-setup' => 'business-it-support',
+        'fiber-optic-commercial-network-installation' => 'low-voltage-cabling',
+        'low-voltage-design-estimation' => 'low-voltage-cabling',
+        'macos-update-optimization' => 'operating-system-installation',
+        'mac-printer-wifi-setup' => 'operating-system-installation',
+        'network-printer-scanner-setup' => 'business-it-support',
+        'new-computer-setup' => 'operating-system-installation',
+        'office-digital-infrastructure' => 'business-it-support',
+        'office-it-infrastructure' => 'business-it-support',
+        'onsite-computer-service' => 'business-it-support',
+        'ram-upgrade' => 'operating-system-installation',
+        'remote-it-support' => 'business-it-support',
+        'rj45-connector-installation' => 'low-voltage-cabling',
+        'server-room-installation' => 'low-voltage-cabling',
+        'software-installation' => 'operating-system-installation',
+        'virus-removal-optimization' => 'operating-system-installation',
         'ip-camera-installation' => 'security-camera-installation',
         'video-surveillance-system-installation' => 'security-camera-installation',
         'intercom-installation' => 'intercom-access-control-installation',
