@@ -297,9 +297,7 @@ final class RefreshPublicContent extends Command
                         ->exists();
 
                     if ($duplicate) {
-                        DB::table('quote_catalog_items')->where('id', $item->id)->delete();
-
-                        continue;
+                        throw new \\RuntimeException("Quote catalog conflict: {$alias} -> {$canonical}, component {$item->component_key}. Refusing to discard pricing records.");
                     }
 
                     DB::table('quote_catalog_items')
