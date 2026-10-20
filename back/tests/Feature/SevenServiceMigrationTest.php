@@ -9,6 +9,7 @@ use App\Models\QuoteCatalogItem;
 use App\Models\Service;
 use Database\Seeders\ProductionContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class SevenServiceMigrationTest extends TestCase
@@ -84,7 +85,7 @@ class SevenServiceMigrationTest extends TestCase
         $this->artisan('safetech:seven-service-preflight', ['--execute' => true])
             ->assertExitCode(0);
 
-        $this->assertSame(1, \Illuminate\Support\Facades\DB::table('local_service_landing_project')
+        $this->assertSame(1, DB::table('local_service_landing_project')
             ->where('landing_id', $target->id)
             ->where('project_id', $project->id)
             ->count());
