@@ -7,6 +7,7 @@ use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
 
 /**
  * Read-only preflight for the production seven-service consolidation.
@@ -16,7 +17,8 @@ use Illuminate\Support\Facades\Schema;
  */
 final class SevenServiceMigration extends Command
 {
-    protected $signature = 'safetech:seven-service-preflight\n        {--audit-collisions : Verify complete collision groups without changing any data}';
+    protected $signature = 'safetech:seven-service-preflight\n        {--audit-collisions : Verify complete collision groups without changing any data}
+        {--execute : Consolidate public visibility and project links without deleting legacy data}';
 
     protected $description = 'Audit service consolidation without modifying production data';
 
@@ -160,9 +162,106 @@ final class SevenServiceMigration extends Command
             }
         }
 
+        if ((bool) $this->option('execute')) {
+            return $this->executePreservingLegacy($canonicalSlugs, $aliases);
+        }
+
         $this->warn('READ-ONLY preflight completed. No records were updated or deleted.');
-        $this->warn('A separate tested migration is required to reconcile content, project pivots and media.');
+        $this->warn('Legacy SEO content, media and quote items must be preserved during consolidation.');
 
         return self::SUCCESS;
     }
+    /**
+     * Non-destructive public consolidation: legacy records are retained as
+     * historical archives. This deliberately does not rewrite quote pricing,
+     * calculator profiles, estimates, analytics, media ownership or SEO copy.
+     */
+    private function executePreservingLegacy(array $canonicalSlugs, array $aliases): int
+    {
+        if (! Schema::hasTable('local_service_landings')
+            || ! Schema::hasTable('local_service_landing_project')
+            || ! Schema::hasTable('quote_catalog_items')) {
+            $this->error('Required production tables are missing.');
+
+            return self::FAILURE;
+        }
+
+        DB::transaction(function () use ($canonicalSlugs, $aliases): void {
+            // Seed only missing canonical definitions; existing CMS fields are
+            // preserved by ServiceCatalogSeeder::fillMissing().
+            app(ServiceCatalogSeeder::class)->run();
+
+            $services = DB::table('services')->get(['id', 'slug'])->keyBy('slug');
+            foreach ($canonicalSlugs as $slug) {
+                if (! $services->has($slug)) {
+                    throw new \RuntimeException("Missing canonical service after seeding: {$slug}");
+                }
+            }
+
+            foreach ($services as $source) {
+                if (in_array($source->slug, $canonicalSlugs, true)) {
+                    continue;
+                }
+
+                $targetSlug = $aliases[$source->slug] ?? null;
+                if (! $targetSlug || ! in_array($targetSlug, $canonicalSlugs, true)) {
+                    throw new \RuntimeException("Unmapped legacy service: {$source->slug}");
+                }
+
+                $targetId = $services->get($targetSlug)->id;
+                $landings = DB::table('local_service_landings')
+                    ->where('service_id', $source->id)
+                    ->get();
+
+                foreach ($landings as $landing) {
+                    $targetLandingId = DB::table('local_service_landings')
+                        ->where('service_id', $targetId)
+                        ->where('location_slug', $landing->location_slug)
+                        ->value('id');
+
+                    if (! $targetLandingId) {
+                        // Reassigning a unique, non-colliding landing preserves
+                        // its ID, all original copy, translations and media.
+                        DB::table('local_service_landings')
+                            ->where('id', $landing->id)
+                            ->update(['service_id' => $targetId, 'updated_at' => now()]);
+
+                        continue;
+                    }
+
+                    // Colliding source landing is archived unchanged, including
+                    // OG media and all localized SEO fields. Merge its project
+                    // associations into the public canonical landing.
+                    $projectIds = DB::table('local_service_landing_project')
+                        ->where('landing_id', $landing->id)
+                        ->pluck('project_id');
+
+                    foreach ($projectIds as $projectId) {
+                        DB::table('local_service_landing_project')->insertOrIgnore([
+                            'landing_id' => $targetLandingId,
+                            'project_id' => $projectId,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+
+                // Do not delete services: historical quotes, calculator inputs,
+                // analytics, FAQs, media and colliding SEO landings remain valid.
+                DB::table('services')->where('id', $source->id)->update([
+                    'is_published' => false,
+                    'updated_at' => now(),
+                ]);
+            }
+
+            // Existing canonical services may be unpublished by editorial choice;
+            // do not override that choice or overwrite their CMS content.
+        });
+
+        $this->info('Public catalog consolidation completed without deleting historical records.');
+        $this->warn('Legacy SEO pages and quote rows are retained. Review redirect and archive coverage before deployment.');
+
+        return self::SUCCESS;
+    }
+
 }
