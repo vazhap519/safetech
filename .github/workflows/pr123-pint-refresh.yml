@@ -1,0 +1,34 @@
+name: Format PR123 Laravel migration
+
+on:
+  push:
+    branches:
+      - feat/seven-service-catalog-20261019
+    paths:
+      - .github/workflows/pr123-pint-refresh.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/seven-service-catalog-20261019
+          persist-credentials: true
+      - name: Install PHP packages
+        run: composer install --no-interaction --prefer-dist --no-progress
+        working-directory: back
+      - name: Apply repository Pint formatting
+        run: vendor/bin/pint app/Console/Commands/SevenServiceMigration.php
+        working-directory: back
+      - name: Commit formatted migration
+        run: |
+          if git diff --quiet -- back/app/Console/Commands/SevenServiceMigration.php; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add back/app/Console/Commands/SevenServiceMigration.php
+          git commit -m 'Format seven-service migration with Pint'
+          git push origin HEAD:feat/seven-service-catalog-20261019
