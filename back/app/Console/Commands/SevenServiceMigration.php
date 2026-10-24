@@ -15,7 +15,7 @@ final class SevenServiceMigration extends Command
 {
     protected $signature = 'safetech:seven-service-preflight {--audit-collisions} {--execute}';
 
-    protected $description = 'Audit service consolidation without modifying production data';
+    protected $description = 'Audit or consolidate services while preserving historical records';
 
     public function handle(): int
     {
