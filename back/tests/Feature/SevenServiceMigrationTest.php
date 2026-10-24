@@ -90,4 +90,59 @@ class SevenServiceMigrationTest extends TestCase
             ->where('project_id', $project->id)
             ->count());
     }
+
+    public function test_execute_creates_missing_seventh_canonical_service(): void
+    {
+        $this->seed(ProductionContentSeeder::class);
+
+        Service::query()->where('slug', 'network-installation-configuration')->sole()->delete();
+
+        $this->assertDatabaseMissing('services', ['slug' => 'network-installation-configuration']);
+
+        $this->artisan('safetech:seven-service-preflight', ['--execute' => true])
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('services', ['slug' => 'network-installation-configuration']);
+    }
+
+    public function test_execute_preserves_all_quote_rows_with_colliding_component_keys(): void
+    {
+        $this->seed(ProductionContentSeeder::class);
+
+        $canonical = Service::query()->where('slug', 'security-camera-installation')->sole();
+        $first = $canonical->replicate();
+        $first->slug = 'ip-camera-installation';
+        $first->save();
+
+        $second = $canonical->replicate();
+        $second->slug = 'video-surveillance-system-installation';
+        $second->save();
+
+        foreach ([$canonical, $first, $second] as $index => $service) {
+            QuoteCatalogItem::query()->create([
+                'service_id' => $service->id,
+                'component_key' => 'migration-conflicting-component',
+                'name' => 'Preserved collision test',
+                'category' => 'other',
+                'purchase_price' => 100 + $index,
+                'sale_price' => 160 + $index,
+                'is_active' => true,
+            ]);
+        }
+
+        $before = DB::table('quote_catalog_items')->count();
+
+        $this->artisan('safetech:seven-service-preflight', ['--execute' => true])
+            ->assertExitCode(0);
+
+        $this->assertSame($before, DB::table('quote_catalog_items')->count());
+        $this->assertSame(3, DB::table('quote_catalog_items')
+            ->where('component_key', 'migration-conflicting-component')
+            ->count());
+
+        $this->artisan('safetech:seven-service-preflight', ['--execute' => true])
+            ->assertExitCode(0);
+
+        $this->assertSame($before, DB::table('quote_catalog_items')->count());
+    }
 }
