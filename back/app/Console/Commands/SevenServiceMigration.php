@@ -166,6 +166,7 @@ final class SevenServiceMigration extends Command
 
         return self::SUCCESS;
     }
+
     /**
      * Non-destructive public consolidation: legacy records are retained as
      * historical archives. This deliberately does not rewrite quote pricing,
