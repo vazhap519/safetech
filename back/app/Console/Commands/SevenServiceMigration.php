@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 final class SevenServiceMigration extends Command
 {
     protected $signature = 'safetech:seven-service-preflight {--audit-collisions} {--execute}';
+
     protected $description = 'Audit or consolidate services while preserving historical records';
 
     public function handle(): int
@@ -258,5 +259,4 @@ final class SevenServiceMigration extends Command
 
         return self::SUCCESS;
     }
-
 }
