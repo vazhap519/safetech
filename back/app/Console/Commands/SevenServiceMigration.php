@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\CanonicalSeedTombstones;
 use Database\Seeders\GoogleBusinessServiceDefinitions;
 use Database\Seeders\ServiceCatalogSeeder;
 use Illuminate\Console\Command;
@@ -183,6 +184,30 @@ final class SevenServiceMigration extends Command
         }
 
         DB::transaction(function () use ($canonicalSlugs, $aliases): void {
+            // An admin deletion tombstone can prevent a required target from
+            // being reseeded. Restore only the seven explicitly selected
+            // services and their four required categories, leaving all other
+            // editorial deletion tombstones untouched.
+            if (Schema::hasTable('seed_deletion_tombstones')) {
+                $missingServices = array_values(array_diff(
+                    $canonicalSlugs,
+                    DB::table('services')->pluck('slug')->all(),
+                ));
+                $missingCategories = array_values(array_diff(
+                    ServiceCatalogSeeder::canonicalCategorySlugs(),
+                    DB::table('category_for_services')->pluck('slug')->all(),
+                ));
+
+                DB::table('seed_deletion_tombstones')
+                    ->where('type', CanonicalSeedTombstones::SERVICE)
+                    ->whereIn('key', $missingServices)
+                    ->delete();
+                DB::table('seed_deletion_tombstones')
+                    ->where('type', CanonicalSeedTombstones::CATEGORY)
+                    ->whereIn('key', $missingCategories)
+                    ->delete();
+            }
+
             // Seed only missing canonical definitions; existing CMS fields are
             // preserved by ServiceCatalogSeeder::fillMissing().
             app(ServiceCatalogSeeder::class)->run();
