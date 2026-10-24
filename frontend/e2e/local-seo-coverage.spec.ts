@@ -3,11 +3,12 @@ import { expect, test } from "@playwright/test";
 const apiBase = process.env.E2E_API_BASE || "http://127.0.0.1:8000/api";
 const missingServices = [
     "operating-system-installation",
-    "custom-computer-build",
-    "computer-cleaning-maintenance",
-    "rack-assembly-cable-management",
-    "pos-system-installation",
-    "patch-panel-network-outlet-installation",
+    "low-voltage-cabling",
+    "network-installation-configuration",
+    "business-it-support",
+    "security-camera-installation",
+    "intercom-access-control-installation",
+    "barrier-gate-installation",
 ];
 
 const locales = [

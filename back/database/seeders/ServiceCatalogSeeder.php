@@ -547,7 +547,7 @@ class ServiceCatalogSeeder extends Seeder
     /** @return array<int, array<string, mixed>> */
     private function categories(): array
     {
-        return [
+        $categories = [
             $this->category(
                 'computer-services',
                 self::t('კომპიუტერული სერვისები', 'Computer Services', 'Компьютерные услуги'),
@@ -604,6 +604,16 @@ class ServiceCatalogSeeder extends Seeder
                 ],
             ),
         ];
+
+        return array_values(array_filter(
+            $categories,
+            static fn (array $category): bool => in_array($category['slug'], [
+                'computer-services',
+                'business-it',
+                'network-infrastructure',
+                'security-access-automation',
+            ], true),
+        ));
     }
 
     private function category(string $slug, array $name, array $seoTitle, array $description, array $keywords): array
@@ -680,7 +690,7 @@ class ServiceCatalogSeeder extends Seeder
                     $this->faq('diagnostics', self::t('გაწმენდამდე დიაგნოსტიკა რატომ არის საჭირო?', 'Why is diagnosis needed before cleaning?', 'Зачем нужна диагностика перед чисткой?'), self::t('გადახურება ყოველთვის მხოლოდ მტვერს არ უკავშირდება. წინასწარი შემოწმება გვეხმარება განვასხვაოთ დაბინძურება, ქულერის გაუმართაობა, ჰაერის ნაკადის პრობლემა და პროგრამული დატვირთვა, რათა არასაჭირო სამუშაო არ შესრულდეს.', 'Overheating is not always caused by dust. A preliminary check separates contamination, fan failure, airflow issues, and software load so unnecessary work is avoided.', 'Перегрев не всегда вызван пылью. Предварительная проверка помогает различить загрязнение, неисправность вентилятора, проблему воздушного потока и программную нагрузку, чтобы избежать лишних работ.')),
                     $this->faq('aftercare', self::t('როგორ შევინარჩუნო შედეგი გაწმენდის შემდეგ?', 'How can I preserve the result after cleaning?', 'Как сохранить результат после чистки?'), self::t('მოწყობილობა უნდა იდგეს მყარ ზედაპირზე და სავენტილაციო ღიობები თავისუფალი დარჩეს. პერიოდულად აკონტროლეთ ხმაური და ტემპერატურა; მათი მკვეთრი ზრდისას მოწყობილობა დროულად უნდა შემოწმდეს.', 'Keep the device on a firm surface with ventilation openings unobstructed. Monitor noise and temperature periodically; a sudden increase should prompt a timely inspection.', 'Держите устройство на твердой поверхности и не перекрывайте вентиляцию. Периодически контролируйте шум и температуру; резкий рост — повод своевременно провести проверку.')),
                 ]),
-            $this->service('rack-assembly-cable-management', 'network-infrastructure', 'dns', 'server-infrastructure',
+            $this->service('low-voltage-cabling', 'network-infrastructure', 'dns', 'server-infrastructure',
                 self::t('რეკების აწყობა და კაბელ მენეჯმენტი', 'Rack Assembly and Cable Management', 'Сборка шкафов и кабель-менеджмент'),
                 self::t('საკომუნიკაციო რეკის აწყობა, მოწყობილობების განლაგება და კაბელ მენეჯმენტი', 'Communication Rack Assembly, Equipment Layout and Cable Management', 'Сборка телекоммуникационного шкафа, размещение оборудования и кабель-менеджмент'),
                 self::t('კედლისა და იატაკის რეკების მონტაჟი, Patch Panel-ის, სვიჩის, NVR-ის, UPS-ისა და PDU-ის სწორად განლაგება, მარკირება და მოწესრიგებული კაბელ მენეჯმენტი.', 'Wall and floor rack installation, correct placement of patch panels, switches, NVRs, UPS and PDU units, labeling, and organized cable management.', 'Монтаж настенных и напольных шкафов, правильное размещение патч-панелей, коммутаторов, NVR, UPS и PDU, маркировка и аккуратный кабель-менеджмент.'),
@@ -750,7 +760,7 @@ class ServiceCatalogSeeder extends Seeder
                     $this->faq('backup', self::t('დენის გათიშვისას იმუშავებს?', 'Will it work during a power outage?', 'Будет ли работать при отключении электричества?'), self::t('სარეზერვო კვების დამატების შემთხვევაში სისტემა გააგრძელებს მუშაობას განსაზღვრული დროით.', 'With backup power, the system can continue operating for a calculated period.', 'При наличии резервного питания система продолжит работу в течение рассчитанного времени.')),
                     $this->faq('phone', self::t('ზარის მიღება ტელეფონზე შეიძლება?', 'Can intercom calls be received on a phone?', 'Можно принимать вызовы на телефон?'), self::t('თავსებადი IP ვიდეოდომოფონის შემთხვევაში შესაძლებელია აპლიკაციით ზარის მიღება და კარის გახსნა.', 'With a compatible IP video intercom, calls and door opening can be handled in the mobile app.', 'При совместимом IP-видеодомофоне можно принимать вызовы и открывать дверь через приложение.')),
                 ]),
-            $this->service('router-wifi-configuration', 'network-infrastructure', 'router', 'networking',
+            $this->service('network-installation-configuration', 'network-infrastructure', 'router', 'networking',
                 self::t('როუტერების ინსტალაცია და კონფიგურაცია', 'Router Installation and Configuration', 'Установка и настройка роутеров'),
                 self::t('როუტერის, Wi-Fi ქსელის, MikroTik-ისა და უსაფრთხო ინტერნეტის გამართვა', 'Router, Wi-Fi, MikroTik and Secure Internet Setup', 'Настройка роутера, Wi-Fi, MikroTik и безопасного интернета'),
                 self::t('როუტერის ინსტალაცია, ISP პარამეტრები, Wi-Fi დაფარვა, სტუმრის ქსელი, DHCP, სტატიკური IP, Port Forwarding, VPN, VLAN, Firewall და MikroTik-ის კონფიგურაცია.', 'Router installation, ISP settings, Wi-Fi coverage, guest networks, DHCP, static IP, port forwarding, VPN, VLAN, firewall, and MikroTik configuration.', 'Установка роутера, параметры провайдера, Wi-Fi, гостевая сеть, DHCP, статический IP, проброс портов, VPN, VLAN, firewall и MikroTik.'),
@@ -812,7 +822,22 @@ class ServiceCatalogSeeder extends Seeder
                 ]),
         ];
 
-        return [...$services, ...$this->googleBusinessServices()];
+        // The public catalog is deliberately limited to the seven approved offerings.
+        // Granular Google Business Profile entries remain definitions, not public pages.
+        $canonical = [
+            'security-camera-installation',
+            'low-voltage-cabling',
+            'barrier-gate-installation',
+            'intercom-access-control-installation',
+            'business-it-support',
+            'network-installation-configuration',
+            'operating-system-installation',
+        ];
+
+        return array_values(array_filter(
+            $services,
+            static fn (array $service): bool => in_array($service['slug'], $canonical, true),
+        ));
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -979,7 +1004,7 @@ class ServiceCatalogSeeder extends Seeder
                 ['en' => 'Reassembly and load testing', 'ru' => 'Сборка и нагрузочный тест'],
             ],
         ],
-        'rack-assembly-cable-management' => [
+        'low-voltage-cabling' => [
             'highlights' => [
                 ['en' => 'Correct U-space allocation', 'ru' => 'Правильное распределение U-мест'],
                 ['en' => 'Labeled cables', 'ru' => 'Маркированные кабели'],
@@ -1039,7 +1064,7 @@ class ServiceCatalogSeeder extends Seeder
                 ['en' => 'Access, app, and security testing', 'ru' => 'Тестирование доступа, приложения и безопасности'],
             ],
         ],
-        'router-wifi-configuration' => [
+        'network-installation-configuration' => [
             'highlights' => [
                 ['en' => 'Stable Wi-Fi coverage', 'ru' => 'Стабильное покрытие Wi-Fi'],
                 ['en' => 'Secure network settings', 'ru' => 'Защищенные настройки сети'],

@@ -30,6 +30,23 @@ final class RefreshPublicContent extends Command
 
     public function handle(): int
     {
+        // Never rebuild destructively for the reduced catalog, even when the stored
+        // version matches. The legacy path deletes local landings and quote rows.
+        if (count(ServiceCatalogSeeder::canonicalServiceSlugs()) === 7 && (bool) $this->option('reset')) {
+            $this->error('Destructive reset is disabled for the seven-service catalog.');
+
+            return self::FAILURE;
+        }
+
+        // Catalog reduction must never run through the legacy destructive refresh.
+        // A dedicated, backed-up service-reference migration is required first.
+        if (count(ServiceCatalogSeeder::canonicalServiceSlugs()) === 7 &&
+            ((bool) $this->option('reset') || $this->currentVersion() !== self::VERSION)) {
+            $this->error('Seven-service migration is not approved for destructive refresh. Preserve existing service references and run a dedicated verified migration first.');
+
+            return self::FAILURE;
+        }
+
         $currentVersion = $this->currentVersion();
         $needsReset = (bool) $this->option('reset') || $currentVersion !== self::VERSION;
 
@@ -208,6 +225,44 @@ final class RefreshPublicContent extends Command
         }
     }
 
+    /**
+     * Fail closed if a legacy service still owns operational records. The
+     * old destructive refresh must not cascade-delete these relationships.
+     */
+    private function assertSafeServiceDeletion(): void
+    {
+        $canonical = ServiceCatalogSeeder::canonicalServiceSlugs();
+        $legacyIds = DB::table('services')->whereNotIn('slug', $canonical)->pluck('id')->all();
+        if ($legacyIds === []) {
+            return;
+        }
+
+        // Inspect every database FK pointing to services, including future modules.
+        // PostgreSQL's FK catalog is authoritative for production.
+        if (DB::getDriverName() === 'pgsql') {
+            $references = DB::select("SELECT DISTINCT src.relname AS table_name, attr.attname AS column_name FROM pg_constraint fk JOIN pg_class src ON src.oid = fk.conrelid JOIN pg_class dest ON dest.oid = fk.confrelid JOIN pg_attribute attr ON attr.attrelid = fk.conrelid AND attr.attnum = fk.conkey[1] WHERE fk.contype = 'f' AND dest.relname = 'services' AND cardinality(fk.conkey) = 1");
+            foreach ($references as $reference) {
+                $table = $reference->table_name;
+                $column = $reference->column_name;
+                $count = DB::table($table)->whereIn($column, $legacyIds)->count();
+                if ($count > 0) {
+                    throw new \RuntimeException("Refusing to delete legacy services: {$table}.{$column} still has {$count} linked rows.");
+                }
+            }
+        }
+
+        foreach (['quote_catalog_items', 'estimates', 'analytics_events', 'local_service_landings', 'faqs'] as $table) {
+            if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'service_id')) {
+                continue;
+            }
+
+            $count = DB::table($table)->whereIn('service_id', $legacyIds)->count();
+            if ($count > 0) {
+                throw new \RuntimeException("Refusing to delete legacy services: {$table} still has {$count} linked rows.");
+            }
+        }
+    }
+
     private function remapAliasReferences(): void
     {
         if (! Schema::hasTable('services')) {
@@ -242,9 +297,7 @@ final class RefreshPublicContent extends Command
                         ->exists();
 
                     if ($duplicate) {
-                        DB::table('quote_catalog_items')->where('id', $item->id)->delete();
-
-                        continue;
+                        throw new \RuntimeException("Quote catalog conflict: {$alias} -> {$canonical}, component {$item->component_key}. Refusing to discard pricing records.");
                     }
 
                     DB::table('quote_catalog_items')
@@ -269,6 +322,8 @@ final class RefreshPublicContent extends Command
         if ($canonicalSlugs === []) {
             throw new \RuntimeException('Canonical service list is empty; refusing to delete services.');
         }
+
+        $this->assertSafeServiceDeletion();
 
         DB::table('services')
             ->whereNotIn('slug', $canonicalSlugs)

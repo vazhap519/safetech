@@ -128,8 +128,8 @@ test("SEO canonical URLs exclude duplicate service intents", async ({ page, requ
 test("legacy service query URLs redirect to canonical service pages", async ({ page }) => {
     for (const [source, target] of [
         ["/services?service=security-camera-installation", "/services/security-camera-installation"],
-        ["/en/services?service=custom-computer-build", "/en/services/custom-computer-build"],
-        ["/en/services?service=pos-system-installation", "/en/services/pos-system-installation"],
+        ["/en/services?service=network-installation-configuration", "/en/services/network-installation-configuration"],
+        ["/en/services?service=low-voltage-cabling", "/en/services/low-voltage-cabling"],
         ["/ru/services?service=security-camera-installation", "/ru/services/security-camera-installation"],
         ["/services?service=ip-camera-installation", "/services/security-camera-installation"],
     ] as const) {

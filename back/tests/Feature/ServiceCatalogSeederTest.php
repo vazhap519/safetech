@@ -16,12 +16,38 @@ class ServiceCatalogSeederTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_only_the_seven_approved_services_are_seeded(): void
+    {
+        $expected = [
+            'barrier-gate-installation',
+            'business-it-support',
+            'intercom-access-control-installation',
+            'low-voltage-cabling',
+            'network-installation-configuration',
+            'operating-system-installation',
+            'security-camera-installation',
+        ];
+
+        $this->assertSame($expected, collect(ServiceCatalogSeeder::canonicalServiceSlugs())->sort()->values()->all());
+
+        $this->seed(ServiceCatalogSeeder::class);
+        $this->seed(ServiceCatalogSeeder::class);
+
+        $this->assertSame(
+            ['business-it', 'computer-services', 'network-infrastructure', 'security-access-automation'],
+            collect(ServiceCatalogSeeder::canonicalCategorySlugs())->sort()->values()->all(),
+        );
+        $this->assertDatabaseCount('category_for_services', 4);
+        $this->assertDatabaseCount('services', 7);
+        $this->assertSame($expected, Service::query()->pluck('slug')->sort()->values()->all());
+    }
+
     public function test_it_seeds_the_complete_multilingual_it_service_catalog_idempotently(): void
     {
         $this->seed(ServiceCatalogSeeder::class);
         $this->seed(ServiceCatalogSeeder::class);
 
-        $this->assertDatabaseCount('category_for_services', 5);
+        $this->assertDatabaseCount('category_for_services', 4);
         $this->assertDatabaseCount('services', count(ServiceCatalogSeeder::canonicalServiceSlugs()));
         $this->assertDatabaseCount('faqs', count(ServiceCatalogSeeder::canonicalFaqContexts()));
 
@@ -53,18 +79,18 @@ class ServiceCatalogSeederTest extends TestCase
         );
         $this->assertSame(
             'VLAN, VPN and firewall',
-            $translationMap['service.router-wifi-configuration.highlight.2']['en'] ?? null,
+            $translationMap['service.network-installation-configuration.highlight.2']['en'] ?? null,
         );
         $this->assertSame(
             'VLAN, VPN и межсетевой экран',
-            $translationMap['service.router-wifi-configuration.benefit.2.title']['ru'] ?? null,
+            $translationMap['service.network-installation-configuration.benefit.2.title']['ru'] ?? null,
         );
         $this->assertSame(
             'Настройка драйверов и программ',
             $translationMap['service.operating-system-installation.solution.1.title']['ru'] ?? null,
         );
         $this->assertNotEmpty(
-            $translationMap['service.router-wifi-configuration.seoDescription']['ru'] ?? null,
+            $translationMap['service.network-installation-configuration.seoDescription']['ru'] ?? null,
         );
     }
 
@@ -78,13 +104,13 @@ class ServiceCatalogSeederTest extends TestCase
                 'value' => [
                     'entries' => [
                         [
-                            'key' => 'service.router-wifi-configuration.highlight.2',
+                            'key' => 'service.network-installation-configuration.highlight.2',
                             'ka' => 'VLAN, VPN და Firewall',
                             'en' => 'VLAN, VPN და Firewall',
                             'ru' => 'VLAN, VPN და Firewall',
                         ],
                         [
-                            'key' => 'service.router-wifi-configuration.benefit.2.title',
+                            'key' => 'service.network-installation-configuration.benefit.2.title',
                             'ka' => 'VLAN, VPN და Firewall',
                             'en' => 'VLAN, VPN და Firewall',
                             'ru' => 'VLAN, VPN და Firewall',
@@ -101,19 +127,19 @@ class ServiceCatalogSeederTest extends TestCase
 
         $this->assertSame(
             'VLAN, VPN and firewall',
-            $translationMap['service.router-wifi-configuration.highlight.2']['en'] ?? null,
+            $translationMap['service.network-installation-configuration.highlight.2']['en'] ?? null,
         );
         $this->assertSame(
             'VLAN, VPN и межсетевой экран',
-            $translationMap['service.router-wifi-configuration.highlight.2']['ru'] ?? null,
+            $translationMap['service.network-installation-configuration.highlight.2']['ru'] ?? null,
         );
         $this->assertSame(
             'VLAN, VPN and firewall',
-            $translationMap['service.router-wifi-configuration.benefit.2.title']['en'] ?? null,
+            $translationMap['service.network-installation-configuration.benefit.2.title']['en'] ?? null,
         );
         $this->assertSame(
             'VLAN, VPN и межсетевой экран',
-            $translationMap['service.router-wifi-configuration.benefit.2.title']['ru'] ?? null,
+            $translationMap['service.network-installation-configuration.benefit.2.title']['ru'] ?? null,
         );
     }
 
@@ -121,29 +147,7 @@ class ServiceCatalogSeederTest extends TestCase
     {
         $this->seed(ServiceCatalogSeeder::class);
 
-        $coreSlugs = [
-            'operating-system-installation',
-            'custom-computer-build',
-            'computer-cleaning-maintenance',
-            'rack-assembly-cable-management',
-            'pos-system-installation',
-            'business-it-support',
-            'security-camera-installation',
-            'intercom-access-control-installation',
-            'router-wifi-configuration',
-            'network-cable-installation',
-            'patch-panel-network-outlet-installation',
-            'barrier-gate-installation',
-        ];
-        $googleBusinessSlugs = collect(GoogleBusinessServiceDefinitions::all())
-            ->pluck('slug')
-            ->reject(fn (string $slug): bool => array_key_exists(
-                $slug,
-                GoogleBusinessServiceDefinitions::CANONICAL_ALIASES,
-            ))
-            ->values()
-            ->all();
-        $expectedSlugs = array_values(array_unique([...$coreSlugs, ...$googleBusinessSlugs]));
+        $expectedSlugs = ServiceCatalogSeeder::canonicalServiceSlugs();
 
         $services = Service::query()->whereIn('slug', $expectedSlugs)->get();
 
@@ -156,7 +160,7 @@ class ServiceCatalogSeederTest extends TestCase
         $this->assertTrue($services->every(fn (Service $service): bool => filled($service->seo_description)));
         $this->assertTrue($services->every(fn (Service $service): bool => is_array($service->keywords) && count($service->keywords) >= 3));
 
-        $this->assertSame(5, CategoryForService::query()->count());
+        $this->assertSame(4, CategoryForService::query()->count());
         $this->assertSame(
             count(ServiceCatalogSeeder::canonicalFaqContexts()),
             Faq::query()->count(),
@@ -183,64 +187,24 @@ class ServiceCatalogSeederTest extends TestCase
         $this->assertSame('ბიზნეს IT სისტემები და IT ინფრასტრუქტურა', $businessIt->seo_title);
     }
 
-    public function test_google_business_profile_services_are_fully_localized_in_all_three_languages(): void
+    public function test_only_canonical_services_are_fully_localized_in_all_three_languages(): void
     {
         $this->seed(ServiceCatalogSeeder::class);
-
-        $expected = collect(GoogleBusinessServiceDefinitions::all())
-            ->reject(fn (array $definition): bool => array_key_exists(
-                $definition['slug'],
-                GoogleBusinessServiceDefinitions::CANONICAL_ALIASES,
-            ))
-            ->keyBy('slug');
-        $services = Service::query()
-            ->whereIn('slug', $expected->keys())
-            ->get()
-            ->keyBy('slug');
-
-        $this->assertCount($expected->count(), $services);
+        $services = Service::query()->get();
+        $this->assertCount(7, $services);
+        foreach ($services as $service) {
+            foreach (['ka', 'en', 'ru'] as $locale) {
+                foreach (['name', 'description', 'seoTitle', 'seoDescription'] as $field) {
+                    $this->assertNotEmpty(
+                        data_get($service->translations, "fields.{$field}.{$locale}"),
+                        "{$service->slug} is missing {$locale} {$field}.",
+                    );
+                }
+            }
+        }
         foreach (array_keys(GoogleBusinessServiceDefinitions::CANONICAL_ALIASES) as $alias) {
             $this->assertDatabaseMissing('services', ['slug' => $alias]);
         }
-
-        foreach ($expected as $slug => $definition) {
-            $service = $services->get($slug);
-
-            $this->assertNotNull($service, "Missing Google Business service: {$slug}");
-
-            foreach (['ka', 'en', 'ru'] as $locale) {
-                $this->assertSame(
-                    $definition['name'][$locale],
-                    data_get($service->translations, "fields.name.{$locale}"),
-                    "{$slug} is missing the {$locale} name.",
-                );
-                $this->assertNotEmpty(
-                    data_get($service->translations, "fields.description.{$locale}"),
-                    "{$slug} is missing the {$locale} description.",
-                );
-                $this->assertNotEmpty(
-                    data_get($service->translations, "fields.seoTitle.{$locale}"),
-                    "{$slug} is missing the {$locale} SEO title.",
-                );
-                $this->assertNotEmpty(
-                    data_get($service->translations, "fields.seoDescription.{$locale}"),
-                    "{$slug} is missing the {$locale} SEO description.",
-                );
-            }
-        }
-
-        $telecommunications = CategoryForService::query()
-            ->where('slug', 'telecommunications-infrastructure')
-            ->firstOrFail();
-
-        $this->assertSame(
-            'Telecommunications Infrastructure',
-            data_get($telecommunications->translations, 'fields.name.en'),
-        );
-        $this->assertSame(
-            'Телекоммуникационная инфраструктура',
-            data_get($telecommunications->translations, 'fields.name.ru'),
-        );
     }
 
     public function test_google_business_services_and_categories_are_localized_by_the_public_api(): void
@@ -263,15 +227,15 @@ class ServiceCatalogSeederTest extends TestCase
         $this->getJson('/api/service-categories?locale=en')
             ->assertOk()
             ->assertJsonFragment([
-                'slug' => 'telecommunications-infrastructure',
-                'name' => 'Telecommunications Infrastructure',
+                'slug' => 'network-infrastructure',
+                'name' => 'Network Infrastructure',
             ]);
 
         $this->getJson('/api/service-categories?locale=ru')
             ->assertOk()
             ->assertJsonFragment([
-                'slug' => 'telecommunications-infrastructure',
-                'name' => 'Телекоммуникационная инфраструктура',
+                'slug' => 'network-infrastructure',
+                'name' => 'Сетевая инфраструктура',
             ]);
     }
 }
