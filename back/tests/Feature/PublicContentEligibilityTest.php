@@ -147,4 +147,49 @@ class PublicContentEligibilityTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.challenges.0.title', 'Coverage');
     }
+
+    public function test_disabling_categories_hides_their_published_content_and_restoring_reenables_it(): void
+    {
+        $serviceCategory = CategoryForService::query()->create([
+            'name' => 'Hidden security',
+            'slug' => 'hidden-security',
+            'is_published' => false,
+        ]);
+        $service = Service::query()->create([
+            'category_for_service_id' => $serviceCategory->id,
+            'slug' => 'hidden-camera',
+            'name' => 'Hidden camera',
+            'description' => 'Camera installation',
+            'is_published' => true,
+            'lead_form' => ['calculator_enabled' => true],
+        ]);
+
+        $projectCategory = ProjectCategory::query()->create([
+            'name' => 'Hidden offices',
+            'slug' => 'hidden-offices',
+            'is_published' => false,
+        ]);
+        $project = Project::query()->create([
+            'category_id' => $projectCategory->id,
+            'slug' => 'hidden-office',
+            'name' => 'Hidden office',
+            'description' => 'Office network deployment',
+            'is_published' => true,
+        ]);
+
+        $this->getJson('/api/services')->assertOk()->assertJsonMissing(['slug' => $service->slug]);
+        $this->getJson('/api/services/'.$service->slug)->assertNotFound();
+        $this->getJson('/api/services?view=sitemap')->assertOk()->assertJsonMissing(['slug' => $service->slug]);
+        $this->getJson('/api/service-categories')->assertOk()->assertJsonMissing(['slug' => $serviceCategory->slug]);
+        $this->getJson('/api/projects')->assertOk()->assertJsonMissing(['slug' => $project->slug]);
+        $this->getJson('/api/projects/'.$project->slug)->assertNotFound();
+        $this->getJson('/api/project-categories')->assertOk()->assertJsonMissing(['slug' => $projectCategory->slug]);
+        $this->getJson('/api/service-calculator-profiles')->assertOk()->assertJsonMissing(['slug' => $service->slug]);
+
+        $serviceCategory->update(['is_published' => true]);
+        $projectCategory->update(['is_published' => true]);
+
+        $this->getJson('/api/services/'.$service->slug)->assertOk();
+        $this->getJson('/api/projects/'.$project->slug)->assertOk();
+    }
 }
