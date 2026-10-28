@@ -101,7 +101,10 @@ class Service extends Model implements HasMedia
     {
         return $query
             ->where('is_published', true)
-            ->whereHas('category', fn (Builder $category): Builder => $category->where('is_published', true))
+            ->where(function (Builder $visibility): void {
+                $visibility->whereNull('category_for_service_id')
+                    ->orWhereHas('category', fn (Builder $category): Builder => $category->where('is_published', true));
+            })
             ->whereNotNull('slug')
             ->whereRaw("TRIM(COALESCE(slug, '')) <> ''")
             ->where(function (Builder $headline): void {
