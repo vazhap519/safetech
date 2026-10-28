@@ -19,7 +19,11 @@ final class ServiceCalculatorProfileController extends Controller
         $serviceSlug = $request->string('service')->trim()->toString();
 
         $services = Service::query()
-            ->publiclyVisible()
+            ->published()
+            ->where(function ($query): void {
+                $query->whereNull('category_for_service_id')
+                    ->orWhereHas('category', fn ($category) => $category->where('is_published', true));
+            })
             ->when($serviceSlug !== '', fn ($query) => $query->where('slug', $serviceSlug))
             ->get()
             ->filter(fn (Service $service): bool => $builder->enabled($service))
