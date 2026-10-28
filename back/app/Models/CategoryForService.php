@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Filament\Support\StableSlug;
 use App\Models\Concerns\FlushesPublicContentCache;
 use App\Support\SocialLinks;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Image\Enums\Fit;
@@ -17,6 +18,7 @@ class CategoryForService extends Model implements HasMedia
     use FlushesPublicContentCache, HasFactory, InteractsWithMedia;
 
     protected $fillable = [
+        'is_published',
         'name',
         'slug',
         'seo_title',
@@ -35,6 +37,7 @@ class CategoryForService extends Model implements HasMedia
         'schema' => 'array',
         'translations' => 'array',
         'noindex' => 'boolean',
+        'is_published' => 'boolean',
     ];
 
     public function registerMediaCollections(): void
@@ -91,6 +94,11 @@ class CategoryForService extends Model implements HasMedia
     | 🔗 RELATION
     |------------------------------------------------------------------
     */
+    public function scopePubliclyVisible(Builder $query): Builder
+    {
+        return $query->where('is_published', true);
+    }
+
     public function services()
     {
         return $this->hasMany(Service::class, 'category_for_service_id');

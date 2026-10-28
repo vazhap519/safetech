@@ -9,6 +9,10 @@ final class CalculatorProfileBuilder
 {
     public function enabled(Service $service): bool
     {
+        if ($service->exists && (! $service->is_published || ($service->category_for_service_id !== null && ! $service->category?->is_published))) {
+            return false;
+        }
+
         $custom = is_array($service->lead_form) ? $service->lead_form : [];
 
         if (array_key_exists('calculator_enabled', $custom)) {

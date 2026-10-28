@@ -209,7 +209,9 @@ class ServiceResource extends Resource
 
             Section::make('Publishing')
                 ->schema([
-                    Toggle::make('is_published')->label('Published')->default(false),
+                    Toggle::make('is_published')->label('Visible on website')->default(false),
+                    Toggle::make('lead_form.calculator_enabled')->label('Calculator enabled')->default(true)
+                        ->helperText('Disable the public calculator for this service without deleting its configuration.'),
                     TextInput::make('sort_order')->label('Sort order')->numeric()->default(0),
                 ])
                 ->columns(2),

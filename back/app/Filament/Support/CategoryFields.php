@@ -6,6 +6,7 @@ use App\Support\SocialLinks;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -18,6 +19,7 @@ final class CategoryFields
         return Section::make('Category name (KA / EN / RU)')
             ->description('ახალი კატეგორიის შექმნისას შეავსეთ სამივე ენა. არსებულ ჩანაწერზე ცარიელი ინგლისური ან რუსული მნიშვნელობა უსაფრთხოდ გამოიყენებს ქართულ სათაურს.')
             ->schema([
+                Toggle::make('is_published')->label('Visible on website')->default(true)->helperText('When disabled, this category and its services/projects are hidden from public API and SEO pages.'),
                 TextInput::make('name')
                     ->label('Category name (ქართული)')
                     ->required()
