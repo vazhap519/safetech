@@ -14,6 +14,7 @@ final class ProjectCategoryController extends Controller
     {
         $locale = $request->string('locale')->toString();
         $categories = ProjectCategory::query()
+            ->publiclyVisible()
             ->with('media')
             ->whereHas('projects', fn ($query) => $query->publiclyVisible())
             ->orderBy('sort_order')
