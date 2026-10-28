@@ -69,7 +69,9 @@ class SeoPageSeeder extends Seeder
             $current = trim((string) $record->getAttribute($field));
             $legacyValue = trim((string) ($legacy[$field] ?? ''));
 
-            if ($current === '' || ($legacyValue !== '' && $current === $legacyValue)) {
+            if ($current === '' || ($legacyValue !== '' && $current === $legacyValue)
+                || ($page['key'] === 'home' && in_array($field, ['title', 'og_title'], true)
+                    && $current === 'უსაფრთხოების სისტემები და IT მომსახურება | SafeTech')) {
                 $record->setAttribute($field, $page[$field]);
             }
         }
@@ -89,11 +91,12 @@ class SeoPageSeeder extends Seeder
                 is_array($record->translations) ? $record->translations : [],
                 $page['translations'],
                 is_array($legacy['translations'] ?? null) ? $legacy['translations'] : [],
+                $page['key'],
             );
         $record->save();
     }
 
-    private function mergeTranslations(array $current, array $defaults, array $legacy): array
+    private function mergeTranslations(array $current, array $defaults, array $legacy, string $pageKey): array
     {
         if ($current === []) {
             // A blank translation repeater was saved deliberately. Seed values
@@ -116,7 +119,10 @@ class SeoPageSeeder extends Seeder
                 $configured = trim((string) ($current['fields'][$field][$locale] ?? ''));
                 $legacyValue = trim((string) data_get($legacy, "fields.{$field}.{$locale}", ''));
 
-                if ($configured === '' || ($legacyValue !== '' && $configured === $legacyValue)) {
+                if ($configured === '' || ($legacyValue !== '' && $configured === $legacyValue)
+                    || ($pageKey === 'home' && $locale === 'ka'
+                        && in_array($field, ['title', 'og_title'], true)
+                        && $configured === 'უსაფრთხოების სისტემები და IT მომსახურება | SafeTech')) {
                     $current['fields'][$field][$locale] = $value;
                 }
             }
@@ -141,7 +147,7 @@ class SeoPageSeeder extends Seeder
                 'home',
                 '/',
                 self::localized(
-                    'უსაფრთხოების სისტემები და IT მომსახურება | SafeTech',
+                    'კამერების მონტაჟი და IT სერვისი | SafeTech',
                     'Security Systems & IT Services in Georgia | SafeTech',
                     'Системы безопасности и IT-услуги в Грузии | SafeTech',
                 ),

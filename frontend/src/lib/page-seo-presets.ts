@@ -16,7 +16,7 @@ export const PAGE_SEO_PRESETS = {
         key: "home",
         path: "/",
         title: {
-            ka: "უსაფრთხოების სისტემები და IT მომსახურება | SafeTech",
+            ka: "კამერების მონტაჟი და IT სერვისი | SafeTech",
             en: "Security Systems & IT Services in Georgia | SafeTech",
             ru: "Системы безопасности и IT-услуги в Грузии | SafeTech",
         },
