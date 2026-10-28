@@ -82,7 +82,10 @@ class Project extends Model implements HasMedia
     {
         return $query
             ->where('is_published', true)
-            ->whereHas('category', fn (Builder $category): Builder => $category->where('is_published', true))
+            ->where(function (Builder $visibility): void {
+                $visibility->whereNull('category_id')
+                    ->orWhereHas('category', fn (Builder $category): Builder => $category->where('is_published', true));
+            })
             ->where(function (Builder $published): void {
                 $published
                     ->whereNull('published_at')
