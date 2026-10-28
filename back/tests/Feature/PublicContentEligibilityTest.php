@@ -184,7 +184,7 @@ class PublicContentEligibilityTest extends TestCase
         $this->getJson('/api/projects')->assertOk()->assertJsonMissing(['slug' => $project->slug]);
         $this->getJson('/api/projects/'.$project->slug)->assertNotFound();
         $this->getJson('/api/project-categories')->assertOk()->assertJsonMissing(['slug' => $projectCategory->slug]);
-        $this->getJson('/api/service-calculator-profiles')->assertOk()->assertJsonMissing(['slug' => $service->slug]);
+        $this->getJson('/api/service-calculator/profiles')->assertOk()->assertJsonMissing(['slug' => $service->slug]);
 
         $serviceCategory->update(['is_published' => true]);
         $projectCategory->update(['is_published' => true]);
