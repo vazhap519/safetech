@@ -159,6 +159,7 @@ class PublicContentEligibilityTest extends TestCase
             'category_for_service_id' => $serviceCategory->id,
             'slug' => 'hidden-camera',
             'name' => 'Hidden camera',
+            'title' => 'Hidden camera',
             'description' => 'Camera installation',
             'is_published' => true,
             'lead_form' => ['calculator_enabled' => true],
@@ -173,6 +174,7 @@ class PublicContentEligibilityTest extends TestCase
             'category_id' => $projectCategory->id,
             'slug' => 'hidden-office',
             'name' => 'Hidden office',
+            'title' => 'Hidden office',
             'description' => 'Office network deployment',
             'is_published' => true,
         ]);
