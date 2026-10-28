@@ -141,7 +141,7 @@ class SeoPageSeeder extends Seeder
                 'home',
                 '/',
                 self::localized(
-                    'უსაფრთხოების სისტემები და IT მომსახურება | SafeTech',
+                    'კამერების მონტაჟი და IT სერვისი | SafeTech',
                     'Security Systems & IT Services in Georgia | SafeTech',
                     'Системы безопасности и IT-услуги в Грузии | SafeTech',
                 ),
