@@ -115,4 +115,39 @@ class SeoPageApiTest extends TestCase
             ->assertJsonMissingPath('data.0.og_image_url')
             ->assertJsonMissingPath('data.0.share_image_url');
     }
+
+    public function test_home_seeder_updates_only_old_default_title_and_keeps_custom_metadata(): void
+    {
+        $legacy = 'უსაფრთხოების სისტემები და IT მომსახურება | SafeTech';
+        $optimized = 'კამერების მონტაჟი და IT სერვისი | SafeTech';
+
+        $page = SeoPage::query()->create([
+            'key' => 'home',
+            'slug' => '/',
+            'title' => $legacy,
+            'description' => 'Administrator description to retain',
+            'og_title' => $legacy,
+            'translations' => [
+                'fields' => [
+                    'title' => ['ka' => $legacy, 'en' => 'Custom English title'],
+                    'og_title' => ['ka' => $legacy],
+                ],
+            ],
+        ]);
+
+        $this->seed(\\Database\\Seeders\\SeoPageSeeder::class);
+        $page->refresh();
+
+        $this->assertSame($optimized, $page->title);
+        $this->assertSame($optimized, $page->og_title);
+        $this->assertSame($optimized, data_get($page->translations, 'fields.title.ka'));
+        $this->assertSame('Custom English title', data_get($page->translations, 'fields.title.en'));
+        $this->assertSame('Administrator description to retain', $page->description);
+
+        $page->title = 'Custom administrator title';
+        $page->save();
+
+        $this->seed(\\Database\\Seeders\\SeoPageSeeder::class);
+        $this->assertSame('Custom administrator title', $page->fresh()->title);
+    }
 }
