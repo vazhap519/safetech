@@ -15,3 +15,5 @@ safetech-bootstrap.local.sh
 frontend/qa-frontend*.log
 back/storage/logs/qa-*.log
 .deploy/
+frontend/test-results/
+frontend/playwright-report/

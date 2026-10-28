@@ -2,15 +2,17 @@
 
 import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from "react";
 
-import { CONSULTATION_OPEN_EVENT } from "@/components/consultation/constants";
+import { CONSULTATION_OPEN_EVENT, type ConsultationPrefill } from "@/components/consultation/constants";
 
 type ConsultationTriggerProps = {
     children: ReactNode;
+    prefill?: ConsultationPrefill;
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type">;
 
 export default function ConsultationTrigger({
     children,
     onClick,
+    prefill,
     ...props
 }: ConsultationTriggerProps) {
     function handleClick(event: MouseEvent<HTMLButtonElement>) {
@@ -18,7 +20,7 @@ export default function ConsultationTrigger({
 
         if (event.defaultPrevented) return;
 
-        window.dispatchEvent(new Event(CONSULTATION_OPEN_EVENT));
+        window.dispatchEvent(new CustomEvent(CONSULTATION_OPEN_EVENT, { detail: prefill }));
     }
 
     return (
