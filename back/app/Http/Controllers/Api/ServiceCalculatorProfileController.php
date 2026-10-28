@@ -19,13 +19,13 @@ final class ServiceCalculatorProfileController extends Controller
         $serviceSlug = $request->string('service')->trim()->toString();
 
         $services = Service::query()
-            ->published()
+            ->publiclyVisible()
             ->when($serviceSlug !== '', fn ($query) => $query->where('slug', $serviceSlug))
             ->get()
             ->filter(fn (Service $service): bool => $builder->enabled($service))
             ->values();
 
-        if ($services->isEmpty() && ! Service::query()->published()->exists()) {
+        if ($services->isEmpty() && ! Service::query()->exists()) {
             $names = [
                 'cctv' => ['ვიდეოსამეთვალყურეობა', 'CCTV', 'Видеонаблюдение'],
                 'networking' => ['ქსელური ინფრასტრუქტურა', 'Networking', 'Сетевая инфраструктура'],
