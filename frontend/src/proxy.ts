@@ -1,60 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { SERVICE_CANONICAL_ALIASES, CANONICAL_SERVICE_SLUGS } from "./src/lib/service-canonical-aliases";
 
 const LOCALE_COOKIE_NAME = "safetech_locale";
 
-const SERVICE_CANONICAL_ALIASES: Record<string, string> = {
-    "ip-camera-installation": "security-camera-installation",
-    "video-surveillance-system-installation": "security-camera-installation",
-    "intercom-installation": "intercom-access-control-installation",
-    "access-control-system-installation": "intercom-access-control-installation",
-    "access-control-installation": "intercom-access-control-installation",
-    "barrier-gate-setup": "barrier-gate-installation",
-    "it-technical-support": "business-it-support",
-    "rack-assembly-cable-management": "low-voltage-cabling",
-    "network-rack-installation": "low-voltage-cabling",
-    "network-cable-installation": "low-voltage-cabling",
-    "patch-panel-network-outlet-installation": "low-voltage-cabling",
-    "patch-panel-installation": "low-voltage-cabling",
-    "cat6-cabling": "low-voltage-cabling",
-    "structured-cabling": "low-voltage-cabling",
-    "structured-cabling-installation": "low-voltage-cabling",
-    "telecommunications-infrastructure-installation": "low-voltage-cabling",
-    "communications-infrastructure": "low-voltage-cabling",
-    "router-wifi-configuration": "network-installation-configuration",
-    "lan-installation": "network-installation-configuration",
-    "lan-network-installation": "network-installation-configuration",
-    "wifi-network-installation": "network-installation-configuration",
-    "network-diagnostics": "network-installation-configuration",
-    "computer-network-diagnostics": "network-installation-configuration",
-    "personal-computer-assembly": "operating-system-installation",
-    "custom-computer-build": "operating-system-installation",
-    "computer-upgrade-optimization": "operating-system-installation",
-    "computer-component-replacement": "operating-system-installation",
-    "computer-preventive-maintenance": "operating-system-installation",
-    "computer-peripheral-troubleshooting": "operating-system-installation",
-    "computer-setup-optimization": "operating-system-installation",
-    "computer-component-upgrades": "operating-system-installation",
-    "computer-cleaning-maintenance": "operating-system-installation",
-    "computer-peripheral-setup": "operating-system-installation",
-    "macos-installation-configuration": "operating-system-installation",
-    "macos-installation": "operating-system-installation",
-    "macbook-imac-software-setup": "operating-system-installation",
-    "mac-software-setup": "operating-system-installation",
-    "mac-software-installation": "operating-system-installation",
-    "mac-app-installation": "operating-system-installation",
-    "mac-diagnostics-repair": "operating-system-installation",
-    "mac-diagnostics": "operating-system-installation",
-    "mac-data-recovery-backup": "operating-system-installation",
-    "mac-backup-migration": "operating-system-installation",
-    "pos-system-installation": "business-it-support",
-    "computers-workstations-setup": "business-it-support",
-    "workstation-setup": "business-it-support",
-    "microsoft-365-setup-migration": "business-it-support",
-    "microsoft-365-migration": "business-it-support",
-    "data-backup-recovery": "business-it-support",
-    "backup-setup": "business-it-support",
 
-};
 
 import {
     DEFAULT_LOCALE,
@@ -114,13 +63,13 @@ export function proxy(request: NextRequest) {
     ) {
         const url = request.nextUrl.clone();
         const targetService =
-            SERVICE_CANONICAL_ALIASES[legacyQueryService] || legacyQueryService;
+            SERVICE_CANONICAL_ALIASES[legacyQueryService] || (CANONICAL_SERVICE_SLUGS.has(legacyQueryService) ? legacyQueryService : null);
         const localePrefix =
             hasLocalePrefix && firstSegment !== DEFAULT_LOCALE
                 ? `/${firstSegment}`
                 : "";
 
-        url.pathname = `${localePrefix}/services/${targetService}`;
+        url.pathname = targetService ? `${localePrefix}/services/${targetService}` : `${localePrefix}/services`;
         url.search = "";
 
         return withLocaleCookie(NextResponse.redirect(url, 308), locale);
