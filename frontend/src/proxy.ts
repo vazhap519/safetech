@@ -1,9 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SERVICE_CANONICAL_ALIASES, CANONICAL_SERVICE_SLUGS } from "./src/lib/service-canonical-aliases";
-
-const LOCALE_COOKIE_NAME = "safetech_locale";
-
-
+import { SERVICE_CANONICAL_ALIASES, CANONICAL_SERVICE_SLUGS } from "@/lib/service-canonical-aliases";
 
 import {
     DEFAULT_LOCALE,
@@ -13,6 +9,8 @@ import {
     stripLocalePrefix,
     type Locale,
 } from "@/lib/locales";
+
+const LOCALE_COOKIE_NAME = "safetech_locale";
 
 function localeFromRequest(request: NextRequest): Locale {
     const firstSegment = request.nextUrl.pathname.split("/").filter(Boolean)[0];
