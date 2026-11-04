@@ -426,9 +426,10 @@ php "${BACKEND_DIR}/artisan" view:clear
 php "${BACKEND_DIR}/artisan" cms:production-check
 php "${BACKEND_DIR}/artisan" migrate --force
 php "${BACKEND_DIR}/artisan" db:seed --class=AdminUserSeeder --force
-php "${BACKEND_DIR}/artisan" safetech:refresh-public-content --force
+# Preserve historical records during catalog consolidation.
+php "${BACKEND_DIR}/artisan" safetech:seven-service-preflight --execute
 php "${BACKEND_DIR}/artisan" safetech:local-seo-audit --strict
-php "${BACKEND_DIR}/artisan" cms:remove-demo-content --force
+# DISABLED PENDING DATA AUDIT: php "${BACKEND_DIR}/artisan" cms:remove-demo-content --force
 php "${BACKEND_DIR}/artisan" cache:clear
 php "${BACKEND_DIR}/artisan" storage:link --force
 php "${BACKEND_DIR}/artisan" optimize
