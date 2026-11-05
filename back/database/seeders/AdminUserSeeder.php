@@ -41,9 +41,6 @@ final class AdminUserSeeder extends Seeder
 
             $admin->forceFill($attributes)->save();
 
-            User::query()
-                ->where('id', '!=', $admin->getKey())
-                ->delete();
         });
     }
 }
