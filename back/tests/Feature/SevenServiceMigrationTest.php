@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\ProjectCategory;
 use App\Models\QuoteCatalogItem;
 use App\Models\Service;
+use Database\Seeders\GoogleBusinessServiceDefinitions;
 use Database\Seeders\ProductionContentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -144,5 +145,81 @@ class SevenServiceMigrationTest extends TestCase
             ->assertExitCode(0);
 
         $this->assertSame($before, DB::table('quote_catalog_items')->count());
+    }
+
+    public function test_execute_preserves_complete_content_snapshots_and_is_idempotent(): void
+    {
+        $this->seed(ProductionContentSeeder::class);
+        $canonical = Service::query()->where('slug', 'security-camera-installation')->sole();
+        $legacy = $canonical->replicate();
+        $legacy->slug = 'ip-camera-installation';
+        $legacy->save();
+
+        $category = ProjectCategory::query()->create([
+            'slug' => 'customer-projects', 'name' => 'Customer projects', 'sort_order' => 1,
+        ]);
+        for ($index = 1; $index <= 17; $index++) {
+            Project::query()->create([
+                'slug' => "customer-project-{$index}",
+                'name' => "Customer project {$index}",
+                'title' => "Customer project {$index}",
+                'description' => 'Administrator content to preserve',
+                'seo_description' => 'Original customer project SEO',
+                'category_id' => $category->id,
+                'is_published' => true,
+            ]);
+        }
+
+        // Include a real media record with historical service ownership.
+        DB::table('media')->insert([
+            'model_type' => Service::class,
+            'model_id' => $legacy->id,
+            'collection_name' => 'images',
+            'name' => 'Customer photo',
+            'file_name' => 'customer-photo.jpg',
+            'mime_type' => 'image/jpeg',
+            'disk' => 'public',
+            'size' => 1234,
+            'manipulations' => '{}',
+            'custom_properties' => '{}',
+            'generated_conversions' => '{}',
+            'responsive_images' => '{}',
+        ]);
+
+        // Reconstruct 204 historical local rows without copying production data.
+        foreach (GoogleBusinessServiceDefinitions::CANONICAL_ALIASES as $slug => $targetSlug) {
+            $target = Service::query()->where('slug', $targetSlug)->sole();
+            $source = Service::query()->where('slug', $slug)->first();
+            if (! $source) {
+                $source = $target->replicate();
+                $source->slug = $slug;
+                $source->save();
+            }
+            foreach (LocalServiceLanding::query()->where('service_id', $target->id)->get() as $landing) {
+                if (DB::table('local_service_landings')->count() >= 204) {
+                    break 2;
+                }
+                $copy = $landing->replicate();
+                $copy->service_id = $source->id;
+                $copy->save();
+            }
+        }
+
+        $tables = ['projects', 'media', 'quote_catalog_items', 'local_service_landings'];
+        $before = [];
+        foreach ($tables as $table) {
+            $before[$table] = DB::table($table)->orderBy('id')->get()->toJson();
+        }
+        $this->assertSame(204, DB::table('local_service_landings')->count());
+        $this->assertGreaterThan(0, DB::table('quote_catalog_items')->count());
+
+        for ($run = 0; $run < 2; $run++) {
+            $this->artisan('safetech:seven-service-preflight', ['--execute' => true])->assertExitCode(0);
+            foreach ($tables as $table) {
+                $this->assertSame($before[$table], DB::table($table)->orderBy('id')->get()->toJson(), $table);
+            }
+            $this->assertSame(7, Service::query()->where('is_published', true)->count());
+            $this->assertSame([], DB::select('PRAGMA foreign_key_check'));
+        }
     }
 }
