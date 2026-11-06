@@ -47,7 +47,6 @@ const CAMPAIGN_PARAMETERS: readonly CampaignParameter[] = [
     "utm_content",
     "utm_term",
 ];
-let campaignAttributionCache: CampaignAttribution | null = null;
 
 function safeText(value: string | null | undefined, maxLength = 160) {
     return (value ?? "")
@@ -86,16 +85,12 @@ function currentCampaignAttribution(): CampaignAttribution {
 }
 
 function readStoredCampaignAttribution(): CampaignAttribution {
-    if (campaignAttributionCache) return campaignAttributionCache;
-
     try {
         const value = window.sessionStorage.getItem(CAMPAIGN_STORAGE_KEY);
         const parsed = value ? (JSON.parse(value) as unknown) : null;
 
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-            campaignAttributionCache = {};
-
-            return campaignAttributionCache;
+            return {};
         }
 
         const record = parsed as Record<string, unknown>;
@@ -116,13 +111,9 @@ function readStoredCampaignAttribution(): CampaignAttribution {
             }
         }
 
-        campaignAttributionCache = attribution;
-
-        return campaignAttributionCache;
+        return attribution;
     } catch {
-        campaignAttributionCache = {};
-
-        return campaignAttributionCache;
+        return {};
     }
 }
 
@@ -133,7 +124,6 @@ export function captureCampaignAttribution(): CampaignAttribution {
         ...currentCampaignAttribution(),
         ...readStoredCampaignAttribution(),
     } satisfies CampaignAttribution;
-    campaignAttributionCache = attribution;
 
     try {
         window.sessionStorage.setItem(

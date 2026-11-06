@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import LocalizedLink from "@/components/ui/LocalizedLink";
@@ -46,6 +46,8 @@ export default function AnalyticsConsentClient({
     const gaId = validId(googleAnalyticsId, /^G-[A-Z0-9]+$/i);
     const pixelId = validId(metaPixelId, /^\d{5,30}$/);
     const hasIntegration = Boolean(gtmId || gaId || pixelId);
+    const previousGooglePageRef = useRef<string | null>(null);
+    const previousMetaPageRef = useRef<string | null>(null);
 
     return (
         <>
@@ -54,6 +56,8 @@ export default function AnalyticsConsentClient({
                     googleAnalyticsId={gaId}
                     googleTagManagerId={gtmId}
                     metaPixelId={pixelId}
+                    previousGooglePageRef={previousGooglePageRef}
+                    previousMetaPageRef={previousMetaPageRef}
                 />
             ) : null}
 

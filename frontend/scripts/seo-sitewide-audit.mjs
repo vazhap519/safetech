@@ -100,7 +100,7 @@ async function request(baseUrl, path, userAgent, accept = "text/html,application
     }
 }
 
-function auditHtmlPage(body, path, publicSiteUrl) {
+function auditHtmlPage(body, path, publicSiteUrl, expectedAlternates) {
     const title = body.match(/<title>([\s\S]*?)<\/title>/i)?.[1]?.trim() || "";
     const description = metaValue(body, "name", "description");
     const canonical = attribute(linkByRel(body, "canonical") || "", "href");
@@ -125,8 +125,17 @@ function auditHtmlPage(body, path, publicSiteUrl) {
     assert(htmlLang, `${path}: html lang attribute is missing`);
     assert(visibleText(body).length >= 80, `${path}: rendered page content is too thin`);
 
-    for (const hreflang of REQUIRED_HREFLANGS) {
+    for (const hreflang of (expectedAlternates ? Object.keys(expectedAlternates) : REQUIRED_HREFLANGS)) {
         assert(alternates.includes(hreflang), `${path}: missing hreflang ${hreflang}`);
+    }
+
+    if (expectedAlternates) {
+        for (const hreflang of alternates) {
+            assert(hreflang in expectedAlternates, `${path}: hreflang ${hreflang} is absent from its sitemap entry`);
+            const tag = tags(body, "link").find((item) => attribute(item, "hreflang") === hreflang);
+            assert(normalizeUrl(attribute(tag, "href")) === normalizeUrl(expectedAlternates[hreflang]),
+                `${path}: hreflang ${hreflang} differs from the sitemap`);
+        }
     }
 
     for (const image of images) {
@@ -198,6 +207,18 @@ export async function runSitewideSeoAudit({
         return result.body;
     });
 
+    const alternatesByPath = new Map();
+    for (const xml of sitemapBodies) {
+        for (const match of xml.matchAll(/<url>[\s\S]*?<\/url>/gi)) {
+            const block = match[0];
+            const path = toLocalPath(extractXmlLocs(block)[0], publicSiteUrl);
+            const alternates = Object.fromEntries(tags(block, "xhtml:link")
+                .filter((tag) => attribute(tag, "rel") === "alternate")
+                .map((tag) => [attribute(tag, "hreflang"), attribute(tag, "href")]));
+            if (path && Object.keys(alternates).length) alternatesByPath.set(path, alternates);
+        }
+    }
+
     const pageUrls = [...new Set(sitemapBodies.flatMap(extractXmlLocs))]
         .map((url) => toLocalPath(url, publicSiteUrl))
         .filter(Boolean)
@@ -210,7 +231,7 @@ export async function runSitewideSeoAudit({
         const contentType = response.headers.get("content-type") || "";
         assert(response.status === 200, `${path}: sitemap URL returned HTTP ${response.status}`);
         assert(contentType.includes("text/html"), `${path}: sitemap URL must return HTML`);
-        return { path, ...auditHtmlPage(body, path, publicSiteUrl) };
+        return { path, ...auditHtmlPage(body, path, publicSiteUrl, alternatesByPath.get(path)) };
     });
 
     for (const [value, paths] of findDuplicates(records, "title")) {

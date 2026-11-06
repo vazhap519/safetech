@@ -45,6 +45,7 @@ class LocalServiceLandingResource extends JsonResource
         return [
             'id' => $this->id,
             'translationAvailable' => $translationAvailable,
+            'availableLocales' => (new LocalServiceLandingSitemapResource($this->resource))->toArray($request)['availableLocales'],
             'locationSlug' => $this->location_slug,
             'locationName' => $this->translated('locationName', $this->location_name, $locale),
             'eyebrow' => $this->translated('eyebrow', $this->eyebrow, $locale),

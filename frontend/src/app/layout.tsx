@@ -33,6 +33,7 @@ import {
 } from "@/lib/site-settings";
 import { createTranslator } from "@/lib/translations";
 import { ANALYTICS_CONSENT_COOKIE } from "@/lib/consent-config";
+import { resolveMarketingIds } from "@/lib/marketing-config";
 
 const siteFont = localFont({
     src: [
@@ -54,14 +55,7 @@ const siteFont = localFont({
     variable: "--font-site",
 });
 
-const GOOGLE_TAG_MANAGER_ID_PATTERN = /^GTM-[A-Z0-9]+$/i;
-const GOOGLE_ANALYTICS_ID_PATTERN = /^G-[A-Z0-9]+$/i;
 const FACEBOOK_APP_ID = "2104123086847903";
-
-function validIntegrationId(value: string | undefined, pattern: RegExp) {
-    const normalized = value?.trim() ?? "";
-    return pattern.test(normalized) ? normalized : "";
-}
 
 export const viewport: Viewport = {
     width: "device-width",
@@ -199,41 +193,14 @@ export default async function RootLayout({
         en: "Skip to main content",
         ru: "Перейти к основному содержанию",
     });
-    const configuredGoogleTagManagerId = validIntegrationId(
-        integrations.googleTagManagerId,
-        GOOGLE_TAG_MANAGER_ID_PATTERN,
-    );
-    const configuredGoogleAnalyticsId = validIntegrationId(
-        integrations.googleAnalyticsId,
-        GOOGLE_ANALYTICS_ID_PATTERN,
-    );
-    const hasAdminGoogleIntegration = Boolean(
-        configuredGoogleTagManagerId || configuredGoogleAnalyticsId,
-    );
-    const googleTagManagerId =
-        configuredGoogleTagManagerId ||
-        (!hasAdminGoogleIntegration
-            ? validIntegrationId(
-                  process.env.NEXT_PUBLIC_GTM_ID,
-                  GOOGLE_TAG_MANAGER_ID_PATTERN,
-              )
-            : "");
-    const googleAnalyticsId =
-        configuredGoogleAnalyticsId ||
-        (!hasAdminGoogleIntegration
-            ? validIntegrationId(
-                  process.env.NEXT_PUBLIC_GA_ID,
-                  GOOGLE_ANALYTICS_ID_PATTERN,
-              )
-            : "");
-    const metaPixelId =
-        integrations.metaPixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
+    const { googleAnalyticsId, googleTagManagerId, metaPixelId } = resolveMarketingIds(integrations);
     const marketingEnabled = integrations.marketingEnabled;
     const googleConsentEnabled =
         marketingEnabled && Boolean(googleTagManagerId || googleAnalyticsId);
     const googleTagManagerNoScriptEnabled =
         marketingEnabled &&
         initialConsent === "accepted" &&
+        !googleAnalyticsId &&
         Boolean(googleTagManagerId);
     const publicApiOrigin = (() => {
         try {
@@ -274,20 +241,6 @@ export default async function RootLayout({
                                 __html: "window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied'});",
                             }}
                         />
-                        {googleAnalyticsId ? (
-                            <>
-                                <script
-                                    async
-                                    src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
-                                />
-                                <script
-                                    id="google-analytics-bootstrap"
-                                    dangerouslySetInnerHTML={{
-                                        __html: `gtag('js',new Date());gtag('config','${googleAnalyticsId}',{anonymize_ip:true,send_page_view:false});`,
-                                    }}
-                                />
-                            </>
-                        ) : null}
                     </>
                 ) : null}
                 {publicApiOrigin ? (

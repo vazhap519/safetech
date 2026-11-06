@@ -72,6 +72,9 @@ final class LocalServiceLandingController extends Controller
                     'location_name',
                     'title',
                     'seo_title',
+                    'seo_description',
+                    'excerpt',
+                    'content',
                     'translations',
                     'noindex',
                     'updated_at',
@@ -80,7 +83,7 @@ final class LocalServiceLandingController extends Controller
                 ->filter(fn (LocalServiceLanding $landing): bool => $this->hasLocaleTranslation(
                     $landing,
                     $this->requestedLocale($request),
-                    false,
+                    true,
                 ))
                 ->values();
 

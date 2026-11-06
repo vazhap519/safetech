@@ -53,6 +53,7 @@ export async function generateMetadata({
         siteName: branding.siteName,
         noindex: Boolean(landing.seo?.noindex),
         canonical: landing.seo?.canonical,
+        availableLocales: landing.availableLocales?.length ? landing.availableLocales : [locale],
         ogTitle: landing.seo?.og?.title,
         ogDescription: landing.seo?.og?.description,
     });

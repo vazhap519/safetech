@@ -341,18 +341,25 @@ export async function categorySitemapResponse({
   return xmlResponse(urlset(urls));
 }
 
-function buildImageSitemapItems(services, projects) {
+export function buildImageSitemapItems(services, projects) {
   return [
     ...services.filter(isIndexableService).map((service) => ({
       loc: absoluteUrl(`/services/${encodeURIComponent(service.slug)}`),
       image: backendAssetUrl(service.image),
       title: service.title || service.name,
     })),
-    ...projects.filter(isIndexableProject).map((project) => ({
-      loc: absoluteUrl(`/projects/${encodeURIComponent(project.slug)}`),
-      image: backendAssetUrl(project.image),
-      title: project.title || project.name,
-    })),
+    ...projects.filter(isIndexableProject).flatMap((project) => {
+      const images = [
+        { src: project.image, alt: project.imageAlt },
+        ...(Array.isArray(project.gallery) ? project.gallery : []),
+      ];
+
+      return images.map((item) => ({
+        loc: absoluteUrl(`/projects/${encodeURIComponent(project.slug)}`),
+        image: backendAssetUrl(typeof item === "string" ? item : item?.src),
+        title: (typeof item === "object" && item?.alt) || project.title || project.name,
+      }));
+    }),
   ].filter((item) => item.loc && item.image);
 }
 

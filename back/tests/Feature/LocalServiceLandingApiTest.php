@@ -138,6 +138,48 @@ class LocalServiceLandingApiTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_summary_excludes_partial_translation_when_detail_is_unavailable(): void
+    {
+        $service = Service::query()->create([
+            'slug' => 'network-cable-installation',
+            'name' => 'ქსელის კაბელის გაყვანა',
+            'title' => 'ქსელის კაბელის გაყვანა',
+            'description' => 'CAT6 ქსელის მონტაჟი.',
+            'seo_description' => 'CAT6 ქსელის მონტაჟი.',
+            'is_published' => true,
+        ]);
+
+        LocalServiceLanding::query()->create([
+            'service_id' => $service->id,
+            'location_slug' => 'tbilisi',
+            'location_name' => 'თბილისი',
+            'title' => 'ქსელის კაბელის გაყვანა თბილისში',
+            'content' => 'ქსელის კაბელის მონტაჟი თბილისში.',
+            'seo_title' => 'ქსელის კაბელის გაყვანა თბილისში',
+            'seo_description' => 'ქსელის კაბელის გაყვანის მომსახურება თბილისში.',
+            'translations' => [
+                'fields' => [
+                    'locationName' => ['en' => 'Tbilisi'],
+                    'title' => ['en' => 'Network cabling in Tbilisi'],
+                    'seoTitle' => ['en' => 'Network cabling in Tbilisi | SafeTech'],
+                ],
+            ],
+            'is_published' => true,
+            'noindex' => false,
+        ]);
+
+        $this->getJson('/api/local-service-landings/network-cable-installation/tbilisi?locale=en')
+            ->assertNotFound();
+
+        $this->getJson('/api/local-service-landings?view=summary&locale=en')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->getJson('/api/local-service-landings?view=sitemap')
+            ->assertOk()
+            ->assertJsonPath('data.0.availableLocales', ['ka']);
+    }
+
     public function test_it_does_not_fallback_to_georgian_for_missing_english_local_copy(): void
     {
         $service = Service::query()->create([

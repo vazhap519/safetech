@@ -1,4 +1,5 @@
 import ConsentSettingsButton from "@/components/analytics/ConsentSettingsButton";
+import ConsentFooterCode from "@/components/analytics/ConsentFooterCode";
 import FooterCopy from "@/components/Footer/components/FooterCopy";
 import TranslatedText from "@/components/i18n/TranslatedText";
 import LocalizedLink from "@/components/ui/LocalizedLink";
@@ -15,11 +16,7 @@ export default async function FooterBottom({
             <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center">
                 <FooterCopy />
                 {footerCounterCode ? (
-                    <div
-                        className="flex min-h-5 items-center justify-center"
-                        dangerouslySetInnerHTML={{ __html: footerCounterCode }}
-                        suppressHydrationWarning
-                    />
+                    <ConsentFooterCode code={footerCounterCode} enabled={marketingEnabled} />
                 ) : null}
             </div>
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 sm:justify-end">

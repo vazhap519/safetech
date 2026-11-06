@@ -61,7 +61,6 @@ import {
     getLanguageTag,
     isSupportedLocale,
     normalizeLocale,
-    stripLocalePrefix,
     type Locale,
 } from "@/lib/locales";
 
