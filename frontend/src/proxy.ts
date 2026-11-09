@@ -67,7 +67,8 @@ export function proxy(request: NextRequest) {
                 : "";
 
         url.pathname = targetService ? `${localePrefix}/services/${targetService}` : `${localePrefix}/services`;
-        url.search = "";
+        // Drop only the legacy routing parameter; preserve unrelated campaign/query data.
+        url.searchParams.delete("service");
 
         return withLocaleCookie(NextResponse.redirect(url, 308), locale);
     }
