@@ -47,3 +47,30 @@ for (const prefix of ["", "/ka", "/en", "/ru"]) {
     }
   });
 }
+
+for (const prefix of ["", "/ka", "/en", "/ru"]) {
+  test(`legacy query service links preserve unrelated query parameters (${prefix || "ka"})`, async ({ request }) => {
+    const response = await request.get(
+      `${prefix}/services?service=ip-camera-installation&utm_source=regression&campaign=autumn`,
+      { maxRedirects: 0 },
+    );
+    expect(response.status()).toBe(308);
+    const target = new URL(response.headers()["location"]!, "https://safetech.ge");
+    expect(target.pathname).toBe(`${prefix === "/ka" ? "" : prefix}/services/security-camera-installation`);
+    expect(target.searchParams.get("service")).toBeNull();
+    expect(target.searchParams.get("utm_source")).toBe("regression");
+    expect(target.searchParams.get("campaign")).toBe("autumn");
+  });
+
+  test(`unknown service query routes to clean catalog (${prefix || "ka"})`, async ({ request }) => {
+    const response = await request.get(
+      `${prefix}/services?service=unknown-service-id&utm_source=regression`,
+      { maxRedirects: 0 },
+    );
+    expect(response.status()).toBe(308);
+    const target = new URL(response.headers()["location"]!, "https://safetech.ge");
+    expect(target.pathname).toBe(`${prefix === "/ka" ? "" : prefix}/services`);
+    expect(target.searchParams.get("service")).toBeNull();
+    expect(target.searchParams.get("utm_source")).toBe("regression");
+  });
+}
