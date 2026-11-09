@@ -2,6 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const LOCALE_COOKIE_NAME = "safetech_locale";
 
+// These seven public service slugs must remain directly routable.
+const CANONICAL_SERVICE_SLUGS = new Set([
+    "security-camera-installation",
+    "low-voltage-cabling",
+    "barrier-gate-installation",
+    "intercom-access-control-installation",
+    "business-it-support",
+    "network-installation-configuration",
+    "operating-system-installation",
+]);
+
 const SERVICE_CANONICAL_ALIASES: Record<string, string> = {
     "access-control-installation": "intercom-access-control-installation",
     "access-control-system-installation": "intercom-access-control-installation",
@@ -129,15 +140,18 @@ export function proxy(request: NextRequest) {
         /^[a-z0-9-]+$/.test(legacyQueryService)
     ) {
         const url = request.nextUrl.clone();
-        const targetService =
-            SERVICE_CANONICAL_ALIASES[legacyQueryService] || legacyQueryService;
+        // Unknown legacy service ids should not generate non-existent service URLs.
+        const targetService = SERVICE_CANONICAL_ALIASES[legacyQueryService] ||
+            (CANONICAL_SERVICE_SLUGS.has(legacyQueryService) ? legacyQueryService : null);
         const localePrefix =
             hasLocalePrefix && firstSegment !== DEFAULT_LOCALE
                 ? `/${firstSegment}`
                 : "";
 
-        url.pathname = `${localePrefix}/services/${targetService}`;
-        url.search = "";
+        url.pathname = targetService
+            ? `${localePrefix}/services/${targetService}`
+            : `${localePrefix}/services`;
+        url.searchParams.delete("service");
 
         return withLocaleCookie(NextResponse.redirect(url, 308), locale);
     }
