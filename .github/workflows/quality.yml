@@ -86,6 +86,8 @@ jobs:
           composer install --no-interaction --prefer-source --no-progress
 
       - name: Audit PHP dependencies
+        id: composer-audit
+        continue-on-error: true
         run: |
           set +e
           for attempt in 1 2 3; do
@@ -116,6 +118,14 @@ jobs:
 
       - name: Run Laravel tests
         run: php artisan test
+
+      # Run functional tests even if a newly disclosed advisory is found, but
+      # never allow an insecure dependency lockfile to pass the Quality gate.
+      - name: Enforce PHP dependency audit
+        if: always() && steps.composer-audit.outcome == 'failure'
+        run: |
+          echo 'Composer security audit failed. Quality cannot pass until the lockfile is patched.' >&2
+          exit 1
 
   frontend:
     name: Next.js
