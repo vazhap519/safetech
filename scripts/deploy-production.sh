@@ -139,8 +139,8 @@ restore_frontend() {
     if [[ -d "${FRONTEND_ROLLBACK_DIR}/.next" ]]; then
         mv "${FRONTEND_ROLLBACK_DIR}/.next" "${FRONTEND_DIR}/.next"
     fi
-    if [[ -d "${FRONTEND_ROLLBACK_DIR}/node_modules" ]]; then
-        mv "${FRONTEND_ROLLBACK_DIR}/node_modules" "${FRONTEND_DIR}/node_modules"
+    if [[ -d "${FRONTEND_ROLLBACK_DIR}/node_modules" || -L "${FRONTEND_ROLLBACK_DIR}/node_modules" ]]; then
+        mv -T "${FRONTEND_ROLLBACK_DIR}/node_modules" "${FRONTEND_DIR}/node_modules"
     fi
 
     FRONTEND_SWAPPED=0
@@ -510,13 +510,13 @@ release_frontend_port || fail "frontend port ${FRONTEND_PORT} is still occupied"
 if [[ -d "${FRONTEND_DIR}/.next" ]]; then
     mv "${FRONTEND_DIR}/.next" "${FRONTEND_ROLLBACK_DIR}/.next"
 fi
-if [[ -d "${FRONTEND_DIR}/node_modules" ]]; then
-    mv "${FRONTEND_DIR}/node_modules" "${FRONTEND_ROLLBACK_DIR}/node_modules"
+if [[ -d "${FRONTEND_DIR}/node_modules" || -L "${FRONTEND_DIR}/node_modules" ]]; then
+    mv -T "${FRONTEND_DIR}/node_modules" "${FRONTEND_ROLLBACK_DIR}/node_modules"
 fi
 
-mv "${FRONTEND_STAGE_DIR}/.next" "${FRONTEND_DIR}/.next"
-mv "${FRONTEND_STAGE_DIR}/node_modules" "${FRONTEND_DIR}/node_modules"
 FRONTEND_SWAPPED=1
+mv -T "${FRONTEND_STAGE_DIR}/.next" "${FRONTEND_DIR}/.next"
+mv -T "${FRONTEND_STAGE_DIR}/node_modules" "${FRONTEND_DIR}/node_modules"
 
 chown -R "${WEB_USER}:${WEB_GROUP}" "${FRONTEND_DIR}/.next"
 find "${FRONTEND_DIR}/node_modules" -type d -exec chmod 0755 {} +
