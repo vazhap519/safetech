@@ -87,15 +87,6 @@ chmod 0700 "${PATCHED_DEPLOY}"
 SAFETECH_PROJECT_DIR="${SAFETECH_PROJECT_DIR:-${SCRIPT_DIR}}" \
     bash "${PATCHED_DEPLOY}" "$@"
 
-# Reaching this point means the production deploy and all of its smoke checks
-# succeeded. Advancing the marker after backend-only releases is safe because we
-# only skip when there were no frontend changes between the previous marker and
-# the target release.
-DEPLOYED_COMMIT="$(git -C "${SCRIPT_DIR}" rev-parse HEAD)"
-printf '%s\n' "${DEPLOYED_COMMIT}" > "${FRONTEND_RELEASE_MARKER}"
-chmod 0644 "${FRONTEND_RELEASE_MARKER}"
-printf 'Frontend release marker updated to %s.\n' "${DEPLOYED_COMMIT:0:12}"
-
 bash "${SCRIPT_DIR}/scripts/repair-backend-runtime.sh"
 
 admin_status="$(curl --silent --show-error --location --output /tmp/safetech-admin-login.html \
@@ -110,3 +101,11 @@ fi
 
 rm -f /tmp/safetech-admin-login.html
 printf 'Filament admin login smoke test passed.\n'
+
+# Only mark a release successful after the final admin and runtime smoke checks.
+# Otherwise a failed post-deploy check could cause the next run to skip a
+# necessary frontend rebuild.
+DEPLOYED_COMMIT="$(git -C "${SCRIPT_DIR}" rev-parse HEAD)"
+printf '%s\n' "${DEPLOYED_COMMIT}" > "${FRONTEND_RELEASE_MARKER}"
+chmod 0644 "${FRONTEND_RELEASE_MARKER}"
+printf 'Frontend release marker updated to %s.\n' "${DEPLOYED_COMMIT:0:12}"
