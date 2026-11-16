@@ -142,6 +142,19 @@ test("legacy service query URLs redirect to canonical service pages", async ({ p
     }
 });
 
+test("priority services SEO metadata reflects actual hardware installation scope", async ({ page }) => {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveTitle(/კამერების მონტაჟი.*სუსტი დენები/);
+    const homeDescription = await page.locator('meta[name="description"]').getAttribute("content");
+    expect(homeDescription).toContain("POS მოწყობილობების მონტაჟი");
+
+    await page.goto("/services", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveTitle(/კამერების მონტაჟი.*POS მოწყობილობები/);
+    const servicesDescription = await page.locator('meta[name="description"]').getAttribute("content");
+    expect(servicesDescription).toContain("POS მოწყობილობების მონტაჟი და გამართვა");
+    expect(servicesDescription).not.toContain("სიგნალიზაცია");
+});
+
 test("contact schema has no public street address", async ({ page }) => {
     await page.goto("/contact", { waitUntil: "domcontentloaded" });
     const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
