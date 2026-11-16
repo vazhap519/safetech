@@ -74,3 +74,34 @@ for (const prefix of ["", "/ka", "/en", "/ru"]) {
     expect(target.searchParams.get("utm_source")).toBe("regression");
   });
 }
+
+const searchConsoleLegacyUrls = [
+  ["/services/pos-system-installation/bakuriani", "/services/business-it-support/bakuriani"],
+  ["/ru/services/computer-cleaning-maintenance/borjomi", "/ru/services/operating-system-installation/borjomi"],
+  ["/en/services/fiber-optic-commercial-network-installation/abastumani", "/en/services/low-voltage-cabling/abastumani"],
+  ["/ru/services/custom-computer-build/abastumani", "/ru/services/operating-system-installation/abastumani"],
+  ["/en/services/mac-printer-wifi-setup/tbilisi", "/en/services/operating-system-installation/tbilisi"],
+  ["/services/it-technical-support/tbilisi", "/services/business-it-support/tbilisi"],
+  ["/en/services/barrier-gate-setup", "/en/services/barrier-gate-installation"],
+  ["/en/services/wifi-network-installation", "/en/services/network-installation-configuration"],
+  ["/ru/services?service=operating-system-installation", "/ru/services/operating-system-installation"],
+  ["/services?service=custom-computer-build", "/services/operating-system-installation"],
+  ["/services?service=ram-upgrade", "/services/operating-system-installation"],
+  ["/ru/services?service=office-digital-infrastructure", "/ru/services/business-it-support"],
+  ["/ru/services?service=computer-peripheral-troubleshooting", "/ru/services/operating-system-installation"],
+  ["/ru/services?service=workstation-setup", "/ru/services/business-it-support"],
+  ["/ru/services?service=access-control-system-installation", "/ru/services/intercom-access-control-installation"],
+  ["/en/services?service=ram-upgrade", "/en/services/operating-system-installation"],
+] as const;
+
+test("Search Console November 2026 legacy URL samples redirect to their intended canonical paths", async ({ request }) => {
+  for (const [legacy, canonical] of searchConsoleLegacyUrls) {
+    const response = await request.get(legacy, { maxRedirects: 0 });
+    expect([301, 308], legacy).toContain(response.status());
+    const location = response.headers()["location"];
+    expect(location, legacy).toBeTruthy();
+    const target = new URL(location!, "https://safetech.ge");
+    expect(target.pathname, legacy).toBe(canonical);
+    expect(target.search, legacy).toBe("");
+  }
+});
