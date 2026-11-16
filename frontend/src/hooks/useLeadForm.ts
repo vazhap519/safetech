@@ -189,7 +189,7 @@ export function useLeadForm(source: string) {
                     "Idempotency-Key": pendingSubmission.current.idempotencyKey,
                 },
                 body: fingerprint,
-                signal: AbortSignal.timeout(15000),
+                // The server proxy allows up to 20 seconds for the Laravel API.\n                // Wait longer than that so slow-but-successful submissions\n                // are not reported as failed while the server saves the lead.\n                signal: AbortSignal.timeout(25000),
             });
             const result = (await response
                 .json()
