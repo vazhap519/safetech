@@ -53,6 +53,19 @@ else
     printf 'No frontend release marker exists yet; rebuilding frontend safely.\n'
 fi
 
+# A previous failed deploy can leave the release marker pointing at a commit
+# while the live .next output or node_modules are missing/mismatched. Never
+# skip a frontend rebuild unless the active runtime is independently healthy.
+if [[ "${SKIP_FRONTEND_BUILD}" -eq 1 ]]; then
+    expected_next="$(node -p "require('${SCRIPT_DIR}/frontend/package.json').dependencies.next")"
+    installed_next="$(node -p "require('${SCRIPT_DIR}/frontend/node_modules/next/package.json').version" 2>/dev/null || true)"
+
+    if [[ ! -s "${SCRIPT_DIR}/frontend/.next/BUILD_ID" || "${installed_next}" != "${expected_next}" ]]; then
+        SKIP_FRONTEND_BUILD=0
+        printf '%s\n' 'Live frontend build or Next.js runtime is missing/mismatched; forcing a fresh staged build.'
+    fi
+fi
+
 # Production deploy already performs a strict TypeScript check and a full Next.js
 # production build. ESLint has repeatedly stalled on this small production host,
 # so lint remains a CI/development concern. For backend-only releases, also omit
