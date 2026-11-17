@@ -353,7 +353,7 @@ verify_frontend_runtime_versions() {
 
 [[ "${EUID}" -eq 0 ]] || fail "run this script with sudo/root privileges"
 
-required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown chmod timeout nice flock ss fuser sleep journalctl runuser sed mktemp cp mv rm head nginx)
+required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown chmod timeout nice flock ss fuser sleep journalctl runuser sed mktemp cp mv rm head nginx pg_dump pg_restore tail date)
 for command_name in "${required_commands[@]}"; do
     command -v "${command_name}" >/dev/null 2>&1 \
         || fail "missing required command: ${command_name}"
