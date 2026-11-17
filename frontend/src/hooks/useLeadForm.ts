@@ -189,7 +189,8 @@ export function useLeadForm(source: string) {
                     "Idempotency-Key": pendingSubmission.current.idempotencyKey,
                 },
                 body: fingerprint,
-                // Allow the backend proxy its full 20-second upstream window before\n                // showing a network error; retries reuse the idempotency key.\n                signal: AbortSignal.timeout(25000),
+                // Wait longer than the proxy timeout; retries reuse the idempotency key.
+                signal: AbortSignal.timeout(25000),
             });
             const result = (await response
                 .json()

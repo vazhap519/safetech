@@ -16,6 +16,24 @@ class ServiceCatalogSeederTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_frontend_and_backend_redirect_registries_match(): void
+    {
+        $proxy = file_get_contents(base_path('../frontend/src/proxy.ts'));
+        $registry = explode('};', explode('const SERVICE_CANONICAL_ALIASES: Record<string, string> = {', $proxy, 2)[1], 2)[0];
+        preg_match_all('/"([a-z0-9-]+)"\\s*:\\s*"([a-z0-9-]+)"/', $registry, $matches, PREG_SET_ORDER);
+        $frontend = [];
+        foreach ($matches as $match) {
+            $frontend[$match[1]] = $match[2];
+        }
+        $backend = GoogleBusinessServiceDefinitions::CANONICAL_ALIASES;
+        ksort($frontend);
+        ksort($backend);
+        $this->assertSame($backend, $frontend);
+        foreach ($backend as $target) {
+            $this->assertContains($target, ServiceCatalogSeeder::canonicalServiceSlugs());
+        }
+    }
+
     public function test_only_the_seven_approved_services_are_seeded(): void
     {
         $expected = [
