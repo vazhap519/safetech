@@ -1,0 +1,42 @@
+name: Refresh Laravel security lockfile (repair branch)
+
+on:
+  push:
+    branches:
+      - fix/priority-services-pos-seo-20261116
+    paths:
+      - .github/workflows/refresh-laravel-lock.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-lock:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify Composer and PHP
+        run: |
+          php --version
+          composer --version
+      - name: Update vulnerable Laravel framework within the existing major version
+        working-directory: back
+        run: |
+          composer update laravel/framework --with-all-dependencies --no-interaction --no-progress --prefer-dist
+          composer validate --strict --no-check-publish
+          composer audit --locked --no-interaction
+      - name: Commit Composer-generated lockfile
+        run: |
+          if git diff --quiet -- back/composer.lock; then
+            echo "Composer lockfile already satisfies the audit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add back/composer.lock
+          git commit -m "fix(security): update locked Laravel framework and dependencies"
+          git push origin HEAD:fix/priority-services-pos-seo-20261116
