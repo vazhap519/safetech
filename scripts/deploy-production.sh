@@ -431,7 +431,7 @@ DB_CONNECTION_NAME="$(php "${BACKEND_DIR}/artisan" tinker --execute='echo config
 [[ "${DB_CONNECTION_NAME}" == "pgsql" ]] || fail "expected PostgreSQL production connection, got ${DB_CONNECTION_NAME:-unknown}"
 DB_NAME="$(php "${BACKEND_DIR}/artisan" tinker --execute='echo config("database.connections.pgsql.database");' 2>/dev/null | tail -n 1)"
 [[ -n "${DB_NAME}" && "${DB_NAME}" =~ ^[a-zA-Z0-9_-]+$ ]] || fail "unable to determine safe PostgreSQL database name"
-BACKUP_FILE="${BACKUP_ROOT}/safetech-$(date -u +%Y%m%dT%H%M%SZ)-$.dump"
+BACKUP_FILE="${BACKUP_ROOT}/safetech-$(date -u +%Y%m%dT%H%M%SZ)-${BASHPID}.dump"
 # Local PostgreSQL is administered through its OS account; never write the
 # database password or application secrets to a log or shell command.
 if ! runuser -u postgres -- pg_dump --format=custom --no-owner --no-acl --dbname="${DB_NAME}" > "${BACKUP_FILE}"; then
