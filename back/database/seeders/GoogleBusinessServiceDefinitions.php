@@ -65,6 +65,7 @@ final class GoogleBusinessServiceDefinitions
         'data-backup-recovery' => 'business-it-support',
         'backup-setup' => 'business-it-support',
         'pos-system-installation' => 'business-it-support',
+        'os-installation-support' => 'operating-system-installation',
         'personal-computer-assembly' => 'operating-system-installation',
         'custom-computer-build' => 'operating-system-installation',
         'computer-upgrade-optimization' => 'operating-system-installation',
