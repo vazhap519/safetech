@@ -141,12 +141,12 @@ class SeoPageSeeder extends Seeder
                 'home',
                 '/',
                 self::localized(
-                    'უსაფრთხოების სისტემები და IT მომსახურება | SafeTech',
-                    'Security Systems & IT Services in Georgia | SafeTech',
-                    'Системы безопасности и IT-услуги в Грузии | SafeTech',
+                    'კამერების მონტაჟი და სუსტი დენები თბილისში | SafeTech',
+                    'CCTV Installation & Low-Voltage Cabling in Tbilisi | SafeTech',
+                    'Установка камер и слаботочные сети в Тбилиси | SafeTech',
                 ),
                 self::localized(
-                    'უსაფრთხოების კამერები, ქსელები, Wi‑Fi და IT მომსახურება თბილისში და რეგიონებში. SafeTech გეგმავს და ამონტაჟებს სისტემებს. მოითხოვეთ კონსულტაცია.',
+                    'კამერების მონტაჟი, სუსტი დენების გაყვანა, CAT6 ქსელები და POS მოწყობილობების მონტაჟი და გამართვა თბილისში. SafeTech — პროფესიონალური პროექტირება და მონტაჟი.',
                     'CCTV, networking, Wi-Fi and IT support in Tbilisi and across Georgia. SafeTech plans and installs systems for homes and businesses. Contact us.',
                     'Видеонаблюдение, сети, Wi-Fi и IT-поддержка в Тбилиси и по всей Грузии. SafeTech проектирует и устанавливает решения для дома и бизнеса. Свяжитесь с нами.',
                 ),
@@ -181,12 +181,12 @@ class SeoPageSeeder extends Seeder
                 'services',
                 '/services',
                 self::localized(
-                    'IT სერვისები, კამერები, ქსელები და დაშვების სისტემები | SafeTech',
-                    'IT, CCTV, Network and Access Control Services | SafeTech',
-                    'IT, видеонаблюдение, сети и контроль доступа | SafeTech',
+                    'კამერების მონტაჟი, სუსტი დენები და IT მომსახურება | SafeTech',
+                    'CCTV, Low-Voltage Cabling & IT Services | SafeTech',
+                    'Камеры, слаботочные сети и IT-услуги | SafeTech',
                 ),
                 self::localized(
-                    'იხილეთ SafeTech-ის სერვისები და გამოთვალეთ საორიენტაციო ღირებულება: კომპიუტერები, POS, IT მხარდაჭერა, CAT6 ქსელი, რეკი, კამერები, დომოფონი და შლაგბაუმი.',
+                    'SafeTech გთავაზობთ კამერების მონტაჟს, სუსტი დენებისა და CAT6 ქსელების გაყვანას, POS მოწყობილობების მონტაჟსა და გამართვას, IT მხარდაჭერას, დომოფონებსა და შლაგბაუმებს.',
                     'Explore SafeTech services and estimate pricing for computers, POS, IT support, CAT6 networks, racks, CCTV, intercoms, and barriers.',
                     'Услуги SafeTech и расчет стоимости: компьютеры, POS, IT-поддержка, CAT6, шкафы, камеры, домофоны и шлагбаумы.',
                 ),
@@ -244,7 +244,18 @@ class SeoPageSeeder extends Seeder
     private function legacyPages(): array
     {
         return [
+            // These were the published CMS defaults before the priority-service
+            // SEO refresh. Only replace an exact default match, never an
+            // administrator's custom title or description.
             'home' => $this->legacy(
+                self::localized('უსაფრთხოების სისტემები და IT მომსახურება | SafeTech', 'Security Systems & IT Services in Georgia | SafeTech', 'Системы безопасности и IT-услуги в Грузии | SafeTech'),
+                self::localized('უსაფრთხოების კამერები, ქსელები, Wi‑Fi და IT მომსახურება თბილისში და რეგიონებში. SafeTech გეგმავს და ამონტაჟებს სისტემებს. მოითხოვეთ კონსულტაცია.', 'CCTV, networking, Wi-Fi and IT support in Tbilisi and across Georgia. SafeTech plans and installs systems for homes and businesses. Contact us.', 'Видеонаблюдение, сети, Wi-Fi и IT-поддержка в Тбилиси и по всей Грузии. SafeTech проектирует и устанавливает решения для дома и бизнеса. Свяжитесь с нами.'),
+            ),
+            'services' => $this->legacy(
+                self::localized('IT სერვისები, კამერები, ქსელები და დაშვების სისტემები | SafeTech', 'IT, CCTV, Network and Access Control Services | SafeTech', 'IT, видеонаблюдение, сети и контроль доступа | SafeTech'),
+                self::localized('იხილეთ SafeTech-ის სერვისები და გამოთვალეთ საორიენტაციო ღირებულება: კომპიუტერები, POS, IT მხარდაჭერა, CAT6 ქსელი, რეკი, კამერები, დომოფონი და შლაგბაუმი.', 'Explore SafeTech services and estimate pricing for computers, POS, IT support, CAT6 networks, racks, CCTV, intercoms, and barriers.', 'Услуги SafeTech и расчет стоимости: компьютеры, POS, IT-поддержка, CAT6, шкафы, камеры, домофоны и шлагбаумы.'),
+            ),
+            'home_old' => $this->legacy(
                 self::localized('IT ინფრასტრუქტურა და უსაფრთხოების სისტემები ბიზნესისთვის', 'IT Infrastructure and Security Systems for Business', 'IT-инфраструктура и системы безопасности для бизнеса'),
                 self::localized('SafeTech ქმნის პროფესიონალურ IT და უსაფრთხოების გადაწყვეტილებებს საქართველოში.', 'SafeTech delivers professional IT and security solutions in Georgia.', 'SafeTech внедряет профессиональные IT-решения и системы безопасности в Грузии.'),
             ),
@@ -252,7 +263,7 @@ class SeoPageSeeder extends Seeder
                 self::localized('SafeTech-ის გუნდი და გამოცდილება', 'SafeTech Team and Experience', 'Команда и опыт SafeTech'),
                 self::localized('გაიცანით SafeTech-ის გუნდი, გამოცდილება და მუშაობის მიდგომა.', 'Meet the SafeTech team, experience, and approach.', 'Познакомьтесь с командой, опытом и подходом SafeTech.'),
             ),
-            'services' => $this->legacy(
+            'services_old' => $this->legacy(
                 self::localized('IT და უსაფრთხოების სერვისები', 'IT and Security Services', 'IT-услуги и системы безопасности'),
                 self::localized('ვიდეოსამეთვალყურეობა, დაშვების კონტროლი, ქსელები, სერვერები და IT მხარდაჭერა.', 'CCTV, access control, networking, servers, and IT support.', 'Видеонаблюдение, контроль доступа, сети, серверы и IT-поддержка.'),
             ),
