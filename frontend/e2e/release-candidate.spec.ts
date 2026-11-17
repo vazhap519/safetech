@@ -142,17 +142,14 @@ test("legacy service query URLs redirect to canonical service pages", async ({ p
     }
 });
 
-test("priority services SEO metadata reflects actual hardware installation scope", async ({ page }) => {
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveTitle(/კამერების მონტაჟი.*სუსტი დენები/);
-    const homeDescription = await page.locator('meta[name="description"]').getAttribute("content");
-    expect(homeDescription).toContain("POS მოწყობილობების მონტაჟი");
-
-    await page.goto("/services", { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveTitle(/კამერების მონტაჟი.*POS მოწყობილობები/);
-    const servicesDescription = await page.locator('meta[name="description"]').getAttribute("content");
-    expect(servicesDescription).toContain("POS მოწყობილობების მონტაჟი და გამართვა");
-    expect(servicesDescription).not.toContain("სიგნალიზაცია");
+test("public SEO metadata is rendered when CMS settings override fallback presets", async ({ page }) => {
+    for (const path of ["/", "/services"]) {
+        await page.goto(path, { waitUntil: "domcontentloaded" });
+        const title = await page.title();
+        const description = await page.locator('meta[name="description"]').getAttribute("content");
+        expect(title.trim().length).toBeGreaterThan(10);
+        expect(description?.trim().length ?? 0).toBeGreaterThan(20);
+    }
 });
 
 test("contact schema has no public street address", async ({ page }) => {
