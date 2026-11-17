@@ -19,8 +19,12 @@ trap cleanup_patched_deploy EXIT INT TERM
 
 bash "${SCRIPT_DIR}/scripts/repair-backend-runtime.sh"
 
-if ! grep -q 'safetech:refresh-public-content --force' "${DEPLOY_SCRIPT}"; then
-    printf '%s\n' 'Canonical public-content refresh hook is missing from scripts/deploy-production.sh.' >&2
+# The legacy refresh-public-content --force command is intentionally NOT run:
+# it can delete local SEO landings and other historical records. Require the
+# non-destructive seven-service migration and strict local SEO audit instead.
+if ! grep -q 'safetech:seven-service-preflight --execute' "${DEPLOY_SCRIPT}" ||
+   ! grep -q 'safetech:local-seo-audit --strict' "${DEPLOY_SCRIPT}"; then
+    printf '%s\n' 'Safe seven-service migration or strict local SEO audit hook is missing.' >&2
     exit 1
 fi
 
