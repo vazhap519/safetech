@@ -209,9 +209,19 @@ export default function ConsultationForm({
                     ))}
                 </select>
                 {!hasServices ? (
-                    <p className="text-sm text-error" role="alert">
-                        {servicesUnavailableLabel}
-                    </p>
+                    <div className="space-y-2" role="alert">
+                        <p className="text-sm text-error">{servicesUnavailableLabel}</p>
+                        <a
+                            className="inline-flex min-h-11 items-center rounded-lg border border-outline-variant px-4 py-2 text-sm font-medium text-primary underline underline-offset-4"
+                            href="tel:+995571430169"
+                        >
+                            {t("consultation.form.callFallback", {
+                                ka: "დაგვირეკეთ: 571 430 169",
+                                en: "Call us: +995 571 430 169",
+                                ru: "Позвоните нам: +995 571 430 169",
+                            })}
+                        </a>
+                    </div>
                 ) : null}
             </label>
             <label className="block space-y-2 font-label-md text-label-md text-on-surface-variant">

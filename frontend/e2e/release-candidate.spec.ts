@@ -142,6 +142,16 @@ test("legacy service query URLs redirect to canonical service pages", async ({ p
     }
 });
 
+test("public SEO metadata is rendered when CMS settings override fallback presets", async ({ page }) => {
+    for (const path of ["/", "/services"]) {
+        await page.goto(path, { waitUntil: "domcontentloaded" });
+        const title = await page.title();
+        const description = await page.locator('meta[name="description"]').getAttribute("content");
+        expect(title.trim().length).toBeGreaterThan(10);
+        expect(description?.trim().length ?? 0).toBeGreaterThan(20);
+    }
+});
+
 test("contact schema has no public street address", async ({ page }) => {
     await page.goto("/contact", { waitUntil: "domcontentloaded" });
     const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();

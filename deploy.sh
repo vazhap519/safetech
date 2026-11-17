@@ -19,8 +19,12 @@ trap cleanup_patched_deploy EXIT INT TERM
 
 bash "${SCRIPT_DIR}/scripts/repair-backend-runtime.sh"
 
-if ! grep -q 'safetech:refresh-public-content --force' "${DEPLOY_SCRIPT}"; then
-    printf '%s\n' 'Canonical public-content refresh hook is missing from scripts/deploy-production.sh.' >&2
+# The legacy refresh-public-content --force command is intentionally NOT run:
+# it can delete local SEO landings and other historical records. Require the
+# non-destructive seven-service migration and strict local SEO audit instead.
+if ! grep -q 'safetech:seven-service-preflight --execute' "${DEPLOY_SCRIPT}" ||
+   ! grep -q 'safetech:local-seo-audit --strict' "${DEPLOY_SCRIPT}"; then
+    printf '%s\n' 'Safe seven-service migration or strict local SEO audit hook is missing.' >&2
     exit 1
 fi
 
@@ -51,6 +55,19 @@ if [[ -s "${FRONTEND_RELEASE_MARKER}" ]]; then
     fi
 else
     printf 'No frontend release marker exists yet; rebuilding frontend safely.\n'
+fi
+
+# A previous failed deploy can leave the release marker pointing at a commit
+# while the live .next output or node_modules are missing/mismatched. Never
+# skip a frontend rebuild unless the active runtime is independently healthy.
+if [[ "${SKIP_FRONTEND_BUILD}" -eq 1 ]]; then
+    expected_next="$(node -p "require('${SCRIPT_DIR}/frontend/package.json').dependencies.next")"
+    installed_next="$(node -p "require('${SCRIPT_DIR}/frontend/node_modules/next/package.json').version" 2>/dev/null || true)"
+
+    if [[ ! -s "${SCRIPT_DIR}/frontend/.next/BUILD_ID" || "${installed_next}" != "${expected_next}" ]]; then
+        SKIP_FRONTEND_BUILD=0
+        printf '%s\n' 'Live frontend build or Next.js runtime is missing/mismatched; forcing a fresh staged build.'
+    fi
 fi
 
 # Production deploy already performs a strict TypeScript check and a full Next.js
@@ -87,15 +104,6 @@ chmod 0700 "${PATCHED_DEPLOY}"
 SAFETECH_PROJECT_DIR="${SAFETECH_PROJECT_DIR:-${SCRIPT_DIR}}" \
     bash "${PATCHED_DEPLOY}" "$@"
 
-# Reaching this point means the production deploy and all of its smoke checks
-# succeeded. Advancing the marker after backend-only releases is safe because we
-# only skip when there were no frontend changes between the previous marker and
-# the target release.
-DEPLOYED_COMMIT="$(git -C "${SCRIPT_DIR}" rev-parse HEAD)"
-printf '%s\n' "${DEPLOYED_COMMIT}" > "${FRONTEND_RELEASE_MARKER}"
-chmod 0644 "${FRONTEND_RELEASE_MARKER}"
-printf 'Frontend release marker updated to %s.\n' "${DEPLOYED_COMMIT:0:12}"
-
 bash "${SCRIPT_DIR}/scripts/repair-backend-runtime.sh"
 
 admin_status="$(curl --silent --show-error --location --output /tmp/safetech-admin-login.html \
@@ -110,3 +118,11 @@ fi
 
 rm -f /tmp/safetech-admin-login.html
 printf 'Filament admin login smoke test passed.\n'
+
+# Only mark a release successful after the final admin and runtime smoke checks.
+# Otherwise a failed post-deploy check could cause the next run to skip a
+# necessary frontend rebuild.
+DEPLOYED_COMMIT="$(git -C "${SCRIPT_DIR}" rev-parse HEAD)"
+printf '%s\n' "${DEPLOYED_COMMIT}" > "${FRONTEND_RELEASE_MARKER}"
+chmod 0644 "${FRONTEND_RELEASE_MARKER}"
+printf 'Frontend release marker updated to %s.\n' "${DEPLOYED_COMMIT:0:12}"

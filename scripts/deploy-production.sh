@@ -139,8 +139,8 @@ restore_frontend() {
     if [[ -d "${FRONTEND_ROLLBACK_DIR}/.next" ]]; then
         mv "${FRONTEND_ROLLBACK_DIR}/.next" "${FRONTEND_DIR}/.next"
     fi
-    if [[ -d "${FRONTEND_ROLLBACK_DIR}/node_modules" ]]; then
-        mv "${FRONTEND_ROLLBACK_DIR}/node_modules" "${FRONTEND_DIR}/node_modules"
+    if [[ -d "${FRONTEND_ROLLBACK_DIR}/node_modules" || -L "${FRONTEND_ROLLBACK_DIR}/node_modules" ]]; then
+        mv -T "${FRONTEND_ROLLBACK_DIR}/node_modules" "${FRONTEND_DIR}/node_modules"
     fi
 
     FRONTEND_SWAPPED=0
@@ -353,7 +353,7 @@ verify_frontend_runtime_versions() {
 
 [[ "${EUID}" -eq 0 ]] || fail "run this script with sudo/root privileges"
 
-required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown chmod timeout nice flock ss fuser sleep journalctl runuser sed mktemp cp mv rm head nginx)
+required_commands=(git php composer node npm systemctl curl rsync find grep sort install chown chmod timeout nice flock ss fuser sleep journalctl runuser sed mktemp cp mv rm head nginx pg_dump pg_restore tail date)
 for command_name in "${required_commands[@]}"; do
     command -v "${command_name}" >/dev/null 2>&1 \
         || fail "missing required command: ${command_name}"
@@ -419,6 +419,30 @@ find "${BACKEND_DIR}/storage" "${BACKEND_DIR}/bootstrap/cache" \
 find "${BACKEND_DIR}/storage" "${BACKEND_DIR}/bootstrap/cache" \
     -type f -exec chmod 0664 {} +
 
+# Fail closed before the first potentially destructive database operation.
+# A compressed PostgreSQL dump is kept outside the Git checkout so that a
+# failed deploy never destroys the recovery point.
+log "Backing up PostgreSQL before Laravel migrations and seeders"
+BACKUP_ROOT="${SAFETECH_BACKUP_ROOT:-/var/backups/safetech}"
+install -d -o root -g root -m 0700 "${BACKUP_ROOT}"
+command -v pg_dump >/dev/null 2>&1 || fail "pg_dump is required before production database migrations"
+command -v pg_restore >/dev/null 2>&1 || fail "pg_restore is required to verify the database backup"
+DB_CONNECTION_NAME="$(php "${BACKEND_DIR}/artisan" tinker --execute='echo config("database.default");' 2>/dev/null | tail -n 1)"
+[[ "${DB_CONNECTION_NAME}" == "pgsql" ]] || fail "expected PostgreSQL production connection, got ${DB_CONNECTION_NAME:-unknown}"
+DB_NAME="$(php "${BACKEND_DIR}/artisan" tinker --execute='echo config("database.connections.pgsql.database");' 2>/dev/null | tail -n 1)"
+[[ -n "${DB_NAME}" && "${DB_NAME}" =~ ^[a-zA-Z0-9_-]+$ ]] || fail "unable to determine safe PostgreSQL database name"
+BACKUP_FILE="${BACKUP_ROOT}/safetech-$(date -u +%Y%m%dT%H%M%SZ)-${BASHPID}.dump"
+# Local PostgreSQL is administered through its OS account; never write the
+# database password or application secrets to a log or shell command.
+if ! runuser -u postgres -- pg_dump --format=custom --no-owner --no-acl --dbname="${DB_NAME}" > "${BACKUP_FILE}"; then
+    rm -f "${BACKUP_FILE}"
+    fail "PostgreSQL backup failed; refusing to run migrations"
+fi
+chmod 0600 "${BACKUP_FILE}"
+[[ -s "${BACKUP_FILE}" ]] || fail "PostgreSQL backup is empty; refusing to run migrations"
+pg_restore --list "${BACKUP_FILE}" >/dev/null || fail "PostgreSQL backup verification failed"
+printf 'Verified pre-migration backup: %s\n' "${BACKUP_FILE}"
+
 log "Updating Laravel"
 php "${BACKEND_DIR}/artisan" config:clear
 php "${BACKEND_DIR}/artisan" route:clear
@@ -429,6 +453,8 @@ php "${BACKEND_DIR}/artisan" db:seed --class=AdminUserSeeder --force
 # Preserve historical records during catalog consolidation.
 php "${BACKEND_DIR}/artisan" safetech:seven-service-preflight --execute
 php "${BACKEND_DIR}/artisan" safetech:local-seo-audit --strict
+# Refresh only safe SEO defaults; SeoPageSeeder preserves administrator edits.
+php "${BACKEND_DIR}/artisan" db:seed --class=SeoPageSeeder --force
 # DISABLED PENDING DATA AUDIT: php "${BACKEND_DIR}/artisan" cms:remove-demo-content --force
 php "${BACKEND_DIR}/artisan" cache:clear
 php "${BACKEND_DIR}/artisan" storage:link --force
@@ -510,13 +536,13 @@ release_frontend_port || fail "frontend port ${FRONTEND_PORT} is still occupied"
 if [[ -d "${FRONTEND_DIR}/.next" ]]; then
     mv "${FRONTEND_DIR}/.next" "${FRONTEND_ROLLBACK_DIR}/.next"
 fi
-if [[ -d "${FRONTEND_DIR}/node_modules" ]]; then
-    mv "${FRONTEND_DIR}/node_modules" "${FRONTEND_ROLLBACK_DIR}/node_modules"
+if [[ -d "${FRONTEND_DIR}/node_modules" || -L "${FRONTEND_DIR}/node_modules" ]]; then
+    mv -T "${FRONTEND_DIR}/node_modules" "${FRONTEND_ROLLBACK_DIR}/node_modules"
 fi
 
-mv "${FRONTEND_STAGE_DIR}/.next" "${FRONTEND_DIR}/.next"
-mv "${FRONTEND_STAGE_DIR}/node_modules" "${FRONTEND_DIR}/node_modules"
 FRONTEND_SWAPPED=1
+mv -T "${FRONTEND_STAGE_DIR}/.next" "${FRONTEND_DIR}/.next"
+mv -T "${FRONTEND_STAGE_DIR}/node_modules" "${FRONTEND_DIR}/node_modules"
 
 chown -R "${WEB_USER}:${WEB_GROUP}" "${FRONTEND_DIR}/.next"
 find "${FRONTEND_DIR}/node_modules" -type d -exec chmod 0755 {} +
