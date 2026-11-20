@@ -17,7 +17,7 @@ const labels = {
         proofText: "ნახეთ შესაბამისი სამუშაოები, რომლებიც SafeTech-მა რეალურ ობიექტებზე შეასრულა.",
         faq: "ხშირად დასმული კითხვები",
         consultation: "კონსულტაციის მოთხოვნა",
-        quote: "შეთავაზების მიღება",
+        quote: "მოითხოვეთ მონტაჟის შეთავაზება",
         servicePage: "სერვისის სრული აღწერა",
         defaultCtaTitle: "გჭირდებათ ზუსტი შეთავაზება?",
         defaultCtaText: "მოგვწერეთ ობიექტის დეტალები და დაგეხმარებით შესაბამისი გადაწყვეტის, სამუშაოს მოცულობისა და შემდეგი ნაბიჯების განსაზღვრაში.",
@@ -58,6 +58,10 @@ export default function LocalServiceLandingView({
     locale: Locale;
 }) {
     const copy = labels[locale];
+    const consultationPrefill = {
+        serviceSlug: landing.service.slug,
+        details: [{ key: "location", label: copy.details, type: "location", value: landing.locationName }],
+    };
     const pagePath = `/services/${landing.service.slug}/${landing.locationSlug}`;
     const pageUrl = absoluteLocalizedUrl(pagePath, locale);
     const organizationId = `${absoluteSiteUrl("/")}#organization`;
@@ -176,10 +180,11 @@ export default function LocalServiceLandingView({
                         ) : null}
 
                         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                            <ConsultationTrigger className="glow-button rounded-xl bg-primary-container px-6 py-4 text-center font-semibold text-on-primary-container">
+                            <ConsultationTrigger prefill={consultationPrefill} className="glow-button rounded-xl bg-primary-container px-6 py-4 text-center font-semibold text-on-primary-container">
                                 {copy.consultation}
                             </ConsultationTrigger>
                             <ConsultationTrigger
+                                prefill={consultationPrefill}
                                 className="rounded-xl border border-outline-variant bg-white/5 px-6 py-4 text-center font-semibold text-white transition hover:bg-white/10"
                             >
                                 {copy.quote}
@@ -350,10 +355,11 @@ export default function LocalServiceLandingView({
                         {landing.ctaText || copy.defaultCtaText}
                     </p>
                     <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-                        <ConsultationTrigger className="rounded-xl bg-primary-container px-7 py-4 font-semibold text-on-primary-container">
+                        <ConsultationTrigger prefill={consultationPrefill} className="rounded-xl bg-primary-container px-7 py-4 font-semibold text-on-primary-container">
                             {copy.consultation}
                         </ConsultationTrigger>
                         <ConsultationTrigger
+                                prefill={consultationPrefill}
                             className="rounded-xl border border-outline-variant bg-surface/40 px-7 py-4 font-semibold text-on-surface"
                         >
                             {copy.quote}

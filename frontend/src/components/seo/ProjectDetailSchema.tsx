@@ -74,7 +74,8 @@ export default async function ProjectDetailSchema({
         ...(project.equipment ?? [])
             .filter((item) => item.name)
             .map((item) => ({
-                "@type": "Product",
+                // Equipment describes completed work, not a standalone offer.
+                "@type": "Thing",
                 name: [item.name, item.model].filter(Boolean).join(" "),
                 ...(item.quantity ? { description: `${item.quantity} — ${item.name}` } : {}),
             })),

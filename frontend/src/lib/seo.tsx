@@ -22,6 +22,7 @@ export type SeoProps = {
     ogDescription?: string;
     robotsIndex?: boolean;
     robotsFollow?: boolean;
+    availableLocales?: readonly Locale[];
 };
 
 export const SITE_NAME = "SafeTech";
@@ -51,9 +52,9 @@ export function absoluteLocalizedUrl(
     return absoluteSiteUrl(localizePath(path, locale));
 }
 
-export function buildLanguageAlternates(path: string) {
+export function buildLanguageAlternates(path: string, locales: readonly Locale[] = supportedLocales) {
     return Object.fromEntries(
-        supportedLocales.map((locale) => [
+        locales.map((locale) => [
             getLanguageTag(locale),
             absoluteLocalizedUrl(path, locale),
         ]),
@@ -129,6 +130,7 @@ export function createMetadata({
     ogDescription,
     robotsIndex,
     robotsFollow,
+    availableLocales,
 }: SeoProps): Metadata {
     // A single CMS canonical override represents the default (KA) URL. Localized
     // pages must remain self-canonical so EN/RU are not incorrectly folded into KA.
@@ -148,8 +150,9 @@ export function createMetadata({
     const socialImage = absoluteSiteUrl(image);
     const resolvedOgTitle = cleanText(ogTitle) || fullTitle;
     const resolvedOgDescription = cleanText(ogDescription) || resolvedDescription;
-    const languageAlternates = buildLanguageAlternates(path);
-    const alternateLocales = supportedLocales
+    const pageLocales = availableLocales ?? supportedLocales;
+    const languageAlternates = buildLanguageAlternates(path, pageLocales);
+    const alternateLocales = pageLocales
         .filter((item) => item !== locale)
         .map(getOgLocale);
     const indexAllowed = !noindex && (robotsIndex ?? true);
@@ -164,7 +167,7 @@ export function createMetadata({
             canonical: url,
             languages: {
                 ...languageAlternates,
-                "x-default": absoluteSiteUrl(path),
+                "x-default": absoluteLocalizedUrl(path, pageLocales.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : locale),
             },
         },
         openGraph: {
