@@ -6,7 +6,7 @@ use App\Models\CategoryForService;
 use App\Models\Faq;
 use App\Models\Service;
 use App\Models\SiteSetting;
-use App\Support\Calculators\DefaultCalculatorProfiles;
+use App\Support\Calculators\CanonicalServiceCalculator;
 use App\Support\CanonicalSeedTombstones;
 use App\Support\MultilingualContent;
 use Illuminate\Database\Seeder;
@@ -197,7 +197,7 @@ class ServiceCatalogSeeder extends Seeder
                 'description' => $definition['seo_description']['ka'],
                 'noindex' => false,
             ],
-            'lead_form' => DefaultCalculatorProfiles::for($definition['calculator_profile']),
+            'lead_form' => CanonicalServiceCalculator::for($definition['slug'], $definition['name']['ka']),
             'button_text' => 'შეთავაზების მოთხოვნა',
             'cta_title' => 'მიიღეთ ზუსტი ტექნიკური შეთავაზება',
             'cta_description' => 'დაგვიკავშირდით კონსულტაციისა და ობიექტის მოთხოვნებზე მორგებული ფასის მისაღებად.',
@@ -824,15 +824,7 @@ class ServiceCatalogSeeder extends Seeder
 
         // The public catalog is deliberately limited to the seven approved offerings.
         // Granular Google Business Profile entries remain definitions, not public pages.
-        $canonical = [
-            'security-camera-installation',
-            'low-voltage-cabling',
-            'barrier-gate-installation',
-            'intercom-access-control-installation',
-            'business-it-support',
-            'network-installation-configuration',
-            'operating-system-installation',
-        ];
+        $canonical = CanonicalServiceCalculator::slugs();
 
         return array_values(array_filter(
             $services,

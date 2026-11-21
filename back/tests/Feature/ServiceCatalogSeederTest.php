@@ -18,8 +18,8 @@ class ServiceCatalogSeederTest extends TestCase
 
     public function test_frontend_and_backend_redirect_registries_match(): void
     {
-        $proxy = file_get_contents(base_path('../frontend/src/proxy.ts'));
-        $registry = explode('};', explode('const SERVICE_CANONICAL_ALIASES: Record<string, string> = {', $proxy, 2)[1], 2)[0];
+        $registrySource = file_get_contents(base_path('../frontend/src/lib/canonical-services.ts'));
+        $registry = explode('};', explode('export const SERVICE_CANONICAL_ALIASES: Record<string, string> = {', $registrySource, 2)[1], 2)[0];
         preg_match_all('/"([a-z0-9-]+)"\\s*:\\s*"([a-z0-9-]+)"/', $registry, $matches, PREG_SET_ORDER);
         $frontend = [];
         foreach ($matches as $match) {
@@ -223,6 +223,33 @@ class ServiceCatalogSeederTest extends TestCase
         foreach (array_keys(GoogleBusinessServiceDefinitions::CANONICAL_ALIASES) as $alias) {
             $this->assertDatabaseMissing('services', ['slug' => $alias]);
         }
+    }
+
+    public function test_all_seven_services_seed_quote_components(): void
+    {
+        $this->seed(ServiceCatalogSeeder::class);
+
+        $services = Service::query()->get();
+        $this->assertCount(7, $services);
+
+        foreach ($services as $service) {
+            $components = data_get($service->lead_form, 'components', []);
+            $this->assertIsArray($components);
+            $this->assertNotEmpty($components, "{$service->slug} has no quote components.");
+
+            foreach ($components as $component) {
+                $this->assertNotEmpty($component['key'] ?? null);
+                $this->assertNotEmpty($component['title_ka'] ?? null);
+                $this->assertArrayHasKey('quantity_mode', $component);
+            }
+        }
+
+        $cameraStorage = collect(
+            Service::query()->where('slug', 'security-camera-installation')->firstOrFail()->lead_form['components'],
+        )->firstWhere('key', 'storage');
+        $this->assertSame('ceil', $cameraStorage['quantity_mode'] ?? null);
+        $this->assertSame('required_storage_tb', $cameraStorage['quantity_field'] ?? null);
+        $this->assertSame(8.0, (float) ($cameraStorage['units_per_component'] ?? 0));
     }
 
     public function test_google_business_services_and_categories_are_localized_by_the_public_api(): void

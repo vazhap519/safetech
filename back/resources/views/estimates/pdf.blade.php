@@ -108,6 +108,7 @@
     $lineItems = $calculation['line_items'] ?? [];
     $requirements = $calculation['requirements'] ?? [];
     $summary = $calculation['summary'] ?? [];
+    $financial = $calculation['financial'] ?? [];
     $isQuoteEngine = (bool) ($calculation['quote_engine'] ?? false);
     $clientNote = trim((string) ($calculation['client_note'] ?? ''));
     $projectTypeLabel = $calculation['service_name'] ?? ([
@@ -138,7 +139,7 @@
                 @endif
             </td>
             <td style="text-align: right;">
-                <div style="font-size: 18px; font-weight: 700;">კომერციული შეთავაზება</div>
+                <div style="font-size: 18px; font-weight: 700;">ინვოისი / კომერციული შეთავაზება</div>
                 <div class="muted">№ {{ $estimate->estimate_number }}</div>
                 <div class="muted">{{ $estimate->created_at?->format('Y-m-d H:i') }}</div>
             </td>
@@ -250,8 +251,28 @@
     </table>
 
     <table class="total-box">
+        @if($isQuoteEngine)
+            <tr>
+                <td>სერვისი</td>
+                <td class="text-right">{{ $money($financial['service_subtotal'] ?? 0) }}</td>
+            </tr>
+            <tr>
+                <td>კომპონენტები</td>
+                <td class="text-right">{{ $money($financial['component_subtotal'] ?? 0) }}</td>
+            </tr>
+            <tr>
+                <td>ხელობის საფასური</td>
+                <td class="text-right">{{ $money($financial['labor_subtotal'] ?? 0) }}</td>
+            </tr>
+            @if((float)($financial['discount_amount'] ?? 0) > 0)
+                <tr>
+                    <td>ფასდაკლება</td>
+                    <td class="text-right">-{{ $money($financial['discount_amount']) }}</td>
+                </tr>
+            @endif
+        @endif
         <tr>
-            <td>სულ</td>
+            <td>სრული ღირებულება</td>
             <td class="text-right">{{ $money($estimate->final_total) }}</td>
         </tr>
     </table>

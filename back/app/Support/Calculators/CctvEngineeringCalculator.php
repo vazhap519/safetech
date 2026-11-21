@@ -91,8 +91,7 @@ final class CctvEngineeringCalculator
             'network_recommended_mbps' => round($peakMbps * 1.25, 2),
             'storage_raw_tb' => round($storageBytes / 1e12, 3),
             'storage_required_tb' => round($requiredTb, 3),
-            'suggested_single_disk_tb' => collect([1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
-                ->first(fn (int $size): bool => $size >= $requiredTb),
+            'suggested_single_disk_tb' => $this->suggestedSingleDisk($requiredTb),
             'poe_load_watts' => round($poeWatts, 2),
             'poe_budget_watts' => round($poeWatts * (1 + $headroom), 1),
             'power_by_voltage' => $powerByVoltage,
@@ -116,6 +115,17 @@ final class CctvEngineeringCalculator
     private function bounded(mixed $value, float $min, float $max): float
     {
         return min($max, max($min, is_numeric($value) ? (float) $value : $min));
+    }
+
+    private function suggestedSingleDisk(float $requiredTb): ?int
+    {
+        foreach ([1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] as $size) {
+            if ($size >= $requiredTb) {
+                return $size;
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import { isCanonicalServiceSlug } from "@/lib/canonical-services";
 import type { ServiceDetail } from "@/features/service-detail/model/types";
 import { getPublicApiOrigin, getServerApiBase } from "@/lib/backend-api";
 import {
@@ -24,41 +25,6 @@ import {
 
 const serverApiBase = getServerApiBase();
 const publicApiOrigin = getPublicApiOrigin();
-
-const NON_CANONICAL_SERVICE_SLUGS = new Set([
-    "ip-camera-installation",
-    "video-surveillance-system-installation",
-    "intercom-installation",
-    "access-control-system-installation",
-    "barrier-gate-setup",
-    "personal-computer-assembly",
-    "computer-upgrade-optimization",
-    "computer-component-replacement",
-    "computer-preventive-maintenance",
-    "computer-peripheral-troubleshooting",
-    "cat6-cabling",
-    "lan-installation",
-    "wifi-network-installation",
-    "network-rack-installation",
-    "patch-panel-installation",
-    "it-technical-support",
-    "computers-workstations-setup",
-    "microsoft-365-setup-migration",
-    "computer-network-diagnostics",
-    "data-backup-recovery",
-    "macos-installation-configuration",
-    "macbook-imac-software-setup",
-    "mac-software-installation",
-    "mac-diagnostics-repair",
-    "mac-data-recovery-backup",
-    "structured-cabling-installation",
-    "telecommunications-infrastructure-installation",
-]);
-
-function isCanonicalServiceSlug(slug?: string | null) {
-    const normalized = slug?.trim();
-    return Boolean(normalized && !NON_CANONICAL_SERVICE_SLUGS.has(normalized));
-}
 
 export type ContentFilterKind = "services" | "projects";
 

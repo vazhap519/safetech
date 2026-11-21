@@ -5,10 +5,12 @@ namespace App\Filament\Pages;
 use App\Filament\Resources\EstimateResource;
 use App\Filament\Support\NavigationGroup;
 use App\Models\Estimate;
+use App\Models\CameraPlan;
 use App\Models\Service;
 use App\Support\Calculators\BarrierConfigurator;
 use App\Support\Calculators\BarrierQuoteProfile;
 use App\Support\Calculators\CalculatorProfileBuilder;
+use App\Support\Calculators\CanonicalServiceCalculator;
 use App\Support\Estimators\ServiceQuoteCalculator;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -66,6 +68,27 @@ class QuoteEnginePage extends Page
 
     public function mount(): void
     {
+        $cameraPlanId = request()->integer('camera_plan');
+        if ($cameraPlanId > 0) {
+            $plan = CameraPlan::query()->find($cameraPlanId);
+            $cameraService = Service::query()
+                ->published()
+                ->where('slug', 'security-camera-installation')
+                ->first();
+
+            if ($plan && $cameraService) {
+                $this->serviceId = (int) $cameraService->getKey();
+                $this->resetServiceState();
+                $this->clientName = (string) $plan->contact_name;
+                $this->phone = (string) $plan->contact_phone;
+                $this->email = (string) ($plan->contact_email ?? '');
+                $this->projectTitle = (string) $plan->title;
+                $this->values['camera_count'] = max(1, count($plan->layout['cameras'] ?? []));
+
+                return;
+            }
+        }
+
         $first = $this->services()->first();
 
         if ($first) {
@@ -138,7 +161,7 @@ class QuoteEnginePage extends Page
             return $this->emptyQuote();
         }
 
-        return app(ServiceQuoteCalculator::class)->calculate($service, [
+        $quote = app(ServiceQuoteCalculator::class)->calculate($service, [
             'values' => $this->values,
             'project_size' => $this->projectSize,
             'property_type' => $this->propertyType,
@@ -147,6 +170,8 @@ class QuoteEnginePage extends Page
             'discount_percentage' => $this->discountPercentage,
             'component_overrides' => $this->componentOverrides,
         ]);
+
+        return $this->withManualItems($quote);
     }
 
     public function setComponentValue(string $key, string $field, mixed $value): void
@@ -186,7 +211,6 @@ class QuoteEnginePage extends Page
             'unit' => 'pcs',
             'purchase_price' => 0,
             'markup_percentage' => 60,
-            'sale_price' => 0,
         ];
     }
 
@@ -208,10 +232,7 @@ class QuoteEnginePage extends Page
                 $quantity = max(0, (float) ($item['quantity'] ?? 0));
                 $purchase = max(0, (float) ($item['purchase_price'] ?? 0));
                 $markup = min(1000, max(0, (float) ($item['markup_percentage'] ?? 0)));
-                $sale = max(0, (float) ($item['sale_price'] ?? 0));
-                if ($sale <= 0 && $purchase > 0) {
-                    $sale = round($purchase * (1 + $markup / 100), 2);
-                }
+                $sale = round($purchase * (1 + $markup / 100), 2);
 
                 return [
                     'category' => (string) ($item['category'] ?? 'other'),
@@ -271,24 +292,6 @@ class QuoteEnginePage extends Page
         $calculation['location'] = trim($this->location);
         $calculation['components_internal'] = $quote['components'];
         $manualItems = $this->normalizedManualItems();
-        $manualTotals = $this->manualTotals();
-        foreach ($manualItems as $item) {
-            $calculation['line_items'][] = [
-                'label' => $item['label'],
-                'quantity' => $item['quantity'],
-                'unit' => $item['unit'],
-                'sell_unit' => $item['sale_price'],
-                'sell_total' => $item['sale_total'],
-                'category' => $item['category'],
-                'manual' => true,
-            ];
-        }
-        $baseFinalTotal = (float) $quote['final_total'];
-        $finalTotal = round($baseFinalTotal + $manualTotals['sale'], 2);
-        $knownCostTotal = round((float) $quote['known_cost_total'] + $manualTotals['cost'], 2);
-        $profitTotal = $quote['profit_total'] === null
-            ? null
-            : round((float) $quote['profit_total'] + $manualTotals['profit'], 2);
 
         $estimate = Estimate::query()->create([
             'client_name' => trim($this->clientName) ?: null,
@@ -302,10 +305,10 @@ class QuoteEnginePage extends Page
             'markup_rate' => 0,
             'discount_percentage' => $quote['discount_percentage'],
             'required_storage_tb' => 0,
-            'cost_total' => $knownCostTotal,
-            'markup_total' => $profitTotal ?? 0,
-            'final_total' => $finalTotal,
-            'profit_total' => $profitTotal ?? 0,
+            'cost_total' => $quote['known_cost_total'],
+            'markup_total' => $quote['profit_total'] ?? 0,
+            'final_total' => $quote['final_total'],
+            'profit_total' => $quote['profit_total'] ?? 0,
             'manual_items' => $manualItems,
             'configuration' => [
                 'values' => $quote['values'],
@@ -352,14 +355,6 @@ class QuoteEnginePage extends Page
         $lines[] = '';
 
         $clientLineItems = $quote['calculation']['line_items'] ?? [];
-        foreach ($this->normalizedManualItems() as $manualItem) {
-            $clientLineItems[] = [
-                'label' => $manualItem['label'],
-                'quantity' => $manualItem['quantity'],
-                'sell_unit' => $manualItem['sale_price'],
-                'sell_total' => $manualItem['sale_total'],
-            ];
-        }
         foreach ($clientLineItems as $item) {
             $quantity = (float) ($item['quantity'] ?? 0);
             $total = (float) ($item['sell_total'] ?? 0);
@@ -373,7 +368,7 @@ class QuoteEnginePage extends Page
         }
 
         $lines[] = '';
-        $clientFinalTotal = (float) ($quote['final_total'] ?? 0) + $this->manualTotals()['sale'];
+        $clientFinalTotal = (float) ($quote['final_total'] ?? 0);
         $lines[] = 'სულ: '.number_format($clientFinalTotal, 2, '.', ' ').' ₾';
 
         if (trim($this->clientNote) !== '') {
@@ -425,10 +420,77 @@ class QuoteEnginePage extends Page
 
         return Service::query()
             ->published()
+            ->whereIn('slug', CanonicalServiceCalculator::slugs())
             ->orderBy('sort_order')
             ->get()
             ->filter(fn (Service $service): bool => $builder->enabled($service))
             ->values();
+    }
+
+    /** @param array<string, mixed> $quote @return array<string, mixed> */
+    private function withManualItems(array $quote): array
+    {
+        $manualItems = $this->normalizedManualItems();
+        if ($manualItems === []) {
+            return $quote;
+        }
+
+        $manualCost = 0.0;
+        $manualSale = 0.0;
+        $manualLabor = 0.0;
+        $manualComponents = 0.0;
+
+        foreach ($manualItems as $item) {
+            $manualCost += (float) $item['cost_total'];
+            $manualSale += (float) $item['sale_total'];
+            if ($item['category'] === 'labor') {
+                $manualLabor += (float) $item['sale_total'];
+            } else {
+                $manualComponents += (float) $item['sale_total'];
+            }
+
+            $quote['calculation']['line_items'][] = [
+                'label' => $item['label'],
+                'quantity' => $item['quantity'],
+                'unit' => $item['unit'],
+                'unit_cost' => $item['purchase_price'],
+                'markup_percentage' => $item['markup_percentage'],
+                'sell_unit' => $item['sale_price'],
+                'cost_total' => $item['cost_total'],
+                'sell_total' => $item['sale_total'],
+                'category' => $item['category'],
+                'manual' => true,
+            ];
+        }
+
+        $quote['component_subtotal'] = round((float) ($quote['component_subtotal'] ?? 0) + $manualComponents, 2);
+        $quote['labor_subtotal'] = round((float) ($quote['labor_subtotal'] ?? 0) + $manualLabor, 2);
+        $quote['subtotal_before_discount'] = round((float) ($quote['subtotal_before_discount'] ?? 0) + $manualSale, 2);
+        $quote['final_total'] = round((float) ($quote['final_total'] ?? 0) + $manualSale, 2);
+        $quote['known_cost_total'] = round((float) ($quote['known_cost_total'] ?? 0) + $manualCost, 2);
+
+        if ($quote['profit_total'] !== null) {
+            $quote['profit_total'] = round((float) $quote['profit_total'] + $manualSale - $manualCost, 2);
+            $quote['gross_margin_percentage'] = $quote['final_total'] > 0
+                ? round($quote['profit_total'] / $quote['final_total'] * 100, 2)
+                : 0.0;
+        }
+
+        $quote['calculation']['financial'] = array_merge(
+            $quote['calculation']['financial'] ?? [],
+            [
+            'service_subtotal' => $quote['service_subtotal'] ?? 0,
+            'component_subtotal' => $quote['component_subtotal'],
+            'labor_subtotal' => $quote['labor_subtotal'],
+            'discount_amount' => $quote['discount_amount'] ?? 0,
+            'final_total' => $quote['final_total'],
+            'known_cost_total' => $quote['known_cost_total'],
+            'profit_total' => $quote['profit_total'],
+            'gross_margin_percentage' => $quote['gross_margin_percentage'],
+            ],
+        );
+
+        return $quote;
     }
 
     private function legacyProjectType(Service $service): string

@@ -213,7 +213,7 @@
                 <thead><tr><th>ტიპი</th><th>დასახელება</th><th>რაოდ.</th><th>ერთეული</th><th>თვითღ.</th><th>Markup %</th><th>გასაყიდი ფასი</th><th>ჯამი</th><th></th></tr></thead>
                 <tbody>
                 @forelse($manualItems as $index => $item)
-                    @php($normalized = $this->normalizedManualItems())
+                        @php($manualSalePrice = round(max(0, (float)($item['purchase_price'] ?? 0)) * (1 + min(1000, max(0, (float)($item['markup_percentage'] ?? 0))) / 100), 2))
                     <tr wire:key="manual-item-{{ $index }}">
                         <td><select wire:model.live="manualItems.{{ $index }}.category"><option value="equipment">მოწყობილობა</option><option value="material">მასალა</option><option value="labor">ხელობა</option><option value="transport">ტრანსპორტი</option><option value="other">სხვა</option></select></td>
                         <td><input style="width:220px" type="text" wire:model.live.debounce.400ms="manualItems.{{ $index }}.label" placeholder="მაგ. IP კამერა"></td>
@@ -221,8 +221,8 @@
                         <td><select wire:model.live="manualItems.{{ $index }}.unit"><option value="pcs">ცალი</option><option value="m">მეტრი</option><option value="set">კომპლექტი</option><option value="job">სამუშაო</option><option value="hour">საათი</option></select></td>
                         <td><input type="number" min="0" step=".01" wire:model.live.debounce.300ms="manualItems.{{ $index }}.purchase_price"></td>
                         <td><input type="number" min="0" max="1000" step=".1" wire:model.live.debounce.300ms="manualItems.{{ $index }}.markup_percentage"></td>
-                        <td><input type="number" min="0" step=".01" wire:model.live.debounce.300ms="manualItems.{{ $index }}.sale_price" placeholder="0 = ავტომატური"></td>
-                        <td class="qe-money"><strong>{{ number_format((float)($this->normalizedManualItems()[$index]['sale_total'] ?? 0), 2, '.', ' ') }} ₾</strong></td>
+                        <td class="qe-money">{{ number_format($manualSalePrice, 2, '.', ' ') }} ₾</td>
+                        <td class="qe-money"><strong>{{ number_format($manualSalePrice * max(0, (float)($item['quantity'] ?? 0)), 2, '.', ' ') }} ₾</strong></td>
                         <td><button type="button" wire:click="removeManualItem({{ $index }})" class="text-danger-600">წაშლა</button></td>
                     </tr>
                 @empty
@@ -255,7 +255,7 @@
             <div class="qe-metric"><span class="qe-note">სამუშაო</span><strong>{{ number_format((float)($quote['labor_subtotal'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
             <div class="qe-metric"><span class="qe-note">ფასდაკლება</span><strong>-{{ number_format((float)($quote['discount_amount'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
             <div class="qe-metric"><span class="qe-note">ხელით დამატებული</span><strong>{{ number_format((float)$this->manualTotals()['sale'], 2, '.', ' ') }} ₾</strong></div>
-            <div class="qe-metric"><span class="qe-note">კლიენტის საბოლოო ფასი</span><strong>{{ number_format((float)($quote['final_total'] ?? 0) + (float)$this->manualTotals()['sale'], 2, '.', ' ') }} ₾</strong></div>
+            <div class="qe-metric"><span class="qe-note">კლიენტის საბოლოო ფასი</span><strong>{{ number_format((float)($quote['final_total'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
             <div class="qe-metric"><span class="qe-note">ცნობილი თვითღირებულება</span><strong>{{ number_format((float)($quote['known_cost_total'] ?? 0), 2, '.', ' ') }} ₾</strong></div>
             <div class="qe-metric"><span class="qe-note">მოგება (overhead-მდე)</span><strong>{{ $quote['profit_total'] === null ? 'დასაზუსტებელია' : number_format((float)$quote['profit_total'], 2, '.', ' ').' ₾' }}</strong></div>
             <div class="qe-metric"><span class="qe-note">მარჟა</span><strong>{{ $quote['gross_margin_percentage'] === null ? '—' : number_format((float)$quote['gross_margin_percentage'], 1). '%' }}</strong></div>

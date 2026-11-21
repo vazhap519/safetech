@@ -10,6 +10,7 @@ import {
 import Icon from "@/components/ui/Icon";
 import { trackEvent } from "@/lib/analytics";
 import { intercomValues, intercomField } from "@/lib/intercom-calculator";
+import { calculateCctvStorage } from "@/lib/cctv-storage-calculator";
 import {
     calculateConfiguratorTotals,
     calculateEstimateBreakdown,
@@ -272,12 +273,26 @@ export default function ServiceCalculator({
 
     const [confirmedScopes, setConfirmedScopes] = useState<Record<string, boolean>>({});
     const configurationReady = !profile?.intercomCatalog || Boolean(confirmedScopes[profile.slug]);
-    const values = useMemo(
+    const baseValues = useMemo(
         () => {
             const raw = profile ? valuesByService[profile.slug] ?? EMPTY_VALUES : EMPTY_VALUES;
             return profile?.intercomCatalog ? intercomValues(profile.intercomCatalog, raw) : raw;
         },
         [profile, valuesByService],
+    );
+    const isCctvProfile = Boolean(
+        profile?.fields.some((field) => field.key === "camera_count")
+        && profile.fields.some((field) => field.key === "recording_days"),
+    );
+    const storageResult = useMemo(
+        () => isCctvProfile ? calculateCctvStorage(baseValues) : null,
+        [isCctvProfile, baseValues],
+    );
+    const values = useMemo(
+        () => storageResult
+            ? { ...baseValues, required_storage_tb: storageResult.requiredTb }
+            : baseValues,
+        [baseValues, storageResult],
     );
     const projectSize = profile ? projectSizes[profile.slug] ?? "" : "";
     const propertyType = profile ? propertyTypes[profile.slug] ?? "" : "";
@@ -611,6 +626,14 @@ export default function ServiceCalculator({
                 ...(componentSummary
                     ? [{ key: "calculator_components", label: copy.componentsTitle, type: "calculator", value: componentSummary }]
                     : []),
+                ...(storageResult
+                    ? [{
+                        key: "calculator_storage",
+                        label: t("calculator.cctv.required", { ka: "საჭირო HDD მარაგით", en: "Required HDD with reserve", ru: "Требуемый HDD с резервом" }),
+                        type: "calculator",
+                        value: `${storageResult.requiredTb} TB (${storageResult.bitrateMbpsPerCamera} Mbps/camera)`,
+                    }]
+                    : []),
             ],
         };
 
@@ -713,6 +736,23 @@ export default function ServiceCalculator({
                                     value={propertyType}
                                 />
                             </div>
+
+                            {storageResult ? (
+                                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4" aria-live="polite" data-testid="cctv-storage-result">
+                                    <p className="font-semibold text-on-surface">
+                                        {t("calculator.cctv.storage", { ka: "HDD არქივის ზუსტი გამოთვლა", en: "HDD archive calculation", ru: "Расчёт HDD-архива" })}
+                                    </p>
+                                    <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                                        <p>{t("calculator.cctv.bitrate", { ka: "ბიტრეიტი / კამერა", en: "Bitrate / camera", ru: "Битрейт / камера" })}: <strong>{storageResult.bitrateMbpsPerCamera} Mbps</strong></p>
+                                        <p>{t("calculator.cctv.effectiveHours", { ka: "ეფექტური ჩაწერა", en: "Effective recording", ru: "Эффективная запись" })}: <strong>{storageResult.recordingHoursEquivalent} h/day</strong></p>
+                                        <p>{t("calculator.cctv.raw", { ka: "ვიდეოს სუფთა მოცულობა", en: "Raw video volume", ru: "Чистый объём видео" })}: <strong>{storageResult.rawTb} TB</strong></p>
+                                        <p>{t("calculator.cctv.required", { ka: "საჭირო HDD მარაგით", en: "Required HDD with reserve", ru: "Требуемый HDD с резервом" })}: <strong>{storageResult.requiredTb} TB</strong></p>
+                                    </div>
+                                    <p className="mt-3 text-xs leading-5 text-on-surface-variant">
+                                        {t("calculator.cctv.note", { ka: "თუ კამერის რეალური Mbps იცით, მიუთითეთ — ეს ყველაზე ზუსტ შედეგს იძლევა. 0-ის შემთხვევაში ბიტრეიტი ითვლება MP, FPS და კოდეკით.", en: "Enter the camera's actual Mbps for maximum accuracy. When set to 0, bitrate is estimated from MP, FPS and codec.", ru: "Для максимальной точности укажите фактический Mbps камеры. При значении 0 битрейт оценивается по MP, FPS и кодеку." })}
+                                    </p>
+                                </div>
+                            ) : null}
 
                             <div className="grid gap-5 sm:grid-cols-2">
                                 {profile.fields.filter((field) => configurationReady || ["apartments", "doors"].includes(field.key)).map((field) => (

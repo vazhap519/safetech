@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\QuoteCatalogItem;
 use App\Models\Service;
 use App\Support\Estimators\ServiceQuoteCalculator;
+use App\Support\Calculators\CanonicalServiceCalculator;
 use Illuminate\Database\Seeder;
 
 /**
@@ -22,6 +23,15 @@ final class QuoteCatalogSeeder extends Seeder
         QuoteCatalogItem::query()
             ->whereNull('markup_percentage')
             ->update(['markup_percentage' => 60]);
+
+        // Keep historical estimate relations intact while preventing legacy
+        // service components from appearing in the seven-service quote engine.
+        QuoteCatalogItem::query()
+            ->whereHas('service', fn ($query) => $query->whereNotIn(
+                'slug',
+                CanonicalServiceCalculator::slugs(),
+            ))
+            ->update(['is_active' => false]);
 
         // Ensure every published calculator-enabled service has been considered.
         // syncCatalog() only creates component rows declared by that service's

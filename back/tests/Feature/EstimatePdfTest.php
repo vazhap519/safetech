@@ -61,6 +61,13 @@ class EstimatePdfTest extends TestCase
                     'სერვისი' => 'ვიდეოდომოფონი',
                     'პარამეტრები' => '34 ბინა · 1 კარი',
                 ],
+                'financial' => [
+                    'service_subtotal' => 100,
+                    'component_subtotal' => 1200,
+                    'labor_subtotal' => 200,
+                    'discount_amount' => 0,
+                    'final_total' => 1500,
+                ],
                 'line_items' => [[
                     'label' => 'ვიდეოდომოფონის მონიტორი',
                     'quantity' => 34,
@@ -82,6 +89,8 @@ class EstimatePdfTest extends TestCase
         $this->assertStringContainsString('შეთავაზება მოქმედებს 7 დღე.', $html);
         $this->assertStringContainsString('34 ბინა · 1 კარი', $html);
         $this->assertStringNotContainsString('შიდა თვითღირებულება', $html);
+        $this->assertStringContainsString('ხელობის საფასური', $html);
+        $this->assertStringContainsString('სრული ღირებულება', $html);
         $this->assertStringNotContainsString('100.00', $html);
     }
 

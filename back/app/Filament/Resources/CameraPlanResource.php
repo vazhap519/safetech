@@ -3,10 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CameraPlanResource\Pages;
+use App\Filament\Pages\QuoteEnginePage;
 use App\Filament\Support\NavigationGroup;
 use App\Models\CameraPlan;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -82,7 +84,16 @@ class CameraPlanResource extends Resource
                 TextColumn::make('created_at')->label('მიღებულია')->dateTime()->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->recordActions([EditAction::make(), DeleteAction::make()]);
+            ->recordActions([
+                Action::make('create_quote')
+                    ->label('შეთავაზების მომზადება')
+                    ->icon('heroicon-o-calculator')
+                    ->url(fn (CameraPlan $record): string => QuoteEnginePage::getUrl([
+                        'camera_plan' => $record->getKey(),
+                    ])),
+                EditAction::make(),
+                DeleteAction::make(),
+            ]);
     }
 
     public static function getPages(): array

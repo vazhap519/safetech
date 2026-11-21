@@ -92,9 +92,16 @@ export default function MarketingScriptsClient({
             ) : null}
 
             {gaId ? (
-                <Script id="google-analytics-consent" strategy="afterInteractive">
-                    {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});gtag('config','${gaId}',{anonymize_ip:true,send_page_view:true});`}
-                </Script>
+                <>
+                    <Script
+                        id="google-analytics-library"
+                        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+                        strategy="afterInteractive"
+                    />
+                    <Script id="google-analytics-consent" strategy="afterInteractive">
+                        {`window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('js',new Date());gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});gtag('config','${gaId}',{anonymize_ip:true,send_page_view:true});`}
+                    </Script>
+                </>
             ) : null}
 
             {pixelId ? (

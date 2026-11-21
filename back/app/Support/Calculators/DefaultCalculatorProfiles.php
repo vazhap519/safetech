@@ -96,6 +96,39 @@ final class DefaultCalculatorProfiles
                     'default' => 14,
                     'unit' => ['დღე', 'days', 'дней'],
                 ]),
+                self::field('recording_codec', 'select', ['ჩაწერის ფორმატი / კოდეკი', 'Recording format / codec', 'Формат записи / кодек'], [
+                    'required' => true,
+                    'options' => [
+                        self::option('h264', 'H.264', 'H.264', 'H.264'),
+                        self::option('h265', 'H.265', 'H.265', 'H.265'),
+                        self::option('h265plus', 'H.265+', 'H.265+', 'H.265+'),
+                    ],
+                    'default' => 'h265',
+                ]),
+                self::field('recording_fps', 'number', ['კადრი წამში', 'Frames per second', 'Кадров в секунду'], [
+                    'required' => true, 'min' => 1, 'max' => 60, 'step' => 1, 'default' => 15, 'unit' => ['FPS', 'FPS', 'FPS'],
+                ]),
+                self::field('recording_mode', 'select', ['ჩაწერის რეჟიმი', 'Recording mode', 'Режим записи'], [
+                    'required' => true,
+                    'options' => [
+                        self::option('continuous', 'უწყვეტი 24/7', 'Continuous 24/7', 'Непрерывно 24/7'),
+                        self::option('schedule', 'გრაფიკით', 'Scheduled', 'По расписанию'),
+                        self::option('motion', 'მოძრაობით', 'Motion detection', 'По движению'),
+                    ],
+                    'default' => 'continuous',
+                ]),
+                self::field('recording_hours_per_day', 'number', ['ჩაწერის საათები დღეში', 'Recording hours per day', 'Часов записи в день'], [
+                    'min' => 0, 'max' => 24, 'step' => .5, 'default' => 24, 'unit' => ['სთ', 'h', 'ч'],
+                ]),
+                self::field('motion_recording_percent', 'number', ['მოძრაობით რეალური ჩაწერა', 'Motion recording duty', 'Фактическая запись по движению'], [
+                    'min' => 0, 'max' => 100, 'step' => 1, 'default' => 35, 'unit' => ['%', '%', '%'],
+                ]),
+                self::field('video_bitrate_mbps', 'number', ['რეალური ბიტრეიტი / კამერა (0 = ავტომატური)', 'Actual bitrate / camera (0 = automatic)', 'Фактический битрейт / камера (0 = авто)'], [
+                    'min' => 0, 'max' => 128, 'step' => .1, 'default' => 0, 'unit' => ['Mbps', 'Mbps', 'Mbps'],
+                ]),
+                self::field('storage_reserve_percent', 'number', ['HDD უსაფრთხოების მარაგი', 'HDD safety reserve', 'Резерв ёмкости HDD'], [
+                    'min' => 0, 'max' => 100, 'step' => 1, 'default' => 20, 'unit' => ['%', '%', '%'],
+                ]),
                 self::field('cable_meters', 'number', ['კაბელის სიგრძე', 'Cable length', 'Длина кабеля'], [
                     'min' => 0,
                     'max' => 20000,

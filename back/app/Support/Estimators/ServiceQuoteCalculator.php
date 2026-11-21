@@ -7,6 +7,7 @@ use App\Models\Service;
 use App\Support\Calculators\BarrierConfigurator;
 use App\Support\Calculators\BarrierQuoteProfile;
 use App\Support\Calculators\CalculatorProfileBuilder;
+use App\Support\Calculators\CanonicalServiceCalculator;
 use App\Support\Calculators\IntercomPlanner;
 
 final class ServiceQuoteCalculator
@@ -421,7 +422,11 @@ final class ServiceQuoteCalculator
     {
         $services = Service::query()
             ->published()
-            ->when($serviceId, fn ($query) => $query->whereKey($serviceId))
+            ->when(
+                $serviceId,
+                fn ($query) => $query->whereKey($serviceId),
+                fn ($query) => $query->whereIn('slug', CanonicalServiceCalculator::slugs()),
+            )
             ->get()
             ->filter(fn (Service $service): bool => $this->profiles->enabled($service));
 

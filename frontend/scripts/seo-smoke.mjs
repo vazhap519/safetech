@@ -281,7 +281,7 @@ async function validateLegacyCalculatorRedirect() {
         `${path}: expected HTTP redirect, got ${response.status}`,
     );
     assert(
-        location.includes("/services/custom-computer-build"),
+        location.includes("/services/operating-system-installation"),
         `${path}: redirect does not target the canonical service URL (${location})`,
     );
 }

@@ -93,4 +93,42 @@ class CctvEngineeringCalculatorTest extends TestCase
 
         $this->assertSame(4.0, $result['groups'][0]['megapixels']);
     }
+
+    public function test_codec_and_fps_change_automatic_storage_estimate(): void
+    {
+        $calculator = new CctvEngineeringCalculator;
+        $base = ['days' => 30, 'reserve_percent' => 0, 'groups' => [[
+            'count' => 4, 'megapixels' => 4, 'fps' => 15,
+            'bitrate_mbps' => 0, 'mode' => 'continuous',
+        ]]];
+
+        $h264 = $calculator->calculate(array_replace_recursive($base, ['groups' => [[
+            'count' => 4, 'megapixels' => 4, 'fps' => 15, 'codec' => 'h264',
+            'bitrate_mbps' => 0, 'mode' => 'continuous',
+        ]]]));
+        $h265Plus = $calculator->calculate(array_replace_recursive($base, ['groups' => [[
+            'count' => 4, 'megapixels' => 4, 'fps' => 15, 'codec' => 'h265plus',
+            'bitrate_mbps' => 0, 'mode' => 'continuous',
+        ]]]));
+
+        $this->assertGreaterThan($h265Plus['storage_raw_tb'], $h264['storage_raw_tb']);
+        $this->assertSame(5.7, $h264['groups'][0]['video_mbps_each']);
+        $this->assertSame(2.7, $h265Plus['groups'][0]['video_mbps_each']);
+    }
+
+    public function test_disk_reserve_and_usable_fraction_are_applied_after_raw_video_bytes(): void
+    {
+        $result = (new CctvEngineeringCalculator)->calculate([
+            'days' => 10,
+            'reserve_percent' => 20,
+            'disk_usable_percent' => 90,
+            'groups' => [[
+                'count' => 1, 'bitrate_mbps' => 8, 'mode' => 'schedule',
+                'hours_per_day' => 12,
+            ]],
+        ]);
+
+        $this->assertEqualsWithDelta(0.432, $result['storage_raw_tb'], 0.001);
+        $this->assertEqualsWithDelta(0.576, $result['storage_required_tb'], 0.001);
+    }
 }
