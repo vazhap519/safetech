@@ -12,6 +12,7 @@ import LocalizationProvider from "@/components/providers/LocalizationProvider";
 import RouteScrollManager from "@/components/providers/RouteScrollManager";
 import ContactInteractionTracker from "@/components/analytics/ContactInteractionTracker";
 import MarketingPixels from "@/components/analytics/MarketingPixels";
+import WebVitalsReporter from "@/components/analytics/WebVitalsReporter";
 import {
     getLanguageTag,
     getOgLocale,
@@ -323,6 +324,7 @@ export default async function RootLayout({
                 >
                     <RouteScrollManager />
                     <ContactInteractionTracker />
+                    <WebVitalsReporter />
                     <MarketingPixels
                         enabled={marketingEnabled}
                         googleAnalyticsId={googleAnalyticsId}

@@ -18,6 +18,14 @@ class EstimatePdfTest extends TestCase
             'client_name' => 'ქართული კომპანია',
             'project_type' => 'cctv',
             'final_total' => 1250.50,
+            'vat_included' => true,
+            'vat_rate' => 18,
+            'vat_amount' => 225.09,
+            'due_date' => now()->addDays(7)->toDateString(),
+            'payment_status' => 'unpaid',
+            'bank_name' => 'Test Bank',
+            'bank_account' => 'GE00TB0000000000000000',
+            'payment_reference' => 'INV-TEST',
             'calculation' => [
                 'line_items' => [[
                     'label' => 'ვიდეოკამერა',

@@ -33,7 +33,10 @@ class EditEstimate extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         if ((bool) data_get($this->record->calculation, 'quote_engine', false)) {
-            return $data;
+            $data['final_total'] = $this->record->final_total;
+            $data['vat_amount'] = $this->record->vat_amount;
+
+            return EstimateResource::applyInvoiceFields($data);
         }
 
         return EstimateResource::hydrateCalculatedFields($data);

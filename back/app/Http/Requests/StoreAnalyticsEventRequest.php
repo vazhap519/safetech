@@ -41,6 +41,7 @@ class StoreAnalyticsEventRequest extends FormRequest
                     AnalyticsEvent::TYPE_LEAD_CREATED,
                     AnalyticsEvent::TYPE_AI_OPEN,
                     AnalyticsEvent::TYPE_AI_MESSAGE,
+                    AnalyticsEvent::TYPE_WEB_VITAL,
                 ]),
             ],
             'service_slug' => ['nullable', 'string', 'max:255', 'exists:services,slug'],

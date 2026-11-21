@@ -12,6 +12,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Placeholder;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -103,6 +104,21 @@ class QuoteCatalogItemResource extends Resource
                     Textarea::make('notes')->label('შიდა შენიშვნა')->rows(3),
                 ])
                 ->columns(2),
+            Section::make('ფასების ისტორია')
+                ->visibleOn('edit')
+                ->schema([
+                    Placeholder::make('price_history')
+                        ->label('ბოლო ცვლილებები')
+                        ->content(fn (?QuoteCatalogItem $record): array => $record?->priceHistory()
+                            ->limit(10)->get()->map(fn ($row): string => sprintf(
+                                '%s · %s · შესყიდვა: %s · მარჟა: %s%% · გაყიდვა: %s',
+                                $row->effective_at?->format('Y-m-d H:i') ?? '—',
+                                $row->supplier ?: 'მომწოდებელი უცნობია',
+                                $row->purchase_price ?? '—',
+                                $row->markup_percentage,
+                                $row->sale_price ?? 'ავტომატური',
+                            ))->all() ?? []),
+                ]),
         ]);
     }
 

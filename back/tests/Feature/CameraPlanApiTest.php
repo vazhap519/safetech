@@ -28,9 +28,14 @@ class CameraPlanApiTest extends TestCase
                 'id' => 'cam-1', 'x' => 150, 'y' => 120,
                 'direction' => 80, 'fov' => 90, 'range' => 18,
                 'kind' => 'bullet', 'height' => 3, 'lens' => 2.8, 'sensor' => 5.6,
+                'megapixels' => 8, 'fps' => 20, 'codec' => 'h265', 'bitrateMbps' => 6.5,
+                'audioMbps' => 0.064, 'recordingMode' => 'motion', 'hoursPerDay' => 18, 'motionPercent' => 40,
             ]],
             'walls' => [],
             'area' => [],
+            'recordingDays' => 45,
+            'storageReservePercent' => 20,
+            'recorder' => ['channels' => 8, 'incomingBandwidthMbps' => 80, 'sataBays' => 2, 'maxDiskTb' => 10, 'raid' => 'raid1'],
         ];
     }
 
@@ -56,6 +61,8 @@ class CameraPlanApiTest extends TestCase
         $this->assertCount(1, $plan->layout['cameras']);
         $this->assertSame([], $plan->layout['walls']);
         $this->assertSame([], $plan->layout['area']);
+        $this->assertSame(8, $plan->layout['cameras'][0]['megapixels']);
+        $this->assertSame('raid1', $plan->layout['recorder']['raid']);
     }
 
     public function test_rejects_missing_consent_and_camera_geometry_outside_plan(): void

@@ -15,6 +15,8 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -94,6 +96,20 @@ class EstimateResource extends Resource
                         ->columnSpanFull(),
                 ])
                 ->columns(2),
+
+            Section::make('ინვოისი და გადახდა')
+                ->schema([
+                    Toggle::make('vat_included')->label('დღგ-ის დამატება')->default(false)->live(),
+                    TextInput::make('vat_rate')->label('დღგ')->suffix('%')->numeric()->default(18)->minValue(0)->maxValue(100)->live(onBlur: true),
+                    DatePicker::make('due_date')->label('გადახდის ვადა')->native(false),
+                    Select::make('payment_status')->label('გადახდის სტატუსი')->options([
+                        'unpaid' => 'გადასახდელი', 'partial' => 'ნაწილობრივ გადახდილი',
+                        'paid' => 'გადახდილი', 'overdue' => 'ვადაგადაცილებული', 'cancelled' => 'გაუქმებული',
+                    ])->default('unpaid')->required(),
+                    TextInput::make('bank_name')->label('ბანკი'),
+                    TextInput::make('bank_account')->label('ანგარიში / IBAN'),
+                    TextInput::make('payment_reference')->label('დანიშნულება')->helperText('თუ ცარიელია, გამოყენებული იქნება ინვოისის ნომერი.'),
+                ])->columns(2),
 
             Section::make('CCTV პარამეტრები')
                 ->description('საცავის კალკულატორი ავტომატურად ითვლის HDD/NVR/PoE საჭიროებებს.')
@@ -343,6 +359,7 @@ class EstimateResource extends Resource
                     ->label('საბოლოო ფასი')
                     ->formatStateUsing(fn ($state): string => self::formatMoney((float) $state))
                     ->sortable(),
+                TextColumn::make('payment_status')->label('გადახდა')->badge()->sortable(),
                 TextColumn::make('profit_total')
                     ->label('მოგება')
                     ->formatStateUsing(fn ($state): string => self::formatMoney((float) $state))
@@ -397,7 +414,20 @@ class EstimateResource extends Resource
      */
     public static function hydrateCalculatedFields(array $data): array
     {
-        return array_merge($data, app(EstimateCalculator::class)->calculate($data));
+        $data = array_merge($data, app(EstimateCalculator::class)->calculate($data));
+        return self::applyInvoiceFields($data);
+    }
+
+    /** @param array<string, mixed> $data @return array<string, mixed> */
+    public static function applyInvoiceFields(array $data): array
+    {
+        $baseTotal = (float) ($data['final_total'] ?? 0) - (float) ($data['vat_amount'] ?? 0);
+        $vatRate = min(100, max(0, (float) ($data['vat_rate'] ?? 18)));
+        $vatAmount = ! empty($data['vat_included']) ? round($baseTotal * $vatRate / 100, 2) : 0.0;
+        $data['vat_amount'] = $vatAmount;
+        $data['final_total'] = round($baseTotal + $vatAmount, 2);
+
+        return $data;
     }
 
     private static function isQuoteEngine(?Estimate $record): bool

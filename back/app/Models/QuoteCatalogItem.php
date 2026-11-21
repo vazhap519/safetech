@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class QuoteCatalogItem extends Model
 {
@@ -23,6 +24,29 @@ class QuoteCatalogItem extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function priceHistory(): HasMany
+    {
+        return $this->hasMany(QuoteCatalogPriceHistory::class)->latest('effective_at');
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $item): void {
+            if (! $item->wasRecentlyCreated && ! $item->wasChanged(['supplier', 'purchase_price', 'markup_percentage', 'sale_price'])) {
+                return;
+            }
+
+            $item->priceHistory()->create([
+                'changed_by' => auth()->id(),
+                'supplier' => $item->supplier,
+                'purchase_price' => $item->purchase_price,
+                'markup_percentage' => $item->markup_percentage,
+                'sale_price' => $item->sale_price,
+                'effective_at' => now(),
+            ]);
+        });
     }
 
     public function effectiveSalePrice(float $fallback = 0): float

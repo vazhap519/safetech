@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { useLocalization } from "@/components/providers/LocalizationProvider";
 import { trackEvent } from "@/lib/analytics";
 import { trackLeadCreated } from "@/lib/analytics-events";
+import { calculateCameraSystem, type RecorderProfile } from "@/lib/camera-system-calculator";
 
 type Point = { x: number; y: number };
 type Wall = { ax: number; ay: number; bx: number; by: number };
@@ -12,10 +13,15 @@ type Kind = "bullet" | "dome" | "ptz" | "turret";
 type Camera = Point & {
     id: string; direction: number; fov: number; range: number;
     kind: Kind; height: number; lens: number; sensor: number;
+    megapixels: number; fps: number; codec: "h264" | "h265" | "h265plus";
+    bitrateMbps: number; audioMbps: number;
+    recordingMode: "continuous" | "schedule" | "motion";
+    hoursPerDay: number; motionPercent: number;
 };
 type Layout = {
     version: 1; widthMeters: number; cameras: Camera[];
     walls: Wall[]; area: Point[]; rooms?: Room[];
+    recordingDays: number; storageReservePercent: number; recorder: RecorderProfile;
 };
 type Mode = "select" | "camera" | "wall" | "area";
 type AiDraft = {
@@ -27,7 +33,8 @@ type AiDraft = {
     notes: string[]; suggested_count: number;
 };
 const W = 900, H = 600;
-const initial: Layout = { version: 1, widthMeters: 20, cameras: [], walls: [], area: [], rooms: [] };
+const defaultRecorder: RecorderProfile = { channels: 8, incomingBandwidthMbps: 80, sataBays: 1, maxDiskTb: 8, raid: "none" };
+const initial: Layout = { version: 1, widthMeters: 20, cameras: [], walls: [], area: [], rooms: [], recordingDays: 30, storageReservePercent: 20, recorder: defaultRecorder };
 const kinds: Kind[] = ["bullet", "dome", "ptz", "turret"];
 const copy = {
     ka: {
@@ -65,6 +72,9 @@ const copy = {
         activeTool: "აქტიური ხელსაწყო", fileError: "დაშვებულია PNG, JPEG ან WebP — მაქსიმუმ 5 MB.",
         jsonError: "JSON გეგმა დაზიანებულია ან არასწორი ფორმატი აქვს.",
         planLoaded: "გეგმა ატვირთულია — ახლა მონიშნეთ კედლები, არე და კამერები.",
+        recording: "ჩაწერა და NVR", storage: "საჭირო HDD", bandwidth: "შემავალი ნაკადი", nvrOk: "NVR თავსებადია", nvrBad: "NVR პარამეტრები არასაკმარისია",
+        days: "დღეები", reserve: "რეზერვი", nvrChannels: "NVR არხები", incoming: "შემავალი Mbps", sata: "SATA ბუდეები", maxHdd: "მაქს. HDD TB",
+        recordMode: "ჩაწერის რეჟიმი", hoursDay: "საათი/დღე", motion: "მოძრაობა", autoBitrate: "Mbps (0 = ავტომატური)",
     },
     en: {
         title: "CCTV camera layout planner",
@@ -99,6 +109,9 @@ const copy = {
         activeTool: "Active tool", fileError: "Use PNG, JPEG or WebP up to 5 MB.",
         jsonError: "The JSON design is invalid or damaged.",
         planLoaded: "Plan loaded — mark walls, the inspection area and cameras.",
+        recording: "Recording and NVR", storage: "Required HDD", bandwidth: "Incoming stream", nvrOk: "NVR is compatible", nvrBad: "NVR limits are insufficient",
+        days: "Days", reserve: "Reserve", nvrChannels: "NVR channels", incoming: "Incoming Mbps", sata: "SATA bays", maxHdd: "Max HDD TB",
+        recordMode: "Recording mode", hoursDay: "Hours/day", motion: "Motion", autoBitrate: "Mbps (0 = auto)",
     },
     ru: {
         title: "Планировщик размещения камер",
@@ -135,6 +148,9 @@ const copy = {
         activeTool: "Активный инструмент", fileError: "Допустимы PNG, JPEG или WebP до 5 МБ.",
         jsonError: "JSON-проект повреждён или имеет неверный формат.",
         planLoaded: "План загружен — отметьте стены, зону контроля и камеры.",
+        recording: "Запись и NVR", storage: "Требуемый HDD", bandwidth: "Входящий поток", nvrOk: "NVR совместим", nvrBad: "Параметры NVR недостаточны",
+        days: "Дни", reserve: "Резерв", nvrChannels: "Каналы NVR", incoming: "Входящие Mbps", sata: "Отсеки SATA", maxHdd: "Макс. HDD TB",
+        recordMode: "Режим записи", hoursDay: "Часов/день", motion: "Движение", autoBitrate: "Mbps (0 = авто)",
     },
 } as const;
 
@@ -239,6 +255,11 @@ function cleanLayout(data: unknown): Layout {
             kind: kinds.includes(camera.kind) ? camera.kind : "bullet",
             height: clamp(Number(camera.height), 1, 20), lens: clamp(Number(camera.lens), 1, 20),
             sensor: clamp(Number(camera.sensor), 2, 20),
+            megapixels: clamp(Number(camera.megapixels || 4), 1, 64), fps: clamp(Number(camera.fps || 15), 1, 60),
+            codec: ["h264", "h265", "h265plus"].includes(camera.codec) ? camera.codec : "h265",
+            bitrateMbps: clamp(Number(camera.bitrateMbps || 0), 0, 128), audioMbps: clamp(Number(camera.audioMbps || 0), 0, 1),
+            recordingMode: ["continuous", "schedule", "motion"].includes(camera.recordingMode) ? camera.recordingMode : "continuous",
+            hoursPerDay: clamp(Number(camera.hoursPerDay || 24), 0, 24), motionPercent: clamp(Number(camera.motionPercent || 35), 0, 100),
         })),
         walls: p.walls.slice(0, 256).map((w) => ({
             ax: point({ x: w.ax, y: w.ay }).x, ay: point({ x: w.ax, y: w.ay }).y,
@@ -247,6 +268,15 @@ function cleanLayout(data: unknown): Layout {
         area: p.area.slice(0, 80).map(point),
         rooms: Array.isArray(p.rooms) ? p.rooms.slice(0, 20).filter((room) => Array.isArray(room.polygon))
             .map((room) => ({ name: String(room.name || "").slice(0, 70), polygon: room.polygon.slice(0, 20).map(point) })) : [],
+        recordingDays: clamp(Number(p.recordingDays || 30), 1, 365),
+        storageReservePercent: clamp(Number(p.storageReservePercent ?? 20), 0, 100),
+        recorder: {
+            channels: clamp(Number(p.recorder?.channels || 8), 1, 256),
+            incomingBandwidthMbps: clamp(Number(p.recorder?.incomingBandwidthMbps || 80), 1, 2048),
+            sataBays: clamp(Number(p.recorder?.sataBays || 1), 1, 32),
+            maxDiskTb: clamp(Number(p.recorder?.maxDiskTb || 8), 1, 30),
+            raid: ["none", "raid1", "raid5"].includes(p.recorder?.raid || "") ? p.recorder!.raid : "none",
+        },
     };
 }
 
@@ -277,6 +307,7 @@ export default function CameraPlanner() {
     const [aiWorking, setAiWorking] = useState(false);
     const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
     const analysis = useMemo(() => analyse(layout), [layout]);
+    const system = useMemo(() => calculateCameraSystem(layout.cameras, layout.recordingDays, layout.storageReservePercent, layout.recorder), [layout.cameras, layout.recordingDays, layout.storageReservePercent, layout.recorder]);
     const active = layout.cameras.find((c) => c.id === selected) || null;
     const isWorkspaceEmpty = !background && !layout.cameras.length
         && !layout.walls.length && !layout.area.length && !areaDraft.length;
@@ -426,7 +457,8 @@ export default function CameraPlanner() {
         if (mode === "camera" && layout.cameras.length < 128) {
             pushHistory();
             const newCamera: Camera = { ...p, id: crypto.randomUUID(), direction: 0, fov: 90,
-                range: 18, kind: "bullet", height: 3, lens: 2.8, sensor: 5.6 };
+                range: 18, kind: "bullet", height: 3, lens: 2.8, sensor: 5.6, megapixels: 4, fps: 15,
+                codec: "h265", bitrateMbps: 0, audioMbps: 0, recordingMode: "continuous", hoursPerDay: 24, motionPercent: 35 };
             setLayout((value) => ({ ...value, cameras: [...value.cameras, newCamera] }));
             setSelected(newCamera.id);
         }
@@ -543,6 +575,8 @@ export default function CameraPlanner() {
             ...imageToCanvas(camera),
             id: crypto.randomUUID(), direction: clamp(camera.direction, 0, 360),
             fov: 90, range: 18, kind: camera.kind, height: 3, lens: 2.8, sensor: 5.6,
+            megapixels: 4, fps: 15, codec: "h265", bitrateMbps: 0, audioMbps: 0,
+            recordingMode: "continuous", hoursPerDay: 24, motionPercent: 35,
         }));
         setLayout((current) => ({ ...current, cameras, walls, area, rooms }));
         setAiDraft(null); setSelected(null); setAreaDraft([]); setWallStart(null);
@@ -734,6 +768,15 @@ export default function CameraPlanner() {
                                         onChange={(e) => editCamera("kind", e.target.value)}>
                                         {kinds.map((kind) => <option key={kind} value={kind}>{kind}</option>)}
                                     </select></label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <label className="block space-y-2 text-sm"><span>MP</span><input className={field} type="number" min="1" max="64" step="1" value={active.megapixels} onFocus={beginCameraEdit} onBlur={endCameraEdit} onChange={(e) => editCamera("megapixels", clamp(Number(e.target.value), 1, 64))} /></label>
+                                    <label className="block space-y-2 text-sm"><span>FPS</span><input className={field} type="number" min="1" max="60" step="1" value={active.fps} onFocus={beginCameraEdit} onBlur={endCameraEdit} onChange={(e) => editCamera("fps", clamp(Number(e.target.value), 1, 60))} /></label>
+                                    <label className="block space-y-2 text-sm"><span>Codec</span><select className={field} value={active.codec} onFocus={beginCameraEdit} onBlur={endCameraEdit} onChange={(e) => editCamera("codec", e.target.value)}><option value="h264">H.264</option><option value="h265">H.265</option><option value="h265plus">H.265+</option></select></label>
+                                    <label className="block space-y-2 text-sm"><span>{t.autoBitrate}</span><input className={field} type="number" min="0" max="128" step=".1" value={active.bitrateMbps} onFocus={beginCameraEdit} onBlur={endCameraEdit} onChange={(e) => editCamera("bitrateMbps", clamp(Number(e.target.value), 0, 128))} /></label>
+                                    <label className="block space-y-2 text-sm"><span>{t.recordMode}</span><select className={field} value={active.recordingMode} onFocus={beginCameraEdit} onBlur={endCameraEdit} onChange={(e) => editCamera("recordingMode", e.target.value)}><option value="continuous">24/7</option><option value="schedule">Schedule</option><option value="motion">Motion</option></select></label>
+                                    {active.recordingMode !== "continuous" ? <label className="block space-y-2 text-sm"><span>{t.hoursDay}</span><input className={field} type="number" min="0" max="24" step=".5" value={active.hoursPerDay} onFocus={beginCameraEdit} onBlur={endCameraEdit} onChange={(e) => editCamera("hoursPerDay", clamp(Number(e.target.value), 0, 24))} /></label> : null}
+                                    {active.recordingMode === "motion" ? <label className="block space-y-2 text-sm"><span>{t.motion} %</span><input className={field} type="number" min="0" max="100" step="1" value={active.motionPercent} onFocus={beginCameraEdit} onBlur={endCameraEdit} onChange={(e) => editCamera("motionPercent", clamp(Number(e.target.value), 0, 100))} /></label> : null}
+                                </div>
                                 {([
                                     ["direction", t.angle, 0, 360, 1],
                                     ["fov", t.fov, 15, 180, 1],
@@ -776,6 +819,24 @@ export default function CameraPlanner() {
                                     {t.delete}</button>
                             </div>
                         )}
+                    </section>
+                    <section className="rounded-3xl border border-slate-700 bg-slate-900 p-6">
+                        <h2 className="mb-4 text-xl font-bold">{t.recording}</h2>
+                        <div className="grid grid-cols-2 gap-3">
+                            <label className="space-y-2 text-sm"><span>{t.days}</span><input className={field} type="number" min="1" max="365" value={layout.recordingDays} onChange={(e) => setLayout((v) => ({ ...v, recordingDays: clamp(Number(e.target.value), 1, 365) }))} /></label>
+                            <label className="space-y-2 text-sm"><span>{t.reserve} %</span><input className={field} type="number" min="0" max="100" value={layout.storageReservePercent} onChange={(e) => setLayout((v) => ({ ...v, storageReservePercent: clamp(Number(e.target.value), 0, 100) }))} /></label>
+                            <label className="space-y-2 text-sm"><span>{t.nvrChannels}</span><input className={field} type="number" min="1" max="256" value={layout.recorder.channels} onChange={(e) => setLayout((v) => ({ ...v, recorder: { ...v.recorder, channels: clamp(Number(e.target.value), 1, 256) } }))} /></label>
+                            <label className="space-y-2 text-sm"><span>{t.incoming}</span><input className={field} type="number" min="1" max="2048" value={layout.recorder.incomingBandwidthMbps} onChange={(e) => setLayout((v) => ({ ...v, recorder: { ...v.recorder, incomingBandwidthMbps: clamp(Number(e.target.value), 1, 2048) } }))} /></label>
+                            <label className="space-y-2 text-sm"><span>{t.sata}</span><input className={field} type="number" min="1" max="32" value={layout.recorder.sataBays} onChange={(e) => setLayout((v) => ({ ...v, recorder: { ...v.recorder, sataBays: clamp(Number(e.target.value), 1, 32) } }))} /></label>
+                            <label className="space-y-2 text-sm"><span>{t.maxHdd}</span><input className={field} type="number" min="1" max="30" value={layout.recorder.maxDiskTb} onChange={(e) => setLayout((v) => ({ ...v, recorder: { ...v.recorder, maxDiskTb: clamp(Number(e.target.value), 1, 30) } }))} /></label>
+                            <label className="col-span-2 space-y-2 text-sm"><span>RAID</span><select className={field} value={layout.recorder.raid} onChange={(e) => setLayout((v) => ({ ...v, recorder: { ...v.recorder, raid: e.target.value as RecorderProfile["raid"] } }))}><option value="none">None</option><option value="raid1">RAID 1</option><option value="raid5">RAID 5</option></select></label>
+                        </div>
+                        <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                            <div className="rounded-xl bg-slate-800 p-3" data-testid="planner-storage"><dt className="text-slate-400">{t.storage}</dt><dd className="font-bold text-amber-300">{system.storageRequiredTb} TB</dd></div>
+                            <div className="rounded-xl bg-slate-800 p-3"><dt className="text-slate-400">{t.bandwidth}</dt><dd className="font-bold text-amber-300">{system.bandwidthMbps} Mbps</dd></div>
+                            <div className="rounded-xl bg-slate-800 p-3"><dt className="text-slate-400">HDD</dt><dd className="font-bold">{system.requiredDiskCount} × {layout.recorder.maxDiskTb} TB</dd></div>
+                            <div data-testid="planner-nvr-status" className={`rounded-xl p-3 ${system.valid ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/15 text-red-300"}`}><dt>NVR</dt><dd className="font-bold">{system.valid ? t.nvrOk : `${t.nvrBad}: ${system.issues.join(", ")}`}</dd></div>
+                        </dl>
                     </section>
                     <section className="rounded-3xl border border-slate-700 bg-slate-900 p-6">
                         <h2 className="mb-4 text-xl font-bold">{t.submit}</h2>

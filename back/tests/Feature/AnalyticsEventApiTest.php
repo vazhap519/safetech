@@ -108,6 +108,22 @@ class AnalyticsEventApiTest extends TestCase
         ]);
     }
 
+    public function test_it_accepts_privacy_safe_real_user_web_vitals(): void
+    {
+        $this->postJson('/api/analytics/events', [
+            'event_type' => AnalyticsEvent::TYPE_WEB_VITAL,
+            'page_path' => '/en/services/security-camera-installation',
+            'locale' => 'en-US',
+            'meta' => ['metric' => 'LCP', 'value' => '2410', 'rating' => 'good', 'delta' => '2410'],
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('analytics_events', [
+            'event_type' => AnalyticsEvent::TYPE_WEB_VITAL,
+            'page_path' => '/en/services/security-camera-installation',
+            'locale' => 'en',
+        ]);
+    }
+
     public function test_it_limits_repeated_events_even_when_the_ip_limit_is_not_reached(): void
     {
         $payload = [

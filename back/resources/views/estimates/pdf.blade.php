@@ -110,6 +110,7 @@
     $summary = $calculation['summary'] ?? [];
     $financial = $calculation['financial'] ?? [];
     $isQuoteEngine = (bool) ($calculation['quote_engine'] ?? false);
+    $paymentQr = $paymentQr ?? null;
     $clientNote = trim((string) ($calculation['client_note'] ?? ''));
     $projectTypeLabel = $calculation['service_name'] ?? ([
         'cctv' => 'CCTV',
@@ -175,6 +176,10 @@
                 <td>{{ $estimate->company }}</td>
             </tr>
         @endif
+        @if($estimate->due_date)
+            <tr><td class="label">გადახდის ვადა</td><td>{{ $estimate->due_date->format('Y-m-d') }}</td></tr>
+        @endif
+        <tr><td class="label">გადახდის სტატუსი</td><td>{{ $estimate->payment_status }}</td></tr>
         @if($estimate->phone)
             <tr>
                 <td class="label">ტელეფონი</td>
@@ -271,11 +276,28 @@
                 </tr>
             @endif
         @endif
+        @if((float)$estimate->vat_amount > 0)
+            <tr><td>დღგ ({{ number_format((float)$estimate->vat_rate, 2) }}%)</td><td class="text-right">{{ $money($estimate->vat_amount) }}</td></tr>
+        @endif
         <tr>
             <td>სრული ღირებულება</td>
             <td class="text-right">{{ $money($estimate->final_total) }}</td>
         </tr>
     </table>
+
+    @if($estimate->bank_name || $estimate->bank_account || $paymentQr)
+        <table class="meta" style="margin-top: 22px;">
+            <tr>
+                <td>
+                    <strong>გადახდის რეკვიზიტები</strong><br>
+                    @if($estimate->bank_name){{ $estimate->bank_name }}<br>@endif
+                    @if($estimate->bank_account){{ $estimate->bank_account }}<br>@endif
+                    დანიშნულება: {{ $estimate->payment_reference ?: $estimate->estimate_number }}
+                </td>
+                @if($paymentQr)<td style="text-align:right"><img src="{{ $paymentQr }}" alt="Payment QR" width="110" height="110"></td>@endif
+            </tr>
+        </table>
+    @endif
 
     @if($isQuoteEngine ? $clientNote !== '' : filled($estimate->notes))
         <h2>შენიშვნები</h2>

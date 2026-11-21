@@ -9,6 +9,7 @@ use App\Support\Calculators\BarrierQuoteProfile;
 use App\Support\Calculators\CalculatorProfileBuilder;
 use App\Support\Calculators\CanonicalServiceCalculator;
 use App\Support\Calculators\IntercomPlanner;
+use App\Support\Calculators\CctvEngineeringCalculator;
 
 final class ServiceQuoteCalculator
 {
@@ -600,6 +601,27 @@ final class ServiceQuoteCalculator
 
         if (isset($config['intercom_version'])) {
             return (new IntercomPlanner)->quantities($values);
+        }
+
+        if (array_key_exists('camera_count', $values) && array_key_exists('recording_days', $values)
+            && (! is_numeric($values['required_storage_tb'] ?? null) || (float) $values['required_storage_tb'] <= 0)) {
+            $resolution = (float) preg_replace('/[^\d.]/', '', (string) ($values['resolution'] ?? '4'));
+            $storage = (new CctvEngineeringCalculator)->calculate([
+                'days' => $values['recording_days'] ?? 14,
+                'reserve_percent' => $values['storage_reserve_percent'] ?? 20,
+                'groups' => [[
+                    'count' => $values['camera_count'] ?? 0,
+                    'megapixels' => $resolution ?: 4,
+                    'fps' => $values['recording_fps'] ?? 15,
+                    'codec' => $values['recording_codec'] ?? 'h265',
+                    'bitrate_mbps' => $values['video_bitrate_mbps'] ?? 0,
+                    'mode' => $values['recording_mode'] ?? 'continuous',
+                    'hours_per_day' => $values['recording_hours_per_day'] ?? 24,
+                    'motion_percent' => $values['motion_recording_percent'] ?? 35,
+                ]],
+            ]);
+            $values['required_storage_tb'] = $storage['storage_required_tb'];
+            $values['video_bandwidth_mbps'] = $storage['video_peak_mbps'];
         }
 
         return $values;

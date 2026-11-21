@@ -7,6 +7,8 @@ use App\Models\Estimate;
 use App\Models\SiteSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
+use chillerlan\QRCode\QRCode;
+use Throwable;
 
 class EstimatePdfController extends Controller
 {
@@ -23,11 +25,25 @@ class EstimatePdfController extends Controller
             ->first()
             ?->value ?? [];
 
+        $paymentPayload = implode("\n", array_filter([
+            "SafeTech invoice {$estimate->estimate_number}",
+            'Amount: '.number_format((float) $estimate->final_total, 2, '.', '').' GEL',
+            $estimate->bank_name ? "Bank: {$estimate->bank_name}" : null,
+            $estimate->bank_account ? "IBAN: {$estimate->bank_account}" : null,
+            'Reference: '.($estimate->payment_reference ?: $estimate->estimate_number),
+        ]));
+        try {
+            $paymentQr = (new QRCode)->render($paymentPayload);
+        } catch (Throwable) {
+            $paymentQr = null;
+        }
+
         $pdf = Pdf::loadView('estimates.pdf', [
             'estimate' => $estimate,
             'calculation' => $estimate->calculation ?? [],
             'branding' => $branding,
             'contact' => $contact,
+            'paymentQr' => $paymentQr,
         ])->setPaper('a4');
 
         $response = $pdf->download("{$estimate->estimate_number}.pdf");

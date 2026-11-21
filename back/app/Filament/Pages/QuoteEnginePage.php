@@ -11,6 +11,7 @@ use App\Support\Calculators\BarrierConfigurator;
 use App\Support\Calculators\BarrierQuoteProfile;
 use App\Support\Calculators\CalculatorProfileBuilder;
 use App\Support\Calculators\CanonicalServiceCalculator;
+use App\Support\Calculators\CctvEngineeringCalculator;
 use App\Support\Estimators\ServiceQuoteCalculator;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -84,6 +85,26 @@ class QuoteEnginePage extends Page
                 $this->email = (string) ($plan->contact_email ?? '');
                 $this->projectTitle = (string) $plan->title;
                 $this->values['camera_count'] = max(1, count($plan->layout['cameras'] ?? []));
+                $this->values['recording_days'] = (int) ($plan->layout['recordingDays'] ?? 30);
+                $this->values['storage_reserve_percent'] = (float) ($plan->layout['storageReservePercent'] ?? 20);
+                $groups = collect($plan->layout['cameras'] ?? [])->map(fn (array $camera): array => [
+                    'count' => 1,
+                    'megapixels' => $camera['megapixels'] ?? 4,
+                    'fps' => $camera['fps'] ?? 15,
+                    'codec' => $camera['codec'] ?? 'h265',
+                    'bitrate_mbps' => $camera['bitrateMbps'] ?? 0,
+                    'audio_mbps' => $camera['audioMbps'] ?? 0,
+                    'mode' => $camera['recordingMode'] ?? 'continuous',
+                    'hours_per_day' => $camera['hoursPerDay'] ?? 24,
+                    'motion_percent' => $camera['motionPercent'] ?? 35,
+                ])->all();
+                $engineering = app(CctvEngineeringCalculator::class)->calculate([
+                    'days' => $this->values['recording_days'],
+                    'reserve_percent' => $this->values['storage_reserve_percent'],
+                    'groups' => $groups,
+                ]);
+                $this->values['required_storage_tb'] = $engineering['storage_required_tb'];
+                $this->values['video_bandwidth_mbps'] = $engineering['video_peak_mbps'];
 
                 return;
             }

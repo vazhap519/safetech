@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\QuoteCatalogItem;
 use App\Models\Service;
 use App\Support\Estimators\ServiceQuoteCalculator;
+use App\Support\Calculators\CanonicalServiceCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -223,5 +224,27 @@ class ServiceQuoteCalculatorTest extends TestCase
         $this->assertSame('90.00', $item->purchase_price);
         $this->assertSame('175.00', $item->sale_price);
         $this->assertSame('Supplier A', $item->supplier);
+    }
+
+    public function test_cctv_quote_derives_storage_and_8tb_disk_count_from_recording_profile(): void
+    {
+        $service = Service::query()->create([
+            'slug' => 'security-camera-installation', 'name' => 'CCTV', 'title' => 'CCTV',
+            'description' => 'CCTV', 'seo_description' => 'CCTV', 'is_published' => true,
+            'lead_form' => CanonicalServiceCalculator::for('security-camera-installation', 'CCTV'),
+        ]);
+
+        $quote = app(ServiceQuoteCalculator::class)->calculate($service, ['values' => [
+            'camera_count' => 32, 'recording_days' => 30, 'resolution' => '4mp',
+            'recording_fps' => 15, 'recording_codec' => 'h265', 'recording_mode' => 'continuous',
+            'storage_reserve_percent' => 20,
+        ]]);
+        $storage = collect($quote['components'])->firstWhere('key', 'storage');
+
+        $this->assertGreaterThan(0, $quote['values']['required_storage_tb']);
+        $this->assertSame(
+            (float) ceil($quote['values']['required_storage_tb'] / 8),
+            $storage['quantity'],
+        );
     }
 }

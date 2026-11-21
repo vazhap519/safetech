@@ -24,6 +24,8 @@ class AnalyticsEvent extends Model
 
     public const TYPE_AI_MESSAGE = 'ai_message';
 
+    public const TYPE_WEB_VITAL = 'web_vital';
+
     protected $guarded = ['id'];
 
     protected function casts(): array
