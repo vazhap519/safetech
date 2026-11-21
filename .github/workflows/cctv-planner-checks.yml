@@ -13,6 +13,9 @@ on:
       - "back/database/migrations/*camera_plans*"
       - "back/tests/Unit/CctvEngineeringCalculatorTest.php"
       - "back/tests/Feature/CameraPlanApiTest.php"
+      - "back/tests/Feature/CameraPlanQuoteInvoiceFlowTest.php"
+      - "back/app/Filament/Pages/QuoteEnginePage.php"
+      - "back/app/Http/Controllers/Admin/EstimatePdfController.php"
       - ".github/workflows/cctv-planner-checks.yml"
 
 permissions:
@@ -44,4 +47,4 @@ jobs:
       - name: Verify migrations and isolated CCTV unit/API tests
         run: |
           php artisan migrate:fresh --force
-          php artisan test tests/Unit/CctvEngineeringCalculatorTest.php tests/Feature/CameraPlanApiTest.php tests/Feature/CameraPlanVisionApiTest.php
+          php artisan test tests/Unit/CctvEngineeringCalculatorTest.php tests/Feature/CameraPlanApiTest.php tests/Feature/CameraPlanVisionApiTest.php tests/Feature/CameraPlanQuoteInvoiceFlowTest.php tests/Feature/EstimatePdfTest.php
