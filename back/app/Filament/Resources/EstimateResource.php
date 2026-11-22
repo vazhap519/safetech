@@ -10,12 +10,12 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -415,6 +415,7 @@ class EstimateResource extends Resource
     public static function hydrateCalculatedFields(array $data): array
     {
         $data = array_merge($data, app(EstimateCalculator::class)->calculate($data));
+
         return self::applyInvoiceFields($data);
     }
 

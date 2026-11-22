@@ -8,8 +8,8 @@ use App\Support\Calculators\BarrierConfigurator;
 use App\Support\Calculators\BarrierQuoteProfile;
 use App\Support\Calculators\CalculatorProfileBuilder;
 use App\Support\Calculators\CanonicalServiceCalculator;
-use App\Support\Calculators\IntercomPlanner;
 use App\Support\Calculators\CctvEngineeringCalculator;
+use App\Support\Calculators\IntercomPlanner;
 
 final class ServiceQuoteCalculator
 {

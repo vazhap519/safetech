@@ -4,8 +4,8 @@ namespace App\Filament\Pages;
 
 use App\Filament\Resources\EstimateResource;
 use App\Filament\Support\NavigationGroup;
-use App\Models\Estimate;
 use App\Models\CameraPlan;
+use App\Models\Estimate;
 use App\Models\Service;
 use App\Support\Calculators\BarrierConfigurator;
 use App\Support\Calculators\BarrierQuoteProfile;
@@ -500,14 +500,14 @@ class QuoteEnginePage extends Page
         $quote['calculation']['financial'] = array_merge(
             $quote['calculation']['financial'] ?? [],
             [
-            'service_subtotal' => $quote['service_subtotal'] ?? 0,
-            'component_subtotal' => $quote['component_subtotal'],
-            'labor_subtotal' => $quote['labor_subtotal'],
-            'discount_amount' => $quote['discount_amount'] ?? 0,
-            'final_total' => $quote['final_total'],
-            'known_cost_total' => $quote['known_cost_total'],
-            'profit_total' => $quote['profit_total'],
-            'gross_margin_percentage' => $quote['gross_margin_percentage'],
+                'service_subtotal' => $quote['service_subtotal'] ?? 0,
+                'component_subtotal' => $quote['component_subtotal'],
+                'labor_subtotal' => $quote['labor_subtotal'],
+                'discount_amount' => $quote['discount_amount'] ?? 0,
+                'final_total' => $quote['final_total'],
+                'known_cost_total' => $quote['known_cost_total'],
+                'profit_total' => $quote['profit_total'],
+                'gross_margin_percentage' => $quote['gross_margin_percentage'],
             ],
         );
 

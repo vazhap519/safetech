@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\QuoteCatalogItem;
 use App\Models\Service;
-use App\Support\Estimators\ServiceQuoteCalculator;
 use App\Support\Calculators\CanonicalServiceCalculator;
+use App\Support\Estimators\ServiceQuoteCalculator;
 use Illuminate\Database\Seeder;
 
 /**

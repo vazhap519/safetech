@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Estimate;
 use App\Models\SiteSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Response;
 use chillerlan\QRCode\QRCode;
+use Illuminate\Http\Response;
 use Throwable;
 
 class EstimatePdfController extends Controller

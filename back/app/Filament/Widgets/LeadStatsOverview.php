@@ -22,7 +22,9 @@ class LeadStatsOverview extends StatsOverviewWidget
             ->groupBy(fn (AnalyticsEvent $event): string => (string) data_get($event->meta, 'metric'));
         $p75 = static function (string $metric) use ($vitals): ?float {
             $values = $vitals->get($metric, collect())->map(fn (AnalyticsEvent $event): float => (float) data_get($event->meta, 'value'))->sort()->values();
-            if ($values->isEmpty()) return null;
+            if ($values->isEmpty()) {
+                return null;
+            }
 
             return (float) $values[(int) ceil($values->count() * .75) - 1];
         };
