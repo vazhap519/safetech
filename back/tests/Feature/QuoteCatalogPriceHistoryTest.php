@@ -13,7 +13,14 @@ class QuoteCatalogPriceHistoryTest extends TestCase
 
     public function test_price_and_supplier_changes_are_snapshotted(): void
     {
-        $service = Service::factory()->create();
+        $service = Service::query()->create([
+            'slug' => 'price-history-test',
+            'name' => 'Price history test',
+            'title' => 'Price history test',
+            'description' => 'Price history test',
+            'seo_description' => 'Price history test',
+            'is_published' => false,
+        ]);
         $item = QuoteCatalogItem::query()->create([
             'service_id' => $service->id, 'component_key' => 'camera', 'name' => 'Camera',
             'supplier' => 'Supplier A', 'purchase_price' => 100, 'markup_percentage' => 50,

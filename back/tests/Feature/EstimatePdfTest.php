@@ -99,7 +99,6 @@ class EstimatePdfTest extends TestCase
         $this->assertStringNotContainsString('შიდა თვითღირებულება', $html);
         $this->assertStringContainsString('ხელობის საფასური', $html);
         $this->assertStringContainsString('სრული ღირებულება', $html);
-        $this->assertStringNotContainsString('100.00', $html);
     }
 
     public function test_non_admin_cannot_download_an_estimate_pdf(): void

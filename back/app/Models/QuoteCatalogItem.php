@@ -42,7 +42,7 @@ class QuoteCatalogItem extends Model
                 'changed_by' => auth()->id(),
                 'supplier' => $item->supplier,
                 'purchase_price' => $item->purchase_price,
-                'markup_percentage' => $item->markup_percentage,
+                'markup_percentage' => $item->markup_percentage ?? 0,
                 'sale_price' => $item->sale_price,
                 'effective_at' => now(),
             ]);
