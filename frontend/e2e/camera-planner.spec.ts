@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
 const locales = [
@@ -13,10 +13,19 @@ async function place(canvas: Locator, x: number, y: number) {
     await canvas.click({ position: { x: box!.width * x, y: box!.height * y } });
 }
 
+async function acceptMarketingConsent(page: Page) {
+    const banner = page.locator(".marketing-consent-banner");
+    if (await banner.isVisible()) {
+        await banner.getByRole("button").last().click();
+        await expect(banner).toBeHidden();
+    }
+}
+
 for (const locale of locales) {
     test((locale.prefix || "/") + " CCTV layout, blind spots, export and Laravel quote submission", async ({ page }) => {
         const response = await page.goto(locale.prefix + "/camera-planner", { waitUntil: "domcontentloaded" });
         expect(response?.status()).toBe(200);
+        await acceptMarketingConsent(page);
         await expect(page.locator("html")).toHaveAttribute("lang", locale.lang);
         await expect(page.getByRole("heading", { level: 1, name: locale.title })).toHaveCount(1);
         const installationLink = page.getByRole("link", {
@@ -91,6 +100,7 @@ test("AI plan requires opt-in, suggests edit-ready geometry and preserves measur
         });
     });
     await page.goto("/en/camera-planner");
+    await acceptMarketingConsent(page);
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGM8ceIEAwwwMSAB3BwAdjQCYKaF12gAAAAASUVORK5CYII=", "base64");
     await page.locator('input[type="file"][accept*="image/png"]').setInputFiles({
         name: "simple.png", mimeType: "image/png", buffer: png,
