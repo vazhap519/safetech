@@ -40,7 +40,6 @@ class PublicContentEligibilityTest extends TestCase
             'name' => 'Camera installation',
             'title' => 'Camera installation',
             'description' => 'A complete camera installation service.',
-            'hero_image' => '/storage/services/camera-installation.webp',
             'short_description' => 'A complete camera installation service.',
             'is_published' => true,
         ]);
@@ -101,6 +100,7 @@ class PublicContentEligibilityTest extends TestCase
             'name' => 'Camera installation',
             'title' => 'Camera installation',
             'description' => 'A complete camera installation service.',
+            'hero_image' => '/storage/services/camera-installation.webp',
             'benefits' => [
                 ['title' => 'Remote access', 'description' => 'Secure mobile viewing.'],
             ],
