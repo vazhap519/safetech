@@ -1,22 +1,32 @@
 import ProjectsSectionHeader from "@/components/Projects/ProjectsSectionHeader";
 import ContentFilterGrid from "@/components/filters/ContentFilterGrid";
+import LocalizedLink from "@/components/ui/LocalizedLink";
 import { getBackendFilterCategories } from "@/lib/backend";
-import { getLocalizedProjectCards } from "@/lib/project-api";
+import { getLocalizedProjectPage } from "@/lib/project-api";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function ProjectsGallerySection({
     category,
+    page = 1,
 }: {
     category?: string;
+    page?: number;
 }) {
-    const [projects, categories, { locale, translations }] = await Promise.all([
-        getLocalizedProjectCards(category),
+    const [projectPage, categories, { locale, translations }] = await Promise.all([
+        getLocalizedProjectPage(category, page),
         getBackendFilterCategories("projects"),
         getSiteSettings(),
     ]);
 
-    if (!projects.length) return null;
+    if (!projectPage.projects.length) return null;
+
+    const pageHref = (targetPage: number) => {
+        const base = category
+            ? `/projects/category/${encodeURIComponent(category)}`
+            : "/projects";
+        return targetPage === 1 ? `${base}#content-filter` : `${base}?page=${targetPage}#content-filter`;
+    };
 
     return (
         <section
@@ -44,9 +54,26 @@ export default async function ProjectsGallerySection({
                 <ContentFilterGrid
                     activeCategory={category}
                     categories={categories}
-                    items={projects}
+                    items={projectPage.projects}
                     kind="projects"
                 />
+                {projectPage.lastPage > 1 ? (
+                    <nav aria-label="Projects pagination" className="mt-unit-xl flex items-center justify-center gap-unit-sm">
+                        {projectPage.currentPage > 1 ? (
+                            <LocalizedLink className="glass-card rounded-full px-5 py-2.5 font-semibold" href={pageHref(projectPage.currentPage - 1)} prefetch={false}>
+                                {locale === "ka" ? "წინა" : locale === "ru" ? "Назад" : "Previous"}
+                            </LocalizedLink>
+                        ) : null}
+                        <span className="px-3 text-sm text-on-surface-variant">
+                            {projectPage.currentPage} / {projectPage.lastPage}
+                        </span>
+                        {projectPage.currentPage < projectPage.lastPage ? (
+                            <LocalizedLink className="rounded-full bg-primary px-5 py-2.5 font-semibold text-on-primary" href={pageHref(projectPage.currentPage + 1)} prefetch={false}>
+                                {locale === "ka" ? "მეტის ნახვა" : locale === "ru" ? "Показать ещё" : "View more"}
+                            </LocalizedLink>
+                        ) : null}
+                    </nav>
+                ) : null}
             </div>
         </section>
     );

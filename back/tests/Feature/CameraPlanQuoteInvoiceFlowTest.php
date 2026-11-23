@@ -87,5 +87,19 @@ class CameraPlanQuoteInvoiceFlowTest extends TestCase
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf')
             ->assertHeader('x-robots-tag', 'noindex, nofollow, noarchive');
+
+        Livewire::test(EditEstimate::class, ['record' => $estimate->getRouteKey()])
+            ->fillForm(['payment_status' => 'partial'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('partial', $estimate->refresh()->payment_status);
+
+        Livewire::test(EditEstimate::class, ['record' => $estimate->getRouteKey()])
+            ->fillForm(['payment_status' => 'paid'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('paid', $estimate->refresh()->payment_status);
     }
 }

@@ -18,8 +18,27 @@ final class ProjectController extends Controller
         $category = $request->string('category')->toString() ?: null;
         $projects = $repository->allPublished($featured, $category);
 
+        $perPage = min(max($request->integer('per_page', 0), 0), 24);
+        $page = max($request->integer('page', 1), 1);
+
+        if ($perPage > 0) {
+            $total = $projects->count();
+            $lastPage = max((int) ceil($total / $perPage), 1);
+            $page = min($page, $lastPage);
+            $projects = $projects->slice(($page - 1) * $perPage, $perPage)->values();
+        }
+
         if ($request->string('view')->toString() === 'summary') {
-            return ProjectSummaryResource::collection($projects);
+            $collection = ProjectSummaryResource::collection($projects);
+
+            return $perPage > 0
+                ? $collection->additional(['meta' => [
+                    'current_page' => $page,
+                    'last_page' => $lastPage,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                ]])
+                : $collection;
         }
 
         return ProjectResource::collection($projects);

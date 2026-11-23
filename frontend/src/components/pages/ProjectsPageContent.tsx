@@ -1,7 +1,7 @@
 import ProjectsSchema from "@/components/seo/ProjectsSchema";
 import CmsPageSchema from "@/components/seo/CmsPageSchema";
 import { getCurrentLocale } from "@/lib/locale-server";
-import { firstSearchParam } from "@/lib/pagination";
+import { firstSearchParam, parsePageNumber } from "@/lib/pagination";
 import { localizeHref } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import ProjectsCtaSection from "@/sections/Projects/Cta/ProjectsCtaSection";
@@ -12,7 +12,7 @@ import MetricsSection from "@/sections/Projects/Metrics/MetricsSection";
 import StandardsSection from "@/sections/Projects/Standards/StandardsSection";
 
 type ProjectsPageContentProps = {
-    searchParams?: Promise<{ category?: string }> | { category?: string };
+    searchParams?: Promise<{ category?: string; page?: string }> | { category?: string; page?: string };
     showPageSchema?: boolean;
     showHero?: boolean;
 };
@@ -22,7 +22,9 @@ export default async function ProjectsPageContent({
     showPageSchema = true,
     showHero = true,
 }: ProjectsPageContentProps) {
-    const category = firstSearchParam((await searchParams)?.category);
+    const resolvedSearchParams = await searchParams;
+    const category = firstSearchParam(resolvedSearchParams?.category);
+    const page = parsePageNumber(resolvedSearchParams?.page) ?? 1;
 
     if (showPageSchema && category) {
         const locale = await getCurrentLocale();
@@ -41,7 +43,7 @@ export default async function ProjectsPageContent({
             {showHero ? <ProjectsHeroSection /> : null}
             <MetricsSection />
             <FeaturedProjectsSection />
-            <ProjectsGallerySection category={category || undefined} />
+            <ProjectsGallerySection category={category || undefined} page={page} />
             <StandardsSection />
             <ProjectsCtaSection />
         </>

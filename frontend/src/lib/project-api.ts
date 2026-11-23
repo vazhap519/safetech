@@ -19,6 +19,13 @@ type ApiProject = ProjectDetail & {
     video_url?: string | null;
 };
 
+export type ProjectPage = {
+    projects: Project[];
+    currentPage: number;
+    lastPage: number;
+    total: number;
+};
+
 async function fetchProjectData<T>(path: string): Promise<T | undefined> {
     for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
@@ -47,6 +54,44 @@ async function fetchProjectData<T>(path: string): Promise<T | undefined> {
     }
 
     return undefined;
+}
+
+async function fetchProjectPageData(path: string): Promise<{
+    data: ApiProject[];
+    meta?: {
+        current_page?: number;
+        last_page?: number;
+        total?: number;
+    };
+} | undefined> {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+            const response = await fetch(`${serverApiBase}${path}`, {
+                next: { revalidate: 15, tags: ["cms", "projects"] },
+                signal: AbortSignal.timeout(7000),
+            });
+
+            if (response.ok) return await response.json();
+            if (response.status !== 429 && response.status < 500) return undefined;
+        } catch {
+            // Retry one transient API/network failure.
+        }
+    }
+
+    return undefined;
+}
+
+function toProjectCard(project: ApiProject): Project {
+    return {
+        slug: project.slug,
+        title: project.name || project.title || project.slug,
+        description: project.description || "",
+        category: project.category || "",
+        icon: project.icon || "business",
+        accent: project.accent || "primary",
+        technology: project.technology || "",
+        videoUrl: videoUrl(project),
+    };
 }
 
 function asset(path?: string | null): string {
@@ -106,16 +151,32 @@ export async function getLocalizedProjectCards(
 ): Promise<Project[]> {
     const projects = await getLocalizedProjects(category, localeOverride);
 
-    return projects.map((project) => ({
-        slug: project.slug,
-        title: project.name || project.title || project.slug,
-        description: project.description || "",
-        category: project.category || "",
-        icon: project.icon || "business",
-        accent: project.accent || "primary",
-        technology: project.technology || "",
-        videoUrl: videoUrl(project),
-    }));
+    return projects.map(toProjectCard);
+}
+
+export async function getLocalizedProjectPage(
+    category?: string,
+    page = 1,
+    perPage = 9,
+    localeOverride?: string,
+): Promise<ProjectPage> {
+    const locale = await resolveProjectLocale(localeOverride);
+    const response = await fetchProjectPageData(
+        apiPath("/projects", {
+            locale,
+            category,
+            page,
+            per_page: perPage,
+            view: "summary",
+        }),
+    );
+
+    return {
+        projects: (response?.data ?? []).map(toProjectCard),
+        currentPage: response?.meta?.current_page ?? 1,
+        lastPage: response?.meta?.last_page ?? 1,
+        total: response?.meta?.total ?? response?.data?.length ?? 0,
+    };
 }
 
 export async function getLocalizedFeaturedProjects(

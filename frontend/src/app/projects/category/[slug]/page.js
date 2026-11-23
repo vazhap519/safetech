@@ -9,8 +9,9 @@ import {
 
 export const generateMetadata = createCategoryMetadataGenerator("projects");
 
-export default async function ProjectCategoryPage({ params }) {
+export default async function ProjectCategoryPage({ params, searchParams }) {
   const { slug } = await params;
+  const { page } = (await searchParams) || {};
   const { category, locale, path } = await getCategoryPageData("projects", slug);
 
   if (!category) notFound();
@@ -19,7 +20,7 @@ export default async function ProjectCategoryPage({ params }) {
     <>
       <CategorySeoContent category={category} locale={locale} path={path} />
       <ProjectsPageContent
-        searchParams={{ category: slug }}
+        searchParams={{ category: slug, page }}
         showHero={false}
         showPageSchema={false}
       />

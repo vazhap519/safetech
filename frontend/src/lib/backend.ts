@@ -40,6 +40,15 @@ type ServiceCardPayload = ServiceDetail & {
     image?: string | null;
 };
 
+const SERVICE_IMAGE_FALLBACKS: Record<string, string> = {
+    "network-installation-configuration": "/services/network-installation.webp",
+    "low-voltage-cabling": "/services/low-voltage-cabling.webp",
+};
+
+function serviceImageFallback(slug: string) {
+    return SERVICE_IMAGE_FALLBACKS[slug] || DEFAULT_SOCIAL_IMAGE;
+}
+
 export type FooterServiceLink = {
     slug: string;
     titles: Partial<Record<Locale, string>>;
@@ -489,8 +498,12 @@ export async function getBackendServices(category?: string) {
             ),
             category: service.category?.slug || "",
             icon: service.icon || "settings",
-            image: maybeBackendAsset(service.image || service.heroImage),
-            heroImage: maybeBackendAsset(service.heroImage || service.image),
+            image:
+                maybeBackendAsset(service.image || service.heroImage) ||
+                serviceImageFallback(service.slug),
+            heroImage:
+                maybeBackendAsset(service.heroImage || service.image) ||
+                serviceImageFallback(service.slug),
         };
     });
 }
@@ -624,7 +637,10 @@ export async function getBackendService(
     return localizeServiceDetail(
         {
             ...remote,
-            heroImage: resolveBackendAsset(remote.heroImage),
+            heroImage: resolveBackendAsset(
+                remote.heroImage,
+                serviceImageFallback(remote.slug),
+            ),
             keywords: remote.keywords ?? [],
             highlights: remote.highlights ?? [],
             overview: remote.overview ?? {

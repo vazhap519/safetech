@@ -31,4 +31,25 @@ class ProjectResourceTest extends TestCase
             ->assertJsonPath('data.challenges.0.icon', 'security')
             ->assertJsonPath('data.solutions.0.icon', 'settings');
     }
+
+    public function test_project_summary_supports_bounded_pagination(): void
+    {
+        foreach (range(1, 12) as $index) {
+            Project::query()->create([
+                'slug' => "paginated-project-{$index}",
+                'name' => "Paginated project {$index}",
+                'title' => "Paginated project {$index}",
+                'description' => 'Published project summary.',
+                'is_published' => true,
+            ]);
+        }
+
+        $this->getJson('/api/projects?view=summary&page=2&per_page=9')
+            ->assertOk()
+            ->assertJsonCount(3, 'data')
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonPath('meta.per_page', 9)
+            ->assertJsonPath('meta.total', 12);
+    }
 }
