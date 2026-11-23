@@ -23,7 +23,7 @@ final class ServiceController extends Controller
 
         if ($view === 'card') {
             $services = $this->publicServices($category)
-                ->with(['category:id,name,slug,translations'])
+                ->with(['category:id,name,slug,translations', 'media'])
                 ->get([
                     'id',
                     'category_for_service_id',
@@ -34,6 +34,7 @@ final class ServiceController extends Controller
                     'short_description',
                     'long_description',
                     'icon',
+                    'hero_image',
                     'translations',
                     'sort_order',
                 ]);

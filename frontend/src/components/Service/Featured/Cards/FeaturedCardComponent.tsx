@@ -12,6 +12,7 @@ type FeaturedService = {
     title: string;
     image?: string | null;
     heroImage?: string | null;
+    icon?: string | null;
 };
 
 export default async function FeaturedCardComponent({
@@ -19,7 +20,7 @@ export default async function FeaturedCardComponent({
 }: {
     service: FeaturedService;
 }) {
-    const { branding, locale, translations } = await getSiteSettings();
+    const { locale, translations } = await getSiteSettings();
     const detailsLabel = translateText(
         translations,
         "common.readMore",
@@ -35,7 +36,7 @@ export default async function FeaturedCardComponent({
 
     if (!service.slug || (!service.title && !service.description)) return null;
 
-    const serviceImage = service.image || service.heroImage || branding.defaultImage;
+    const serviceImage = service.image || service.heroImage;
 
     return (
         <article className="group relative aspect-[4/5] overflow-hidden rounded-lg border border-outline-variant/20">
@@ -46,7 +47,15 @@ export default async function FeaturedCardComponent({
                     sizes="(max-width: 768px) 100vw, 50vw"
                     src={serviceImage}
                 />
-            ) : null}
+            ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-container/35 via-surface-container to-secondary-container/25">
+                    <Icon
+                        aria-hidden="true"
+                        className="absolute right-unit-lg top-unit-lg text-[88px] text-secondary/30 transition-transform duration-700 group-hover:scale-110 group-hover:text-secondary/45"
+                        name={service.icon || "settings"}
+                    />
+                </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-col p-unit-lg">
                 {service.title ? (

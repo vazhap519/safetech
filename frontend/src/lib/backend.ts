@@ -37,6 +37,7 @@ export type ContentFilterCategory = {
 type ServiceCardPayload = ServiceDetail & {
     category?: { slug?: string; name?: string };
     icon?: string;
+    image?: string | null;
 };
 
 export type FooterServiceLink = {
@@ -488,6 +489,8 @@ export async function getBackendServices(category?: string) {
             ),
             category: service.category?.slug || "",
             icon: service.icon || "settings",
+            image: maybeBackendAsset(service.image || service.heroImage),
+            heroImage: maybeBackendAsset(service.heroImage || service.image),
         };
     });
 }

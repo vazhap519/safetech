@@ -31,6 +31,8 @@ class ServiceCardResource extends JsonResource
             'title' => $title ?: $name,
             'description' => $description,
             'icon' => $this->icon,
+            'image' => $this->image,
+            'heroImage' => $this->image,
             'category' => $category ? [
                 'name' => $this->translatedModel($category, 'name', $category->name, $locale),
                 'slug' => $category->slug,

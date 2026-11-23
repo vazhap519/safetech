@@ -40,6 +40,7 @@ class PublicContentEligibilityTest extends TestCase
             'name' => 'Camera installation',
             'title' => 'Camera installation',
             'description' => 'A complete camera installation service.',
+            'hero_image' => '/storage/services/camera-installation.webp',
             'short_description' => 'A complete camera installation service.',
             'is_published' => true,
         ]);
@@ -122,7 +123,9 @@ class PublicContentEligibilityTest extends TestCase
 
         $serviceCard = $this->getJson('/api/services?view=card&locale=en')
             ->assertOk()
-            ->assertJsonPath('data.0.slug', 'camera-installation');
+            ->assertJsonPath('data.0.slug', 'camera-installation')
+            ->assertJsonPath('data.0.image', '/storage/services/camera-installation.webp')
+            ->assertJsonPath('data.0.heroImage', '/storage/services/camera-installation.webp');
         $serviceSitemap = $this->getJson('/api/services?view=sitemap')
             ->assertOk()
             ->assertJsonPath('data.0.slug', 'camera-installation')
