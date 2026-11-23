@@ -80,12 +80,12 @@ export default function NavbarClient({ logo, siteName }: NavbarClientProps) {
                         {headerLogo ? (
                             <Image
                                 alt={siteName || homeLabel}
-                                className="h-11 w-11 shrink-0 rounded-lg object-contain transition-transform duration-200 group-hover:scale-105 sm:h-12 sm:w-12"
-                                height={48}
-                                sizes="(min-width: 640px) 48px, 44px"
+                                className="h-8 w-32 shrink-0 object-contain transition-transform duration-200 group-hover:scale-105 sm:h-10 sm:w-40"
+                                height={40}
+                                sizes="(min-width: 640px) 160px, 128px"
                                 src={headerLogo}
                                 variant="plain"
-                                width={48}
+                                width={160}
                             />
                         ) : null}
                         {!headerLogo && siteName ? (
