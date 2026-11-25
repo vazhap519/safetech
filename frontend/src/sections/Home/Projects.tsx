@@ -7,7 +7,7 @@ import { translateText } from "@/lib/translations";
 
 export default async function Projects() {
     const [projects, { locale, translations }] = await Promise.all([
-        getLocalizedFeaturedProjects(),
+        getLocalizedFeaturedProjects(undefined, true, 3),
         getSiteSettings(),
     ]);
 
@@ -62,7 +62,7 @@ export default async function Projects() {
             ) : null}
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {projects.slice(0, 3).map((project) => (
+                {projects.map((project) => (
                     <FeaturedProjectCard key={project.slug} project={project} />
                 ))}
             </div>

@@ -38,7 +38,7 @@ export default async function ProjectsPageContent({
     return (
         <>
             {showPageSchema ? (
-                <CmsPageSchema pageKey="projects" fallback={<ProjectsSchema />} />
+                <CmsPageSchema pageKey="projects" fallback={<ProjectsSchema page={page} />} />
             ) : null}
             {showHero ? <ProjectsHeroSection /> : null}
             <MetricsSection />

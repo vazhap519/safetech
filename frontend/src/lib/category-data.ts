@@ -7,6 +7,7 @@ import {
 import { categoryMetadata, findCategory } from "@/lib/categorySeo";
 import { getCurrentLocale } from "@/lib/locale-server";
 import { createMetadata } from "@/lib/seo";
+import { parsePageNumber, withPaginationMetadata } from "@/lib/pagination";
 
 export type CategoryKind = "projects" | "services";
 
@@ -44,10 +45,13 @@ export async function getCategoryPageData(kind: CategoryKind, slug: string) {
 export function createCategoryMetadataGenerator(kind: CategoryKind) {
     return async function generateCategoryMetadata({
         params,
+        searchParams,
     }: {
         params: Promise<{ slug: string }>;
+        searchParams?: Promise<{ page?: string }>;
     }) {
         const { slug } = await params;
+        const page = parsePageNumber((await searchParams)?.page) ?? 1;
         const { category, locale, path } = await getCategoryPageData(kind, slug);
 
         if (!category) {
@@ -59,6 +63,11 @@ export function createCategoryMetadataGenerator(kind: CategoryKind) {
             });
         }
 
-        return categoryMetadata({ category, path, locale, kind });
+        return withPaginationMetadata(
+            categoryMetadata({ category, path, locale, kind }),
+            path,
+            page,
+            locale,
+        );
     };
 }

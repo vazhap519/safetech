@@ -421,6 +421,7 @@ export const getSiteSettings = cache(async () => {
         buildTranslationMap(
             settings.client_translations ?? settings.translations,
         ),
+        locale,
     );
     const socialSharing = parseSocialSharing(settings.socials, locale);
     const configuredPhones = normalizeStringList(configuredContact.phones);

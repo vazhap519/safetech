@@ -1,17 +1,27 @@
-"use client";
-
-import { useLocalization } from "@/components/providers/LocalizationProvider";
 import ProjectDetailsLink from "@/components/Projects/ProjectDetailsLink";
 import Icon from "@/components/ui/Icon";
-import LocalizedLink from "@/components/ui/LocalizedLink";
 import type { Project } from "@/lib/projects";
+import { localizeHref } from "@/lib/seo";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
 import { getYouTubeWatchUrl } from "@/lib/youtube";
+import Link from "next/link";
 
-export default function ProjectCard({ project }: { project: Project }) {
+export default async function ProjectCard({ project }: { project: Project }) {
     const color = project.accent === "secondary" ? "secondary" : "primary";
-    const { t } = useLocalization();
-    const completedLabel = t("projects.completed", null);
-    const videoLabel = t("projects.video.open", null);
+    const { locale, translations } = await getSiteSettings();
+    const completedLabel = translateText(
+        translations,
+        "projects.completed",
+        locale,
+        null,
+    );
+    const videoLabel = translateText(
+        translations,
+        "projects.video.open",
+        locale,
+        null,
+    );
     const videoUrl = getYouTubeWatchUrl(project.videoUrl);
 
     return (
@@ -54,13 +64,13 @@ export default function ProjectCard({ project }: { project: Project }) {
             {project.title ? (
                 <h3 className="mb-2 font-headline-md text-headline-md text-white">
                     {project.slug ? (
-                        <LocalizedLink
+                        <Link
                             className="transition-colors hover:text-secondary"
-                            href={`/projects/${project.slug}`}
+                            href={localizeHref(`/projects/${project.slug}`, locale)}
                             prefetch={false}
                         >
                             {project.title}
-                        </LocalizedLink>
+                        </Link>
                     ) : (
                         project.title
                     )}

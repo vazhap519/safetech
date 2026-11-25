@@ -5,12 +5,12 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
 export default async function FeaturedProjectsSection({
-    limit,
+    limit = 2,
 }: {
     limit?: number;
 } = {}) {
     const [featuredProjects, { locale, translations }] = await Promise.all([
-        getLocalizedFeaturedProjects(undefined, false),
+        getLocalizedFeaturedProjects(undefined, false, limit),
         getSiteSettings(),
     ]);
     const visibleProjects =
@@ -42,7 +42,7 @@ export default async function FeaturedProjectsSection({
                         )}
                     />
                 </div>
-                <div className="grid grid-cols-1 gap-gutter md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-gutter md:grid-cols-2">
                     {visibleProjects.map((project) => (
                         <FeaturedProjectCard key={project.slug} project={project} />
                     ))}

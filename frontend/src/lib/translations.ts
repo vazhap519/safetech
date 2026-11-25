@@ -54,13 +54,19 @@ function matchesTranslationPrefix(key: string, prefix: string) {
 
 export function selectClientTranslations(
     translations: TranslationMap,
+    locale?: Locale,
 ): TranslationMap {
     return Object.fromEntries(
-        Object.entries(translations).filter(([key]) =>
-            CLIENT_TRANSLATION_PREFIXES.some((prefix) =>
-                matchesTranslationPrefix(key, prefix),
-            ),
-        ),
+        Object.entries(translations)
+            .filter(([key]) =>
+                CLIENT_TRANSLATION_PREFIXES.some((prefix) =>
+                    matchesTranslationPrefix(key, prefix),
+                ),
+            )
+            .map(([key, values]) => [
+                key,
+                locale && values[locale] ? { [locale]: values[locale] } : values,
+            ]),
     );
 }
 

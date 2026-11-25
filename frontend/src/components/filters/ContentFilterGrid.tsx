@@ -1,10 +1,10 @@
-"use client";
-
-import { useLocalization } from "@/components/providers/LocalizationProvider";
 import ProjectCard from "@/components/Projects/ProjectCard";
 import ServiceCardComponent from "@/components/Service/ServiceCard/ServiceCardComponent";
-import LocalizedLink from "@/components/ui/LocalizedLink";
 import type { Project } from "@/lib/projects";
+import { localizeHref } from "@/lib/seo";
+import { getSiteSettings } from "@/lib/site-settings";
+import { translateText } from "@/lib/translations";
+import Link from "next/link";
 
 type FilterKind = "projects" | "services";
 
@@ -44,15 +44,19 @@ function categoryHref(kind: FilterKind, slug: string) {
     return `${path}#content-filter`;
 }
 
-export default function ContentFilterGrid({
+export default async function ContentFilterGrid({
     activeCategory = "all",
     categories,
     items,
     kind,
 }: Props) {
-    const { t } = useLocalization();
-    const allLabel = t(`${kind}.filters.all`, null) || t("filters.all", null);
-    const filterAriaLabel = t(`${kind}.filters.aria`, null) || undefined;
+    const { locale, translations } = await getSiteSettings();
+    const allLabel =
+        translateText(translations, `${kind}.filters.all`, locale, null) ||
+        translateText(translations, "filters.all", locale, null);
+    const filterAriaLabel =
+        translateText(translations, `${kind}.filters.aria`, locale, null) ||
+        undefined;
     const normalizedActiveCategory = activeCategory || "all";
     const filterItems = [
         allLabel ? { name: allLabel, slug: "all" } : null,
@@ -75,20 +79,23 @@ export default function ContentFilterGrid({
                         const active = category.slug === normalizedActiveCategory;
 
                         return (
-                            <LocalizedLink
+                            <Link
                                 aria-pressed={active}
                                 className={`${
                                     active
                                         ? "bg-primary text-on-primary"
                                         : "glass-card text-on-surface hover:bg-surface-variant"
                                 } rounded-full px-5 py-2.5 font-label-md text-label-md transition-colors sm:px-8`}
-                                href={categoryHref(kind, category.slug)}
+                                href={localizeHref(
+                                    categoryHref(kind, category.slug),
+                                    locale,
+                                )}
                                 key={category.slug}
                                 prefetch={false}
                                 role="button"
                             >
                                 {category.name}
-                            </LocalizedLink>
+                            </Link>
                         );
                     })}
                 </div>

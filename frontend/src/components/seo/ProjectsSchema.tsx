@@ -1,9 +1,6 @@
-import {
-    getBackendFeaturedProjects,
-    getBackendProjectCards,
-} from "@/lib/backend";
 import { getLanguageTag } from "@/lib/locales";
-import { absoluteLocalizedUrl, absoluteSiteUrl, SITE_NAME } from "@/lib/seo";
+import { getLocalizedProjectPage } from "@/lib/project-api";
+import { absoluteLocalizedUrl, SITE_NAME } from "@/lib/seo";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
 
@@ -13,13 +10,11 @@ type ProjectSchemaItem = {
     image?: string;
 };
 
-export default async function ProjectsSchema() {
-    const [{ branding, locale, translations }, featuredProjects, projects] =
-        await Promise.all([
-            getSiteSettings(),
-            getBackendFeaturedProjects(),
-            getBackendProjectCards(),
-        ]);
+export default async function ProjectsSchema({ page = 1 }: { page?: number }) {
+    const [{ branding, locale, translations }, projectPage] = await Promise.all([
+        getSiteSettings(),
+        getLocalizedProjectPage(undefined, page),
+    ]);
     const siteName = branding.siteName || SITE_NAME;
     const name =
         translateText(translations, "meta.projects.title", locale, null) ||
@@ -34,7 +29,7 @@ export default async function ProjectsSchema() {
     const seen = new Set<string>();
     const items: ProjectSchemaItem[] = [];
 
-    for (const project of projects) {
+    for (const project of projectPage.projects) {
         if (seen.has(project.title)) continue;
         seen.add(project.title);
         items.push({
@@ -42,15 +37,6 @@ export default async function ProjectsSchema() {
             url: project.slug
                 ? absoluteLocalizedUrl(`/projects/${project.slug}`, locale)
                 : undefined,
-        });
-    }
-
-    for (const project of featuredProjects) {
-        if (seen.has(project.title)) continue;
-        seen.add(project.title);
-        items.push({
-            name: project.title,
-            image: absoluteSiteUrl(project.image),
         });
     }
 
@@ -71,7 +57,6 @@ export default async function ProjectsSchema() {
                     "@type": "CreativeWork",
                     name: project.name,
                     ...(project.url ? { url: project.url } : {}),
-                    ...(project.image ? { image: project.image } : {}),
                 },
             })),
         },

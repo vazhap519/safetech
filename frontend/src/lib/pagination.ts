@@ -1,4 +1,10 @@
 import type { Locale } from "@/lib/locales";
+import type { Metadata } from "next";
+import {
+    absoluteLocalizedUrl,
+    absoluteSiteUrl,
+    buildLanguageAlternates,
+} from "@/lib/seo";
 
 export function firstSearchParam(value: unknown): string {
     const candidate = Array.isArray(value) ? value[0] : value;
@@ -14,6 +20,35 @@ export function parsePageNumber(value: unknown): number | null {
     const page = Number(candidate);
 
     return Number.isSafeInteger(page) ? page : null;
+}
+
+export function paginatedPath(basePath: string, page: number) {
+    return page > 1 ? `${basePath}?page=${page}` : basePath;
+}
+
+export function withPaginationMetadata(
+    metadata: Metadata,
+    basePath: string,
+    page: number,
+    locale: Locale,
+): Metadata {
+    const path = paginatedPath(basePath, page);
+    const canonical = absoluteLocalizedUrl(path, locale);
+
+    return {
+        ...metadata,
+        alternates: {
+            ...metadata.alternates,
+            canonical,
+            languages: {
+                ...buildLanguageAlternates(path),
+                "x-default": absoluteSiteUrl(path),
+            },
+        },
+        openGraph: metadata.openGraph
+            ? { ...metadata.openGraph, url: canonical }
+            : metadata.openGraph,
+    };
 }
 
 export function paginatedTitle(subject: string, page: number, locale: Locale) {

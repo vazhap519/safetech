@@ -5,6 +5,8 @@ import { getBackendFilterCategories } from "@/lib/backend";
 import { getLocalizedProjectPage } from "@/lib/project-api";
 import { getSiteSettings } from "@/lib/site-settings";
 import { translateText } from "@/lib/translations";
+import { paginatedPath } from "@/lib/pagination";
+import { localizeHref } from "@/lib/seo";
 
 export default async function ProjectsGallerySection({
     category,
@@ -27,12 +29,24 @@ export default async function ProjectsGallerySection({
             : "/projects";
         return targetPage === 1 ? `${base}#content-filter` : `${base}?page=${targetPage}#content-filter`;
     };
+    const paginationBase = category
+        ? `/projects/category/${encodeURIComponent(category)}`
+        : "/projects";
+    const previousPath = projectPage.currentPage > 1
+        ? paginatedPath(paginationBase, projectPage.currentPage - 1)
+        : null;
+    const nextPath = projectPage.currentPage < projectPage.lastPage
+        ? paginatedPath(paginationBase, projectPage.currentPage + 1)
+        : null;
 
     return (
-        <section
-            className="bg-surface-container-low/30 py-unit-xl"
-            aria-labelledby="projects-gallery-title"
-        >
+        <>
+            {previousPath ? <link rel="prev" href={localizeHref(previousPath, locale)} /> : null}
+            {nextPath ? <link rel="next" href={localizeHref(nextPath, locale)} /> : null}
+            <section
+                className="bg-surface-container-low/30 py-unit-xl"
+                aria-labelledby="projects-gallery-title"
+            >
             <div className="mx-auto max-w-container-max px-margin-desktop">
                 <div id="projects-gallery-title">
                     <ProjectsSectionHeader
@@ -75,6 +89,7 @@ export default async function ProjectsGallerySection({
                     </nav>
                 ) : null}
             </div>
-        </section>
+            </section>
+        </>
     );
 }
