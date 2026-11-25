@@ -91,7 +91,9 @@ export default function MarketingScriptsClient({
                 </Script>
             ) : null}
 
-            {gaId ? (
+            {/* GTM owns GA/Ads tags when configured. Loading gtag.js as well
+                duplicates page views and adds substantial main-thread work. */}
+            {gaId && !gtmId ? (
                 <>
                     <Script
                         id="google-analytics-library"
