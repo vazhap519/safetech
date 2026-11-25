@@ -326,7 +326,7 @@ test.describe("release candidate public matrix", () => {
         });
 
         test(`${locale} service calculator is interactive`, async ({ page }) => {
-            await page.goto(localizedPath(prefix, "/services#service-calculator"), { waitUntil: "domcontentloaded" });
+            await page.goto(localizedPath(prefix, "/calculators#service-calculator"), { waitUntil: "domcontentloaded" });
 
             const calculator = page.locator("#service-calculator");
             await expect(calculator).toBeVisible();
@@ -388,7 +388,7 @@ test.describe("release candidate public matrix", () => {
 
     test("legacy service calculator route redirects to the services calculator", async ({ page }) => {
         await page.goto("/service-calculator", { waitUntil: "domcontentloaded" });
-        await expect(page).toHaveURL(/\/services#service-calculator$/);
+        await expect(page).toHaveURL(/\/calculators#service-calculator$/);
         await expect(page.locator("#service-calculator")).toBeVisible();
     });
 

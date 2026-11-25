@@ -2,6 +2,7 @@
 
 namespace App\Support\Calculators;
 
+use App\Models\QuoteCatalogItem;
 use App\Models\Service;
 use App\Support\MultilingualContent;
 
@@ -52,7 +53,10 @@ final class CalculatorProfileBuilder
             ],
             'fields' => $this->fields($config['extra_fields'] ?? [], $locale),
             'packages' => $this->packages($config['packages'] ?? [], $locale),
-            'components' => $this->components($config['components'] ?? [], $locale),
+            'components' => $this->catalogComponents(
+                $service,
+                $this->components($config['components'] ?? [], $locale),
+            ),
             'disclaimer' => $this->localizedLabel(
                 $config,
                 'calculator_disclaimer',
@@ -67,11 +71,100 @@ final class CalculatorProfileBuilder
     {
         $slug = $this->string($service->slug);
         $name = $this->string($service->name ?: $service->title);
-        $defaults = DefaultCalculatorProfiles::for($slug, $name);
-        $defaults['components'] = DefaultConfiguratorComponents::for($slug, $name);
-        $custom = is_array($service->lead_form) ? $service->lead_form : [];
+        $isCanonical = in_array($slug, CanonicalServiceCalculator::slugs(), true);
+        $defaults = $isCanonical
+            ? CanonicalServiceCalculator::for($slug, $name)
+            : DefaultCalculatorProfiles::for($slug, $name);
 
-        return $this->mergeConfig($defaults, $custom);
+        if (! $isCanonical) {
+            $defaults['components'] = DefaultConfiguratorComponents::for($slug, $name);
+        }
+
+        $custom = is_array($service->lead_form) ? $service->lead_form : [];
+        $config = $this->mergeConfig($defaults, $custom);
+
+        if ($isCanonical) {
+            // Compatibility and quantity rules are application logic, not
+            // editorial content. Keep current canonical definitions even when
+            // production still contains an older saved calculator profile.
+            $config['extra_fields'] = $this->mergeDefinitionsByKey(
+                $defaults['extra_fields'] ?? [],
+                $custom['extra_fields'] ?? [],
+            );
+            $config['components'] = $this->mergeCanonicalComponentContent(
+                $defaults['components'] ?? [],
+                $custom['components'] ?? [],
+            );
+        }
+
+        return $config;
+    }
+
+    /**
+     * Preserve admin labels/prices on known fields while adding new canonical
+     * inputs and dropping no longer supported legacy definitions.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function mergeDefinitionsByKey(mixed $defaults, mixed $custom): array
+    {
+        if (! is_array($defaults)) {
+            return [];
+        }
+
+        $customByKey = collect(is_array($custom) ? $custom : [])
+            ->filter(fn ($item): bool => is_array($item) && filled($item['key'] ?? null))
+            ->keyBy(fn (array $item): string => (string) $item['key']);
+
+        return collect($defaults)
+            ->filter(fn ($item): bool => is_array($item) && filled($item['key'] ?? null))
+            ->map(function (array $definition) use ($customByKey): array {
+                $saved = $customByKey->get((string) $definition['key']);
+
+                return is_array($saved)
+                    ? $this->mergeConfig($definition, $saved)
+                    : $definition;
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Compatibility rules stay canonical while existing catalog-facing copy
+     * and prices remain editable and survive profile upgrades.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function mergeCanonicalComponentContent(mixed $defaults, mixed $custom): array
+    {
+        $editableKeys = [
+            'title_ka', 'title_en', 'title_ru',
+            'description_ka', 'description_en', 'description_ru',
+            'unit_price', 'monthly_price', 'quote_required',
+        ];
+        $customByKey = collect(is_array($custom) ? $custom : [])
+            ->filter(fn ($item): bool => is_array($item) && filled($item['key'] ?? null))
+            ->keyBy(fn (array $item): string => (string) $item['key']);
+
+        return collect(is_array($defaults) ? $defaults : [])
+            ->filter(fn ($item): bool => is_array($item) && filled($item['key'] ?? null))
+            ->map(function (array $definition) use ($customByKey, $editableKeys): array {
+                $saved = $customByKey->get((string) $definition['key']);
+
+                if (! is_array($saved)) {
+                    return $definition;
+                }
+
+                foreach ($editableKeys as $key) {
+                    if (array_key_exists($key, $saved)) {
+                        $definition[$key] = $saved[$key];
+                    }
+                }
+
+                return $definition;
+            })
+            ->values()
+            ->all();
     }
 
     /**
@@ -244,6 +337,46 @@ final class CalculatorProfileBuilder
             })
             ->sortByDesc('priority')
             ->values()
+            ->all();
+    }
+
+    /**
+     * Apply the active commercial catalog without replacing the canonical
+     * compatibility rules. This keeps the public estimator and Quote Engine
+     * on the same product name, model and final selling price.
+     *
+     * @param  array<int, array<string, mixed>>  $components
+     * @return array<int, array<string, mixed>>
+     */
+    private function catalogComponents(Service $service, array $components): array
+    {
+        if (! $service->exists || $components === []) {
+            return $components;
+        }
+
+        $catalog = QuoteCatalogItem::query()
+            ->where('service_id', $service->getKey())
+            ->where('is_active', true)
+            ->get()
+            ->keyBy('component_key');
+
+        return collect($components)
+            ->map(function (array $component) use ($catalog): array {
+                /** @var QuoteCatalogItem|null $item */
+                $item = $catalog->get($component['key']);
+
+                if (! $item) {
+                    return $component;
+                }
+
+                $component['catalogName'] = $this->string($item->name);
+                $component['brand'] = $this->string($item->brand);
+                $component['model'] = $this->string($item->model);
+                $component['unitPrice'] = $item->effectiveSalePrice((float) $component['unitPrice']);
+                $component['priceOnRequest'] = $component['unitPrice'] <= 0;
+
+                return $component;
+            })
             ->all();
     }
 

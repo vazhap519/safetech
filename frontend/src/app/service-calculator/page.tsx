@@ -25,8 +25,8 @@ export default async function LegacyServiceCalculatorPage({
     const canonicalService = resolveCanonicalServiceSlug(selectedService);
     const locale = await getCurrentLocale();
     const target = canonicalService
-        ? `/services/${encodeURIComponent(canonicalService)}`
-        : "/services#service-calculator";
+        ? `/calculators?service=${encodeURIComponent(canonicalService)}#service-calculator`
+        : "/calculators#service-calculator";
 
     permanentRedirect(localizeHref(target, locale));
 }

@@ -11,7 +11,7 @@ class CameraPlannerPage extends Page
 
     protected static ?string $title = 'კამერების განლაგების პლანერი';
 
-    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Calculators;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-map';
 

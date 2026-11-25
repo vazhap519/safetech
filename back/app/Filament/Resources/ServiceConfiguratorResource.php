@@ -34,7 +34,7 @@ class ServiceConfiguratorResource extends Resource
 
     protected static ?string $pluralModelLabel = 'სერვისების კონფიგურატორები';
 
-    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Calculators;
 
     protected static ?int $navigationSort = 20;
 

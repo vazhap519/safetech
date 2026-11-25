@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import LocalServiceLinks from "@/components/seo/LocalServiceLinks";
-import ServiceCalculatorSlot from "@/components/calculator/ServiceCalculatorSlot";
 import ServiceDetailView from "@/features/service-detail/ServiceDetailView";
 import ServiceStructuredData from "@/features/service-detail/components/ServiceStructuredData";
 import { getBackendService } from "@/lib/backend";
@@ -157,8 +156,23 @@ export default async function ServicePage({ params }: ServicePageProps) {
                     </div>
                 </section>
             ) : null}
-            <section className="mx-auto max-w-container-max px-5 md:px-8 xl:px-14">
-                <ServiceCalculatorSlot initialService={service.slug} />
+            <section className="mx-auto max-w-container-max px-5 py-12 md:px-8 xl:px-14">
+                <div className="rounded-3xl border border-outline-variant/30 bg-surface-container p-7 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-10">
+                    <div>
+                        <h2 className="text-2xl font-semibold text-on-surface">
+                            {{ ka: "გამოთვალეთ საორიენტაციო ღირებულება", en: "Calculate an indicative price", ru: "Рассчитайте ориентировочную стоимость" }[locale]}
+                        </h2>
+                        <p className="mt-3 text-on-surface-variant">
+                            {{ ka: "კალკულატორების ცენტრი მხოლოდ თქვენს არჩევანთან თავსებად მოწყობილობებსა და მასალებს გაჩვენებთ.", en: "The calculator center only shows equipment and materials compatible with your selection.", ru: "Центр калькуляторов показывает только совместимое с вашим выбором оборудование и материалы." }[locale]}
+                        </p>
+                    </div>
+                    <Link
+                        className="mt-6 inline-flex shrink-0 rounded-xl bg-primary-container px-6 py-4 font-semibold text-on-primary-container sm:mt-0"
+                        href={localizeHref(`/calculators?service=${encodeURIComponent(service.slug)}#service-calculator`, locale)}
+                    >
+                        {{ ka: "კალკულატორის გახსნა", en: "Open calculator", ru: "Открыть калькулятор" }[locale]}
+                    </Link>
+                </div>
             </section>
             <LocalServiceLinks locale={locale} serviceSlug={service.slug} />
         </>

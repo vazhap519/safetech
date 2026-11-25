@@ -66,10 +66,7 @@ export default async function ServicesPageContent({
             ) : null}
             {showHero ? <HeroSection /> : null}
             <PartnerSection />
-            <ServiceSection
-                category={category || undefined}
-                initialService={selectedService || undefined}
-            />
+            <ServiceSection category={category || undefined} />
             <FeaturedSection selectedService={selectedService || undefined} />
             {showPageSchema && !category ? (
                 <section className="mx-auto max-w-container-max px-5 py-10 md:px-8 xl:px-14">

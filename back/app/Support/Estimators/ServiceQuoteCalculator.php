@@ -435,6 +435,12 @@ final class ServiceQuoteCalculator
 
         foreach ($services as $service) {
             $config = $this->config($service);
+            $activeKeys = collect((array) ($config['components'] ?? []))
+                ->filter(fn ($component): bool => is_array($component) && filled($component['key'] ?? null))
+                ->pluck('key')
+                ->map(fn ($key): string => (string) $key)
+                ->values()
+                ->all();
 
             foreach ((array) ($config['components'] ?? []) as $component) {
                 if (! is_array($component) || blank($component['key'] ?? null)) {
@@ -461,6 +467,14 @@ final class ServiceQuoteCalculator
                 }
 
                 $item->save();
+            }
+
+            if ($activeKeys !== []) {
+                QuoteCatalogItem::query()
+                    ->where('service_id', $service->getKey())
+                    ->whereNotIn('component_key', $activeKeys)
+                    ->where('is_active', true)
+                    ->update(['is_active' => false]);
             }
         }
 
@@ -601,6 +615,20 @@ final class ServiceQuoteCalculator
 
         if (isset($config['intercom_version'])) {
             return (new IntercomPlanner)->quantities($values);
+        }
+
+        if (array_key_exists('area_sqm', $values) && array_key_exists('network_points', $values)) {
+            $area = max(10, (float) ($values['area_sqm'] ?? 10));
+            $points = max(0, (int) ($values['network_points'] ?? 0));
+            $averageRun = min(45, max(8, sqrt($area) * 1.25 + 5));
+            $estimatedCable = (int) ceil(round($points * $averageRun * 1.12, 6));
+
+            $values['estimated_average_run_m'] = round($averageRun, 1);
+            $values['estimated_cable_meters'] = $estimatedCable;
+
+            if (($values['cable_estimation_mode'] ?? 'auto') === 'auto') {
+                $values['cable_meters'] = $estimatedCable;
+            }
         }
 
         if (array_key_exists('camera_count', $values) && array_key_exists('recording_days', $values)

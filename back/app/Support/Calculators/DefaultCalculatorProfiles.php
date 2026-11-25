@@ -27,7 +27,7 @@ final class DefaultCalculatorProfiles
         $value = mb_strtolower(trim("{$slug} {$name}"));
         $matches = [
             'cctv' => ['cctv', 'camera', 'surveillance', 'video', 'კამერ', 'ვიდეო'],
-            'networking' => ['network', 'wi-fi', 'wifi', 'lan', 'router', 'switch', 'ქსელ', 'ინტერნეტ'],
+            'networking' => ['network', 'wi-fi', 'wifi', 'lan', 'router', 'switch', 'low-voltage', 'cabling', 'ქსელ', 'ინტერნეტ', 'სუსტი დენ', 'კაბელ'],
             'access-control' => ['access', 'intercom', 'door', 'gate', 'lock', 'alarm', 'ajax', 'fire', 'დომოფონ', 'დაშვ', 'საკეტ', 'სიგნალიზ', 'სახანძრო', 'აჯაქს'],
             'server-infrastructure' => ['server', 'backup', 'virtual', 'rack', 'სერვერ', 'ბექაფ', 'ვირტუალ'],
             'it-support' => ['support', 'computer', 'printer', 'windows', 'pos', 'კომპიუტ', 'პრინტერ', 'მხარდაჭერ', 'სალარო'],
@@ -161,12 +161,28 @@ final class DefaultCalculatorProfiles
             propertyLabels: ['ქსელის გარემო', 'Network environment', 'Тип объекта'],
             propertyOptions: self::propertyOptions(),
             fields: [
+                self::field('area_sqm', 'number', ['ობიექტის ფართობი', 'Property area', 'Площадь объекта'], [
+                    'required' => true,
+                    'min' => 10,
+                    'max' => 100000,
+                    'step' => 1,
+                    'default' => 100,
+                    'unit' => ['მ²', 'm²', 'м²'],
+                ]),
                 self::field('network_points', 'number', ['ქსელის წერტილები', 'Network points', 'Сетевые точки'], [
                     'required' => true,
                     'min' => 1,
                     'max' => 2000,
                     'step' => 1,
                     'default' => 8,
+                ]),
+                self::field('cable_estimation_mode', 'select', ['კაბელის დათვლის რეჟიმი', 'Cable calculation mode', 'Режим расчёта кабеля'], [
+                    'required' => true,
+                    'default' => 'auto',
+                    'options' => [
+                        self::option('auto', 'ავტომატური — ფართობით და წერტილებით', 'Automatic — by area and points', 'Автоматически — по площади и точкам'),
+                        self::option('manual', 'ხელით მითითება', 'Enter manually', 'Указать вручную'),
+                    ],
                 ]),
                 self::field('cable_meters', 'number', ['კაბელის სიგრძე', 'Cable length', 'Длина кабеля'], [
                     'required' => true,

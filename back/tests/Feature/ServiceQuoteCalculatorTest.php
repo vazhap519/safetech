@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\QuoteCatalogItem;
 use App\Models\Service;
+use App\Support\Calculators\CalculatorProfileBuilder;
 use App\Support\Calculators\CanonicalServiceCalculator;
 use App\Support\Estimators\ServiceQuoteCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,6 +62,8 @@ class ServiceQuoteCalculatorTest extends TestCase
         QuoteCatalogItem::query()->create([
             'service_id' => $service->getKey(),
             'component_key' => 'device',
+            'brand' => 'SafeCam',
+            'model' => 'SC-4MP',
             'name' => 'მოწყობილობა',
             'category' => 'camera',
             'purchase_price' => 100,
@@ -86,6 +89,12 @@ class ServiceQuoteCalculatorTest extends TestCase
         $this->assertTrue($quote['pricing_complete']);
         $this->assertSame(160.0, $quote['components'][0]['sale_price']);
         $this->assertSame(4.0, $quote['components'][0]['quantity']);
+
+        $publicProfile = app(CalculatorProfileBuilder::class)->build($service, 'ka');
+        $this->assertSame('SafeCam', $publicProfile['components'][0]['brand']);
+        $this->assertSame('SC-4MP', $publicProfile['components'][0]['model']);
+        $this->assertSame(160.0, $publicProfile['components'][0]['unitPrice']);
+        $this->assertFalse($publicProfile['components'][0]['priceOnRequest']);
     }
 
     public function test_it_marks_profit_incomplete_when_equipment_purchase_cost_is_missing(): void
@@ -246,5 +255,67 @@ class ServiceQuoteCalculatorTest extends TestCase
             (float) ceil($quote['values']['required_storage_tb'] / 8),
             $storage['quantity'],
         );
+    }
+
+    public function test_cctv_quote_only_returns_the_matching_camera_and_nvr_class(): void
+    {
+        $service = Service::query()->create([
+            'slug' => 'security-camera-installation', 'name' => 'CCTV', 'title' => 'CCTV',
+            'description' => 'CCTV', 'seo_description' => 'CCTV', 'is_published' => true,
+            'lead_form' => CanonicalServiceCalculator::for('security-camera-installation', 'CCTV'),
+        ]);
+
+        $quote = app(ServiceQuoteCalculator::class)->calculate($service, ['values' => [
+            'camera_technology' => 'ip', 'camera_count' => 12, 'resolution' => '4mp',
+        ]]);
+        $keys = collect($quote['components'])->pluck('key');
+
+        $this->assertTrue($keys->contains('ip-camera-4mp'));
+        $this->assertTrue($keys->contains('nvr-16ch-160mbps'));
+        $this->assertTrue($keys->contains('poe-switch-16'));
+        $this->assertFalse($keys->contains('ip-camera-2mp'));
+        $this->assertFalse($keys->contains('nvr-8ch-80mbps'));
+    }
+
+    public function test_low_voltage_quote_estimates_cable_from_area_and_points(): void
+    {
+        $service = Service::query()->create([
+            'slug' => 'low-voltage-cabling', 'name' => 'Low voltage', 'title' => 'Low voltage',
+            'description' => 'Low voltage', 'seo_description' => 'Low voltage', 'is_published' => true,
+            'lead_form' => CanonicalServiceCalculator::for('low-voltage-cabling', 'Low voltage'),
+        ]);
+
+        $quote = app(ServiceQuoteCalculator::class)->calculate($service, ['values' => [
+            'area_sqm' => 400, 'network_points' => 20, 'cable_estimation_mode' => 'auto',
+        ]]);
+        $cable = collect($quote['components'])->firstWhere('key', 'low-voltage-cat6');
+
+        $this->assertSame(30.0, $quote['values']['estimated_average_run_m']);
+        $this->assertSame(672, $quote['values']['estimated_cable_meters']);
+        $this->assertSame(672.0, $cable['quantity']);
+    }
+
+    public function test_canonical_runtime_upgrades_legacy_saved_component_definitions(): void
+    {
+        $service = new Service([
+            'slug' => 'security-camera-installation',
+            'name' => 'CCTV',
+            'lead_form' => [
+                'pricing' => ['labor_price' => 321],
+                'components' => [[
+                    'key' => 'recorder',
+                    'title_en' => 'Legacy generic recorder',
+                    'quantity_mode' => 'ceil',
+                    'quantity_field' => 'camera_count',
+                ]],
+            ],
+        ]);
+
+        $config = app(CalculatorProfileBuilder::class)->config($service);
+        $keys = collect($config['components'])->pluck('key');
+
+        $this->assertSame(321, $config['pricing']['labor_price']);
+        $this->assertTrue($keys->contains('nvr-16ch-160mbps'));
+        $this->assertFalse($keys->contains('recorder'));
     }
 }

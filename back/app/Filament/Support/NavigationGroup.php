@@ -10,6 +10,7 @@ use Illuminate\Contracts\Support\Htmlable;
 enum NavigationGroup: string implements HasIcon, HasLabel
 {
     case Services = 'სერვისები';
+    case Calculators = 'კალკულატორები და შეთავაზებები';
     case Projects = 'პროექტები';
     case Content = 'კონტენტი';
     case Sales = 'გაყიდვები';
@@ -25,6 +26,7 @@ enum NavigationGroup: string implements HasIcon, HasLabel
     {
         return match ($this) {
             self::Services => 'heroicon-o-wrench-screwdriver',
+            self::Calculators => 'heroicon-o-calculator',
             self::Projects => 'heroicon-o-briefcase',
             self::Content => 'heroicon-o-rectangle-stack',
             self::Sales => 'heroicon-o-inbox-arrow-down',

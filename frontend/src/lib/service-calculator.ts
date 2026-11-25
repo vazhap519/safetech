@@ -58,6 +58,9 @@ export type CalculatorComponent = {
     key: string;
     category: string;
     title: string;
+    catalogName?: string;
+    brand?: string;
+    model?: string;
     description: string;
     unitPrice: number;
     monthlyPrice: number;
@@ -175,6 +178,34 @@ export function initialCalculatorValues(profile: CalculatorProfile) {
                     : "",
         ]),
     ) satisfies CalculatorValues;
+}
+
+export function withDerivedCalculatorValues(
+    profile: CalculatorProfile,
+    values: CalculatorValues,
+): CalculatorValues {
+    if (
+        !profile.fields.some((field) => field.key === "area_sqm")
+        || !profile.fields.some((field) => field.key === "network_points")
+    ) {
+        return values;
+    }
+
+    const area = Math.max(10, Number(values.area_sqm) || 10);
+    const points = Math.max(0, Math.floor(Number(values.network_points) || 0));
+    const averageRun = Math.min(45, Math.max(8, Math.sqrt(area) * 1.25 + 5));
+    const estimatedCable = Math.ceil(
+        Math.round(points * averageRun * 1.12 * 1_000_000) / 1_000_000,
+    );
+    const derived: CalculatorValues = {
+        ...values,
+        estimated_average_run_m: Math.round(averageRun * 10) / 10,
+        estimated_cable_meters: estimatedCable,
+    };
+
+    return (values.cable_estimation_mode ?? "auto") === "auto"
+        ? { ...derived, cable_meters: estimatedCable }
+        : derived;
 }
 
 function compatibilityValue(

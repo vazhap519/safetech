@@ -17,6 +17,7 @@ import {
     clampComponentQuantity,
     getCompatibleComponents,
     initialCalculatorValues,
+    withDerivedCalculatorValues,
     type CalculatorEstimateBreakdown,
     type CalculatorField,
     type CalculatorOption,
@@ -86,10 +87,12 @@ function SelectControl({
 }
 
 function DynamicField({
+    disabled = false,
     field,
     onChange,
     value,
 }: {
+    disabled?: boolean;
     field: CalculatorField;
     onChange: (value: string | number | boolean) => void;
     value: string | number | boolean;
@@ -144,7 +147,8 @@ function DynamicField({
             ) : (
                 <div className="relative">
                     <input
-                        className={`${inputClass} ${field.unit ? "pr-16" : ""}`}
+                        className={`${inputClass} ${field.unit ? "pr-16" : ""} disabled:cursor-not-allowed disabled:opacity-70`}
+                        disabled={disabled}
                         max={field.max ?? undefined}
                         min={field.min ?? undefined}
                         onChange={(event) => {
@@ -280,19 +284,27 @@ export default function ServiceCalculator({
         },
         [profile, valuesByService],
     );
+    const configuredValues = useMemo(
+        () => profile ? withDerivedCalculatorValues(profile, baseValues) : baseValues,
+        [profile, baseValues],
+    );
     const isCctvProfile = Boolean(
         profile?.fields.some((field) => field.key === "camera_count")
         && profile.fields.some((field) => field.key === "recording_days"),
     );
+    const hasAutomaticCableEstimate = Boolean(
+        profile?.fields.some((field) => field.key === "area_sqm")
+        && profile.fields.some((field) => field.key === "network_points"),
+    );
     const storageResult = useMemo(
-        () => isCctvProfile ? calculateCctvStorage(baseValues) : null,
-        [isCctvProfile, baseValues],
+        () => isCctvProfile ? calculateCctvStorage(configuredValues) : null,
+        [isCctvProfile, configuredValues],
     );
     const values = useMemo(
         () => storageResult
-            ? { ...baseValues, required_storage_tb: storageResult.requiredTb }
-            : baseValues,
-        [baseValues, storageResult],
+            ? { ...configuredValues, required_storage_tb: storageResult.requiredTb }
+            : configuredValues,
+        [configuredValues, storageResult],
     );
     const projectSize = profile ? projectSizes[profile.slug] ?? "" : "";
     const propertyType = profile ? propertyTypes[profile.slug] ?? "" : "";
@@ -754,6 +766,21 @@ export default function ServiceCalculator({
                                 </div>
                             ) : null}
 
+                            {hasAutomaticCableEstimate ? (
+                                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4" aria-live="polite" data-testid="cable-estimate-result">
+                                    <p className="font-semibold text-on-surface">
+                                        {t("calculator.cabling.estimate", { ka: "კაბელის მიახლოებითი დათვლა", en: "Estimated cable calculation", ru: "Ориентировочный расчёт кабеля" })}
+                                    </p>
+                                    <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                                        <p>{t("calculator.cabling.averageRun", { ka: "საშუალო მარშრუტი / წერტილი", en: "Average route / point", ru: "Средняя трасса / точка" })}: <strong>{String(values.estimated_average_run_m ?? 0)} m</strong></p>
+                                        <p>{t("calculator.cabling.total", { ka: "კაბელი 12% რეზერვით", en: "Cable with 12% reserve", ru: "Кабель с запасом 12%" })}: <strong>{String(values.estimated_cable_meters ?? 0)} m</strong></p>
+                                    </div>
+                                    <p className="mt-3 text-xs leading-5 text-on-surface-variant">
+                                        {t("calculator.cabling.note", { ka: "შეფასება ეფუძნება ფართობსა და წერტილების რაოდენობას. რეალური მეტრაჟი ზუსტდება გეგმაზე ან ადგილზე გაზომვით.", en: "The estimate uses property area and point count. Final length requires a plan or on-site measurement.", ru: "Расчёт основан на площади и количестве точек. Точный метраж определяется по плану или замером на объекте." })}
+                                    </p>
+                                </div>
+                            ) : null}
+
                             <div className="grid gap-5 sm:grid-cols-2">
                                 {profile.fields.filter((field) => configurationReady || ["apartments", "doors"].includes(field.key)).map((field) => (
                                     <div
@@ -765,6 +792,7 @@ export default function ServiceCalculator({
                                         key={field.key}
                                     >
                                         <DynamicField
+                                            disabled={field.key === "cable_meters" && values.cable_estimation_mode === "auto"}
                                             field={profile.intercomCatalog ? intercomField(profile.intercomCatalog, field, values) : field}
                                             onChange={(value) =>
                                                 updateField(field.key, value)
@@ -916,6 +944,13 @@ export default function ServiceCalculator({
                                                             {component.description ? (
                                                                 <span className="mt-1 block text-sm leading-5 text-on-surface-variant">
                                                                     {component.description}
+                                                                </span>
+                                                            ) : null}
+                                                            {component.catalogName || component.brand || component.model ? (
+                                                                <span className="mt-1 block text-xs font-medium text-on-surface-variant">
+                                                                    {[component.catalogName, component.brand, component.model]
+                                                                        .filter(Boolean)
+                                                                        .join(" · ")}
                                                                 </span>
                                                             ) : null}
                                                             <span className="mt-2 block text-sm font-medium text-primary">

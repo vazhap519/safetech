@@ -13,7 +13,7 @@ class BarrierConfiguratorPage extends Page
 
     protected static ?string $title = 'შლაგბაუმი / LPR / UHF კონფიგურატორი';
 
-    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Calculators;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 

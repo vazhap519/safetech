@@ -452,6 +452,7 @@ php "${BACKEND_DIR}/artisan" migrate --force
 php "${BACKEND_DIR}/artisan" db:seed --class=AdminUserSeeder --force
 # Preserve historical records during catalog consolidation.
 php "${BACKEND_DIR}/artisan" safetech:seven-service-preflight --execute
+php "${BACKEND_DIR}/artisan" db:seed --class=QuoteCatalogSeeder --force
 php "${BACKEND_DIR}/artisan" safetech:local-seo-audit --strict
 # Refresh only safe SEO defaults; SeoPageSeeder preserves administrator edits.
 php "${BACKEND_DIR}/artisan" db:seed --class=SeoPageSeeder --force

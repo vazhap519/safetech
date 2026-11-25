@@ -20,9 +20,9 @@ const basePrimaryNavigation = [
         fallback: { ka: "პროექტები", en: "Projects", ru: "Проекты" },
     },
     {
-        href: "/camera-planner",
-        key: "nav.cameraPlanner",
-        fallback: { ka: "კამერების პლანერი", en: "Camera Planner", ru: "План камер" },
+        href: "/calculators",
+        key: "nav.calculators",
+        fallback: { ka: "კალკულატორები", en: "Calculators", ru: "Калькуляторы" },
     },
     {
         href: "/contact",

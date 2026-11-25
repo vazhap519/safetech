@@ -31,7 +31,7 @@ class QuoteCatalogItemResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Quote Catalog';
 
-    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
+    protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Calculators;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-archive-box';
 

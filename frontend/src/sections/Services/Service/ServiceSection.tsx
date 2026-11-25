@@ -1,4 +1,3 @@
-import ServiceCalculatorSlot from "@/components/calculator/ServiceCalculatorSlot";
 import ServiceTypographyComponent from "@/components/Service/ServiceTypography/ServiceTypographyComponent";
 import ContentFilterGrid from "@/components/filters/ContentFilterGrid";
 import {
@@ -10,10 +9,8 @@ import { translateText } from "@/lib/translations";
 
 export default async function ServiceSection({
     category,
-    initialService,
 }: {
     category?: string;
-    initialService?: string;
 }) {
     const [services, categories, { locale, translations }] =
         await Promise.all([
@@ -61,9 +58,6 @@ export default async function ServiceSection({
                 />
             ) : null}
 
-            <ServiceCalculatorSlot
-                initialService={initialService || services[0]?.slug}
-            />
         </section>
     );
 }
