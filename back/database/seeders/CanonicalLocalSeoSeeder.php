@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\LocalServiceLanding;
 use App\Models\Service;
+use App\Support\Seo\CanonicalLocalSeo;
 use Illuminate\Database\Seeder;
 
 /**
@@ -18,9 +19,11 @@ final class CanonicalLocalSeoSeeder extends Seeder
 
     public function run(): void
     {
+        CanonicalLocalSeo::prune();
+
         $cities = PriorityLocalSeoCopy::cities();
         $technical = PriorityLocalSeoCopy::technical();
-        $allowedSlugs = ServiceCatalogSeeder::canonicalServiceSlugs();
+        $allowedSlugs = CanonicalLocalSeo::serviceSlugs();
 
         Service::query()
             ->publiclyVisible()

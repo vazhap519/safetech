@@ -10,6 +10,7 @@ use App\Filament\Support\StableSlug;
 use App\Filament\Support\StructuredDataJsonField;
 use App\Models\LocalServiceLanding;
 use App\Models\Project;
+use App\Support\Seo\CanonicalLocalSeo;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -52,7 +53,12 @@ class LocalServiceLandingResource extends Resource
                 ->schema([
                     Select::make('service_id')
                         ->label('სერვისი')
-                        ->relationship('service', 'name')
+                        ->relationship(
+                            'service',
+                            'name',
+                            modifyQueryUsing: fn (Builder $query): Builder => $query
+                                ->whereIn('slug', CanonicalLocalSeo::serviceSlugs()),
+                        )
                         ->searchable()
                         ->preload()
                         ->required(),
@@ -75,10 +81,17 @@ class LocalServiceLandingResource extends Resource
                             }
                         }),
                     ...LocalizedContentFields::secondaryInputs('locationName', 'ქალაქი / მომსახურების ზონა'),
-                    TextInput::make('location_slug')
+                    Select::make('location_slug')
                         ->label('URL slug')
+                        ->options(array_combine(
+                            CanonicalLocalSeo::locationSlugs(),
+                            array_map(
+                                static fn (string $slug): string => str($slug)->headline()->toString(),
+                                CanonicalLocalSeo::locationSlugs(),
+                            ),
+                        ))
+                        ->searchable()
                         ->required()
-                        ->maxLength(120)
                         ->helperText('მაგალითი: tbilisi. საბოლოო URL: /services/{service}/{location}.'),
                     TextInput::make('eyebrow')
                         ->label('მოკლე ზედა ტექსტი (ქართული)')
@@ -242,6 +255,11 @@ class LocalServiceLandingResource extends Resource
             ->toolbarActions([
                 BulkActionGroup::make([DeleteBulkAction::make()]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->canonical();
     }
 
     public static function getPages(): array

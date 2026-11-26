@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\FlushesPublicContentCache;
 use App\Support\CmsMedia;
+use App\Support\Seo\CanonicalLocalSeo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -69,6 +70,11 @@ class LocalServiceLanding extends Model implements HasMedia
             ->useDisk('public')
             ->acceptsMimeTypes(CmsMedia::IMAGE_MIME_TYPES)
             ->singleFile();
+    }
+
+    public function scopeCanonical(Builder $query): Builder
+    {
+        return CanonicalLocalSeo::apply($query);
     }
 
     public function registerMediaConversions(?Media $media = null): void

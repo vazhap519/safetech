@@ -23,6 +23,7 @@ final class LocalServiceLandingController extends Controller
         $view = $request->string('view')->toString();
 
         $query = LocalServiceLanding::query()
+            ->canonical()
             ->publiclyVisible();
 
         if ($serviceSlug !== '') {
@@ -106,6 +107,7 @@ final class LocalServiceLandingController extends Controller
         string $location,
     ): LocalServiceLandingResource|JsonResponse {
         $landing = LocalServiceLanding::query()
+            ->canonical()
             ->publiclyVisible()
             ->with(['service', 'publicProjects'])
             ->where('location_slug', $location)
