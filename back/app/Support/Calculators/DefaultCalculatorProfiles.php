@@ -105,6 +105,15 @@ final class DefaultCalculatorProfiles
                     ],
                     'default' => 'h265',
                 ]),
+                self::field('storage_raid', 'select', ['დისკების რეჟიმი / RAID', 'Disk mode / RAID', 'Режим дисков / RAID'], [
+                    'required' => true,
+                    'options' => [
+                        self::option('none', 'RAID-ის გარეშე', 'Without RAID', 'Без RAID'),
+                        self::option('raid1', 'RAID 1 — სარკე', 'RAID 1 — mirror', 'RAID 1 — зеркало'),
+                        self::option('raid5', 'RAID 5 — პარიტეტი', 'RAID 5 — parity', 'RAID 5 — чётность'),
+                    ],
+                    'default' => 'none',
+                ]),
                 self::field('recording_fps', 'number', ['კადრი წამში', 'Frames per second', 'Кадров в секунду'], [
                     'required' => true, 'min' => 1, 'max' => 60, 'step' => 1, 'default' => 15, 'unit' => ['FPS', 'FPS', 'FPS'],
                 ]),

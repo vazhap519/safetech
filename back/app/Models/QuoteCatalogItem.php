@@ -17,6 +17,7 @@ class QuoteCatalogItem extends Model
             'markup_percentage' => 'decimal:2',
             'sale_price' => 'decimal:2',
             'warranty_months' => 'integer',
+            'technical_specs' => 'array',
             'is_active' => 'boolean',
         ];
     }

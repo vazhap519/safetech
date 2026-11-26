@@ -293,7 +293,7 @@ final class CalculatorProfileBuilder
         }
 
         $quantityModes = ['fixed', 'field', 'ceil'];
-        $operators = ['equals', 'not_equals', 'gte', 'lte', 'contains', 'truthy', 'falsy'];
+        $operators = ['equals', 'not_equals', 'gte', 'lte', 'contains', 'one_of', 'truthy', 'falsy'];
 
         return collect($components)
             ->filter(fn ($component): bool => is_array($component) && filled($component['key'] ?? null))
@@ -375,7 +375,7 @@ final class CalculatorProfileBuilder
                 $component['unitPrice'] = $item->effectiveSalePrice((float) $component['unitPrice']);
                 $component['priceOnRequest'] = $component['unitPrice'] <= 0;
 
-                return $component;
+                return CatalogCompatibility::apply($component, $item);
             })
             ->all();
     }

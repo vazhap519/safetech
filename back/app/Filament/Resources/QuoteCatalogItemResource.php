@@ -79,6 +79,31 @@ class QuoteCatalogItemResource extends Resource
                     ->minValue(0),
             ])->columns(2),
 
+            Section::make('NVR / DVR ტექნიკური თავსებადობა')
+                ->description('შეავსეთ ჩამწერის რეალური ლიმიტები. კალკულატორი შეუთავსებელ მოდელს ავტომატურად გამორიცხავს.')
+                ->schema([
+                    TextInput::make('technical_specs.channels')->label('არხები')->numeric()->minValue(1),
+                    TextInput::make('technical_specs.poe_ports')->label('PoE პორტები')->numeric()->minValue(0),
+                    TextInput::make('technical_specs.incoming_bandwidth_mbps')->label('Incoming bandwidth')->suffix('Mbps')->numeric()->minValue(1),
+                    TextInput::make('technical_specs.max_resolution_mp')->label('მაქს. გარჩევადობა')->suffix('MP')->numeric()->minValue(1),
+                    TextInput::make('technical_specs.sata_bays')->label('SATA bay')->numeric()->minValue(0),
+                    TextInput::make('technical_specs.max_hdd_tb')->label('მაქს. HDD თითო bay-ზე')->suffix('TB')->numeric()->minValue(1),
+                    Select::make('technical_specs.raid_levels')->label('RAID მხარდაჭერა')->multiple()->options([
+                        'none' => 'RAID-ის გარეშე',
+                        'raid1' => 'RAID 1',
+                        'raid5' => 'RAID 5',
+                        'raid6' => 'RAID 6',
+                        'raid10' => 'RAID 10',
+                    ]),
+                    Select::make('technical_specs.codecs')->label('Codec-ები')->multiple()->options([
+                        'h264' => 'H.264',
+                        'h265' => 'H.265',
+                        'h265plus' => 'H.265+',
+                    ]),
+                    Toggle::make('technical_specs.onvif')->label('ONVIF მხარდაჭერა')->default(true),
+                ])
+                ->columns(3),
+
             Section::make('ფასი და მოგება')
                 ->description('თუ გასაყიდი ფასი ცარიელია, Quote Engine გამოიყენებს: შესყიდვის ფასი × (1 + ფასნამატი / 100).')
                 ->schema([

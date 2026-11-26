@@ -277,6 +277,60 @@ class ServiceQuoteCalculatorTest extends TestCase
         $this->assertFalse($keys->contains('nvr-8ch-80mbps'));
     }
 
+    public function test_real_nvr_catalog_limits_are_applied_to_public_profile_and_quote_engine(): void
+    {
+        $service = Service::query()->create([
+            'slug' => 'security-camera-installation', 'name' => 'CCTV', 'title' => 'CCTV',
+            'description' => 'CCTV', 'seo_description' => 'CCTV', 'is_published' => true,
+            'lead_form' => CanonicalServiceCalculator::for('security-camera-installation', 'CCTV'),
+        ]);
+        $catalog = QuoteCatalogItem::query()->create([
+            'service_id' => $service->id,
+            'component_key' => 'nvr-16ch-160mbps',
+            'name' => 'Professional 16-channel NVR',
+            'category' => 'recorder',
+            'brand' => 'SafeVision',
+            'model' => 'SV-NVR16',
+            'technical_specs' => [
+                'channels' => 16,
+                'incoming_bandwidth_mbps' => 160,
+                'max_resolution_mp' => 8,
+                'sata_bays' => 2,
+                'max_hdd_tb' => 10,
+                'raid_levels' => ['none', 'raid1'],
+                'codecs' => ['h265'],
+                'onvif' => true,
+            ],
+            'is_active' => true,
+        ]);
+
+        $profile = app(CalculatorProfileBuilder::class)->build($service, 'en');
+        $recorder = collect($profile['components'])->firstWhere('key', 'nvr-16ch-160mbps');
+
+        $this->assertSame('SV-NVR16', $recorder['model']);
+        $this->assertSame(160, $recorder['technicalSpecs']['incoming_bandwidth_mbps']);
+        $this->assertContains(
+            ['field' => 'resolution_mp', 'operator' => 'lte', 'value' => '8'],
+            $recorder['rules'],
+        );
+
+        $compatibleQuote = app(ServiceQuoteCalculator::class)->calculate($service, ['values' => [
+            'camera_technology' => 'ip', 'camera_count' => 12, 'resolution' => '4mp',
+            'recording_days' => 14, 'recording_fps' => 15, 'recording_codec' => 'h265', 'storage_raid' => 'none',
+        ]]);
+        $this->assertContains('nvr-16ch-160mbps', collect($compatibleQuote['components'])->pluck('key'));
+
+        $catalog->update(['technical_specs' => array_merge(
+            $catalog->technical_specs,
+            ['max_resolution_mp' => 2],
+        )]);
+        $incompatibleQuote = app(ServiceQuoteCalculator::class)->calculate($service, ['values' => [
+            'camera_technology' => 'ip', 'camera_count' => 12, 'resolution' => '4mp',
+            'recording_days' => 14, 'recording_fps' => 15, 'recording_codec' => 'h265', 'storage_raid' => 'none',
+        ]]);
+        $this->assertNotContains('nvr-16ch-160mbps', collect($incompatibleQuote['components'])->pluck('key'));
+    }
+
     public function test_low_voltage_quote_estimates_cable_from_area_and_points(): void
     {
         $service = Service::query()->create([

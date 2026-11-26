@@ -8,6 +8,7 @@ use App\Support\Calculators\BarrierConfigurator;
 use App\Support\Calculators\BarrierQuoteProfile;
 use App\Support\Calculators\CalculatorProfileBuilder;
 use App\Support\Calculators\CanonicalServiceCalculator;
+use App\Support\Calculators\CatalogCompatibility;
 use App\Support\Calculators\CctvEngineeringCalculator;
 use App\Support\Calculators\IntercomPlanner;
 
@@ -197,8 +198,18 @@ final class ServiceQuoteCalculator
             ->get()
             ->keyBy('component_key');
 
+        $catalogComponents = collect($config['components'] ?? [])
+            ->map(function (array $component) use ($catalog): array {
+                $item = $catalog->get((string) ($component['key'] ?? ''));
+
+                return $item instanceof QuoteCatalogItem
+                    ? CatalogCompatibility::apply($component, $item)
+                    : $component;
+            })
+            ->all();
+
         $compatible = $this->compatibleComponents(
-            $config['components'] ?? [],
+            $catalogComponents,
             $values,
             $projectSize,
             $propertyType,
@@ -591,6 +602,11 @@ final class ServiceQuoteCalculator
                 'gte' => (float) $actual >= (float) $expected,
                 'lte' => (float) $actual <= (float) $expected,
                 'contains' => str_contains(strtolower((string) $actual), strtolower((string) $expected)),
+                'one_of' => in_array(
+                    strtolower(trim((string) $actual)),
+                    array_map('trim', explode(',', strtolower((string) $expected))),
+                    true,
+                ),
                 'truthy' => $this->truthy($actual),
                 'falsy' => ! $this->truthy($actual),
                 default => strtolower((string) $actual) === strtolower((string) $expected),
@@ -629,6 +645,11 @@ final class ServiceQuoteCalculator
             if (($values['cable_estimation_mode'] ?? 'auto') === 'auto') {
                 $values['cable_meters'] = $estimatedCable;
             }
+        }
+
+        if (array_key_exists('resolution', $values)) {
+            $resolution = (float) preg_replace('/[^\d.]/', '', (string) $values['resolution']);
+            $values['resolution_mp'] = $resolution ?: 4;
         }
 
         if (array_key_exists('camera_count', $values) && array_key_exists('recording_days', $values)

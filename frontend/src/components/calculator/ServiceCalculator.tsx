@@ -227,6 +227,46 @@ function componentCategoryLabel(category: string, locale: string) {
     return labels[category]?.[locale] ?? labels[category]?.ka ?? category;
 }
 
+function technicalSpecsSummary(
+    specs: Record<string, string | number | boolean | string[] | null> | undefined,
+    locale: string,
+) {
+    if (!specs) return [];
+
+    const labels = {
+        channels: { ka: "არხი", en: "channels", ru: "каналов" },
+        poe_ports: { ka: "PoE პორტი", en: "PoE ports", ru: "PoE-портов" },
+        sata_bays: { ka: "SATA bay", en: "SATA bays", ru: "SATA-отсеков" },
+    } as const;
+    const items: string[] = [];
+
+    for (const key of ["channels", "poe_ports", "sata_bays"] as const) {
+        const value = specs[key];
+        if (typeof value === "number" && value > 0) {
+            items.push(`${value} ${labels[key][locale as "ka" | "en" | "ru"] ?? labels[key].ka}`);
+        }
+    }
+
+    if (typeof specs.incoming_bandwidth_mbps === "number") {
+        items.push(`${specs.incoming_bandwidth_mbps} Mbps`);
+    }
+    if (typeof specs.max_resolution_mp === "number") {
+        items.push(`${specs.max_resolution_mp} MP`);
+    }
+    if (typeof specs.max_hdd_tb === "number") {
+        items.push(`${specs.max_hdd_tb} TB/HDD`);
+    }
+    if (Array.isArray(specs.raid_levels) && specs.raid_levels.length > 0) {
+        items.push(specs.raid_levels.map((value) => value.toUpperCase()).join(" / "));
+    }
+    if (Array.isArray(specs.codecs) && specs.codecs.length > 0) {
+        items.push(specs.codecs.map((value) => value.toUpperCase()).join(" / "));
+    }
+    if (specs.onvif === true) items.push("ONVIF");
+
+    return items;
+}
+
 export default function ServiceCalculator({
     profiles,
     initialService,
@@ -894,6 +934,10 @@ export default function ServiceCalculator({
                                     {compatibleComponents.map((item) => {
                                         const { component } = item;
                                         const selection = selectionFor(item);
+                                        const technicalSpecs = technicalSpecsSummary(
+                                            component.technicalSpecs,
+                                            locale,
+                                        );
 
                                         return (
                                             <article
@@ -951,6 +995,18 @@ export default function ServiceCalculator({
                                                                     {[component.catalogName, component.brand, component.model]
                                                                         .filter(Boolean)
                                                                         .join(" · ")}
+                                                                </span>
+                                                            ) : null}
+                                                            {technicalSpecs.length > 0 ? (
+                                                                <span className="mt-2 flex flex-wrap gap-1.5">
+                                                                    {technicalSpecs.map((spec) => (
+                                                                        <span
+                                                                            className="rounded-full bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary"
+                                                                            key={spec}
+                                                                        >
+                                                                            {spec}
+                                                                        </span>
+                                                                    ))}
                                                                 </span>
                                                             ) : null}
                                                             <span className="mt-2 block text-sm font-medium text-primary">

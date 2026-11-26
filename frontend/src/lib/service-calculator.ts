@@ -1,4 +1,5 @@
 import { intercomValues, type IntercomCatalog } from "./intercom-calculator";
+import { calculateCctvStorage } from "./cctv-storage-calculator";
 
 export type CalculatorOption = {
     value: string;
@@ -49,6 +50,7 @@ export type CalculatorCompatibilityRule = {
         | "gte"
         | "lte"
         | "contains"
+        | "one_of"
         | "truthy"
         | "falsy";
     value: string;
@@ -61,6 +63,7 @@ export type CalculatorComponent = {
     catalogName?: string;
     brand?: string;
     model?: string;
+    technicalSpecs?: Record<string, string | number | boolean | string[] | null>;
     description: string;
     unitPrice: number;
     monthlyPrice: number;
@@ -184,28 +187,48 @@ export function withDerivedCalculatorValues(
     profile: CalculatorProfile,
     values: CalculatorValues,
 ): CalculatorValues {
+    let derived = { ...values };
+
     if (
-        !profile.fields.some((field) => field.key === "area_sqm")
-        || !profile.fields.some((field) => field.key === "network_points")
+        profile.fields.some((field) => field.key === "area_sqm")
+        && profile.fields.some((field) => field.key === "network_points")
     ) {
-        return values;
+        const area = Math.max(10, Number(values.area_sqm) || 10);
+        const points = Math.max(0, Math.floor(Number(values.network_points) || 0));
+        const averageRun = Math.min(45, Math.max(8, Math.sqrt(area) * 1.25 + 5));
+        const estimatedCable = Math.ceil(
+            Math.round(points * averageRun * 1.12 * 1_000_000) / 1_000_000,
+        );
+        derived = {
+            ...derived,
+            estimated_average_run_m: Math.round(averageRun * 10) / 10,
+            estimated_cable_meters: estimatedCable,
+            ...((values.cable_estimation_mode ?? "auto") === "auto"
+                ? { cable_meters: estimatedCable }
+                : {}),
+        };
     }
 
-    const area = Math.max(10, Number(values.area_sqm) || 10);
-    const points = Math.max(0, Math.floor(Number(values.network_points) || 0));
-    const averageRun = Math.min(45, Math.max(8, Math.sqrt(area) * 1.25 + 5));
-    const estimatedCable = Math.ceil(
-        Math.round(points * averageRun * 1.12 * 1_000_000) / 1_000_000,
-    );
-    const derived: CalculatorValues = {
-        ...values,
-        estimated_average_run_m: Math.round(averageRun * 10) / 10,
-        estimated_cable_meters: estimatedCable,
-    };
+    if (profile.fields.some((field) => field.key === "camera_count")) {
+        const storage = calculateCctvStorage(derived);
+        const resolutionMp = Number(
+            String(derived.resolution ?? "4mp").replace(/[^\d.]/g, ""),
+        ) || 4;
 
-    return (values.cable_estimation_mode ?? "auto") === "auto"
-        ? { ...derived, cable_meters: estimatedCable }
-        : derived;
+        derived = {
+            ...derived,
+            resolution_mp: resolutionMp,
+            ...(storage
+                ? {
+                    required_storage_tb: storage.requiredTb,
+                    video_bandwidth_mbps:
+                        Math.round(storage.bitrateMbpsPerCamera * Number(derived.camera_count || 0) * 100) / 100,
+                }
+                : {}),
+        };
+    }
+
+    return derived;
 }
 
 function compatibilityValue(
@@ -257,6 +280,8 @@ function ruleMatches(
             return Number(actual) <= Number(rule.value);
         case "contains":
             return actualString.includes(expectedString);
+        case "one_of":
+            return expectedString.split(",").map((value) => value.trim()).includes(actualString);
         case "truthy":
             return booleanValue(actual);
         case "falsy":
