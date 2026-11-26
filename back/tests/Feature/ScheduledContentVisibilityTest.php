@@ -48,7 +48,7 @@ class ScheduledContentVisibilityTest extends TestCase
     public function test_local_service_landings_only_return_publicly_visible_projects(): void
     {
         $service = Service::query()->create([
-            'slug' => 'camera-installation',
+            'slug' => 'security-camera-installation',
             'name' => 'Camera installation',
             'title' => 'Camera installation',
             'description' => 'Professional camera installation.',
@@ -83,7 +83,7 @@ class ScheduledContentVisibilityTest extends TestCase
         ]);
         $landing->projects()->attach([$visibleProject->id, $futureProject->id]);
 
-        $this->getJson('/api/local-service-landings/camera-installation/tbilisi')
+        $this->getJson('/api/local-service-landings/security-camera-installation/tbilisi')
             ->assertOk()
             ->assertJsonPath('data.projects.0.slug', 'visible-project')
             ->assertJsonMissing(['slug' => 'future-related-project']);

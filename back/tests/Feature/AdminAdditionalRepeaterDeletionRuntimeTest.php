@@ -71,7 +71,7 @@ class AdminAdditionalRepeaterDeletionRuntimeTest extends TestCase
         $service = Service::query()->create([
             'category_for_service_id' => $category->id,
             'name' => 'Local landing service',
-            'slug' => 'local-landing-service',
+            'slug' => 'security-camera-installation',
             'icon' => 'settings',
             'title' => 'Local landing service',
             'description' => 'Local landing service description.',
@@ -81,7 +81,7 @@ class AdminAdditionalRepeaterDeletionRuntimeTest extends TestCase
         $landing = LocalServiceLanding::query()->create([
             'service_id' => $service->id,
             'location_name' => 'Tbilisi',
-            'location_slug' => 'tbilisi-repeater-test',
+            'location_slug' => 'tbilisi',
             'title' => 'Tbilisi service page',
             'content' => 'Unique local service page content.',
             'benefits' => [
