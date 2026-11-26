@@ -149,8 +149,14 @@ export function createMetadata({
           : genericDescription;
     const fullTitle = withSiteTitle(resolvedTitle, resolvedSiteName);
     const socialImage = absoluteSiteUrl(image);
-    const resolvedOgTitle = cleanText(ogTitle) || fullTitle;
-    const resolvedOgDescription = cleanText(ogDescription) || resolvedDescription;
+    const suppliedOgTitle = cleanText(ogTitle);
+    const suppliedOgDescription = cleanText(ogDescription);
+    const resolvedOgTitle = suppliedOgTitle.length >= 10
+        ? suppliedOgTitle
+        : fullTitle;
+    const resolvedOgDescription = suppliedOgDescription.length >= 40
+        ? suppliedOgDescription
+        : resolvedDescription;
     const languageAlternates = buildLanguageAlternates(path);
     const alternateLocales = supportedLocales
         .filter((item) => item !== locale)
