@@ -41,12 +41,6 @@ class ServiceResource extends Resource
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
 
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->whereIn('slug', CanonicalServiceCalculator::slugs());
-    }
-
     /** @return array<int, mixed> */
     private static function cardSchema(bool $featured = false): array
     {
@@ -229,7 +223,9 @@ class ServiceResource extends Resource
     {
         return $table
             ->modifyQueryUsing(
-                fn (Builder $query) => $query->withAnalyticsSummary(),
+                fn (Builder $query) => $query
+                    ->whereIn('slug', CanonicalServiceCalculator::slugs())
+                    ->withAnalyticsSummary(),
             )
             ->columns([
                 TextColumn::make('name')->label('Name')->searchable()->sortable(),
