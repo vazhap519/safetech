@@ -25,7 +25,10 @@ export type SeoProps = {
 };
 
 export const SITE_NAME = "SafeTech";
-export const DEFAULT_SOCIAL_IMAGE = "/brand-preview.svg";
+// Next.js intentionally skips some SVG image metadata in generated social tags.
+// Keep a raster fallback so og:image and twitter:image remain present even when
+// the CMS branding payload is unavailable during a deploy or cache refresh.
+export const DEFAULT_SOCIAL_IMAGE = "/icon-512.png";
 
 function resolveSiteUrl() {
     const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
