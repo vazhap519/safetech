@@ -142,7 +142,20 @@ function auditHtmlPage(body, path, publicSiteUrl) {
     assert(ogDescription.length >= 40, `${path}: Open Graph description is missing or too short`);
     assert(ogUrl, `${path}: og:url is missing`);
     assert(normalizeUrl(ogUrl) === normalizeUrl(expectedCanonical), `${path}: og:url mismatch`);
-    assert(/^https:\/\//i.test(ogImage), `${path}: absolute Open Graph image is missing`);
+    let parsedOgImage;
+    try {
+        parsedOgImage = new URL(ogImage);
+    } catch {
+        fail(`${path}: absolute Open Graph image is missing`);
+    }
+    assert(
+        ["http:", "https:"].includes(parsedOgImage.protocol),
+        `${path}: Open Graph image must use HTTP(S)`,
+    );
+    assert(
+        new URL(publicSiteUrl).protocol !== "https:" || parsedOgImage.protocol === "https:",
+        `${path}: production Open Graph image must use HTTPS`,
+    );
     assert(twitterCard === "summary_large_image", `${path}: large Twitter card is missing`);
     assert(structuredData.length > 0, `${path}: structured data is missing`);
     for (const payload of structuredData) {
