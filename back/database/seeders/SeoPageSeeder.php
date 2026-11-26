@@ -15,6 +15,21 @@ class SeoPageSeeder extends Seeder
         }
     }
 
+    /** Refresh the core acquisition pages after the seven-service consolidation. */
+    public function refreshCoreSeoPages(): void
+    {
+        foreach ($this->pages() as $page) {
+            if (! in_array($page['key'], ['home', 'services'], true)) {
+                continue;
+            }
+
+            SeoPage::query()->updateOrCreate(
+                ['key' => $page['key']],
+                $page,
+            );
+        }
+    }
+
     /**
      * Seeds only the immutable defaults for /contact. Existing administrator
      * edits and deletion tombstones are handled by seedPage().
@@ -146,9 +161,9 @@ class SeoPageSeeder extends Seeder
                     'Установка камер и слаботочные сети в Тбилиси | SafeTech',
                 ),
                 self::localized(
-                    'კამერების მონტაჟი, სუსტი დენების გაყვანა, CAT6 ქსელები და POS მოწყობილობების მონტაჟი და გამართვა თბილისში. SafeTech — პროფესიონალური პროექტირება და მონტაჟი.',
-                    'CCTV, networking, Wi-Fi and IT support in Tbilisi and across Georgia. SafeTech plans and installs systems for homes and businesses. Contact us.',
-                    'Видеонаблюдение, сети, Wi-Fi и IT-поддержка в Тбилиси и по всей Грузии. SafeTech проектирует и устанавливает решения для дома и бизнеса. Свяжитесь с нами.',
+                    'კამერების, სუსტი დენების, ქსელების, დომოფონების, დაშვების სისტემებისა და შლაგბაუმების პროექტირება და მონტაჟი; Windows და ბიზნეს IT მხარდაჭერა თბილისში და რეგიონებში.',
+                    'CCTV, low-voltage cabling, networks, intercoms, access control, barriers, Windows setup and business IT support in Tbilisi and across Georgia.',
+                    'Камеры, слаботочные сети, домофоны, контроль доступа, шлагбаумы, настройка Windows и IT-поддержка бизнеса в Тбилиси и по Грузии.',
                 ),
                 [
                     'ka' => ['IT სერვისები', 'კამერების მონტაჟი', 'ქსელის მონტაჟი', 'დაშვების სისტემები', 'SafeTech Georgia'],
@@ -186,9 +201,9 @@ class SeoPageSeeder extends Seeder
                     'Камеры, слаботочные сети и IT-услуги | SafeTech',
                 ),
                 self::localized(
-                    'SafeTech გთავაზობთ კამერების მონტაჟს, სუსტი დენებისა და CAT6 ქსელების გაყვანას, POS მოწყობილობების მონტაჟსა და გამართვას, IT მხარდაჭერას, დომოფონებსა და შლაგბაუმებს.',
-                    'Explore SafeTech services and estimate pricing for computers, POS, IT support, CAT6 networks, racks, CCTV, intercoms, and barriers.',
-                    'Услуги SafeTech и расчет стоимости: компьютеры, POS, IT-поддержка, CAT6, шкафы, камеры, домофоны и шлагбаумы.',
+                    'SafeTech-ის 7 ძირითადი სერვისი: კამერები, სუსტი დენები, ქსელები, დომოფონი და დაშვების კონტროლი, შლაგბაუმი, ბიზნეს IT მხარდაჭერა და ოპერაციული სისტემების ინსტალაცია.',
+                    'Explore SafeTech’s seven core services: CCTV, low-voltage cabling, networks, intercom and access control, barriers, business IT support, and operating system installation.',
+                    'Семь основных услуг SafeTech: камеры, слаботочные сети, локальные сети, домофоны и контроль доступа, шлагбаумы, IT-поддержка и установка ОС.',
                 ),
                 [
                     'ka' => ['IT მომსახურება', 'სერვისების კალკულატორი', 'კამერების მონტაჟი', 'CAT6 კაბელი', 'დომოფონის მონტაჟი'],

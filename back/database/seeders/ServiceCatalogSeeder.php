@@ -25,6 +25,8 @@ class ServiceCatalogSeeder extends Seeder
 
     public function run(): void
     {
+        $this->pruneLegacyServiceFaqs();
+
         $categories = $this->seedCategories();
         $translationEntries = [];
 
@@ -50,6 +52,26 @@ class ServiceCatalogSeeder extends Seeder
         }
 
         $this->mergePublicTranslations($translationEntries);
+    }
+
+    private function pruneLegacyServiceFaqs(): void
+    {
+        $canonicalSlugs = CanonicalServiceCalculator::slugs();
+        $canonicalContexts = self::canonicalFaqContexts();
+
+        Faq::query()
+            ->where(function ($legacy) use ($canonicalSlugs, $canonicalContexts): void {
+                $legacy
+                    ->whereHas('service', fn ($service) => $service->whereNotIn('slug', $canonicalSlugs))
+                    ->orWhere(function ($orphaned) use ($canonicalContexts): void {
+                        $orphaned
+                            ->whereNull('service_id')
+                            ->where('context', 'like', 'service:%')
+                            ->whereNotIn('context', $canonicalContexts);
+                    });
+            })
+            ->get()
+            ->each(static fn (Faq $faq): bool => $faq->delete());
     }
 
     /** @return array<int, string> */

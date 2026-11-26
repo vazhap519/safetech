@@ -10,6 +10,7 @@ use App\Filament\Support\NavigationGroup;
 use App\Filament\Support\StableSlug;
 use App\Filament\Support\StructuredDataJsonField;
 use App\Models\Service;
+use App\Support\Calculators\CanonicalServiceCalculator;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -39,6 +40,12 @@ class ServiceResource extends Resource
     protected static ?string $pluralModelLabel = 'Services';
 
     protected static string|\UnitEnum|null $navigationGroup = NavigationGroup::Services;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereIn('slug', CanonicalServiceCalculator::slugs());
+    }
 
     /** @return array<int, mixed> */
     private static function cardSchema(bool $featured = false): array

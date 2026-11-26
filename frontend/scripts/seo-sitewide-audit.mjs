@@ -1,5 +1,7 @@
 const REQUIRED_HREFLANGS = ["ka-GE", "en-GE", "ru-GE", "x-default"];
-const MAX_SITEMAP_PAGES = 250;
+// Audit the complete current multilingual catalogue (currently 270 URLs),
+// while retaining a sensible ceiling for accidental sitemap explosions.
+const MAX_SITEMAP_PAGES = 500;
 // Keep the audit representative of a resource-constrained production host.
 // Six simultaneous SSR page renders can turn a healthy 2 GB deployment into
 // a load test and obscure the URL that actually failed.
@@ -63,6 +65,12 @@ function visibleText(html) {
         .trim();
 }
 
+function jsonLdPayloads(html) {
+    return [...html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
+        .map((match) => match[1]?.trim())
+        .filter(Boolean);
+}
+
 function extractXmlLocs(xml) {
     return [...xml.matchAll(/<loc>([\s\S]*?)<\/loc>/gi)]
         .map((match) => match[1]?.trim())
@@ -112,6 +120,12 @@ function auditHtmlPage(body, path, publicSiteUrl) {
         .filter((tag) => attribute(tag, "rel").toLowerCase().includes("alternate"))
         .map((tag) => attribute(tag, "hreflang"));
     const images = tags(body, "img");
+    const ogTitle = metaValue(body, "property", "og:title");
+    const ogDescription = metaValue(body, "property", "og:description");
+    const ogUrl = metaValue(body, "property", "og:url");
+    const ogImage = metaValue(body, "property", "og:image");
+    const twitterCard = metaValue(body, "name", "twitter:card");
+    const structuredData = jsonLdPayloads(body);
 
     assert(title.length >= 10, `${path}: title is missing or too short`);
     assert(description.length >= 40, `${path}: meta description is missing or too short`);
@@ -124,6 +138,20 @@ function auditHtmlPage(body, path, publicSiteUrl) {
     assert(h1Tags.length === 1, `${path}: expected exactly one H1, found ${h1Tags.length}`);
     assert(htmlLang, `${path}: html lang attribute is missing`);
     assert(visibleText(body).length >= 80, `${path}: rendered page content is too thin`);
+    assert(ogTitle.length >= 10, `${path}: Open Graph title is missing or too short`);
+    assert(ogDescription.length >= 40, `${path}: Open Graph description is missing or too short`);
+    assert(ogUrl, `${path}: og:url is missing`);
+    assert(normalizeUrl(ogUrl) === normalizeUrl(expectedCanonical), `${path}: og:url mismatch`);
+    assert(/^https:\/\//i.test(ogImage), `${path}: absolute Open Graph image is missing`);
+    assert(twitterCard === "summary_large_image", `${path}: large Twitter card is missing`);
+    assert(structuredData.length > 0, `${path}: structured data is missing`);
+    for (const payload of structuredData) {
+        try {
+            JSON.parse(payload);
+        } catch {
+            fail(`${path}: structured data contains invalid JSON`);
+        }
+    }
 
     for (const hreflang of REQUIRED_HREFLANGS) {
         assert(alternates.includes(hreflang), `${path}: missing hreflang ${hreflang}`);

@@ -34,6 +34,45 @@ class PageContentSeeder extends Seeder
         $this->seedFrequentlyAskedQuestions();
     }
 
+    /** Replace the small set of acquisition copy retired with the old catalog. */
+    public function refreshSevenServiceCopy(): void
+    {
+        $keys = [
+            'home.hero.description',
+            'about.who.item.2.description',
+            'contact.support.item.4',
+        ];
+        $entries = collect($this->translationEntries())
+            ->whereIn('key', $keys)
+            ->keyBy('key');
+
+        $setting = SiteSetting::query()->where('key', 'translations')->first();
+        if (! $setting) {
+            $this->seedTranslations();
+
+            return;
+        }
+
+        $value = is_array($setting->value) ? $setting->value : [];
+        $map = MultilingualContent::mapFrom($value);
+
+        foreach ($keys as $key) {
+            $entry = $entries->get($key);
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $map[$key] = [
+                'ka' => $entry['ka'],
+                'en' => $entry['en'],
+                'ru' => $entry['ru'],
+            ];
+        }
+
+        $value['entries'] = MultilingualContent::entriesFromMap($map);
+        $setting->forceFill(['value' => $value])->save();
+    }
+
     /**
      * Contact FAQs predate a dedicated immutable seed key. Their stable
      * identity is therefore the contact context plus the canonical sort order.
@@ -350,7 +389,7 @@ class PageContentSeeder extends Seeder
             self::entry('home.hero.eyebrow', 'IT და უსაფრთხოების სისტემები საქართველოში', 'IT and security systems in Georgia', 'IT и системы безопасности в Грузии'),
             self::entry('home.hero.titlePrefix', 'ტექნოლოგიური ინფრასტრუქტურა', 'Technology infrastructure', 'Технологическая инфраструктура'),
             self::entry('home.hero.titleAccent', 'თქვენი ობიექტისთვის', 'built for your property', 'для вашего объекта'),
-            self::entry('home.hero.description', 'ვგეგმავთ, ვამონტაჟებთ და ვმართავთ კამერებს, დაშვების სისტემებს, ქსელებს, POS სისტემებსა და კომპიუტერულ ინფრასტრუქტურას.', 'We design, install, and support CCTV, access control, networks, POS systems, and computer infrastructure.', 'Проектируем, устанавливаем и обслуживаем видеонаблюдение, контроль доступа, сети, POS и компьютерную инфраструктуру.'),
+            self::entry('home.hero.description', 'ვგეგმავთ, ვამონტაჟებთ და ვმართავთ კამერებს, სუსტ დენებს, ქსელებს, დომოფონებს, დაშვების სისტემებს, შლაგბაუმებსა და ბიზნეს IT ინფრასტრუქტურას.', 'We design, install, and support CCTV, low-voltage cabling, networks, intercoms, access control, barriers, and business IT infrastructure.', 'Проектируем, устанавливаем и обслуживаем камеры, слаботочные сети, локальные сети, домофоны, контроль доступа, шлагбаумы и IT-инфраструктуру бизнеса.'),
             self::entry('home.hero.primaryCta', 'უფასო კონსულტაციის მოთხოვნა', 'Request a consultation', 'Запросить консультацию'),
             self::entry('home.hero.secondaryCta', 'სერვისების ნახვა', 'Explore services', 'Посмотреть услуги'),
             self::entry('home.hero.imageAlt', 'SafeTech-ის IT და უსაფრთხოების სისტემები', 'SafeTech IT and security systems', 'IT и системы безопасности SafeTech'),
@@ -421,7 +460,7 @@ class PageContentSeeder extends Seeder
             self::entry('about.who.item.1.title', 'ქსელური ინფრასტრუქტურა', 'Network infrastructure', 'Сетевая инфраструктура'),
             self::entry('about.who.item.1.description', 'კაბელირება, როზეტები, Patch Panel, რეკი, როუტერები, Wi-Fi და VLAN.', 'Cabling, outlets, patch panels, racks, routers, Wi-Fi, and VLAN.', 'Кабели, розетки, патч-панели, шкафы, роутеры, Wi-Fi и VLAN.'),
             self::entry('about.who.item.2.title', 'IT მხარდაჭერა', 'IT support', 'IT-поддержка'),
-            self::entry('about.who.item.2.description', 'კომპიუტერები, პროგრამები, POS სისტემები, პრინტერები და ბიზნესის ტექნიკური მხარდაჭერა.', 'Computers, software, POS systems, printers, and business IT support.', 'Компьютеры, программы, POS, принтеры и техническая поддержка бизнеса.'),
+            self::entry('about.who.item.2.description', 'კომპიუტერები, ოპერაციული სისტემები, პრინტერები, ქსელები და ბიზნესის ტექნიკური მხარდაჭერა.', 'Computers, operating systems, printers, networks, and business IT support.', 'Компьютеры, операционные системы, принтеры, сети и техническая поддержка бизнеса.'),
             self::entry('about.what.item.0.index', '01', '01', '01'),
             self::entry('about.what.item.0.title', 'ვაფასებთ', 'Assess', 'Оцениваем'),
             self::entry('about.what.item.0.description', 'ვადგენთ ამოცანას, არსებულ ინფრასტრუქტურას, რისკებსა და რეალურ საჭიროებებს.', 'We define the task, existing infrastructure, risks, and real needs.', 'Определяем задачу, текущую инфраструктуру, риски и реальные потребности.'),
@@ -529,7 +568,7 @@ class PageContentSeeder extends Seeder
             self::entry('contact.support.item.1', 'ქსელისა და Wi-Fi-ის პრობლემების მოგვარება', 'Network and Wi-Fi troubleshooting', 'Устранение проблем сети и Wi-Fi'),
             self::entry('contact.support.item.2', 'კამერების, NVR/DVR-ისა და დისტანციური წვდომის გამართვა', 'CCTV, NVR/DVR, and remote access support', 'Настройка камер, NVR/DVR и удаленного доступа'),
             self::entry('contact.support.item.3', 'დომოფონისა და დაშვების სისტემების მომსახურება', 'Intercom and access control support', 'Обслуживание домофонов и контроля доступа'),
-            self::entry('contact.support.item.4', 'POS სისტემებისა და პერიფერიის დახმარება', 'POS and peripheral support', 'Поддержка POS и периферии'),
+            self::entry('contact.support.item.4', 'ოპერაციული სისტემებისა და პერიფერიის დახმარება', 'Operating system and peripheral support', 'Поддержка операционных систем и периферии'),
             self::entry('contact.support.item.5', 'ქსელური რეკისა და კაბელირების მოწესრიგება', 'Rack and cabling organization', 'Организация сетевого шкафа и кабелей'),
             self::entry('contact.faq.title', 'კითხვები დაკავშირებამდე', 'Questions before contacting us', 'Вопросы перед обращением'),
             self::entry('contact.final.title', 'მზად ხართ ტექნიკური ამოცანის დასაწყებად?', 'Ready to start your technical project?', 'Готовы начать технический проект?'),
