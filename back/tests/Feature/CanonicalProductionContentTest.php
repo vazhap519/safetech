@@ -81,4 +81,40 @@ class CanonicalProductionContentTest extends TestCase
 
         $this->assertDatabaseCount('local_service_landings', $count);
     }
+
+    public function test_tbilisi_cctv_copy_is_specific_and_existing_landing_migration_preserves_data(): void
+    {
+        $this->seed(ProductionContentSeeder::class);
+
+        $landing = LocalServiceLanding::query()
+            ->where('location_slug', 'tbilisi')
+            ->whereHas('service', fn ($query) => $query->where('slug', 'security-camera-installation'))
+            ->sole();
+
+        $city = PriorityLocalSeoCopy::cities()['tbilisi'];
+        $old = $city['use']['security-access-automation']['ka'];
+        $new = $city['use']['tbilisi-cctv']['ka'];
+        $this->assertStringContainsString($new, $landing->content);
+        $this->assertStringNotContainsString($old, $landing->content);
+        $this->assertStringContainsString($city['use']['tbilisi-cctv']['en'], data_get($landing->translations, 'fields.content.en'));
+        $this->assertStringContainsString($city['use']['tbilisi-cctv']['ru'], data_get($landing->translations, 'fields.content.ru'));
+
+        $landing->content = 'Custom editorial paragraph. '.$old;
+        $landing->save();
+        $count = LocalServiceLanding::query()->count();
+        $publication = [$landing->is_published, $landing->noindex, $landing->location_slug];
+        $projectIds = $landing->projects()->pluck('projects.id')->all();
+
+        $migration = require database_path('migrations/2026_11_28_053000_refresh_cctv_search_intent_copy.php');
+        $migration->up();
+        $landing->refresh();
+
+        $this->assertSame('Custom editorial paragraph. '.$new, $landing->content);
+        $this->assertSame($publication, [$landing->is_published, $landing->noindex, $landing->location_slug]);
+        $this->assertSame($projectIds, $landing->projects()->pluck('projects.id')->all());
+        $this->assertDatabaseCount('local_service_landings', $count);
+
+        $migration->up();
+        $this->assertSame('Custom editorial paragraph. '.$new, $landing->fresh()->content);
+    }
 }

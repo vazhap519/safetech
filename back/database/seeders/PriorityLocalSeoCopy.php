@@ -32,6 +32,7 @@ final class PriorityLocalSeoCopy
                     'Для объекта в Тбилиси уточните доступ в здание, время работ, существующие кабельные трассы и возможность минимизировать неудобства для жильцов или персонала.',
                 ),
                 'use' => [
+                    'tbilisi-cctv' => self::t('კერძო სახლის, კორპუსის ეზოს, ოფისისა და მაღაზიისთვის კამერების განლაგებას ვგეგმავთ შესასვლელების, პერიმეტრის, ბრმა ზონებისა და დღის და ღამის განათების მიხედვით. კამერის ობიექტივი შეირჩევა საჭირო ხედვისა და დეტალიზაციის შესაბამისად.', 'For homes, apartment courtyards, offices and shops, we plan camera coverage around entrances, perimeters, blind spots and day and night lighting. Lens selection depends on the required field of view and image detail.', 'Для домов, дворов, офисов и магазинов планируем обзор входов, периметра и слепых зон с учётом дневного и ночного освещения. Объектив выбираем по требуемому углу обзора и детализации.'),
                     'security-access-automation' => self::t('კორპუსის ეზო, ოფისი, მაღაზია ან პარკინგი: წინასწარ დგინდება შესასვლელები, მოძრაობის ნაკადი და უფლებამოსილი პირების დაშვება.', 'Apartment courtyard, office, shop or car park: map entrances, traffic flow and authorised users before selecting the system.', 'Двор жилого дома, офис, магазин или парковка: до выбора системы уточняем входы, поток транспорта и права доступа.'),
                     'network-infrastructure' => self::t('ბინასა და ოფისში ოთახების განლაგება, ქსელის პორტები და საერთო საკომუნიკაციო სივრცე განსაზღვრავს ქსელის გეგმას.', 'In flats and offices, room layout, port counts and shared risers affect the network plan.', 'В квартирах и офисах план сети зависит от комнат, числа портов и общих кабельных шахт.'),
                     'computer-services' => self::t('საოფისე სამუშაო ადგილისა და კერძო კომპიუტერისთვის წინასწარ ვარკვევთ მონაცემების შენარჩუნების, ლიცენზიებისა და ადგილზე მუშაობის პირობებს.', 'For office and home computers, clarify data retention, licensing and whether an onsite visit is necessary.', 'Для офисных и домашних ПК уточняем сохранение данных, лицензии и необходимость выезда.'),
@@ -126,6 +127,11 @@ final class PriorityLocalSeoCopy
     public static function technical(): array
     {
         return [
+            'tbilisi-cctv' => self::t(
+                'მონტაჟამდე ვამოწმებთ საკაბელო მარშრუტებს, PoE კვებას, კამერების ხედვის ზონებს, ღამის განათებასა და ჩამწერის თავსებადობას. ჩანაწერის სასურველი ვადის მიხედვით ვითვლით დისკის მოცულობას და ჩაბარებისას ვტესტავთ ტელეფონიდან წვდომას.',
+                'Before installation, we check cable routes, PoE power, camera coverage, night lighting and recorder compatibility. Storage is sized for the requested retention period, and mobile access is tested at handover.',
+                'До монтажа проверяем кабельные трассы, питание PoE, зоны обзора камер, ночное освещение и совместимость регистратора. Объём диска рассчитываем по сроку хранения, при сдаче проверяем доступ с телефона.',
+            ),
             'security-access-automation' => self::t(
                 'სისტემის შერჩევამდე მოწმდება კვება, კაბელირება, მოწყობილობების თავსებადობა, საჭირო ხედვის ან დაშვების ზონები და უსაფრთხო ექსპლუატაციის პირობები.',
                 'Before choosing the system, check power, cabling, device compatibility, required visibility or access zones and safe operation.',
