@@ -65,7 +65,10 @@ final class CanonicalLocalSeoSeeder extends Seeder
                     }
 
                     $city = $cities[$slug];
-                    $copy = $this->copy($service, $city, $technical[$category], $category, $names, $descriptions);
+                    $copyCategory = $slug === 'tbilisi' && $service->slug === 'security-camera-installation'
+                        ? 'tbilisi-cctv'
+                        : $category;
+                    $copy = $this->copy($service, $city, $technical[$copyCategory], $copyCategory, $names, $descriptions);
 
                     LocalServiceLanding::query()->create([
                         'service_id' => $service->getKey(),
@@ -75,8 +78,8 @@ final class CanonicalLocalSeoSeeder extends Seeder
                         'title' => $copy['ka']['title'],
                         'excerpt' => $copy['ka']['excerpt'],
                         'content' => $copy['ka']['content'],
-                        'benefits' => $this->benefits($city, $technical[$category], $category, $names),
-                        'faq' => $this->faqs($service, $city, $category, $names, $technical[$category]),
+                        'benefits' => $this->benefits($city, $technical[$copyCategory], $copyCategory, $names),
+                        'faq' => $this->faqs($service, $city, $copyCategory, $names, $technical[$copyCategory]),
                         'cta_title' => $copy['ka']['ctaTitle'],
                         'cta_text' => $copy['ka']['ctaText'],
                         'primary_keyword' => $copy['ka']['primaryKeyword'],
