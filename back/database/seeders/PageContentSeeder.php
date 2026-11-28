@@ -387,8 +387,8 @@ class PageContentSeeder extends Seeder
             self::entry('consultation.modal.close', 'ფანჯრის დახურვა', 'Close window', 'Закрыть окно'),
 
             self::entry('home.hero.eyebrow', 'IT და უსაფრთხოების სისტემები საქართველოში', 'IT and security systems in Georgia', 'IT и системы безопасности в Грузии'),
-            self::entry('home.hero.titlePrefix', 'ტექნოლოგიური ინფრასტრუქტურა', 'Technology infrastructure', 'Технологическая инфраструктура'),
-            self::entry('home.hero.titleAccent', 'თქვენი ობიექტისთვის', 'built for your property', 'для вашего объекта'),
+            self::entry('home.hero.titlePrefix', 'კამერების მონტაჟი და სუსტი დენები', 'CCTV installation and low-voltage cabling', 'Монтаж камер и слаботочных сетей'),
+            self::entry('home.hero.titleAccent', 'თბილისში და რეგიონებში', 'in Tbilisi and beyond', 'в Тбилиси и регионах'),
             self::entry('home.hero.description', 'ვგეგმავთ, ვამონტაჟებთ და ვმართავთ კამერებს, სუსტ დენებს, ქსელებს, დომოფონებს, დაშვების სისტემებს, შლაგბაუმებსა და ბიზნეს IT ინფრასტრუქტურას.', 'We design, install, and support CCTV, low-voltage cabling, networks, intercoms, access control, barriers, and business IT infrastructure.', 'Проектируем, устанавливаем и обслуживаем камеры, слаботочные сети, локальные сети, домофоны, контроль доступа, шлагбаумы и IT-инфраструктуру бизнеса.'),
             self::entry('home.hero.primaryCta', 'უფასო კონსულტაციის მოთხოვნა', 'Request a consultation', 'Запросить консультацию'),
             self::entry('home.hero.secondaryCta', 'სერვისების ნახვა', 'Explore services', 'Посмотреть услуги'),
